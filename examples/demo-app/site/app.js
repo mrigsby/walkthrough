@@ -183,7 +183,7 @@ function checkoutPage() {
     </form>
     <iframe src="/payment-frame.html" title="Payment form" class="payment-frame"></iframe>
     <p id="card-status" role="status">${savedCard ? `Card ending in ${savedCard} is ready.` : 'Add a card above.'}</p>
-    <button type="button" id="place-order">Place order</button>
+    <button type="button" id="place-order" data-testid="place-order">Place order</button>
     <p id="checkout-error" class="error" role="alert"></p>`;
 
   document.getElementById('place-order').addEventListener('click', async () => {

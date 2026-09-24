@@ -2,7 +2,7 @@
 
 Walkthrough lets an AI agent test your web app in a visible browser, one step at a time. After each step, the agent tells you what it did and what you should see. You confirm the step or report a bug. When you report a bug, Walkthrough saves screenshots, console errors, and failed requests.
 
-> Status: early development. Only the project setup is done. See the [changelog](CHANGELOG.md).
+> Status: early development. The browser tools work. The confirm panel, test plans, and reports come next. See the [changelog](CHANGELOG.md).
 
 ## Parts
 
@@ -36,7 +36,7 @@ cd examples/demo-app
 claude --plugin-dir ../../plugins/walkthrough
 ```
 
-Run `/mcp` and check that `uiwalk` is connected.
+Run `/mcp` and check that `uiwalk` is connected. Then ask Claude to open the demo shop and walk through it.
 
 ## Project layout
 

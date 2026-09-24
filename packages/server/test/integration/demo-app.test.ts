@@ -1,43 +1,22 @@
-import { type ChildProcess, spawn } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { startDemoServer } from '../helpers/demo-server.js';
 
 // Checks that the demo shop works and has its planted bugs.
-const root = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const port = 4390 + Math.floor(Math.random() * 100);
-const base = `http://localhost:${port}`;
-
-let server: ChildProcess;
+let demo: Awaited<ReturnType<typeof startDemoServer>>;
+let base: string;
 let browser: Browser;
 let page: Page;
 
-async function waitForServer(): Promise<void> {
-  for (let i = 0; i < 50; i++) {
-    try {
-      if ((await fetch(`${base}/api/products`)).ok) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error('Demo server did not start');
-}
-
 beforeAll(async () => {
-  server = spawn(
-    process.execPath,
-    [join(root, 'scripts/demo-server.mjs'), '--port', String(port)],
-    {
-      stdio: 'ignore',
-    },
-  );
-  await waitForServer();
+  demo = await startDemoServer();
+  base = demo.base;
   browser = await puppeteer.launch({ channel: 'chrome', headless: true });
 });
 
 afterAll(async () => {
   await browser?.close();
-  server?.kill();
+  demo?.stop();
 });
 
 beforeEach(async () => {

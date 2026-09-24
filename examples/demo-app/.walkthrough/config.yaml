@@ -1,5 +1,22 @@
 # Walkthrough settings for the demo shop.
-# Later phases add more settings.
+
+# The page that browser_open starts at.
 baseUrl: http://localhost:4321
+
+# Sites that Walkthrough may open. Anything else is blocked.
 allowedOrigins:
   - http://localhost:4321
+
+# How to answer confirm and prompt dialogs: ask (default), accept, or dismiss.
+dialogs: ask
+
+# Browser options.
+browser:
+  # Set to true to hide the browser window.
+  headless: false
+  # Wait this many milliseconds between browser steps, so you can watch each step.
+  slowMo: 0
+
+# Put personal settings in config.local.yaml. Git does not track that file.
+# Only that file can turn on the evaluate tool (allowEvaluate: true)
+# or change the upload folder (uploadsRoot).

@@ -1,0 +1,5 @@
+# Created by Walkthrough. These files stay on this computer.
+.env
+sessions/
+runs/
+config.local.yaml

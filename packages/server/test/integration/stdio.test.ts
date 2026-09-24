@@ -1,34 +1,29 @@
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { startClient } from '../helpers/mcp.js';
 
 // Starts the bundled server the same way Claude Code does.
-const bundle = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../../../plugins/walkthrough/server/uiwalk.mjs',
-);
-
 describe('bundled server over stdio', () => {
-  const client = new Client({ name: 'uiwalk-test', version: '0.0.0' });
+  let mcp: Awaited<ReturnType<typeof startClient>>;
 
   beforeAll(async () => {
-    await client.connect(new StdioClientTransport({ command: process.execPath, args: [bundle] }));
+    mcp = await startClient({});
   });
 
   afterAll(async () => {
-    await client.close();
+    await mcp.close();
   });
 
-  it('lists the ping tool', async () => {
-    const { tools } = await client.listTools();
-    expect(tools.map((tool) => tool.name)).toContain('ping');
+  it('reports its name and version', () => {
+    expect(mcp.client.getServerVersion()?.name).toBe('uiwalk');
   });
 
-  it('answers ping', async () => {
-    const result = await client.callTool({ name: 'ping', arguments: { message: 'hi' } });
-    const content = result.content as Array<{ type: string; text: string }>;
-    expect(content[0]?.text).toMatch(/^pong: hi/);
+  it('does not have the Phase 0 ping tool', async () => {
+    const { tools } = await mcp.client.listTools();
+    expect(tools.map((t) => t.name)).not.toContain('ping');
+  });
+
+  it('answers doctor', async () => {
+    const reply = await mcp.call('doctor');
+    expect(reply.text).toMatch(/Walkthrough \(uiwalk\)/);
   });
 });

@@ -1,23 +1,23 @@
+import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import { Context } from './context.js';
+import { registerBrowserTools } from './tools/browser-tools.js';
+import { registerPageTools } from './tools/page-tools.js';
 import { VERSION } from './version.js';
 
 // Builds the MCP server and adds its tools.
-export function createServer(): McpServer {
+export function createServer(): { server: McpServer; ctx: Context } {
   const server = new McpServer({ name: 'uiwalk', version: VERSION });
 
-  // Temporary tool to prove the server works. Phase 1 removes it.
-  server.registerTool(
-    'ping',
-    {
-      title: 'Ping',
-      description: 'Check that the Walkthrough server is running.',
-      inputSchema: { message: z.string().optional().describe('Text to echo back.') },
-    },
-    async ({ message }) => ({
-      content: [{ type: 'text', text: `pong${message ? `: ${message}` : ''} (uiwalk ${VERSION})` }],
-    }),
-  );
+  // Ask the client for its project folder ("roots"), if it supports that.
+  const roots = async (): Promise<string[]> => {
+    if (!server.server.getClientCapabilities()?.roots) return [];
+    const { roots: list } = await server.server.listRoots();
+    return list.map((root) => (root.uri.startsWith('file:') ? fileURLToPath(root.uri) : root.uri));
+  };
 
-  return server;
+  const ctx = new Context(roots);
+  registerBrowserTools(server, ctx);
+  registerPageTools(server, ctx);
+  return { server, ctx };
 }
