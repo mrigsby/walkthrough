@@ -6,6 +6,13 @@ This file lists all notable changes to the project.
 
 ### Added
 
+- Slash commands: `/walkthrough:init`, `/walkthrough:run`, `/walkthrough:plan`, `/walkthrough:report`, and `/walkthrough:doctor`.
+- The `init_project` tool and the `uiwalk init` command make the `.walkthrough` folder with settings, a sample plan, and the plan schema.
+- The `runs` tool lists recent test runs.
+- The skill has reference pages for the plan format, the tools, and bug reports. The build copies the plan format guide into the plugin.
+- `npm run check:bundle` fails when the committed bundle does not match the source.
+- The snapshot says when a visible image has no alt text, so the agent does not think the image is missing.
+
 - YAML test plans in `.walkthrough/plans`, with a JSON Schema for editor autocomplete. Validation shows the line number of each problem.
 - Three run modes: interactive, checkpoints, and autonomous.
 - The `plan`, `run_start`, `run_step`, and `run_finish` tools. Each run has its own folder. Walkthrough saves `run.json` after every step.
@@ -25,6 +32,11 @@ This file lists all notable changes to the project.
 - The `evaluate` tool is off unless `config.local.yaml` turns it on.
 - The `uiwalk setup` command downloads Chrome for Testing. The `uiwalk doctor` command checks the setup.
 - The server closes Chrome and removes its temporary profile when it stops.
+
+### Changed
+
+- The demo shop no longer logs a 401 error for a visitor who is not logged in.
+- The message about missing Chrome shows the exact setup command for the installed plugin.
 
 ### Removed
 

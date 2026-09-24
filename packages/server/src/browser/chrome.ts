@@ -61,8 +61,10 @@ export async function findChrome(configPath?: string): Promise<ChromeInfo | unde
   return undefined;
 }
 
-export const NO_CHROME_MESSAGE =
-  'Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome, or run "npx uiwalk setup" to download a copy for testing.';
+// The command that runs this server file, so the message works with or without npm.
+const SELF = process.argv[1] ? `node "${process.argv[1]}"` : 'npx uiwalk';
+
+export const NO_CHROME_MESSAGE = `Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome. Or, to download a copy for testing (about 170 MB), run: ${SELF} setup`;
 
 // Downloads Chrome for Testing into the cache folder.
 export async function installChrome(onProgress?: (percent: number) => void): Promise<string> {

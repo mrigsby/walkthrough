@@ -48,21 +48,12 @@ The developer can choose the mode when they ask for the run. Pass it to `run_sta
 
 ## Write a plan
 
-When the developer asks for a new plan, write YAML like this. Then save it with the `plan` tool, action `save`. Ask the developer before you replace a plan.
+When the developer asks for a new plan:
 
-```yaml
-name: Checkout flow
-mode: checkpoints
-steps:
-  - id: open-cart
-    do: Open the cart
-    action: { navigate: /cart }
-    expect: The cart lists the Coffee Mug ($10.00).
-  - id: check-total
-    do: Read the cart total
-    expect: The total is $10.00.
-    checkpoint: true
-```
+1. Look at the app to get the real names of buttons, links, and fields.
+2. Write the YAML. The format is in `references/plan-format.md`.
+3. Validate it with the `plan` tool.
+4. Show it to the developer, and save it after they agree.
 
 - Write `expect` so that a person can check it in a few seconds: exact text, numbers, or what is visible.
 - Use `action` only when the exact element is clear. Otherwise, write `do` in plain words.
@@ -83,3 +74,9 @@ steps:
 - When a new tab opens, the reply says so. Use `tabs` to switch to it.
 - If the browser was closed, call `browser_open` again.
 - If something does not work, call `doctor`. Show the result to the developer.
+
+## References
+
+- `references/plan-format.md`: every plan key, exact actions, run modes, and reports.
+- `references/tools.md`: what each tool does.
+- `references/bug-report.md`: how to describe a bug.

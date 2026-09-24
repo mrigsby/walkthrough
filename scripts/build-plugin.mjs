@@ -66,6 +66,14 @@ async function writeLicenses(metafile) {
 
 await mkdir(dirname(outFile), { recursive: true });
 
+// The skill gets its own copy of the plan format guide, because a plugin
+// install copies only the plugin folder.
+const guide = await readFile(join(root, 'docs/plan-format.md'), 'utf8');
+await writeFile(
+  join(root, 'plugins/walkthrough/skills/walkthrough/references/plan-format.md'),
+  `<!-- Copied from docs/plan-format.md by scripts/build-plugin.mjs. Edit that file. -->\n\n${guide}`,
+);
+
 if (watch) {
   const ctx = await esbuild.context({
     ...options,

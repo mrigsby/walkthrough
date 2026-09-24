@@ -93,7 +93,8 @@ async function handleApi(req, res, path) {
 
   if (path === '/api/me' && req.method === 'GET') {
     const user = currentUser(req);
-    return user ? sendJson(res, 200, user) : sendJson(res, 401, { error: 'Not logged in' });
+    // A visitor who is not logged in gets an empty answer, not an error.
+    return sendJson(res, 200, user ?? {});
   }
 
   if (path === '/api/order' && req.method === 'POST') {

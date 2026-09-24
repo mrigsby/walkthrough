@@ -57,7 +57,8 @@ function go(path) {
 
 async function loadUser() {
   const res = await fetch('/api/me');
-  user = res.ok ? await res.json() : null;
+  const data = res.ok ? await res.json() : {};
+  user = data.name ? data : null;
   document.getElementById('user-name').textContent = user ? `Hi, ${user.name}` : '';
   document.getElementById('login-link').hidden = Boolean(user);
   document.getElementById('logout-button').hidden = !user;

@@ -4,6 +4,7 @@ import { findChrome, installChrome, NO_CHROME_MESSAGE } from './browser/chrome.j
 import { loadConfig, resolveProjectDir } from './config.js';
 import { doctorReport } from './doctor.js';
 import { SecretStore } from './guards/secrets.js';
+import { initProject } from './init.js';
 import { installShutdownHandlers } from './lifecycle.js';
 import { log } from './log.js';
 import { planJsonSchema } from './run/plan-schema.js';
@@ -17,6 +18,7 @@ Commands:
   setup     Download Chrome for Testing, if Chrome is not installed.
   doctor    Check Node, Chrome, and the project settings.
   schema    Print the JSON Schema for test plans.
+  init      Make the .walkthrough folder here. Option: --base-url URL
   version   Show the version.
 `;
 
@@ -83,6 +85,13 @@ async function main(): Promise<void> {
     case 'doctor':
       await doctor();
       break;
+    case 'init': {
+      const flag = process.argv.indexOf('--base-url');
+      const result = initProject(process.cwd(), flag > -1 ? process.argv[flag + 1] : undefined);
+      for (const file of result.created) process.stdout.write(`Created ${file}\n`);
+      for (const file of result.kept) process.stdout.write(`Kept ${file} (already there)\n`);
+      break;
+    }
     case 'schema':
       process.stdout.write(`${JSON.stringify(planJsonSchema(), null, 2)}\n`);
       break;

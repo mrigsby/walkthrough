@@ -45256,9 +45256,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join18 } = await import("node:path");
+    const { join: join20 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join18(userDataDir, "DevToolsActivePort");
+    const portPath = join20(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line) => {
@@ -83209,7 +83209,8 @@ async function findChrome(configPath) {
   if (downloaded) return { path: downloaded, source: "downloaded" };
   return void 0;
 }
-var NO_CHROME_MESSAGE = 'Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome, or run "npx uiwalk setup" to download a copy for testing.';
+var SELF = process.argv[1] ? `node "${process.argv[1]}"` : "npx uiwalk";
+var NO_CHROME_MESSAGE = `Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome. Or, to download a copy for testing (about 170 MB), run: ${SELF} setup`;
 async function installChrome(onProgress) {
   const platform = detectBrowserPlatform();
   if (!platform) throw new ToolError("Chrome for Testing does not support this type of computer.");
@@ -83517,53 +83518,9 @@ var SecretStore = class _SecretStore {
   }
 };
 
-// packages/server/src/log.ts
-var order = { debug: 10, info: 20, warn: 30, error: 40 };
-function currentLevel() {
-  const value = process.env.UIWALK_LOG_LEVEL;
-  return value === "debug" || value === "warn" || value === "error" ? value : "info";
-}
-function write2(level, message, extra) {
-  if (order[level] < order[currentLevel()]) return;
-  const line = `[uiwalk] ${level}: ${message}`;
-  if (extra === void 0) console.error(line);
-  else console.error(line, extra);
-}
-var log = {
-  debug: (message, extra) => write2("debug", message, extra),
-  info: (message, extra) => write2("info", message, extra),
-  warn: (message, extra) => write2("warn", message, extra),
-  error: (message, extra) => write2("error", message, extra)
-};
-
-// packages/server/src/lifecycle.ts
-var cleanups = /* @__PURE__ */ new Set();
-var stopping;
-function onShutdown(fn) {
-  cleanups.add(fn);
-  return () => cleanups.delete(fn);
-}
-function shutdown(code = 0, reason = "stop") {
-  stopping ??= (async () => {
-    log.debug(`shutting down (${reason}), ${cleanups.size} cleanup step(s)`);
-    for (const fn of cleanups) {
-      try {
-        await Promise.race([fn(), new Promise((resolve10) => setTimeout(resolve10, 3e3))]);
-      } catch (error62) {
-        log.warn("cleanup step failed", error62);
-      }
-    }
-    process.exit(code);
-  })();
-  return stopping;
-}
-function installShutdownHandlers() {
-  process.stdin.on("end", () => void shutdown(0, "stdin end"));
-  process.stdin.on("close", () => void shutdown(0, "stdin close"));
-  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
-    process.on(signal, () => void shutdown(0, signal));
-  }
-}
+// packages/server/src/init.ts
+import { existsSync as existsSync6, mkdirSync, writeFileSync } from "node:fs";
+import { dirname as dirname5, join as join9 } from "node:path";
 
 // packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
@@ -83627,6 +83584,142 @@ function planJsonSchema() {
     ...external_exports.toJSONSchema(planSchema, { target: "draft-7" }),
     title: "Walkthrough test plan"
   };
+}
+
+// packages/server/src/init.ts
+function configTemplate(baseUrl) {
+  const origin = new URL(baseUrl).origin;
+  return `# Walkthrough settings for this project. Commit this file.
+
+# The page that browser_open and test runs start at.
+baseUrl: ${baseUrl}
+
+# Sites that Walkthrough may open. Anything else is blocked.
+# Use "*" for any port or subdomain, like http://localhost:* or https://*.staging.example.com
+allowedOrigins:
+  - ${origin}
+
+# How to answer confirm and prompt dialogs: ask (default), accept, or dismiss.
+dialogs: ask
+
+# Show the Pass, Bug, Skip, and Stop panel in the browser.
+panel: true
+
+# Show a box on each element for this many milliseconds before the agent uses it.
+highlightMs: 600
+
+# How long ask_developer waits for an answer before it tells the agent to wait again.
+# askTimeoutSec: 300
+
+# Browser options.
+browser:
+  # Set to true to hide the browser window.
+  headless: false
+  # Wait this many milliseconds between browser steps, so you can watch each step.
+  slowMo: 0
+
+# Put personal settings in config.local.yaml. Git does not track that file.
+# Only that file can turn on the evaluate tool (allowEvaluate: true)
+# or change the upload folder (uploadsRoot).
+`;
+}
+var SAMPLE_PLAN = `# yaml-language-server: $schema=../plan.schema.json
+name: Smoke test
+description: A first plan. Change the steps to match your app.
+mode: interactive
+steps:
+  - id: open-start-page
+    do: Open the start page
+    action: { navigate: / }
+    expect: The start page shows, with no error messages.
+`;
+var ENV_EXAMPLE = `# Secrets for test plans. Copy this file to .env in the same folder. Then add your values.
+# Git does not track .env. The agent never sees the values.
+# A plan uses a secret like this: {{secret:APP_PASSWORD}}
+# APP_PASSWORD=
+`;
+var GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
+.env
+sessions/
+runs/
+config.local.yaml
+`;
+function initProject(projectDir, baseUrl = "http://localhost:3000") {
+  if (!/^https?:\/\//.test(baseUrl) || !URL.canParse(baseUrl)) {
+    throw new ToolError(
+      `"${baseUrl}" is not a web address. Use a full URL, like http://localhost:3000.`,
+      "bad_input"
+    );
+  }
+  const files = [
+    ["config.yaml", configTemplate(baseUrl), false],
+    ["plans/smoke.yaml", SAMPLE_PLAN, false],
+    ["plan.schema.json", `${JSON.stringify(planJsonSchema(), null, 2)}
+`, true],
+    [".env.example", ENV_EXAMPLE, false],
+    [".gitignore", GITIGNORE, false]
+  ];
+  const result = { created: [], kept: [] };
+  for (const [name, content, replace] of files) {
+    const file2 = join9(projectDir, ".walkthrough", name);
+    const shown = `.walkthrough/${name}`;
+    if (existsSync6(file2) && !replace) {
+      result.kept.push(shown);
+      continue;
+    }
+    mkdirSync(dirname5(file2), { recursive: true });
+    writeFileSync(file2, content);
+    result.created.push(shown);
+  }
+  return result;
+}
+
+// packages/server/src/log.ts
+var order = { debug: 10, info: 20, warn: 30, error: 40 };
+function currentLevel() {
+  const value = process.env.UIWALK_LOG_LEVEL;
+  return value === "debug" || value === "warn" || value === "error" ? value : "info";
+}
+function write2(level, message, extra) {
+  if (order[level] < order[currentLevel()]) return;
+  const line = `[uiwalk] ${level}: ${message}`;
+  if (extra === void 0) console.error(line);
+  else console.error(line, extra);
+}
+var log = {
+  debug: (message, extra) => write2("debug", message, extra),
+  info: (message, extra) => write2("info", message, extra),
+  warn: (message, extra) => write2("warn", message, extra),
+  error: (message, extra) => write2("error", message, extra)
+};
+
+// packages/server/src/lifecycle.ts
+var cleanups = /* @__PURE__ */ new Set();
+var stopping;
+function onShutdown(fn) {
+  cleanups.add(fn);
+  return () => cleanups.delete(fn);
+}
+function shutdown(code = 0, reason = "stop") {
+  stopping ??= (async () => {
+    log.debug(`shutting down (${reason}), ${cleanups.size} cleanup step(s)`);
+    for (const fn of cleanups) {
+      try {
+        await Promise.race([fn(), new Promise((resolve10) => setTimeout(resolve10, 3e3))]);
+      } catch (error62) {
+        log.warn("cleanup step failed", error62);
+      }
+    }
+    process.exit(code);
+  })();
+  return stopping;
+}
+function installShutdownHandlers() {
+  process.stdin.on("end", () => void shutdown(0, "stdin end"));
+  process.stdin.on("close", () => void shutdown(0, "stdin close"));
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+    process.on(signal, () => void shutdown(0, signal));
+  }
 }
 
 // packages/server/src/server.ts
@@ -92289,11 +92382,11 @@ var DeveloperPanel = class {
 };
 
 // packages/server/src/browser/attach.ts
-import { existsSync as existsSync6, readFileSync as readFileSync7, statSync as statSync3 } from "node:fs";
-import { join as join9 } from "node:path";
+import { existsSync as existsSync7, readFileSync as readFileSync7, statSync as statSync3 } from "node:fs";
+import { join as join10 } from "node:path";
 function endpointFromProfile(dir) {
-  const file2 = join9(dir, "DevToolsActivePort");
-  if (!existsSync6(file2)) {
+  const file2 = join10(dir, "DevToolsActivePort");
+  if (!existsSync7(file2)) {
     throw new ToolError(
       `No DevToolsActivePort file in ${dir}. Start Chrome with --remote-debugging-port=9222 and --user-data-dir=${dir}.`,
       "attach_failed"
@@ -92306,7 +92399,7 @@ async function attachChrome(target2) {
   try {
     if (/^https?:\/\//.test(target2)) return await puppeteer_core_default.connect({ browserURL: target2 });
     if (/^wss?:\/\//.test(target2)) return await puppeteer_core_default.connect({ browserWSEndpoint: target2 });
-    if (existsSync6(target2) && statSync3(target2).isDirectory()) {
+    if (existsSync7(target2) && statSync3(target2).isDirectory()) {
       return await puppeteer_core_default.connect({ browserWSEndpoint: endpointFromProfile(target2) });
     }
   } catch (error62) {
@@ -92325,11 +92418,11 @@ async function attachChrome(target2) {
 // packages/server/src/browser/launch.ts
 import { mkdtempSync, rmSync as rmSync2 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join10 } from "node:path";
+import { join as join11 } from "node:path";
 async function launchChrome(config3) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
-  const profileDir = mkdtempSync(join10(tmpdir2(), "uiwalk-profile-"));
+  const profileDir = mkdtempSync(join11(tmpdir2(), "uiwalk-profile-"));
   const headless = config3.browser.headless;
   try {
     const browser = await puppeteer_core_default.launch({
@@ -92700,19 +92793,19 @@ var Mutex2 = class {
 };
 
 // packages/server/src/project-files.ts
-import { existsSync as existsSync7, mkdirSync, writeFileSync } from "node:fs";
-import { join as join11 } from "node:path";
-var GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
+import { existsSync as existsSync8, mkdirSync as mkdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join12 } from "node:path";
+var GITIGNORE2 = `# Created by Walkthrough. These files stay on this computer.
 .env
 sessions/
 runs/
 config.local.yaml
 `;
 function ensureWalkthroughDir(projectDir) {
-  const dir = join11(projectDir, ".walkthrough");
-  mkdirSync(dir, { recursive: true });
-  const ignore = join11(dir, ".gitignore");
-  if (!existsSync7(ignore)) writeFileSync(ignore, GITIGNORE);
+  const dir = join12(projectDir, ".walkthrough");
+  mkdirSync2(dir, { recursive: true });
+  const ignore = join12(dir, ".gitignore");
+  if (!existsSync8(ignore)) writeFileSync2(ignore, GITIGNORE2);
   return dir;
 }
 function stamp(date5 = /* @__PURE__ */ new Date()) {
@@ -92723,8 +92816,8 @@ function stamp(date5 = /* @__PURE__ */ new Date()) {
   };
 }
 function adhocEvidenceDir(projectDir) {
-  const dir = join11(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
-  mkdirSync(dir, { recursive: true });
+  const dir = join12(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
+  mkdirSync2(dir, { recursive: true });
   return dir;
 }
 function fileStamp(label) {
@@ -93115,9 +93208,9 @@ async function elementRect(handle) {
 }
 
 // packages/server/src/evidence/screenshot.ts
-import { join as join12, relative as relative3 } from "node:path";
+import { join as join13, relative as relative3 } from "node:path";
 async function takeScreenshot(tab, dir, projectDir, options) {
-  const path14 = join12(dir, `${fileStamp(options.label)}.png`);
+  const path14 = join13(dir, `${fileStamp(options.label)}.png`);
   const { handle, fullPage = false } = options;
   if (handle) {
     await handle.scrollIntoView().catch(() => void 0);
@@ -93130,7 +93223,7 @@ async function takeScreenshot(tab, dir, projectDir, options) {
 }
 
 // packages/server/src/run/record.ts
-import { isAbsolute as isAbsolute4, join as join13, relative as relative4 } from "node:path";
+import { isAbsolute as isAbsolute4, join as join14, relative as relative4 } from "node:path";
 function recordResult(ctx, ref, result) {
   const store = ctx.run;
   if (store?.run.status !== "running") return void 0;
@@ -93140,7 +93233,7 @@ function recordResult(ctx, ref, result) {
   if (result.notes !== void 0) step.notes = result.notes || void 0;
   if (result.actual !== void 0) step.actual = result.actual || void 0;
   if (result.screenshot) {
-    const full = isAbsolute4(result.screenshot) ? result.screenshot : join13(store.projectDir, result.screenshot);
+    const full = isAbsolute4(result.screenshot) ? result.screenshot : join14(store.projectDir, result.screenshot);
     step.screenshots.push(relative4(store.dir, full));
   }
   if (result.logs) {
@@ -93817,6 +93910,17 @@ async function buildSnapshot(tab, refs, root) {
     for (const child of node2.children ?? []) walk(child, childDepth, name || parentName);
   };
   if (tree) walk(tree, 0);
+  if (!root) {
+    const noAlt = await tab.page.$$eval(
+      "img:not([alt])",
+      (imgs) => imgs.filter((img) => img.getClientRects().length > 0).length
+    ).catch(() => 0);
+    if (noAlt > 0) {
+      lines.push(
+        `(Note: ${noAlt} visible image${noAlt === 1 ? " has" : "s have"} no alt text, so the outline does not show ${noAlt === 1 ? "it" : "them"}. The image is on the page.)`
+      );
+    }
+  }
   if (truncated)
     lines.push(
       `(The outline stopped at ${MAX_LINES} lines. Use the "ref" option to look at one part of the page.)`
@@ -94038,9 +94142,9 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
   );
 }
 
-// packages/server/src/tools/run-tools.ts
-import { writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join17, relative as relative8 } from "node:path";
+// packages/server/src/tools/project-tools.ts
+import { existsSync as existsSync9, readdirSync as readdirSync3, readFileSync as readFileSync8 } from "node:fs";
+import { join as join15 } from "node:path";
 
 // packages/server/src/report/common.ts
 var STATUS_LABELS = {
@@ -94094,15 +94198,77 @@ var RUN_STATUS_LABELS = {
   incomplete: "Incomplete (the run ended early)"
 };
 
+// packages/server/src/tools/project-tools.ts
+function registerProjectTools(server, ctx) {
+  server.registerTool(
+    "init_project",
+    {
+      title: "Set up a project",
+      description: "Make the .walkthrough folder in the project: config.yaml, a sample plan, the plan schema, .env.example, and .gitignore. It keeps files that exist, but it always updates plan.schema.json.",
+      inputSchema: {
+        baseUrl: external_exports.string().optional().describe("The start page of the app, like http://localhost:3000."),
+        projectDir: external_exports.string().optional().describe("Project folder. Leave empty to find it automatically.")
+      }
+    },
+    ({ baseUrl, projectDir }) => runTool(ctx, "init_project", async () => {
+      const config3 = await ctx.refresh(projectDir);
+      const result = initProject(config3.projectDir, baseUrl);
+      await ctx.refresh(projectDir);
+      return [
+        `Project folder: ${config3.projectDir}`,
+        result.created.length ? `Created:
+${result.created.map((f) => `- ${f}`).join("\n")}` : "",
+        result.kept.length ? `Already there (not changed):
+${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
+      ].filter(Boolean).join("\n");
+    })
+  );
+  server.registerTool(
+    "runs",
+    {
+      title: "List test runs",
+      description: "List recent test runs in .walkthrough/runs, newest first, with the result of each.",
+      inputSchema: {
+        limit: external_exports.number().int().min(1).max(50).optional().describe("How many runs to list. The default is 10.")
+      }
+    },
+    ({ limit }) => runTool(ctx, "runs", async () => {
+      const { projectDir } = await ctx.config();
+      const dir = join15(projectDir, ".walkthrough", "runs");
+      if (!existsSync9(dir)) return "There are no runs yet.";
+      const rows = [];
+      for (const id of readdirSync3(dir).sort().reverse()) {
+        if (rows.length >= (limit ?? 10)) break;
+        const file2 = join15(dir, id, "run.json");
+        if (!existsSync9(file2)) continue;
+        try {
+          const run = JSON.parse(readFileSync8(file2, "utf8"));
+          const report = existsSync9(join15(dir, id, "report.html")) ? "report written" : "no report yet";
+          rows.push(
+            `- ${id}: "${run.name}", ${run.status}, ${resultLine(run) || "no steps"} (${report})`
+          );
+        } catch {
+          rows.push(`- ${id}: run.json cannot be read`);
+        }
+      }
+      return rows.length ? rows.join("\n") : "There are no runs yet.";
+    })
+  );
+}
+
+// packages/server/src/tools/run-tools.ts
+import { writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join19, relative as relative8 } from "node:path";
+
 // packages/server/src/report/html.ts
-import { readFileSync as readFileSync8 } from "node:fs";
-import { join as join14 } from "node:path";
+import { readFileSync as readFileSync9 } from "node:fs";
+import { join as join16 } from "node:path";
 function esc2(text) {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 function image(runDir, path14, alt) {
   try {
-    const data = readFileSync8(join14(runDir, path14)).toString("base64");
+    const data = readFileSync9(join16(runDir, path14)).toString("base64");
     return `<a href="${esc2(path14)}"><img src="data:image/png;base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
@@ -94276,10 +94442,10 @@ function markdownReport(run) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync8, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync9, writeFileSync as writeFileSync2 } from "node:fs";
-import { basename as basename4, extname as extname2, isAbsolute as isAbsolute6, join as join15, relative as relative6, resolve as resolve9 } from "node:path";
+import { existsSync as existsSync10, mkdirSync as mkdirSync3, readdirSync as readdirSync4, readFileSync as readFileSync10, writeFileSync as writeFileSync3 } from "node:fs";
+import { basename as basename4, extname as extname2, isAbsolute as isAbsolute6, join as join17, relative as relative6, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
-  return join15(projectDir, ".walkthrough", "plans");
+  return join17(projectDir, ".walkthrough", "plans");
 }
 function validatePlanText(text) {
   const lineCounter = new import_yaml2.LineCounter();
@@ -94318,13 +94484,13 @@ function formatProblems(file2, problems) {
 function findPlanFile(projectDir, name) {
   const dir = plansDir(projectDir);
   const candidates = [
-    join15(dir, name),
-    join15(dir, `${name}.yaml`),
-    join15(dir, `${name}.yml`),
+    join17(dir, name),
+    join17(dir, `${name}.yaml`),
+    join17(dir, `${name}.yml`),
     isAbsolute6(name) ? name : resolve9(projectDir, name)
   ];
   for (const file2 of candidates) {
-    if (existsSync8(file2) && [".yaml", ".yml"].includes(extname2(file2))) {
+    if (existsSync10(file2) && [".yaml", ".yml"].includes(extname2(file2))) {
       const rel = relative6(projectDir, file2);
       if (rel.startsWith("..") || isAbsolute6(rel)) {
         throw new ToolError(`The plan ${name} is outside the project folder.`, "plan_not_found");
@@ -94339,7 +94505,7 @@ function findPlanFile(projectDir, name) {
 }
 function loadPlan(projectDir, name) {
   const file2 = findPlanFile(projectDir, name);
-  const result = validatePlanText(readFileSync9(file2, "utf8"));
+  const result = validatePlanText(readFileSync10(file2, "utf8"));
   if (!result.ok)
     throw new ToolError(
       formatProblems(relative6(projectDir, file2), result.problems),
@@ -94362,11 +94528,11 @@ function laterFeatures(plan) {
 }
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
-  if (!existsSync8(dir)) return [];
-  return readdirSync3(dir).filter((f) => [".yaml", ".yml"].includes(extname2(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync9(join15(dir, f), "utf8"));
+  if (!existsSync10(dir)) return [];
+  return readdirSync4(dir).filter((f) => [".yaml", ".yml"].includes(extname2(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync10(join17(dir, f), "utf8"));
     const name = basename4(f, extname2(f));
-    const file2 = relative6(projectDir, join15(dir, f));
+    const file2 = relative6(projectDir, join17(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
   });
 }
@@ -94381,23 +94547,23 @@ function savePlan(projectDir, name, text, overwrite = false) {
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
   const dir = plansDir(projectDir);
-  mkdirSync2(dir, { recursive: true });
-  const file2 = join15(dir, `${name}.yaml`);
-  if (existsSync8(file2) && !overwrite) {
+  mkdirSync3(dir, { recursive: true });
+  const file2 = join17(dir, `${name}.yaml`);
+  if (existsSync10(file2) && !overwrite) {
     throw new ToolError(
       `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
       "plan_exists"
     );
   }
   const header = "# yaml-language-server: $schema=../plan.schema.json\n";
-  writeFileSync2(file2, text.startsWith("# yaml-language-server") ? text : header + text);
+  writeFileSync3(file2, text.startsWith("# yaml-language-server") ? text : header + text);
   return file2;
 }
 
 // packages/server/src/run/run-store.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdirSync as mkdirSync3, readFileSync as readFileSync10, renameSync, writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join16, relative as relative7 } from "node:path";
+import { mkdirSync as mkdirSync4, readFileSync as readFileSync11, renameSync, writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join18, relative as relative7 } from "node:path";
 function slug(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "run";
 }
@@ -94421,8 +94587,8 @@ var RunStore = class _RunStore {
   projectDir;
   static create(projectDir, input3) {
     const id = `${stamp2()}-${slug(input3.name)}-${randomBytes3(2).toString("hex")}`;
-    const dir = join16(ensureWalkthroughDir(projectDir), "runs", id);
-    mkdirSync3(join16(dir, "screenshots"), { recursive: true });
+    const dir = join18(ensureWalkthroughDir(projectDir), "runs", id);
+    mkdirSync4(join18(dir, "screenshots"), { recursive: true });
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
@@ -94450,24 +94616,24 @@ var RunStore = class _RunStore {
     return store;
   }
   static open(projectDir, id) {
-    const dir = join16(projectDir, ".walkthrough", "runs", id);
+    const dir = join18(projectDir, ".walkthrough", "runs", id);
     try {
-      const run = JSON.parse(readFileSync10(join16(dir, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync11(join18(dir, "run.json"), "utf8"));
       return new _RunStore(dir, run, projectDir);
     } catch {
       throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
     }
   }
   get screenshotsDir() {
-    return join16(this.dir, "screenshots");
+    return join18(this.dir, "screenshots");
   }
   get relativeDir() {
     return relative7(this.projectDir, this.dir);
   }
   // Writes run.json safely: a crash never leaves a half-written file.
   save() {
-    const file2 = join16(this.dir, "run.json");
-    writeFileSync3(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
+    const file2 = join18(this.dir, "run.json");
+    writeFileSync4(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
 `);
     renameSync(`${file2}.tmp`, file2);
   }
@@ -94510,10 +94676,10 @@ var RunStore = class _RunStore {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store) {
-  const markdown = join17(store.dir, "report.md");
-  const html = join17(store.dir, "report.html");
-  writeFileSync4(markdown, markdownReport(store.run));
-  writeFileSync4(html, htmlReport(store.run, store.dir));
+  const markdown = join19(store.dir, "report.md");
+  const html = join19(store.dir, "report.html");
+  writeFileSync5(markdown, markdownReport(store.run));
+  writeFileSync5(html, htmlReport(store.run, store.dir));
   return { markdown: relative8(store.projectDir, markdown), html: relative8(store.projectDir, html) };
 }
 function describeAction(step) {
@@ -94772,6 +94938,7 @@ function createServer() {
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
   registerRunTools(server, ctx);
+  registerProjectTools(server, ctx);
   onShutdown(() => {
     if (ctx.run?.run.status !== "running") return;
     try {
@@ -94792,6 +94959,7 @@ Commands:
   setup     Download Chrome for Testing, if Chrome is not installed.
   doctor    Check Node, Chrome, and the project settings.
   schema    Print the JSON Schema for test plans.
+  init      Make the .walkthrough folder here. Option: --base-url URL
   version   Show the version.
 `;
 async function serve() {
@@ -94861,6 +95029,15 @@ async function main() {
     case "doctor":
       await doctor();
       break;
+    case "init": {
+      const flag = process.argv.indexOf("--base-url");
+      const result = initProject(process.cwd(), flag > -1 ? process.argv[flag + 1] : void 0);
+      for (const file2 of result.created) process.stdout.write(`Created ${file2}
+`);
+      for (const file2 of result.kept) process.stdout.write(`Kept ${file2} (already there)
+`);
+      break;
+    }
     case "schema":
       process.stdout.write(`${JSON.stringify(planJsonSchema(), null, 2)}
 `);

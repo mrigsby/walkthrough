@@ -55,6 +55,7 @@ describe('uiwalk tools', () => {
         'dialog',
         'doctor',
         'evaluate',
+        'init_project',
         'logs',
         'navigate',
         'plan',
@@ -62,6 +63,7 @@ describe('uiwalk tools', () => {
         'run_finish',
         'run_start',
         'run_step',
+        'runs',
         'screenshot',
         'snapshot',
         'tabs',
@@ -93,6 +95,8 @@ describe('uiwalk tools', () => {
     expect(outline).toContain('<page-content untrusted="true">');
     expect(outline).toMatch(/\[e\d+\] link "Shop"/);
     expect(outline).toMatch(/\[e\d+\] button "Add to cart"/);
+    // The cap image has no alt text. The outline must say it is there.
+    expect(outline).toContain('1 visible image has no alt text');
   });
 
   it('logs in with a secret that the agent never sees', async () => {

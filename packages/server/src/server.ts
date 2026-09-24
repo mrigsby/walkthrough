@@ -6,6 +6,7 @@ import { log } from './log.js';
 import { registerBrowserTools } from './tools/browser-tools.js';
 import { registerDeveloperTools } from './tools/developer-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
+import { registerProjectTools } from './tools/project-tools.js';
 import { registerRunTools, writeReports } from './tools/run-tools.js';
 import { VERSION } from './version.js';
 
@@ -25,6 +26,7 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
   registerRunTools(server, ctx);
+  registerProjectTools(server, ctx);
 
   // If the server stops during a run, keep what we have and write the reports.
   onShutdown(() => {

@@ -178,6 +178,9 @@ describe('test plans and runs', () => {
     expect(html.match(/data:image\/png;base64,/g)?.length).toBe(2);
     expect(readRun().status).toBe('finished');
     expect(readdirSync(join(project, runDir, 'screenshots'))).toHaveLength(2);
+    const runs = await mcp.call('runs');
+    expect(runs.text).toContain(`${runDir.split('/').pop()}: "Mini checkout", finished`);
+    expect(runs.text).toContain('(report written)');
   });
 
   it('writes a report for a run that ends early', async () => {

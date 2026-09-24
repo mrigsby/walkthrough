@@ -20,7 +20,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "check:text": "node scripts/check-text.mjs",
-    "demo": "node scripts/demo-server.mjs"
+    "demo": "node scripts/demo-server.mjs",
+    "check:bundle": "npm run build:plugin && git diff --exit-code -- plugins/walkthrough schemas examples/demo-app/.walkthrough/plan.schema.json"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",

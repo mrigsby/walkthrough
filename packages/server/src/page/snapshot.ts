@@ -73,6 +73,22 @@ export async function buildSnapshot(
   };
 
   if (tree) walk(tree, 0);
+
+  // Images with no alt text are left out of the outline. Say so, so the agent
+  // does not think the image is missing.
+  if (!root) {
+    const noAlt = await tab.page
+      .$$eval(
+        'img:not([alt])',
+        (imgs) => imgs.filter((img) => img.getClientRects().length > 0).length,
+      )
+      .catch(() => 0);
+    if (noAlt > 0) {
+      lines.push(
+        `(Note: ${noAlt} visible image${noAlt === 1 ? ' has' : 's have'} no alt text, so the outline does not show ${noAlt === 1 ? 'it' : 'them'}. The image is on the page.)`,
+      );
+    }
+  }
   if (truncated)
     lines.push(
       `(The outline stopped at ${MAX_LINES} lines. Use the "ref" option to look at one part of the page.)`,
