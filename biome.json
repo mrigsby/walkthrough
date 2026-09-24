@@ -2,7 +2,13 @@
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "includes": ["**", "!plugins/walkthrough/server", "!**/dist", "!schemas"]
+    "includes": [
+      "**",
+      "!plugins/walkthrough/server",
+      "!**/dist",
+      "!schemas",
+      "!**/plan.schema.json"
+    ]
   },
   "formatter": {
     "enabled": true,

@@ -6,6 +6,12 @@ This file lists all notable changes to the project.
 
 ### Added
 
+- YAML test plans in `.walkthrough/plans`, with a JSON Schema for editor autocomplete. Validation shows the line number of each problem.
+- Three run modes: interactive, checkpoints, and autonomous.
+- The `plan`, `run_start`, `run_step`, and `run_finish` tools. Each run has its own folder. Walkthrough saves `run.json` after every step.
+- A Markdown report and a single-file HTML report for each run, with bugs first and steps to reproduce. A run that ends early still gets a report.
+- Sample `checkout` and `login` plans for the demo shop.
+- The `uiwalk schema` command.
 - A developer panel in the browser. It shows each step with what the agent did and what you should see. You answer Pass, Bug, Skip, or Stop, with notes.
 - The panel runs where page scripts cannot see or call it. It accepts only real clicks, and each answer must match the current question.
 - The `ask_developer` tool. On Bug, it saves a screenshot with a red box on the last element and the errors from the step.

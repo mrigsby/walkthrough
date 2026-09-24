@@ -1,9 +1,12 @@
 import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Context } from './context.js';
+import { onShutdown } from './lifecycle.js';
+import { log } from './log.js';
 import { registerBrowserTools } from './tools/browser-tools.js';
 import { registerDeveloperTools } from './tools/developer-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
+import { registerRunTools, writeReports } from './tools/run-tools.js';
 import { VERSION } from './version.js';
 
 // Builds the MCP server and adds its tools.
@@ -21,5 +24,17 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerBrowserTools(server, ctx);
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
+  registerRunTools(server, ctx);
+
+  // If the server stops during a run, keep what we have and write the reports.
+  onShutdown(() => {
+    if (ctx.run?.run.status !== 'running') return;
+    try {
+      ctx.run.markIncomplete();
+      writeReports(ctx.run);
+    } catch (error) {
+      log.warn('could not write the reports for the unfinished run', error);
+    }
+  });
   return { server, ctx };
 }

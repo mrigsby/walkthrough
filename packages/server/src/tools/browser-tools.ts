@@ -50,6 +50,43 @@ async function goTo(tab: Tab, url: string): Promise<string | undefined> {
   }
 }
 
+// Opens the browser if needed, then goes to the url (or the baseUrl for a new browser).
+export async function openBrowser(
+  ctx: Context,
+  options: { url?: string; attach?: string; alwaysGo?: boolean },
+): Promise<{ text: string; tab: Tab }> {
+  const config = await ctx.config();
+  const guard = await ctx.guard();
+  const lines: string[] = [];
+
+  let driver = ctx.driver?.alive ? ctx.driver : undefined;
+  const alreadyOpen = Boolean(driver);
+  if (driver) {
+    lines.push('The browser is already open.');
+  } else {
+    driver = await ctx.startDriver(options.attach);
+    lines.push(
+      driver.mode === 'attached'
+        ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.`
+        : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`,
+    );
+  }
+  for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
+
+  const tab = driver.activeTab();
+  // A new browser starts at the baseUrl. An open one stays where it is.
+  const target = options.url ?? (alreadyOpen && !options.alwaysGo ? undefined : config.baseUrl);
+  if (target) {
+    const full = fullUrl(target, tab.page.url(), config.baseUrl);
+    guard.check(full);
+    const problem = await goTo(tab, full);
+    if (problem) lines.push(problem);
+  }
+  lines.push(await pageSummary(tab));
+  lines.push('Next, take a snapshot to see the page.');
+  return { text: lines.join('\n'), tab };
+}
+
 export function registerBrowserTools(server: McpServer, ctx: Context): void {
   server.registerTool(
     'doctor',
@@ -96,36 +133,8 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
     },
     ({ url, attach, projectDir }) =>
       runTool(ctx, 'browser_open', async () => {
-        const config = await ctx.refresh(projectDir);
-        const guard = await ctx.guard();
-        const lines: string[] = [];
-
-        let driver = ctx.driver?.alive ? ctx.driver : undefined;
-        const alreadyOpen = Boolean(driver);
-        if (driver) {
-          lines.push('The browser is already open.');
-        } else {
-          driver = await ctx.startDriver(attach);
-          lines.push(
-            driver.mode === 'attached'
-              ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.`
-              : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`,
-          );
-        }
-        for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
-
-        const tab = driver.activeTab();
-        // A new browser starts at the baseUrl. An open one stays where it is.
-        const target = url ?? (alreadyOpen ? undefined : config.baseUrl);
-        if (target) {
-          const full = fullUrl(target, tab.page.url(), config.baseUrl);
-          guard.check(full);
-          const problem = await goTo(tab, full);
-          if (problem) lines.push(problem);
-        }
-        lines.push(await pageSummary(tab));
-        lines.push('Next, take a snapshot to see the page.');
-        return lines.join('\n');
+        await ctx.refresh(projectDir);
+        return (await openBrowser(ctx, { url, attach })).text;
       }),
   );
 

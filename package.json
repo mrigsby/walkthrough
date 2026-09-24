@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "npm run typecheck && npm run build:plugin",
-    "build:plugin": "node scripts/build-plugin.mjs",
+    "build:plugin": "node scripts/build-plugin.mjs && node scripts/gen-schema.mjs",
     "typecheck": "tsc -p packages/server --noEmit",
     "pretest": "npm run build:plugin",
     "test": "vitest run && npm run check:text",

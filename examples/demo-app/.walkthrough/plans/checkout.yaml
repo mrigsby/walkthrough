@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Checkout flow
+description: Add two items, check the cart total, try a coupon, and place an order.
+mode: checkpoints
+steps:
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    expect: The shop shows three products. Each product has an "Add to cart" button.
+
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    expect: The cart count in the header is 1.
+
+  - id: add-shirt
+    do: Click "Add to cart" on the T-Shirt
+    expect: The cart count in the header is 2.
+
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    expect: The cart lists the Coffee Mug ($10.00) and the T-Shirt ($20.00).
+
+  - id: check-total
+    do: Read the cart total
+    expect: The total is $30.00.
+    checkpoint: true
+    screenshot: true
+
+  - id: apply-coupon
+    do: Type SAVE10 in the coupon field and click "Apply coupon"
+    expect: A message says the coupon SAVE10 is applied.
+    checkpoint: true
+
+  - id: go-to-checkout
+    do: Click "Checkout"
+    action: { click: { role: button, name: Checkout } }
+    expect: The checkout page shows name, email, and address fields, and a card form.
+
+  - id: fill-details
+    do: Type a name, an email, and an address. Save the test card 4242 4242 4242 4242 in the card form.
+    expect: The page says that the card ending in 4242 is ready.
+
+  - id: place-order
+    do: Click "Place order" and accept the confirm dialog
+    expect: A thank-you page shows an order number.
+    checkpoint: true

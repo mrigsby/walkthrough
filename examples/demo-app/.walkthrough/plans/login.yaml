@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Log in
+description: Logs in with the demo account. Before you run it, copy .walkthrough/.env.example to .walkthrough/.env.
+mode: interactive
+steps:
+  - id: open-login
+    do: Open the login page
+    action: { navigate: /login }
+    expect: The page shows Username and Password fields and a "Log in" button.
+
+  - id: enter-username
+    do: Type demo in the Username field
+    action: { fill: { role: textbox, name: Username, value: demo } }
+    expect: The Username field shows "demo".
+
+  - id: enter-password
+    do: Type the demo password in the Password field
+    action: { fill: { role: textbox, name: Password, value: "{{secret:DEMO_PASSWORD}}" } }
+    expect: The Password field shows dots, not the password.
+
+  - id: submit
+    do: Click "Log in"
+    action: { click: { role: button, name: Log in } }
+    expect: The Account page says "Logged in as Demo User".

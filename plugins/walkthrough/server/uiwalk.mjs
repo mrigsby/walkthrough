@@ -28,9 +28,9 @@ var __commonJS = (cb, mod) => function __require2() {
     throw mod = 0, e;
   }
 };
-var __export = (target, all) => {
+var __export = (target2, all) => {
   for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+    __defProp(target2, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from2, except, desc) => {
   if (from2 && typeof from2 === "object" || typeof from2 === "function") {
@@ -40,12 +40,12 @@ var __copyProps = (to, from2, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
   // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target2, "default", { value: mod, enumerable: true }) : target2,
   mod
 ));
 
@@ -94,11 +94,11 @@ function __extends(d, b2) {
 }
 function __awaiter(thisArg, _arguments, P2, generator) {
   function adopt(value) {
-    return value instanceof P2 ? value : new P2(function(resolve9) {
-      resolve9(value);
+    return value instanceof P2 ? value : new P2(function(resolve10) {
+      resolve10(value);
     });
   }
-  return new (P2 || (P2 = Promise))(function(resolve9, reject) {
+  return new (P2 || (P2 = Promise))(function(resolve10, reject) {
     function fulfilled(value) {
       try {
         step(generator.next(value));
@@ -114,7 +114,7 @@ function __awaiter(thisArg, _arguments, P2, generator) {
       }
     }
     function step(result) {
-      result.done ? resolve9(result.value) : adopt(result.value).then(fulfilled, rejected);
+      result.done ? resolve10(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
@@ -277,14 +277,14 @@ function __asyncValues(o) {
   }, i);
   function verb(n) {
     i[n] = o[n] && function(v2) {
-      return new Promise(function(resolve9, reject) {
-        v2 = o[n](v2), settle4(resolve9, reject, v2.done, v2.value);
+      return new Promise(function(resolve10, reject) {
+        v2 = o[n](v2), settle4(resolve10, reject, v2.done, v2.value);
       });
     };
   }
-  function settle4(resolve9, reject, d, v2) {
+  function settle4(resolve10, reject, d, v2) {
     Promise.resolve(v2).then(function(v22) {
-      resolve9({ value: v22, done: d });
+      resolve10({ value: v22, done: d });
     }, reject);
   }
 }
@@ -809,7 +809,7 @@ function of() {
 }
 function lastValueFrom(source2, config22) {
   var hasConfig = typeof config22 === "object";
-  return new Promise(function(resolve9, reject) {
+  return new Promise(function(resolve10, reject) {
     var _hasValue = false;
     var _value;
     source2.subscribe({
@@ -820,9 +820,9 @@ function lastValueFrom(source2, config22) {
       error: reject,
       complete: function() {
         if (_hasValue) {
-          resolve9(_value);
+          resolve10(_value);
         } else if (hasConfig) {
-          resolve9(config22.defaultValue);
+          resolve10(config22.defaultValue);
         } else {
           reject(new EmptyError());
         }
@@ -832,16 +832,16 @@ function lastValueFrom(source2, config22) {
 }
 function firstValueFrom(source2, config22) {
   var hasConfig = typeof config22 === "object";
-  return new Promise(function(resolve9, reject) {
+  return new Promise(function(resolve10, reject) {
     var subscriber = new SafeSubscriber({
       next: function(value) {
-        resolve9(value);
+        resolve10(value);
         subscriber.unsubscribe();
       },
       error: reject,
       complete: function() {
         if (hasConfig) {
-          resolve9(config22.defaultValue);
+          resolve10(config22.defaultValue);
         } else {
           reject(new EmptyError());
         }
@@ -1050,24 +1050,24 @@ function defer(observableFactory) {
     innerFrom(observableFactory()).subscribe(subscriber);
   });
 }
-function fromEvent(target, eventName, options, resultSelector) {
+function fromEvent(target2, eventName, options, resultSelector) {
   if (isFunction(options)) {
     resultSelector = options;
     options = void 0;
   }
   if (resultSelector) {
-    return fromEvent(target, eventName, options).pipe(mapOneOrManyArgs(resultSelector));
+    return fromEvent(target2, eventName, options).pipe(mapOneOrManyArgs(resultSelector));
   }
-  var _a6 = __read(isEventTarget(target) ? eventTargetMethods.map(function(methodName) {
+  var _a6 = __read(isEventTarget(target2) ? eventTargetMethods.map(function(methodName) {
     return function(handler) {
-      return target[methodName](eventName, handler, options);
+      return target2[methodName](eventName, handler, options);
     };
-  }) : isNodeStyleEventEmitter(target) ? nodeEventEmitterMethods.map(toCommonHandlerRegistry(target, eventName)) : isJQueryStyleEventEmitter(target) ? jqueryMethods.map(toCommonHandlerRegistry(target, eventName)) : [], 2), add = _a6[0], remove = _a6[1];
+  }) : isNodeStyleEventEmitter(target2) ? nodeEventEmitterMethods.map(toCommonHandlerRegistry(target2, eventName)) : isJQueryStyleEventEmitter(target2) ? jqueryMethods.map(toCommonHandlerRegistry(target2, eventName)) : [], 2), add = _a6[0], remove = _a6[1];
   if (!add) {
-    if (isArrayLike(target)) {
+    if (isArrayLike(target2)) {
       return mergeMap(function(subTarget) {
         return fromEvent(subTarget, eventName, options);
-      })(innerFrom(target));
+      })(innerFrom(target2));
     }
   }
   if (!add) {
@@ -1087,21 +1087,21 @@ function fromEvent(target, eventName, options, resultSelector) {
     };
   });
 }
-function toCommonHandlerRegistry(target, eventName) {
+function toCommonHandlerRegistry(target2, eventName) {
   return function(methodName) {
     return function(handler) {
-      return target[methodName](eventName, handler);
+      return target2[methodName](eventName, handler);
     };
   };
 }
-function isNodeStyleEventEmitter(target) {
-  return isFunction(target.addListener) && isFunction(target.removeListener);
+function isNodeStyleEventEmitter(target2) {
+  return isFunction(target2.addListener) && isFunction(target2.removeListener);
 }
-function isJQueryStyleEventEmitter(target) {
-  return isFunction(target.on) && isFunction(target.off);
+function isJQueryStyleEventEmitter(target2) {
+  return isFunction(target2.on) && isFunction(target2.off);
 }
-function isEventTarget(target) {
-  return isFunction(target.addEventListener) && isFunction(target.removeEventListener);
+function isEventTarget(target2) {
+  return isFunction(target2.addEventListener) && isFunction(target2.removeEventListener);
 }
 function timer(dueTime, intervalOrScheduler, scheduler) {
   if (dueTime === void 0) {
@@ -1880,7 +1880,7 @@ var init_rxjs = __esm({
       Observable2.prototype.forEach = function(next, promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve9, reject) {
+        return new promiseCtor(function(resolve10, reject) {
           var subscriber = new SafeSubscriber({
             next: function(value) {
               try {
@@ -1891,7 +1891,7 @@ var init_rxjs = __esm({
               }
             },
             error: reject,
-            complete: resolve9
+            complete: resolve10
           });
           _this.subscribe(subscriber);
         });
@@ -1913,14 +1913,14 @@ var init_rxjs = __esm({
       Observable2.prototype.toPromise = function(promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve9, reject) {
+        return new promiseCtor(function(resolve10, reject) {
           var value;
           _this.subscribe(function(x2) {
             return value = x2;
           }, function(err) {
             return reject(err);
           }, function() {
-            return resolve9(value);
+            return resolve10(value);
           });
         });
       };
@@ -2344,23 +2344,23 @@ var init_rxjs = __esm({
         _this._active = false;
         return _this;
       }
-      AsyncScheduler2.prototype.flush = function(action) {
+      AsyncScheduler2.prototype.flush = function(action2) {
         var actions = this.actions;
         if (this._active) {
-          actions.push(action);
+          actions.push(action2);
           return;
         }
         var error62;
         this._active = true;
         do {
-          if (error62 = action.execute(action.state, action.delay)) {
+          if (error62 = action2.execute(action2.state, action2.delay)) {
             break;
           }
-        } while (action = actions.shift());
+        } while (action2 = actions.shift());
         this._active = false;
         if (error62) {
-          while (action = actions.shift()) {
-            action.unsubscribe();
+          while (action2 = actions.shift()) {
+            action2.unsubscribe();
           }
           throw error62;
         }
@@ -3554,8 +3554,8 @@ var init_Deferred = __esm({
       // SAFETY: This is ensured by #taskPromise.
       #resolve;
       // TODO: Switch to Promise.withResolvers with Node 22
-      #taskPromise = new Promise((resolve9) => {
-        this.#resolve = resolve9;
+      #taskPromise = new Promise((resolve10) => {
+        this.#resolve = resolve10;
       });
       #timeoutId;
       #timeoutError;
@@ -3646,12 +3646,12 @@ var init_Mutex = __esm({
         return new _Mutex.Guard(this, onRelease);
       }
       release() {
-        const resolve9 = this.#acquirers.shift();
-        if (!resolve9) {
+        const resolve10 = this.#acquirers.shift();
+        if (!resolve10) {
           this.#locked = false;
           return;
         }
-        resolve9();
+        resolve10();
       }
     };
   }
@@ -5052,24 +5052,24 @@ function moveable(Class2, _2) {
 function throwIfDisposed(message = (value) => {
   return `Attempted to use disposed ${value.constructor.name}.`;
 }) {
-  return (target, _2) => {
+  return (target2, _2) => {
     return function(...args) {
       if (this.disposed) {
         throw new Error(message(this));
       }
-      return target.call(this, ...args);
+      return target2.call(this, ...args);
     };
   };
 }
-function inertIfDisposed(target, _2) {
+function inertIfDisposed(target2, _2) {
   return function(...args) {
     if (this.disposed) {
       return;
     }
-    return target.call(this, ...args);
+    return target2.call(this, ...args);
   };
 }
-function invokeAtMostOnceForArguments(target, _2) {
+function invokeAtMostOnceForArguments(target2, _2) {
   const cache = /* @__PURE__ */ new WeakMap();
   let cacheDepth = -1;
   return function(...args) {
@@ -5093,13 +5093,13 @@ function invokeAtMostOnceForArguments(target, _2) {
     if (!freshArguments) {
       return;
     }
-    return target.call(this, ...args);
+    return target2.call(this, ...args);
   };
 }
 function guarded(getKey = function() {
   return this;
 }) {
-  return (target, _2) => {
+  return (target2, _2) => {
     const mutexes = /* @__PURE__ */ new WeakMap();
     return async function(...args) {
       const env_1 = { stack: [], error: void 0, hasError: false };
@@ -5111,7 +5111,7 @@ function guarded(getKey = function() {
           mutexes.set(key, mutex);
         }
         const _3 = __addDisposableResource3(env_1, await mutex.acquire(), true);
-        return await target.call(this, ...args);
+        return await target2.call(this, ...args);
       } catch (e_1) {
         env_1.error = e_1;
         env_1.hasError = true;
@@ -5257,8 +5257,8 @@ var init_JSHandle = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -5280,7 +5280,7 @@ var init_JSHandle = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource4 = function(env2, value, async2) {
@@ -5695,12 +5695,12 @@ var init_locators = __esm({
         }
         return defer(() => {
           return from(handle.evaluate((element) => {
-            return new Promise((resolve9) => {
+            return new Promise((resolve10) => {
               window.requestAnimationFrame(() => {
                 const rect1 = element.getBoundingClientRect();
                 window.requestAnimationFrame(() => {
                   const rect2 = element.getBoundingClientRect();
-                  resolve9([
+                  resolve10([
                     {
                       x: rect1.x,
                       y: rect1.y,
@@ -6215,10 +6215,10 @@ var init_locators = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js
-function bindIsolatedHandle(target, _2) {
+function bindIsolatedHandle(target2, _2) {
   return async function(...args) {
     if (this.realm === this.frame.isolatedRealm()) {
-      return await target.call(this, ...args);
+      return await target2.call(this, ...args);
     }
     let adoptedThis;
     if (this["isolatedHandle"]) {
@@ -6226,7 +6226,7 @@ function bindIsolatedHandle(target, _2) {
     } else {
       this["isolatedHandle"] = adoptedThis = await this.frame.isolatedRealm().adoptHandle(this);
     }
-    const result = await target.call(adoptedThis, ...args);
+    const result = await target2.call(adoptedThis, ...args);
     if (result === adoptedThis) {
       return this;
     }
@@ -6282,8 +6282,8 @@ var init_ElementHandle = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -6305,7 +6305,7 @@ var init_ElementHandle = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource6 = function(env2, value, async2) {
@@ -6945,15 +6945,15 @@ var init_ElementHandle = __esm({
          * @returns DEPRECATED. When drag interception is enabled, the drag payload is
          * returned.
          */
-        async drag(target) {
+        async drag(target2) {
           const page = this.frame.page();
           if (page.isDragInterceptionEnabled()) {
             await this.scrollIntoViewIfNeeded();
             const source2 = await this.clickablePoint();
-            if (target instanceof ElementHandle2) {
-              target = await target.clickablePoint();
+            if (target2 instanceof ElementHandle2) {
+              target2 = await target2.clickablePoint();
             }
-            return await page.mouse.drag(source2, target);
+            return await page.mouse.drag(source2, target2);
           }
           let isMouseDown = page._isDragging;
           try {
@@ -6964,10 +6964,10 @@ var init_ElementHandle = __esm({
               await page.mouse.down();
               isMouseDown = true;
             }
-            if (target instanceof ElementHandle2) {
-              await target.hover();
+            if (target2 instanceof ElementHandle2) {
+              await target2.hover();
             } else {
-              await page.mouse.move(target.x, target.y);
+              await page.mouse.move(target2.x, target2.y);
             }
           } catch (error62) {
             page._isDragging = false;
@@ -6985,8 +6985,8 @@ var init_ElementHandle = __esm({
         async dragEnter(data = { items: [], dragOperationsMask: 1 }) {
           const page = this.frame.page();
           await this.scrollIntoViewIfNeeded();
-          const target = await this.clickablePoint();
-          await page.mouse.dragEnter(target, data);
+          const target2 = await this.clickablePoint();
+          await page.mouse.dragEnter(target2, data);
         }
         /**
          * @deprecated Do not use. `dragover` will automatically be performed during dragging.
@@ -6994,8 +6994,8 @@ var init_ElementHandle = __esm({
         async dragOver(data = { items: [], dragOperationsMask: 1 }) {
           const page = this.frame.page();
           await this.scrollIntoViewIfNeeded();
-          const target = await this.clickablePoint();
-          await page.mouse.dragOver(target, data);
+          const target2 = await this.clickablePoint();
+          await page.mouse.dragOver(target2, data);
         }
         /**
          * @internal
@@ -7018,12 +7018,12 @@ var init_ElementHandle = __esm({
         /**
          * @deprecated Use `ElementHandle.drop` instead.
          */
-        async dragAndDrop(target, options) {
+        async dragAndDrop(target2, options) {
           const page = this.frame.page();
           assert2(page.isDragInterceptionEnabled(), "Drag Interception is not enabled!");
           await this.scrollIntoViewIfNeeded();
           const startPoint = await this.clickablePoint();
-          const targetPoint = await target.clickablePoint();
+          const targetPoint = await target2.clickablePoint();
           await page.mouse.dragAndDrop(startPoint, targetPoint, options);
         }
         /**
@@ -7484,11 +7484,11 @@ var init_ElementHandle = __esm({
           try {
             await this.assertConnectedElement();
             const handle = await this.#asSVGElementHandle();
-            const target = __addDisposableResource6(env_5, handle && await handle.#getOwnerSVGElement(), false);
-            return await (target ?? this).evaluate(async (element, threshold) => {
-              const visibleRatio = await new Promise((resolve9) => {
+            const target2 = __addDisposableResource6(env_5, handle && await handle.#getOwnerSVGElement(), false);
+            return await (target2 ?? this).evaluate(async (element, threshold) => {
+              const visibleRatio = await new Promise((resolve10) => {
                 const observer = new IntersectionObserver((entries) => {
-                  resolve9(entries[0].intersectionRatio);
+                  resolve10(entries[0].intersectionRatio);
                   observer.disconnect();
                 });
                 observer.observe(element);
@@ -7642,8 +7642,8 @@ var init_Frame = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -7665,7 +7665,7 @@ var init_Frame = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource7 = function(env2, value, async2) {
@@ -8206,7 +8206,7 @@ var init_Frame = __esm({
           }
           type = type ?? "text/javascript";
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url: url2, id, type: type2, content: content2 }) => {
-            return await new Promise((resolve9, reject) => {
+            return await new Promise((resolve10, reject) => {
               const script = document.createElement("script");
               script.type = type2;
               script.text = content2;
@@ -8219,12 +8219,12 @@ var init_Frame = __esm({
               if (url2) {
                 script.src = url2;
                 script.addEventListener("load", () => {
-                  resolve9(script);
+                  resolve10(script);
                 }, { once: true });
                 document.head.appendChild(script);
               } else {
                 document.head.appendChild(script);
-                resolve9(script);
+                resolve10(script);
               }
             });
           }, { ...options, type, content }));
@@ -8244,7 +8244,7 @@ var init_Frame = __esm({
             options.content = content;
           }
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url: url2, content: content2 }) => {
-            return await new Promise((resolve9, reject) => {
+            return await new Promise((resolve10, reject) => {
               let element;
               if (!url2) {
                 element = document.createElement("style");
@@ -8256,7 +8256,7 @@ var init_Frame = __esm({
                 element = link2;
               }
               element.addEventListener("load", () => {
-                resolve9(element);
+                resolve10(element);
               }, { once: true });
               element.addEventListener("error", (event) => {
                 reject(new Error(event.message ?? "Could not load style"));
@@ -8571,8 +8571,8 @@ var init_HTTPRequest = __esm({
           return promiseChain.then(interceptAction);
         }, Promise.resolve());
         this.interception.handlers = [];
-        const { action } = this.interceptResolutionState();
-        switch (action) {
+        const { action: action2 } = this.interceptResolutionState();
+        switch (action2) {
           case "abort":
             return await this._abort(this.interception.abortReason);
           case "respond":
@@ -9093,8 +9093,8 @@ var init_Page = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -9116,7 +9116,7 @@ var init_Page = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource8 = function(env2, value, async2) {
@@ -10078,9 +10078,9 @@ var init_Page = __esm({
           ++this.#screencastSessionCount;
           if (!this.#startScreencastPromise) {
             const client = this.mainFrame().client;
-            const firstFrame = new Promise((resolve9) => {
+            const firstFrame = new Promise((resolve10) => {
               return client.once("Page.screencastFrame", () => {
-                return resolve9();
+                return resolve10();
               });
             });
             this.#startScreencastPromise = client.send("Page.startScreencast", { format: "png" }).then(() => {
@@ -10916,13 +10916,13 @@ var init_ScreenRecording = __esm({
           dest.end();
         }
         const destinationPromises = Array.from(this.destinations).map((dest) => {
-          return new Promise((resolve9) => {
+          return new Promise((resolve10) => {
             if (dest.writableFinished || dest.closed || dest.destroyed) {
-              resolve9(void 0);
+              resolve10(void 0);
             } else {
-              dest.once?.("finish", resolve9);
-              dest.once?.("close", resolve9);
-              dest.once?.("error", resolve9);
+              dest.once?.("finish", resolve10);
+              dest.once?.("close", resolve10);
+              dest.once?.("error", resolve10);
             }
           });
         });
@@ -12128,8 +12128,8 @@ var init_CdpSession = __esm({
        *
        * @internal
        */
-      setTarget(target) {
-        this.#target = target;
+      setTarget(target2) {
+        this.#target = target2;
       }
       /**
        * Gets the {@link CdpTarget} associated with the session instance.
@@ -12847,8 +12847,8 @@ var init_EmulationManager = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -12870,7 +12870,7 @@ var init_EmulationManager = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __setFunctionName2 = function(f, name, prefix) {
@@ -13669,11 +13669,11 @@ function addPageBinding(type, name, prefix) {
           return value instanceof Node;
         })
       }));
-      return new Promise((resolve9, reject) => {
+      return new Promise((resolve10, reject) => {
         callPuppeteer.callbacks.set(seq, {
           resolve(value) {
             callPuppeteer.args.delete(seq);
-            resolve9(value);
+            resolve10(value);
           },
           reject(value) {
             callPuppeteer.args.delete(seq);
@@ -13836,8 +13836,8 @@ var init_ElementHandle2 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -13859,7 +13859,7 @@ var init_ElementHandle2 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     NON_ELEMENT_NODE_ROLES = /* @__PURE__ */ new Set(["StaticText", "InlineTextBox"]);
@@ -14977,8 +14977,8 @@ var init_Frame2 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -15000,7 +15000,7 @@ var init_Frame2 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     CdpFrame = (() => {
@@ -16740,10 +16740,10 @@ var init_FrameManager = __esm({
       frame(frameId) {
         return this._frameTree.getById(frameId) || null;
       }
-      async #forEachFrame(action) {
+      async #forEachFrame(action2) {
         await Promise.all(this.frames().map(async (frame) => {
           try {
-            await action(frame);
+            await action2(frame);
           } catch (error62) {
             if (frame._client() === this.#client || !isErrorLike(error62) || !isTargetClosedError(error62)) {
               throw error62;
@@ -16792,16 +16792,16 @@ var init_FrameManager = __esm({
           });
         }));
       }
-      onAttachedToTarget(target) {
-        if (target._getTargetInfo().type !== "iframe") {
+      onAttachedToTarget(target2) {
+        if (target2._getTargetInfo().type !== "iframe") {
           return;
         }
-        const frame = this.frame(target._getTargetInfo().targetId);
+        const frame = this.frame(target2._getTargetInfo().targetId);
         if (frame) {
-          frame.updateClient(target._session());
+          frame.updateClient(target2._session());
         }
-        this.setupEventListeners(target._session());
-        void this.initialize(target._session(), frame).catch((error62) => {
+        this.setupEventListeners(target2._session());
+        void this.initialize(target2._session(), frame).catch((error62) => {
           this.#logger?.(DEBUG_PREFIXES.error)?.(error62);
         });
       }
@@ -17605,10 +17605,10 @@ var init_Input2 = __esm({
        * This is a shortcut for a typical update, commit/rollback lifecycle based on
        * the error of the action.
        */
-      async #withTransaction(action) {
+      async #withTransaction(action2) {
         const { update, commit, rollback } = this.#createTransaction();
         try {
-          await action(update);
+          await action2(update);
           commit();
         } catch (error62) {
           rollback();
@@ -17717,8 +17717,8 @@ var init_Input2 = __esm({
         if (typeof delay === "number") {
           await Promise.all(actions);
           actions.length = 0;
-          await new Promise((resolve9) => {
-            setTimeout(resolve9, delay);
+          await new Promise((resolve10) => {
+            setTimeout(resolve10, delay);
           });
         }
         actions.push(this.up({ ...options, clickCount: count }));
@@ -17737,55 +17737,55 @@ var init_Input2 = __esm({
           ...position
         });
       }
-      async drag(start, target) {
-        const promise2 = new Promise((resolve9) => {
+      async drag(start, target2) {
+        const promise2 = new Promise((resolve10) => {
           this.#client.once("Input.dragIntercepted", (event) => {
-            return resolve9(event.data);
+            return resolve10(event.data);
           });
         });
         await this.move(start.x, start.y);
         await this.down();
-        await this.move(target.x, target.y);
+        await this.move(target2.x, target2.y);
         return await promise2;
       }
-      async dragEnter(target, data) {
+      async dragEnter(target2, data) {
         await this.#client.send("Input.dispatchDragEvent", {
           type: "dragEnter",
-          x: target.x,
-          y: target.y,
+          x: target2.x,
+          y: target2.y,
           modifiers: this.#keyboard._modifiers,
           data
         });
       }
-      async dragOver(target, data) {
+      async dragOver(target2, data) {
         await this.#client.send("Input.dispatchDragEvent", {
           type: "dragOver",
-          x: target.x,
-          y: target.y,
+          x: target2.x,
+          y: target2.y,
           modifiers: this.#keyboard._modifiers,
           data
         });
       }
-      async drop(target, data) {
+      async drop(target2, data) {
         await this.#client.send("Input.dispatchDragEvent", {
           type: "drop",
-          x: target.x,
-          y: target.y,
+          x: target2.x,
+          y: target2.y,
           modifiers: this.#keyboard._modifiers,
           data
         });
       }
-      async dragAndDrop(start, target, options = {}) {
+      async dragAndDrop(start, target2, options = {}) {
         const { delay = null } = options;
-        const data = await this.drag(start, target);
-        await this.dragEnter(target, data);
-        await this.dragOver(target, data);
+        const data = await this.drag(start, target2);
+        await this.dragEnter(target2, data);
+        await this.dragOver(target2, data);
         if (delay) {
-          await new Promise((resolve9) => {
-            return setTimeout(resolve9, delay);
+          await new Promise((resolve10) => {
+            return setTimeout(resolve10, delay);
           });
         }
-        await this.drop(target, data);
+        await this.drop(target2, data);
         await this.up();
       }
     };
@@ -17888,8 +17888,8 @@ var init_ScreenRecording2 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -17911,7 +17911,7 @@ var init_ScreenRecording2 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     CdpScreenRecording = (() => {
@@ -18174,7 +18174,7 @@ var init_WebMCP = __esm({
        */
       async execute(input3 = {}, options = {}) {
         const { invocationId } = await this.#webmcp.invokeTool(this, input3);
-        return await new Promise((resolve9) => {
+        return await new Promise((resolve10) => {
           const onAbort = () => {
             void this.#webmcp.cancelInvocation(invocationId);
           };
@@ -18182,7 +18182,7 @@ var init_WebMCP = __esm({
             if (event.id === invocationId) {
               options.signal?.removeEventListener("abort", onAbort);
               this.#webmcp.off("toolresponded", handler);
-              resolve9(event);
+              resolve10(event);
             }
           };
           this.#webmcp.on("toolresponded", handler);
@@ -18498,8 +18498,8 @@ var init_Page2 = __esm({
       return e.name = "SuppressedError", e.error = error62, e.suppressed = suppressed, e;
     });
     CdpPage = class _CdpPage extends Page {
-      static async _create(client, target, defaultViewport, logger) {
-        const page = new _CdpPage(client, target, logger);
+      static async _create(client, target2, defaultViewport, logger) {
+        const page = new _CdpPage(client, target2, logger);
         await page.#initialize();
         if (defaultViewport) {
           try {
@@ -18537,7 +18537,7 @@ var init_Page2 = __esm({
       #sessionCloseDeferred = Deferred.create();
       #serviceWorkerBypassed = false;
       #userDragInterceptionEnabled = false;
-      constructor(client, target, logger) {
+      constructor(client, target2, logger) {
         super(logger);
         this.#primaryTargetClient = client;
         this.#tabTargetClient = client.parentSession();
@@ -18545,8 +18545,8 @@ var init_Page2 = __esm({
         this.#tabTarget = this.#tabTargetClient.target();
         assert2(this.#tabTarget, "Tab target is not defined.");
         this._tabId = this.#tabTarget._getTargetInfo().targetId;
-        this.#primaryTarget = target;
-        this.#targetManager = target._targetManager();
+        this.#primaryTarget = target2;
+        this.#targetManager = target2._targetManager();
         this.#keyboard = new CdpKeyboard(client);
         this.#mouse = new CdpMouse(client, this.#keyboard);
         this.#touchscreen = new CdpTouchscreen(client, this.#keyboard);
@@ -18670,8 +18670,8 @@ var init_Page2 = __esm({
         clientEmitter.on("Log.entryAdded", this.#onLogEntryAdded.bind(this));
         clientEmitter.on("Page.fileChooserOpened", this.#onFileChooser.bind(this));
       }
-      #onDetachedFromTarget = (target) => {
-        const sessionId = target._session()?.id();
+      #onDetachedFromTarget = (target2) => {
+        const sessionId = target2._session()?.id();
         const worker = this.#workers.get(sessionId);
         if (!worker) {
           return;
@@ -19032,9 +19032,9 @@ var init_Page2 = __esm({
         const env_2 = { stack: [], error: void 0, hasError: false };
         try {
           const stream = environment.value.createWriteStream(options.path);
-          const streamPromise = new Promise((resolve9, reject) => {
+          const streamPromise = new Promise((resolve10, reject) => {
             stream.on("error", reject);
-            stream.on("finish", resolve9);
+            stream.on("finish", resolve10);
           });
           const client = this.#primaryTargetClient;
           await client.send("HeapProfiler.enable");
@@ -19464,15 +19464,15 @@ var init_BrowserContext2 = __esm({
         return this.#id;
       }
       targets() {
-        return this.#browser.targets().filter((target) => {
-          return target.browserContext() === this;
+        return this.#browser.targets().filter((target2) => {
+          return target2.browserContext() === this;
         });
       }
       async pages(includeAll = false) {
-        const pages = await Promise.all(this.targets().filter((target) => {
-          return target.type() === "page" || (target.type() === "other" || includeAll) && this.#browser._getIsPageTargetCallback()?.(target);
-        }).map((target) => {
-          return target.page();
+        const pages = await Promise.all(this.targets().filter((target2) => {
+          return target2.type() === "page" || (target2.type() === "other" || includeAll) && this.#browser._getIsPageTargetCallback()?.(target2);
+        }).map((target2) => {
+          return target2.page();
         }));
         return pages.filter((page) => {
           return !!page;
@@ -19592,13 +19592,13 @@ var init_Extension2 = __esm({
       }
       async workers() {
         const targets = this.#browser.targets();
-        const extensionWorkers = targets.filter((target) => {
-          const targetUrl = target.url();
-          return target.type() === "service_worker" && targetUrl.startsWith("chrome-extension://" + this.id);
+        const extensionWorkers = targets.filter((target2) => {
+          const targetUrl = target2.url();
+          return target2.type() === "service_worker" && targetUrl.startsWith("chrome-extension://" + this.id);
         });
-        const workers = await Promise.all(extensionWorkers.map(async (target) => {
+        const workers = await Promise.all(extensionWorkers.map(async (target2) => {
           try {
-            return await target.worker();
+            return await target2.worker();
           } catch (err) {
             if (this.#canIgnoreError(err)) {
               this.#logger?.(DEBUG_PREFIXES.error)?.(err);
@@ -19613,13 +19613,13 @@ var init_Extension2 = __esm({
       }
       async pages() {
         const targets = this.#browser.targets();
-        const extensionPages = targets.filter((target) => {
-          const targetUrl = target.url();
-          return (target.type() === "page" || target.type() === "background_page") && targetUrl.startsWith("chrome-extension://" + this.id);
+        const extensionPages = targets.filter((target2) => {
+          const targetUrl = target2.url();
+          return (target2.type() === "page" || target2.type() === "background_page") && targetUrl.startsWith("chrome-extension://" + this.id);
         });
-        const pages = await Promise.all(extensionPages.map(async (target) => {
+        const pages = await Promise.all(extensionPages.map(async (target2) => {
           try {
-            return await target.asPage();
+            return await target2.asPage();
           } catch (err) {
             if (this.#canIgnoreError(err)) {
               this.#logger?.(DEBUG_PREFIXES.error)?.(err);
@@ -19714,11 +19714,11 @@ var init_Target2 = __esm({
       _session() {
         return this.#session;
       }
-      _addChildTarget(target) {
-        this.#childTargets.add(target);
+      _addChildTarget(target2) {
+        this.#childTargets.add(target2);
       }
-      _removeChildTarget(target) {
-        this.#childTargets.delete(target);
+      _removeChildTarget(target2) {
+        this.#childTargets.delete(target2);
       }
       _childTargets() {
         return this.#childTargets;
@@ -19788,8 +19788,8 @@ var init_Target2 = __esm({
         if (!openerId) {
           return;
         }
-        return this.browser().targets().find((target) => {
-          return target._targetId === openerId;
+        return this.browser().targets().find((target2) => {
+          return target2._targetId === openerId;
         });
       }
       _targetInfoChanged(targetInfo) {
@@ -20671,8 +20671,8 @@ var init_urlpattern_polyfill = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js
-function isPageTargetBecomingPrimary(target, newTargetInfo) {
-  return Boolean(target._subtype()) && !newTargetInfo.subtype;
+function isPageTargetBecomingPrimary(target2, newTargetInfo) {
+  return Boolean(target2._subtype()) && !newTargetInfo.subtype;
 }
 var TargetManager;
 var init_TargetManager = __esm({
@@ -20777,8 +20777,8 @@ var init_TargetManager = __esm({
       addToIgnoreTarget(targetId) {
         this.#ignoredTargets.add(targetId);
       }
-      getChildTargets(target) {
-        return target._childTargets();
+      getChildTargets(target2) {
+        return target2._childTargets();
       }
       dispose() {
         this.#subscriptions.dispose();
@@ -20832,9 +20832,9 @@ var init_TargetManager = __esm({
           if (this.#attachedTargetsByTargetId.has(event.targetInfo.targetId)) {
             return;
           }
-          const target = this.#targetFactory(event.targetInfo, void 0);
-          target._initialize();
-          this.#attachedTargetsByTargetId.set(event.targetInfo.targetId, target);
+          const target2 = this.#targetFactory(event.targetInfo, void 0);
+          target2._initialize();
+          this.#attachedTargetsByTargetId.set(event.targetInfo.targetId, target2);
         }
       };
       #onTargetDestroyed = (event) => {
@@ -20842,9 +20842,9 @@ var init_TargetManager = __esm({
         this.#discoveredTargetsByTargetId.delete(event.targetId);
         this.#finishInitializationIfReady(event.targetId);
         if (targetInfo?.type === "service_worker") {
-          const target = this.#attachedTargetsByTargetId.get(event.targetId);
-          if (target) {
-            this.emit("targetGone", target);
+          const target2 = this.#attachedTargetsByTargetId.get(event.targetId);
+          if (target2) {
+            this.emit("targetGone", target2);
             this.#attachedTargetsByTargetId.delete(event.targetId);
           }
         }
@@ -20854,21 +20854,21 @@ var init_TargetManager = __esm({
         if (this.#ignoredTargets.has(event.targetInfo.targetId) || !event.targetInfo.attached) {
           return;
         }
-        const target = this.#attachedTargetsByTargetId.get(event.targetInfo.targetId);
-        if (!target) {
+        const target2 = this.#attachedTargetsByTargetId.get(event.targetInfo.targetId);
+        if (!target2) {
           return;
         }
-        const previousURL = target.url();
-        const wasInitialized = target._initializedDeferred.value() === InitializationStatus.SUCCESS;
-        if (isPageTargetBecomingPrimary(target, event.targetInfo)) {
-          const session = target._session();
+        const previousURL = target2.url();
+        const wasInitialized = target2._initializedDeferred.value() === InitializationStatus.SUCCESS;
+        if (isPageTargetBecomingPrimary(target2, event.targetInfo)) {
+          const session = target2._session();
           assert2(session, "Target that is being activated is missing a CDPSession.");
           session.parentSession()?.emit(CDPSessionEvent.Swapped, session);
         }
-        target._targetInfoChanged(event.targetInfo);
-        if (wasInitialized && previousURL !== target.url()) {
+        target2._targetInfoChanged(event.targetInfo);
+        if (wasInitialized && previousURL !== target2.url()) {
           this.emit("targetChanged", {
-            target,
+            target: target2,
             wasInitialized,
             previousURL
           });
@@ -20902,19 +20902,19 @@ var init_TargetManager = __esm({
           if (this.#attachedTargetsByTargetId.has(targetInfo.targetId) || this.#ignoredTargets.has(targetInfo.targetId) || !this.#discoveredTargetsByTargetId.has(targetInfo.targetId)) {
             return;
           }
-          const target2 = this.#targetFactory(targetInfo);
-          target2._initialize();
-          this.#attachedTargetsByTargetId.set(targetInfo.targetId, target2);
-          this.emit("targetAvailable", target2);
+          const target3 = this.#targetFactory(targetInfo);
+          target3._initialize();
+          this.#attachedTargetsByTargetId.set(targetInfo.targetId, target3);
+          this.emit("targetAvailable", target3);
           return;
         }
-        let target = this.#attachedTargetsByTargetId.get(targetInfo.targetId);
-        const isExistingTarget = target !== void 0;
-        if (!target) {
-          target = this.#targetFactory(targetInfo, session, parentSession instanceof CdpCDPSession ? parentSession : void 0);
+        let target2 = this.#attachedTargetsByTargetId.get(targetInfo.targetId);
+        const isExistingTarget = target2 !== void 0;
+        if (!target2) {
+          target2 = this.#targetFactory(targetInfo, session, parentSession instanceof CdpCDPSession ? parentSession : void 0);
         }
         const parentTarget = this.#getParentTarget(parentSession);
-        if (this.#targetFilterCallback && !this.#targetFilterCallback(target)) {
+        if (this.#targetFilterCallback && !this.#targetFilterCallback(target2)) {
           this.#ignoredTargets.add(targetInfo.targetId);
           if (parentTarget?.type() === "tab") {
             this.#finishInitializationIfReady(parentTarget._targetId);
@@ -20927,17 +20927,17 @@ var init_TargetManager = __esm({
         }
         this.#setupAttachmentListeners(session);
         if (isExistingTarget) {
-          session.setTarget(target);
-          this.#attachedTargetsBySessionId.set(session.id(), target);
+          session.setTarget(target2);
+          this.#attachedTargetsBySessionId.set(session.id(), target2);
         } else {
-          target._initialize();
-          this.#attachedTargetsByTargetId.set(targetInfo.targetId, target);
-          this.#attachedTargetsBySessionId.set(session.id(), target);
+          target2._initialize();
+          this.#attachedTargetsByTargetId.set(targetInfo.targetId, target2);
+          this.#attachedTargetsBySessionId.set(session.id(), target2);
         }
-        parentTarget?._addChildTarget(target);
+        parentTarget?._addChildTarget(target2);
         parentSession.emit(CDPSessionEvent.Ready, session);
         if (!isExistingTarget) {
-          this.emit("targetAvailable", target);
+          this.emit("targetAvailable", target2);
         }
         if (parentTarget?.type() === "tab") {
           this.#finishInitializationIfReady(parentTarget._targetId);
@@ -20967,16 +20967,16 @@ var init_TargetManager = __esm({
         }
       }
       #onDetachedFromTarget = (parentSession, event) => {
-        const target = this.#attachedTargetsBySessionId.get(event.sessionId);
+        const target2 = this.#attachedTargetsBySessionId.get(event.sessionId);
         this.#attachedTargetsBySessionId.delete(event.sessionId);
-        if (!target) {
+        if (!target2) {
           return;
         }
         if (parentSession instanceof CdpCDPSession) {
-          parentSession.target()._removeChildTarget(target);
+          parentSession.target()._removeChildTarget(target2);
         }
-        this.#attachedTargetsByTargetId.delete(target._targetId);
-        this.emit("targetGone", target);
+        this.#attachedTargetsByTargetId.delete(target2._targetId);
+        this.emit("targetGone", target2);
       };
       /**
        * Helper to validate URL against blocklist patterns
@@ -21158,8 +21158,8 @@ var init_Browser2 = __esm({
         return this.#targetManager;
       }
       #setIsPageTargetCallback(isPageTargetCallback) {
-        this.#isPageTargetCallback = isPageTargetCallback || ((target) => {
-          return target.type() === "page" || target.type() === "background_page" || target.type() === "webview" || this.#handleDevToolsAsPage && target.type() === "other" && isDevToolsPageTarget(target.url());
+        this.#isPageTargetCallback = isPageTargetCallback || ((target2) => {
+          return target2.type() === "page" || target2.type() === "background_page" || target2.type() === "webview" || this.#handleDevToolsAsPage && target2.type() === "other" && isDevToolsPageTarget(target2.url());
         });
       }
       _getIsPageTargetCallback() {
@@ -21214,23 +21214,23 @@ var init_Browser2 = __esm({
         }
         return otherTarget;
       };
-      #onAttachedToTarget = async (target) => {
-        if (target._isTargetExposed() && await target._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS) {
-          this.emit("targetcreated", target);
-          target.browserContext().emit("targetcreated", target);
+      #onAttachedToTarget = async (target2) => {
+        if (target2._isTargetExposed() && await target2._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS) {
+          this.emit("targetcreated", target2);
+          target2.browserContext().emit("targetcreated", target2);
         }
       };
-      #onDetachedFromTarget = async (target) => {
-        target._initializedDeferred.resolve(InitializationStatus.ABORTED);
-        target._isClosedDeferred.resolve();
-        if (target._isTargetExposed() && await target._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS) {
-          this.emit("targetdestroyed", target);
-          target.browserContext().emit("targetdestroyed", target);
+      #onDetachedFromTarget = async (target2) => {
+        target2._initializedDeferred.resolve(InitializationStatus.ABORTED);
+        target2._isClosedDeferred.resolve();
+        if (target2._isTargetExposed() && await target2._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS) {
+          this.emit("targetdestroyed", target2);
+          target2.browserContext().emit("targetdestroyed", target2);
         }
       };
-      #onTargetChanged = ({ target }) => {
-        this.emit("targetchanged", target);
-        target.browserContext().emit("targetchanged", target);
+      #onTargetChanged = ({ target: target2 }) => {
+        this.emit("targetchanged", target2);
+        target2.browserContext().emit("targetchanged", target2);
       };
       #onTargetDiscovered = (targetInfo) => {
         this.emit("targetdiscovered", targetInfo);
@@ -21258,17 +21258,17 @@ var init_Browser2 = __esm({
           newWindow: hasTargets && options?.type === "window" ? true : void 0,
           background: options?.background
         });
-        const target = await this.waitForTarget((t) => {
+        const target2 = await this.waitForTarget((t) => {
           return t._targetId === targetId;
         });
-        if (!target) {
+        if (!target2) {
           throw new Error(`Missing target for page (id = ${targetId})`);
         }
-        const initialized = await target._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS;
+        const initialized = await target2._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS;
         if (!initialized) {
           throw new Error(`Failed to create target for page (id = ${targetId})`);
         }
-        const page = await target.page();
+        const page = await target2.page();
         if (!page) {
           throw new Error(`Failed to create a page for context (id = ${contextId})`);
         }
@@ -21281,17 +21281,17 @@ var init_Browser2 = __esm({
         return await this._getDevToolsTargetPage(openDevToolsResponse.targetId);
       }
       async _getDevToolsTargetPage(devtoolsTargetId) {
-        const target = await this.waitForTarget((t) => {
+        const target2 = await this.waitForTarget((t) => {
           return t._targetId === devtoolsTargetId;
         });
-        if (!target) {
+        if (!target2) {
           throw new Error(`Missing target for DevTools page (id = ${devtoolsTargetId})`);
         }
-        const initialized = await target._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS;
+        const initialized = await target2._initializedDeferred.valueOrThrow() === InitializationStatus.SUCCESS;
         if (!initialized) {
           throw new Error(`Failed to create target for DevTools page (id = ${devtoolsTargetId})`);
         }
-        const page = await target.page();
+        const page = await target2.page();
         if (!page) {
           throw new Error(`Failed to create a DevTools Page for target (id = ${devtoolsTargetId})`);
         }
@@ -21317,12 +21317,12 @@ var init_Browser2 = __esm({
         for (const [targetId, targetInfo] of this._targetManager().getDiscoveredTargetInfos().entries()) {
           if (targetInfo.url.includes(id) && targetInfo.type === "service_worker") {
             this._targetManager().addToIgnoreTarget(targetId);
-            targetDestroyedPromises.push(new Promise((resolve9) => {
+            targetDestroyedPromises.push(new Promise((resolve10) => {
               return setTimeout(() => {
                 this.#connection.emit("Target.targetDestroyed", {
                   targetId
                 });
-                resolve9(null);
+                resolve10(null);
               }, 0);
             }));
           }
@@ -21362,7 +21362,7 @@ var init_Browser2 = __esm({
           manifestId: options.manifestId,
           url: options.url
         });
-        const target = await this.waitForTarget((candidate) => {
+        const target2 = await this.waitForTarget((candidate) => {
           const tab = this.#targetManager.getAvailableTargets().get(tabTargetId);
           if (tab?.type() !== "tab") {
             return false;
@@ -21374,7 +21374,7 @@ var init_Browser2 = __esm({
           }
           return false;
         }, { timeout: options.timeout });
-        const page = await target.page();
+        const page = await target2.page();
         if (!page) {
           throw new Error(`Failed to create a page for the launched PWA (manifestId = ${options.manifestId})`);
         }
@@ -21411,13 +21411,13 @@ var init_Browser2 = __esm({
         });
       }
       targets() {
-        return Array.from(this.#targetManager.getAvailableTargets().values()).filter((target) => {
-          return target._isTargetExposed() && target._initializedDeferred.value() === InitializationStatus.SUCCESS;
+        return Array.from(this.#targetManager.getAvailableTargets().values()).filter((target2) => {
+          return target2._isTargetExposed() && target2._initializedDeferred.value() === InitializationStatus.SUCCESS;
         });
       }
       target() {
-        const browserTarget = this.targets().find((target) => {
-          return target.type() === "browser";
+        const browserTarget = this.targets().find((target2) => {
+          return target2.type() === "browser";
         });
         if (!browserTarget) {
           throw new Error("Browser target is not found");
@@ -21636,10 +21636,10 @@ var init_BrowserWebSocketTransport = __esm({
     init_Debug();
     BrowserWebSocketTransport = class _BrowserWebSocketTransport {
       static create(url2, _headers, logger, _options) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           const ws = new WebSocket(url2);
           ws.addEventListener("open", () => {
-            return resolve9(new _BrowserWebSocketTransport(ws, logger));
+            return resolve10(new _BrowserWebSocketTransport(ws, logger));
           });
           ws.addEventListener("error", reject);
         });
@@ -24030,8 +24030,8 @@ var init_Navigation = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -24053,7 +24053,7 @@ var init_Navigation = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     Navigation = (() => {
@@ -24195,8 +24195,8 @@ var init_Realm2 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -24218,7 +24218,7 @@ var init_Realm2 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     Realm2 = (() => {
@@ -24483,8 +24483,8 @@ var init_Request = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -24506,7 +24506,7 @@ var init_Request = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     Request = (() => {
@@ -24772,8 +24772,8 @@ var init_UserPrompt = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -24795,7 +24795,7 @@ var init_UserPrompt = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     UserPrompt = (() => {
@@ -24910,8 +24910,8 @@ var init_BrowsingContext = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -24933,7 +24933,7 @@ var init_BrowsingContext = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     BrowsingContext = (() => {
@@ -25517,8 +25517,8 @@ var init_UserContext = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -25540,7 +25540,7 @@ var init_UserContext = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     UserContext = (() => {
@@ -25864,8 +25864,8 @@ var init_ElementHandle3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -25887,7 +25887,7 @@ var init_ElementHandle3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource15 = function(env2, value, async2) {
@@ -26190,8 +26190,8 @@ var init_ExposedFunction = __esm({
         const functionDeclaration = stringifyFunction(interpolateFunction((callback) => {
           Object.assign(globalThis, {
             [PLACEHOLDER("name")]: function(...args) {
-              return new Promise((resolve9, reject) => {
-                callback([resolve9, reject, args]);
+              return new Promise((resolve10, reject) => {
+                callback([resolve10, reject, args]);
               });
             }
           });
@@ -26279,8 +26279,8 @@ var init_ExposedFunction = __esm({
             return;
           }
           try {
-            await dataHandle.evaluate(([resolve9], result2) => {
-              resolve9(result2);
+            await dataHandle.evaluate(([resolve10], result2) => {
+              resolve10(result2);
             }, result);
           } catch (error62) {
             this.#logger?.(DEBUG_PREFIXES.error)?.(error62);
@@ -26361,8 +26361,8 @@ var init_HTTPResponse3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -26384,7 +26384,7 @@ var init_HTTPResponse3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     BidiHTTPResponse = (() => {
@@ -27350,8 +27350,8 @@ var init_Frame3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -27373,7 +27373,7 @@ var init_Frame3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __setFunctionName3 = function(f, name, prefix) {
@@ -28434,8 +28434,8 @@ var init_ScreenRecording3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -28457,7 +28457,7 @@ var init_ScreenRecording3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     BidiScreenRecording = (() => {
@@ -28701,8 +28701,8 @@ var init_Page3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -28724,7 +28724,7 @@ var init_Page3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __runInitializers19 = function(thisArg, initializers, value) {
@@ -29212,11 +29212,11 @@ var init_Page3 = __esm({
           throw new UnsupportedOperation();
         }
         target() {
-          const target = this.browserContext().getTargetForPage(this);
-          if (!target) {
+          const target2 = this.browserContext().getTargetForPage(this);
+          if (!target2) {
             throw new Error("Target not found for page");
           }
-          return target;
+          return target2;
         }
         async waitForFileChooser(options = {}) {
           const { timeout: timeout2 = this._timeoutSettings.timeout() } = options;
@@ -29604,8 +29604,8 @@ var init_BrowserContext3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -29627,7 +29627,7 @@ var init_BrowserContext3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __runInitializers20 = function(thisArg, initializers, value) {
@@ -29765,42 +29765,42 @@ var init_BrowserContext3 = __esm({
           this.#targets.set(page, [pageTarget, pageTargets]);
           page.trustedEmitter.on("frameattached", (frame) => {
             const bidiFrame = frame;
-            const target = new BidiFrameTarget(bidiFrame, this.#logger);
-            pageTargets.set(bidiFrame, target);
-            this.trustedEmitter.emit("targetcreated", target);
+            const target2 = new BidiFrameTarget(bidiFrame, this.#logger);
+            pageTargets.set(bidiFrame, target2);
+            this.trustedEmitter.emit("targetcreated", target2);
           });
           page.trustedEmitter.on("framenavigated", (frame) => {
             const bidiFrame = frame;
-            const target = pageTargets.get(bidiFrame);
-            if (target === void 0) {
+            const target2 = pageTargets.get(bidiFrame);
+            if (target2 === void 0) {
               this.trustedEmitter.emit("targetchanged", pageTarget);
             } else {
-              this.trustedEmitter.emit("targetchanged", target);
+              this.trustedEmitter.emit("targetchanged", target2);
             }
           });
           page.trustedEmitter.on("framedetached", (frame) => {
             const bidiFrame = frame;
-            const target = pageTargets.get(bidiFrame);
-            if (target === void 0) {
+            const target2 = pageTargets.get(bidiFrame);
+            if (target2 === void 0) {
               return;
             }
             pageTargets.delete(bidiFrame);
-            this.trustedEmitter.emit("targetdestroyed", target);
+            this.trustedEmitter.emit("targetdestroyed", target2);
           });
           page.trustedEmitter.on("workercreated", (worker) => {
             const bidiWorker = worker;
-            const target = new BidiWorkerTarget(bidiWorker, this.#logger);
-            pageTargets.set(bidiWorker, target);
-            this.trustedEmitter.emit("targetcreated", target);
+            const target2 = new BidiWorkerTarget(bidiWorker, this.#logger);
+            pageTargets.set(bidiWorker, target2);
+            this.trustedEmitter.emit("targetcreated", target2);
           });
           page.trustedEmitter.on("workerdestroyed", (worker) => {
             const bidiWorker = worker;
-            const target = pageTargets.get(bidiWorker);
-            if (target === void 0) {
+            const target2 = pageTargets.get(bidiWorker);
+            if (target2 === void 0) {
               return;
             }
             pageTargets.delete(worker);
-            this.trustedEmitter.emit("targetdestroyed", target);
+            this.trustedEmitter.emit("targetdestroyed", target2);
           });
           page.trustedEmitter.on("close", () => {
             this.#targets.delete(page);
@@ -29810,8 +29810,8 @@ var init_BrowserContext3 = __esm({
           return page;
         }
         targets() {
-          return [...this.#targets.values()].flatMap(([target, frames]) => {
-            return [target, ...frames.values()];
+          return [...this.#targets.values()].flatMap(([target2, frames]) => {
+            return [target2, ...frames.values()];
           });
         }
         /**
@@ -29992,8 +29992,8 @@ var init_Browser3 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -30015,7 +30015,7 @@ var init_Browser3 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __addDisposableResource20 = function(env2, value, async2) {
@@ -30332,8 +30332,8 @@ var init_Session = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -30355,7 +30355,7 @@ var init_Session = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     Session = (() => {
@@ -30505,8 +30505,8 @@ var init_Browser4 = __esm({
         return f;
       }
       var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-      var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-      var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+      var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+      var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
       var _2, done = false;
       for (var i = decorators.length - 1; i >= 0; i--) {
         var context2 = {};
@@ -30528,7 +30528,7 @@ var init_Browser4 = __esm({
           else descriptor[key] = _2;
         }
       }
-      if (target) Object.defineProperty(target, contextIn.name, descriptor);
+      if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
     __runInitializers23 = function(thisArg, initializers, value) {
@@ -30695,14 +30695,14 @@ var init_Browser4 = __esm({
             defaultViewport: this.#defaultViewport
           }, this.#logger);
           this.#browserContexts.set(userContext, browserContext);
-          browserContext.trustedEmitter.on("targetcreated", (target) => {
-            this.#trustedEmitter.emit("targetcreated", target);
+          browserContext.trustedEmitter.on("targetcreated", (target2) => {
+            this.#trustedEmitter.emit("targetcreated", target2);
           });
-          browserContext.trustedEmitter.on("targetchanged", (target) => {
-            this.#trustedEmitter.emit("targetchanged", target);
+          browserContext.trustedEmitter.on("targetchanged", (target2) => {
+            this.#trustedEmitter.emit("targetchanged", target2);
           });
-          browserContext.trustedEmitter.on("targetdestroyed", (target) => {
-            this.#trustedEmitter.emit("targetdestroyed", target);
+          browserContext.trustedEmitter.on("targetdestroyed", (target2) => {
+            this.#trustedEmitter.emit("targetdestroyed", target2);
           });
           return browserContext;
         }
@@ -30998,17 +30998,17 @@ var require_buffer_util = __commonJS({
     function concat2(list, totalLength) {
       if (list.length === 0) return EMPTY_BUFFER;
       if (list.length === 1) return list[0];
-      const target = Buffer.allocUnsafe(totalLength);
+      const target2 = Buffer.allocUnsafe(totalLength);
       let offset = 0;
       for (let i = 0; i < list.length; i++) {
         const buf = list[i];
-        target.set(buf, offset);
+        target2.set(buf, offset);
         offset += buf.length;
       }
       if (offset < totalLength) {
-        return new FastBuffer(target.buffer, target.byteOffset, offset);
+        return new FastBuffer(target2.buffer, target2.byteOffset, offset);
       }
-      return target;
+      return target2;
     }
     function _mask(source2, mask, output3, offset, length) {
       for (let i = 0; i < length; i++) {
@@ -32432,29 +32432,29 @@ var require_sender = __commonJS({
           offset += 2;
           payloadLength = 126;
         }
-        const target = Buffer.allocUnsafe(merge3 ? dataLength + offset : offset);
-        target[0] = options.fin ? options.opcode | 128 : options.opcode;
-        if (options.rsv1) target[0] |= 64;
-        target[1] = payloadLength;
+        const target2 = Buffer.allocUnsafe(merge3 ? dataLength + offset : offset);
+        target2[0] = options.fin ? options.opcode | 128 : options.opcode;
+        if (options.rsv1) target2[0] |= 64;
+        target2[1] = payloadLength;
         if (payloadLength === 126) {
-          target.writeUInt16BE(dataLength, 2);
+          target2.writeUInt16BE(dataLength, 2);
         } else if (payloadLength === 127) {
-          target[2] = target[3] = 0;
-          target.writeUIntBE(dataLength, 4, 6);
+          target2[2] = target2[3] = 0;
+          target2.writeUIntBE(dataLength, 4, 6);
         }
-        if (!options.mask) return [target, data];
-        target[1] |= 128;
-        target[offset - 4] = mask[0];
-        target[offset - 3] = mask[1];
-        target[offset - 2] = mask[2];
-        target[offset - 1] = mask[3];
-        if (skipMasking) return [target, data];
+        if (!options.mask) return [target2, data];
+        target2[1] |= 128;
+        target2[offset - 4] = mask[0];
+        target2[offset - 3] = mask[1];
+        target2[offset - 2] = mask[2];
+        target2[offset - 1] = mask[3];
+        if (skipMasking) return [target2, data];
         if (merge3) {
-          applyMask(data, mask, target, offset, dataLength);
-          return [target];
+          applyMask(data, mask, target2, offset, dataLength);
+          return [target2];
         }
         applyMask(data, mask, data, 0, dataLength);
-        return [target, data];
+        return [target2, data];
       }
       /**
        * Sends a close message to the other peer.
@@ -33205,7 +33205,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes3, createHash: createHash2 } = __require("crypto");
+    var { randomBytes: randomBytes4, createHash: createHash2 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -33743,7 +33743,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes3(16).toString("base64");
+      const key = randomBytes4(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -34667,7 +34667,7 @@ var init_NodeWebSocketTransport = __esm({
     DEFAULT_KEEP_ALIVE_INTERVAL_MS = 3e4;
     NodeWebSocketTransport = class _NodeWebSocketTransport {
       static create(url2, headers, logger, options = {}) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           const ws = new wrapper_default(url2, [], {
             followRedirects: true,
             perMessageDeflate: false,
@@ -34680,7 +34680,7 @@ var init_NodeWebSocketTransport = __esm({
             }
           });
           ws.addEventListener("open", () => {
-            return resolve9(new _NodeWebSocketTransport(ws, logger, options));
+            return resolve10(new _NodeWebSocketTransport(ws, logger, options));
           });
           ws.addEventListener("error", reject);
         });
@@ -34758,16 +34758,16 @@ import * as http from "node:http";
 import * as https from "node:https";
 import { URL as URL2, urlToHttpOptions } from "node:url";
 async function headHttpRequest(url2) {
-  return await new Promise((resolve9) => {
+  return await new Promise((resolve10) => {
     httpRequest(url2, "HEAD", (response) => {
       response.resume();
-      resolve9(response.statusCode === 200);
+      resolve10(response.statusCode === 200);
     }, false).then((request3) => {
       request3.on("error", () => {
-        resolve9(false);
+        resolve10(false);
       });
     }).catch(() => {
-      resolve9(false);
+      resolve10(false);
     });
   });
 }
@@ -34801,7 +34801,7 @@ async function httpRequest(url2, method, response, keepAlive = true) {
   return request3;
 }
 function downloadFile(url2, destinationPath, progressCallback, expectedHash) {
-  return new Promise(async (resolve9, reject) => {
+  return new Promise(async (resolve10, reject) => {
     let downloadedBytes = 0;
     let totalBytes = 0;
     const verifier = expectedHash ? new HashVerifier() : null;
@@ -34823,7 +34823,7 @@ function downloadFile(url2, destinationPath, progressCallback, expectedHash) {
               return;
             }
           }
-          return resolve9();
+          return resolve10();
         });
         file2.on("error", (error62) => {
           return reject(error62);
@@ -34855,7 +34855,7 @@ async function getJSON(url2) {
   }
 }
 function getText(url2) {
-  return new Promise(async (resolve9, reject) => {
+  return new Promise(async (resolve10, reject) => {
     try {
       const request3 = await httpRequest(url2, "GET", (response) => {
         let data = "";
@@ -34867,7 +34867,7 @@ function getText(url2) {
         });
         response.on("end", () => {
           try {
-            return resolve9(String(data));
+            return resolve10(String(data));
           } catch {
             return reject(new Error(`Failed to read text response from ${url2}`));
           }
@@ -36370,7 +36370,7 @@ var init_launch = __esm({
         if (opts.onExit) {
           this.#onExitHook = opts.onExit;
         }
-        this.#browserProcessExiting = new Promise((resolve9, reject) => {
+        this.#browserProcessExiting = new Promise((resolve10, reject) => {
           this.#browserProcess.once("exit", async () => {
             this.#logger?.(`Browser process ${this.#browserProcess.pid} onExit`);
             this.#clearListeners();
@@ -36381,7 +36381,7 @@ var init_launch = __esm({
               reject(err);
               return;
             }
-            resolve9();
+            resolve10();
           });
         });
       }
@@ -36497,7 +36497,7 @@ Error cause: ${isErrorLike2(error62) ? error62.stack : error62}`);
         return [...this.#logs];
       }
       waitForLineOutput(regex2, timeout2 = 0) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           const onClose = (errorOrCode) => {
             cleanup();
             reject(new Error([
@@ -36533,7 +36533,7 @@ Error cause: ${isErrorLike2(error62) ? error62.stack : error62}`);
               return;
             }
             cleanup();
-            resolve9(match[1]);
+            resolve10(match[1]);
           }
         });
       }
@@ -36650,10 +36650,10 @@ function transformHeader(header, options) {
     if (!newName) return null;
     h.name = h.type === "directory" && !newName.endsWith("/") ? `${newName}/` : newName;
     if (h.linkname) {
-      const isAbsolute5 = h.linkname.startsWith("/");
-      if (isAbsolute5 || h.type === "link") {
+      const isAbsolute7 = h.linkname.startsWith("/");
+      if (isAbsolute7 || h.type === "link") {
         const stripped = stripPath(h.linkname, strip);
-        h.linkname = isAbsolute5 ? `/${stripped}` || "/" : stripped;
+        h.linkname = isAbsolute7 ? `/${stripped}` || "/" : stripped;
       }
     }
   }
@@ -37039,8 +37039,8 @@ function createUnpacker(options = {}) {
           discard(512);
           const overrides = metaParser(pull(paddedSize).subarray(0, internalHeader.size));
           if (nextEntryOverrides.pax) nextEntryOverrides = {};
-          const target = internalHeader.type === "pax-global-header" ? paxGlobals : nextEntryOverrides;
-          for (const key in overrides) target[key] = overrides[key];
+          const target2 = internalHeader.type === "pax-global-header" ? paxGlobals : nextEntryOverrides;
+          for (const key in overrides) target2[key] = overrides[key];
           continue;
         }
         discard(512);
@@ -37241,18 +37241,18 @@ import { cpus } from "node:os";
 import * as path8 from "node:path";
 import { Readable, Writable } from "node:stream";
 function validateBounds(targetPath, destDir, errorMessage) {
-  const target = path8.resolve(targetPath);
+  const target2 = path8.resolve(targetPath);
   const dest = path8.resolve(destDir);
-  if (target !== dest && !target.startsWith(dest + path8.sep)) throw new Error(errorMessage);
+  if (target2 !== dest && !target2.startsWith(dest + path8.sep)) throw new Error(errorMessage);
 }
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative5 = path14;
-  if (/^[a-zA-Z]:/.test(relative5)) relative5 = relative5.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative5.startsWith("/")) relative5 = relative5.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative5.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative5;
+  let relative9 = path14;
+  if (/^[a-zA-Z]:/.test(relative9)) relative9 = relative9.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative9.startsWith("/")) relative9 = relative9.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative9.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative9;
 }
 function packTar(sources, options = {}) {
   const results = /* @__PURE__ */ new Map();
@@ -37263,10 +37263,10 @@ function packTar(sources, options = {}) {
   let resumeWriter = null;
   let cancelError;
   const unblock = () => {
-    const resolve9 = resume;
+    const resolve10 = resume;
     resume = null;
     drain = null;
-    resolve9?.();
+    resolve10?.();
   };
   const wakeWriter = () => {
     resumeWriter?.();
@@ -37302,8 +37302,8 @@ function packTar(sources, options = {}) {
   const onError = (error62) => stream.destroy(error62);
   const packer = createTarPacker((chunk) => {
     if (stream.destroyed) throw cancelError;
-    if (!stream.push(Buffer.from(chunk)) && !drain) drain = new Promise((resolve9) => {
-      resume = resolve9;
+    if (!stream.push(Buffer.from(chunk)) && !drain) drain = new Promise((resolve10) => {
+      resume = resolve10;
     });
   });
   (async () => {
@@ -37350,8 +37350,8 @@ function packTar(sources, options = {}) {
         if (stream.destroyed) return;
         if (allJobsQueued && writeIndex >= jobs.length) break;
         if (!results.has(writeIndex)) {
-          await new Promise((resolve9) => {
-            resumeWriter = resolve9;
+          await new Promise((resolve10) => {
+            resumeWriter = resolve10;
           });
           continue;
         }
@@ -37429,12 +37429,12 @@ function packTar(sources, options = {}) {
     };
     const processJob = async (job, index) => {
       let jobResult = null;
-      const target = normalizeName(job.target);
+      const target2 = normalizeName(job.target);
       try {
         if (job.type === "content" || job.type === "stream") {
           let body2;
           let size;
-          const isDir = target.endsWith("/");
+          const isDir = target2.endsWith("/");
           if (job.type === "stream") {
             if (!isDir && job.size <= 0 || isDir && job.size !== 0) throw new Error(isDir ? "Streams for directories must have size 0." : "Streams require a positive size.");
             size = job.size;
@@ -37454,10 +37454,10 @@ function packTar(sources, options = {}) {
             gid: job.gid ?? 0
           };
           if (stream.destroyed) return;
-          if (filter2 && !filter2(target, stat3)) return;
+          if (filter2 && !filter2(target2, stat3)) return;
           if (stream.destroyed) return;
           let header2 = {
-            name: target,
+            name: target2,
             type: isDir ? DIRECTORY : FILE,
             size: isDir ? 0 : size,
             mode: stat3.mode,
@@ -37497,7 +37497,7 @@ function packTar(sources, options = {}) {
         if (filter2 && !filter2(job.source, stat2)) return;
         if (stream.destroyed) return;
         let header = {
-          name: target,
+          name: target2,
           size: 0,
           mode: (job.mode ?? Number(stat2.mode)) & 4095,
           mtime: job.mtime === void 0 ? stat2.mtime : new Date(job.mtime.getTime()),
@@ -37511,7 +37511,7 @@ function packTar(sources, options = {}) {
         let hardlinkId;
         if (stat2.isDirectory()) {
           header.type = DIRECTORY;
-          header.name = target.endsWith("/") ? target : `${target}/`;
+          header.name = target2.endsWith("/") ? target2 : `${target2}/`;
           try {
             const entries = await fsp.readdir(source2, WITH_FILE_TYPES);
             if (stream.destroyed) return;
@@ -37632,13 +37632,13 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
   let drainReject = null;
   const settleDrain = (error62) => {
     if (!drainPromise) return;
-    const resolve9 = drainResolve;
+    const resolve10 = drainResolve;
     const reject = drainReject;
     drainPromise = null;
     drainResolve = null;
     drainReject = null;
     if (error62) reject?.(error62);
-    else resolve9?.();
+    else resolve10?.();
   };
   const resetBuffers = () => {
     bytes = 0;
@@ -37768,8 +37768,8 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
   };
   const waitDrain = () => {
     if (storedError) return Promise.reject(storedError);
-    if (state === STATE_OPENING || state === STATE_OPEN && (bytes >= BUFFER_LIMIT || queue.length >= MAX_WRITE_VECTORS)) return drainPromise ??= new Promise((resolve9, reject) => {
-      drainResolve = resolve9;
+    if (state === STATE_OPENING || state === STATE_OPEN && (bytes >= BUFFER_LIMIT || queue.length >= MAX_WRITE_VECTORS)) return drainPromise ??= new Promise((resolve10, reject) => {
+      drainResolve = resolve10;
       drainReject = reject;
     });
     return DRAINED_PROMISE;
@@ -37778,8 +37778,8 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
     if (storedError) return Promise.reject(storedError);
     if (state >= STATE_CLOSED) return DRAINED_PROMISE;
     if (endPromise) return endPromise;
-    endPromise = new Promise((resolve9, reject) => {
-      endResolve = resolve9;
+    endPromise = new Promise((resolve10, reject) => {
+      endResolve = resolve10;
       endReject = reject;
       if (state === STATE_OPEN && !flushing) if (queue.length > 0) flush();
       else close2();
@@ -37952,7 +37952,7 @@ var init_fs = __esm({
       let head = 0;
       let idle = null;
       let resolveIdle = null;
-      const ensureIdle = () => idle ??= new Promise((resolve9) => resolveIdle = resolve9);
+      const ensureIdle = () => idle ??= new Promise((resolve10) => resolveIdle = resolve10);
       const flush = () => {
         while (active < concurrency && head < tasks.length) {
           const task = tasks[head++];
@@ -37975,8 +37975,8 @@ var init_fs = __esm({
       return {
         add(op) {
           const wasIdle = active === 0 && head === tasks.length;
-          return new Promise((resolve9, reject) => {
-            tasks.push(() => Promise.resolve().then(op).then(resolve9, reject));
+          return new Promise((resolve10, reject) => {
+            tasks.push(() => Promise.resolve().then(op).then(resolve10, reject));
             if (wasIdle) ensureIdle();
             flush();
           });
@@ -38419,8 +38419,8 @@ async function extractZipWithYauzl(archivePath, folderPath, _logger) {
   const open4 = promisify(yauzl.open);
   try {
     const zipFile = await open4(archivePath, { lazyEntries: true });
-    await new Promise((resolve9, reject) => {
-      zipFile.on("error", reject).on("end", resolve9).on("entry", (entry) => {
+    await new Promise((resolve10, reject) => {
+      zipFile.on("error", reject).on("end", resolve10).on("entry", (entry) => {
         extractZipEntry(zipFile, entry, folderPath).then(() => {
           zipFile.readEntry();
         }, reject);
@@ -38667,8 +38667,8 @@ function debugTimeEnd(label, logger) {
   if (!start) {
     return;
   }
-  const duration3 = end[0] * 1e3 + end[1] / 1e6 - (start[0] * 1e3 + start[1] / 1e6);
-  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label}: ${duration3}ms`);
+  const duration4 = end[0] * 1e3 + end[1] / 1e6 - (start[0] * 1e3 + start[1] / 1e6);
+  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label}: ${duration4}ms`);
 }
 async function installWithProviders(options) {
   if (!options.platform) {
@@ -39122,20 +39122,20 @@ var init_lib = __esm({
       renderInline(source2, previousLine) {
         const match = source2.match(/^ */);
         const leadingWhitespace = match ? match[0].length : 0;
-        const target = previousLine.text;
-        const targetTextWidth = mixin.stringWidth(target.trimRight());
+        const target2 = previousLine.text;
+        const targetTextWidth = mixin.stringWidth(target2.trimRight());
         if (!previousLine.span) {
           return source2;
         }
         if (!this.wrap) {
           previousLine.hidden = true;
-          return target + source2;
+          return target2 + source2;
         }
         if (leadingWhitespace < targetTextWidth) {
           return source2;
         }
         previousLine.hidden = true;
-        return target.trimRight() + " ".repeat(leadingWhitespace - targetTextWidth) + source2.trimLeft();
+        return target2.trimRight() + " ".repeat(leadingWhitespace - targetTextWidth) + source2.trimLeft();
       }
       rasterize(row) {
         const rrows = [];
@@ -43232,21 +43232,21 @@ function getPathToDefaultConfig(cwd, pathToExtend) {
   return shim2.path.resolve(cwd, pathToExtend);
 }
 function mergeDeep(config1, config22) {
-  const target = {};
+  const target2 = {};
   function isObject2(obj) {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
-  Object.assign(target, config1);
+  Object.assign(target2, config1);
   for (const key of Object.keys(config22)) {
     if (key === "__proto__")
       continue;
-    if (isObject2(config22[key]) && isObject2(target[key])) {
-      target[key] = mergeDeep(config1[key], config22[key]);
+    if (isObject2(config22[key]) && isObject2(target2[key])) {
+      target2[key] = mergeDeep(config1[key], config22[key]);
     } else {
-      target[key] = config22[key];
+      target2[key] = config22[key];
     }
   }
-  return target;
+  return target2;
 }
 var previouslyVisitedConfigs, shim2;
 var init_apply_extends = __esm({
@@ -43693,12 +43693,12 @@ var init_yargs_factory = __esm({
       async getCompletion(args, done) {
         argsert("<array> [function]", [args, done], arguments.length);
         if (!done) {
-          return new Promise((resolve9, reject) => {
+          return new Promise((resolve10, reject) => {
             __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, (err, completions) => {
               if (err)
                 reject(err);
               else
-                resolve9(completions);
+                resolve10(completions);
             });
           });
         } else {
@@ -44870,15 +44870,15 @@ var init_CLI = __esm({
         const { default: yargs } = await Promise.resolve().then(() => (init_yargs(), yargs_exports));
         const { hideBin: hideBin2 } = await Promise.resolve().then(() => (init_helpers(), helpers_exports));
         const yargsInstance = yargs(hideBin2(argv));
-        let target = yargsInstance.scriptName(this.#scriptName).version(this.#version);
+        let target2 = yargsInstance.scriptName(this.#scriptName).version(this.#version);
         if (this.#prefixCommand) {
-          target = target.command(this.#prefixCommand.cmd, this.#prefixCommand.description, (yargs2) => {
+          target2 = target2.command(this.#prefixCommand.cmd, this.#prefixCommand.description, (yargs2) => {
             return this.#build(yargs2);
           });
         } else {
-          target = this.#build(target);
+          target2 = this.#build(target2);
         }
-        await target.demandCommand(1).help().wrap(Math.min(120, yargsInstance.terminalWidth())).parseAsync();
+        await target2.demandCommand(1).help().wrap(Math.min(120, yargsInstance.terminalWidth())).parseAsync();
       }
       #build(yargs) {
         const latestOrPinned = this.#pinnedBrowsers ? "pinned" : "latest";
@@ -45046,7 +45046,7 @@ var init_CLI = __esm({
             "-c",
             testCommand
           ];
-          await new Promise((resolve9, reject) => {
+          await new Promise((resolve10, reject) => {
             const createProcess = spawn2(pythonExecutable, bisectArgs, {
               stdio: "inherit"
             });
@@ -45057,7 +45057,7 @@ var init_CLI = __esm({
               if (code !== 0) {
                 reject(new Error(`Process exited with code ${code}`));
               } else {
-                resolve9();
+                resolve10();
               }
             });
           });
@@ -45256,9 +45256,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join13 } = await import("node:path");
+    const { join: join18 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join13(userDataDir, "DevToolsActivePort");
+    const portPath = join18(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line) => {
@@ -51774,7 +51774,7 @@ var require_lexer = __commonJS({
 var require_line_counter = __commonJS({
   "node_modules/yaml/dist/parse/line-counter.js"(exports) {
     "use strict";
-    var LineCounter = class {
+    var LineCounter2 = class {
       constructor() {
         this.lineStarts = [];
         this.addNewLine = (offset) => this.lineStarts.push(offset);
@@ -51797,7 +51797,7 @@ var require_line_counter = __commonJS({
         };
       }
     };
-    exports.LineCounter = LineCounter;
+    exports.LineCounter = LineCounter2;
   }
 });
 
@@ -51872,12 +51872,12 @@ var require_parser = __commonJS({
       }
       return prev.splice(i, prev.length);
     }
-    function arrayPushArray(target, source2) {
+    function arrayPushArray(target2, source2) {
       if (source2.length < 1e5)
-        Array.prototype.push.apply(target, source2);
+        Array.prototype.push.apply(target2, source2);
       else
         for (let i = 0; i < source2.length; ++i)
-          target.push(source2[i]);
+          target2.push(source2[i]);
     }
     function fixFlowSeqItems(fc) {
       if (fc.start.type === "flow-seq-start") {
@@ -52705,7 +52705,7 @@ var require_public_api = __commonJS({
         return docs;
       return Object.assign([], { empty: true }, composer$1.streamInfo());
     }
-    function parseDocument(source2, options = {}) {
+    function parseDocument2(source2, options = {}) {
       const { lineCounter: lineCounter2, prettyErrors } = parseOptions(options);
       const parser$1 = new parser2.Parser(lineCounter2?.addNewLine);
       const composer$1 = new composer.Composer(options);
@@ -52731,7 +52731,7 @@ var require_public_api = __commonJS({
       } else if (options === void 0 && reviver && typeof reviver === "object") {
         options = reviver;
       }
-      const doc = parseDocument(src, options);
+      const doc = parseDocument2(src, options);
       if (!doc)
         return null;
       doc.warnings.forEach((warning) => log2.warn(doc.options.logLevel, warning));
@@ -52767,7 +52767,7 @@ var require_public_api = __commonJS({
     }
     exports.parse = parse6;
     exports.parseAllDocuments = parseAllDocuments;
-    exports.parseDocument = parseDocument;
+    exports.parseDocument = parseDocument2;
     exports.stringify = stringify2;
   }
 });
@@ -56164,7 +56164,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve9.call(this, root, ref);
+      let _sch = resolve10.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a6 = root.localRefs) === null || _a6 === void 0 ? void 0 : _a6[ref];
         const { schemaId } = this.opts;
@@ -56191,7 +56191,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve9(root, ref) {
+    function resolve10(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -57021,7 +57021,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve9(baseURI, relativeURI, options) {
+    function resolve10(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -57054,58 +57054,58 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative5, options, skipNormalization) {
-      const target = {};
+    function resolveComponent(base, relative9, options, skipNormalization) {
+      const target2 = {};
       if (!skipNormalization) {
         base = parse6(serialize(base, options), options);
-        relative5 = parse6(serialize(relative5, options), options);
+        relative9 = parse6(serialize(relative9, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative5.scheme) {
-        target.scheme = relative5.scheme;
-        target.userinfo = relative5.userinfo;
-        target.host = relative5.host;
-        target.port = relative5.port;
-        target.path = removeDotSegments(relative5.path || "");
-        target.query = relative5.query;
+      if (!options.tolerant && relative9.scheme) {
+        target2.scheme = relative9.scheme;
+        target2.userinfo = relative9.userinfo;
+        target2.host = relative9.host;
+        target2.port = relative9.port;
+        target2.path = removeDotSegments(relative9.path || "");
+        target2.query = relative9.query;
       } else {
-        if (relative5.userinfo !== void 0 || relative5.host !== void 0 || relative5.port !== void 0) {
-          target.userinfo = relative5.userinfo;
-          target.host = relative5.host;
-          target.port = relative5.port;
-          target.path = removeDotSegments(relative5.path || "");
-          target.query = relative5.query;
+        if (relative9.userinfo !== void 0 || relative9.host !== void 0 || relative9.port !== void 0) {
+          target2.userinfo = relative9.userinfo;
+          target2.host = relative9.host;
+          target2.port = relative9.port;
+          target2.path = removeDotSegments(relative9.path || "");
+          target2.query = relative9.query;
         } else {
-          if (!relative5.path) {
-            target.path = base.path;
-            if (relative5.query !== void 0) {
-              target.query = relative5.query;
+          if (!relative9.path) {
+            target2.path = base.path;
+            if (relative9.query !== void 0) {
+              target2.query = relative9.query;
             } else {
-              target.query = base.query;
+              target2.query = base.query;
             }
           } else {
-            if (relative5.path[0] === "/") {
-              target.path = removeDotSegments(relative5.path);
+            if (relative9.path[0] === "/") {
+              target2.path = removeDotSegments(relative9.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative5.path;
+                target2.path = "/" + relative9.path;
               } else if (!base.path) {
-                target.path = relative5.path;
+                target2.path = relative9.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative5.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative9.path;
               }
-              target.path = removeDotSegments(target.path);
+              target2.path = removeDotSegments(target2.path);
             }
-            target.query = relative5.query;
+            target2.query = relative9.query;
           }
-          target.userinfo = base.userinfo;
-          target.host = base.host;
-          target.port = base.port;
+          target2.userinfo = base.userinfo;
+          target2.host = base.host;
+          target2.port = base.port;
         }
-        target.scheme = base.scheme;
+        target2.scheme = base.scheme;
       }
-      target.fragment = relative5.fragment;
-      return target;
+      target2.fragment = relative9.fragment;
+      return target2;
     }
     function equal(uriA, uriB, options) {
       const normalizedA = normalizeComparableURI(uriA, options);
@@ -57390,7 +57390,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve9,
+      resolve: resolve10,
       resolveComponent,
       equal,
       serialize,
@@ -61129,8 +61129,8 @@ function defineLazy(object3, key, getter) {
 function objectClone(obj) {
   return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }
-function assignProp(target, prop, value) {
-  Object.defineProperty(target, prop, {
+function assignProp(target2, prop, value) {
+  Object.defineProperty(target2, prop, {
     value,
     writable: true,
     enumerable: true,
@@ -61144,8 +61144,8 @@ function rawShape(def) {
 function sourceShape(schema) {
   return rawShape(schema._zod.def) ?? schema._zod.def.shape;
 }
-function deferProp(target, key, getter) {
-  Object.defineProperty(target, key, {
+function deferProp(target2, key, getter) {
+  Object.defineProperty(target2, key, {
     get() {
       const value = getter();
       assignProp(this, key, value);
@@ -61155,36 +61155,36 @@ function deferProp(target, key, getter) {
     configurable: true
   });
 }
-function putProp(target, key, value) {
-  if (key in target)
-    assignProp(target, key, value);
+function putProp(target2, key, value) {
+  if (key in target2)
+    assignProp(target2, key, value);
   else
-    target[key] = value;
+    target2[key] = value;
 }
-function mirrorShape(target, source2, keys, wrap) {
+function mirrorShape(target2, source2, keys, wrap) {
   const raw = sourceShape(source2);
   for (const key of keys) {
     const desc = Object.getOwnPropertyDescriptor(raw, key);
     if (!desc.enumerable)
       continue;
     if (desc.get) {
-      deferProp(target, key, () => {
+      deferProp(target2, key, () => {
         const value = source2._zod.def.shape[key];
         return wrap ? wrap(value, key) : value;
       });
     } else
-      putProp(target, key, wrap ? wrap(desc.value, key) : desc.value);
+      putProp(target2, key, wrap ? wrap(desc.value, key) : desc.value);
   }
 }
-function mirrorProps(target, source2) {
+function mirrorProps(target2, source2) {
   for (const key of Reflect.ownKeys(source2)) {
     const desc = Object.getOwnPropertyDescriptor(source2, key);
     if (!desc.enumerable)
       continue;
     if (desc.get)
-      deferProp(target, key, () => source2[key]);
+      deferProp(target2, key, () => source2[key]);
     else
-      putProp(target, key, desc.value);
+      putProp(target2, key, desc.value);
   }
 }
 function mergeDefs(...defs) {
@@ -61363,35 +61363,35 @@ function normalizeParams(_params) {
   return params;
 }
 function createTransparentProxy(getter) {
-  let target;
+  let target2;
   return new Proxy({}, {
     get(_2, prop, receiver) {
-      target ?? (target = getter());
-      return Reflect.get(target, prop, receiver);
+      target2 ?? (target2 = getter());
+      return Reflect.get(target2, prop, receiver);
     },
     set(_2, prop, value, receiver) {
-      target ?? (target = getter());
-      return Reflect.set(target, prop, value, receiver);
+      target2 ?? (target2 = getter());
+      return Reflect.set(target2, prop, value, receiver);
     },
     has(_2, prop) {
-      target ?? (target = getter());
-      return Reflect.has(target, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.has(target2, prop);
     },
     deleteProperty(_2, prop) {
-      target ?? (target = getter());
-      return Reflect.deleteProperty(target, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.deleteProperty(target2, prop);
     },
     ownKeys(_2) {
-      target ?? (target = getter());
-      return Reflect.ownKeys(target);
+      target2 ?? (target2 = getter());
+      return Reflect.ownKeys(target2);
     },
     getOwnPropertyDescriptor(_2, prop) {
-      target ?? (target = getter());
-      return Reflect.getOwnPropertyDescriptor(target, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.getOwnPropertyDescriptor(target2, prop);
     },
     defineProperty(_2, prop, descriptor) {
-      target ?? (target = getter());
-      return Reflect.defineProperty(target, prop, descriptor);
+      target2 ?? (target2 = getter());
+      return Reflect.defineProperty(target2, prop, descriptor);
     }
   });
 }
@@ -61862,10 +61862,10 @@ function $constructor(name, initializer3, proto, params) {
       let up = own2;
       while (up && up !== ctorProto)
         up = Object.getPrototypeOf(up);
-      const target = up ?? own2;
-      if (!initialized.has(target)) {
-        initialized.add(target);
-        members(target, protoMembers);
+      const target2 = up ?? own2;
+      if (!initialized.has(target2)) {
+        initialized.add(target2);
+        members(target2, protoMembers);
       }
     }
     const proto2 = _2.prototype;
@@ -65408,7 +65408,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve9) {
+function isRecursive(inst, stack, resolve10) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -65418,7 +65418,7 @@ function isRecursive(inst, stack, resolve9) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve9);
+      const answer = isRecursive(child, stack, resolve10);
       if (answer > result)
         result = answer;
     }
@@ -65429,7 +65429,7 @@ function isRecursive(inst, stack, resolve9) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve9) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve10) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -65493,7 +65493,7 @@ function isRecursive(inst, stack, resolve9) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve9 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve10 ? inst._zod.innerType : void 0);
       merge3(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -73349,8 +73349,8 @@ function withParser(schema, parser2) {
     installCompiledUserMethods(clone2, schema, parser2);
   return clone2;
 }
-function installCompiledUserMethods(target, source2, parser2) {
-  const targetAny = target;
+function installCompiledUserMethods(target2, source2, parser2) {
+  const targetAny = target2;
   const sourceAny = source2;
   if (typeof sourceAny.safeParse === "function") {
     const originalSafeParse = sourceAny.safeParse;
@@ -75945,26 +75945,26 @@ function _stringFormat(Class2, format3, fnOrRegex, _params = {}) {
 }
 
 // node_modules/zod/v4/core/to-json-schema.js
-function assignProps(target, ...sources) {
+function assignProps(target2, ...sources) {
   for (const source2 of sources) {
     for (const key of Reflect.ownKeys(source2)) {
       if (Object.prototype.propertyIsEnumerable.call(source2, key)) {
-        assignProp(target, key, source2[key]);
+        assignProp(target2, key, source2[key]);
       }
     }
   }
-  return target;
+  return target2;
 }
 function initializeContext(params) {
-  let target = params?.target ?? "draft-2020-12";
-  if (target === "draft-4")
-    target = "draft-04";
-  if (target === "draft-7")
-    target = "draft-07";
+  let target2 = params?.target ?? "draft-2020-12";
+  if (target2 === "draft-4")
+    target2 = "draft-04";
+  if (target2 === "draft-7")
+    target2 = "draft-07";
   return {
     processors: params.processors ?? {},
     metadataRegistry: params?.metadata ?? globalRegistry,
-    target,
+    target: target2,
     unrepresentable: params?.unrepresentable ?? "throw",
     override: params?.override ?? (() => {
     }),
@@ -76467,8 +76467,8 @@ var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
   return finalize(ctx, schema);
 };
 var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) => {
-  const { libraryOptions, target } = params ?? {};
-  const ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors });
+  const { libraryOptions, target: target2 } = params ?? {};
+  const ctx = initializeContext({ ...libraryOptions ?? {}, target: target2, io, processors });
   processSchema(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
@@ -77662,8 +77662,8 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   catch(params) {
     return _catch2(this, params);
   },
-  pipe(target) {
-    return pipe(this, target);
+  pipe(target2) {
+    return pipe(this, target2);
   },
   readonly() {
     return readonly(this);
@@ -81674,12 +81674,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve9) => {
+    return new Promise((resolve10) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve9();
+        resolve10();
       } else {
-        this._stdout.once("drain", resolve9);
+        this._stdout.once("drain", resolve10);
       }
     });
   }
@@ -82877,8 +82877,8 @@ var __esDecorate24 = function(ctor, descriptorIn, decorators, contextIn, initial
     return f;
   }
   var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-  var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-  var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+  var target2 = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+  var descriptor = descriptorIn || (target2 ? Object.getOwnPropertyDescriptor(target2, contextIn.name) : {});
   var _2, done = false;
   for (var i = decorators.length - 1; i >= 0; i--) {
     var context2 = {};
@@ -82900,7 +82900,7 @@ var __esDecorate24 = function(ctor, descriptorIn, decorators, contextIn, initial
       else descriptor[key] = _2;
     }
   }
-  if (target) Object.defineProperty(target, contextIn.name, descriptor);
+  if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
   done = true;
 };
 var __setFunctionName5 = function(f, name, prefix) {
@@ -82924,8 +82924,8 @@ var ScreenRecorder = (() => {
     static {
       const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
       __esDecorate24(this, _private_writeFrame_descriptor = { value: __setFunctionName5(async function(buffer) {
-        const error62 = await new Promise((resolve9) => {
-          this.#process.stdin.write(buffer, resolve9);
+        const error62 = await new Promise((resolve10) => {
+          this.#process.stdin.write(buffer, resolve10);
         });
         if (error62) {
           console.log(`ffmpeg failed to write: ${error62.message}.`);
@@ -83119,8 +83119,8 @@ var ScreenRecorder = (() => {
       const [buffer, timestamp] = await this.#lastFrame;
       await Promise.all(Array(Math.max(1, Math.round(this.#fps * (performance.now() - timestamp) / 1e3))).fill(buffer).map(this.#writeFrame.bind(this)));
       this.#process.stdin.end();
-      await new Promise((resolve9) => {
-        this.#process.once("close", resolve9);
+      await new Promise((resolve10) => {
+        this.#process.once("close", resolve10);
       });
     }
     async [(_private_writeFrame_decorators = [guarded()], _stop_decorators = [guarded()], asyncDisposeSymbol)]() {
@@ -83548,7 +83548,7 @@ function shutdown(code = 0, reason = "stop") {
     log.debug(`shutting down (${reason}), ${cleanups.size} cleanup step(s)`);
     for (const fn of cleanups) {
       try {
-        await Promise.race([fn(), new Promise((resolve9) => setTimeout(resolve9, 3e3))]);
+        await Promise.race([fn(), new Promise((resolve10) => setTimeout(resolve10, 3e3))]);
       } catch (error62) {
         log.warn("cleanup step failed", error62);
       }
@@ -83563,6 +83563,70 @@ function installShutdownHandlers() {
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => void shutdown(0, signal));
   }
+}
+
+// packages/server/src/run/plan-schema.ts
+var MODES = ["interactive", "checkpoints", "autonomous"];
+var target = external_exports.object({
+  role: external_exports.string().optional().describe('ARIA role, like "button" or "textbox".'),
+  name: external_exports.string().optional().describe('The name the user sees, like "Checkout".'),
+  selector: external_exports.string().optional().describe("A CSS or Puppeteer selector."),
+  value: external_exports.string().optional().describe("Text to type, option to choose, or key to press."),
+  files: external_exports.array(external_exports.string()).optional().describe("Files to upload, from the project folder.")
+}).strict();
+var action = external_exports.object({
+  navigate: external_exports.string().optional().describe('A URL or a path like "/cart".'),
+  click: target.optional(),
+  dblclick: target.optional(),
+  hover: target.optional(),
+  fill: target.optional(),
+  select: target.optional(),
+  check: target.optional(),
+  uncheck: target.optional(),
+  press: target.optional(),
+  scroll: target.optional(),
+  upload: target.optional(),
+  wait: external_exports.string().optional().describe("Text to wait for on the page.")
+}).strict().refine((value) => Object.keys(value).length === 1, {
+  message: 'Use exactly one action, like "click" or "fill".'
+}).describe("An exact action for this step. The agent uses it instead of guessing.");
+var stepSchema = external_exports.object({
+  id: external_exports.string().regex(
+    /^[a-z0-9][a-z0-9-]*$/,
+    'Use lowercase letters, numbers, and dashes, like "open-cart".'
+  ).optional().describe("A short id for the step. Reports and scripts use it."),
+  do: external_exports.string().min(1).describe("What to do, in plain words."),
+  expect: external_exports.string().optional().describe("What the developer should see after the step. Make it specific."),
+  checkpoint: external_exports.boolean().optional().describe("In checkpoints mode, ask the developer to confirm this step."),
+  action: action.optional(),
+  screenshot: external_exports.boolean().optional().describe("Save a screenshot after this step."),
+  visual: external_exports.boolean().optional().describe("Compare a screenshot with the saved baseline (Phase 5).")
+}).strict();
+var planSchema = external_exports.object({
+  name: external_exports.string().min(1).describe("The name of the test."),
+  description: external_exports.string().optional(),
+  baseUrl: external_exports.url().optional().describe("The start page. Overrides baseUrl in config.yaml."),
+  mode: external_exports.enum(MODES).optional().describe(
+    "interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step."
+  ),
+  device: external_exports.string().optional().describe('Screen preset, like "mobile" (Phase 5).'),
+  colorScheme: external_exports.enum(["light", "dark"]).optional().describe("Light or dark mode (Phase 5)."),
+  network: external_exports.enum(["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"]).optional().describe("Network speed (Phase 5)."),
+  session: external_exports.string().optional().describe("A saved login to use (Phase 5)."),
+  steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
+}).strict();
+var LATER_KEYS = {
+  device: "Phase 5",
+  colorScheme: "Phase 5",
+  network: "Phase 5",
+  session: "Phase 5"
+};
+var LATER_STEP_KEYS = { visual: "Phase 5" };
+function planJsonSchema() {
+  return {
+    ...external_exports.toJSONSchema(planSchema, { target: "draft-7" }),
+    title: "Walkthrough test plan"
+  };
 }
 
 // packages/server/src/server.ts
@@ -84388,8 +84452,8 @@ var ZodType2 = class {
       description
     });
   }
-  pipe(target) {
-    return ZodPipeline.create(this, target);
+  pipe(target2) {
+    return ZodPipeline.create(this, target2);
   }
   readonly() {
     return ZodReadonly2.create(this);
@@ -89520,7 +89584,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
+        await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error62) {
@@ -89537,7 +89601,7 @@ var Protocol = class {
    */
   request(request3, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve9, reject) => {
+    return new Promise((resolve10, reject) => {
       const earlyReject = (error62) => {
         reject(error62);
       };
@@ -89615,7 +89679,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve9(parseResult.data);
+            resolve10(parseResult.data);
           }
         } catch (error62) {
           reject(error62);
@@ -89876,12 +89940,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve9, reject) => {
+    return new Promise((resolve10, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve9, interval);
+      const timeoutId = setTimeout(resolve10, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -90972,7 +91036,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
+      await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -92113,7 +92177,7 @@ var DeveloperPanel = class {
     const end = Date.now() + ms;
     while (Date.now() < end) {
       if (this.bridges.get(tabId)?.ready) return true;
-      await new Promise((resolve9) => setTimeout(resolve9, 100));
+      await new Promise((resolve10) => setTimeout(resolve10, 100));
     }
     return Boolean(this.bridges.get(tabId)?.ready);
   }
@@ -92165,9 +92229,9 @@ var DeveloperPanel = class {
     }
   }
   finish(outcome) {
-    const resolve9 = this.waiter;
+    const resolve10 = this.waiter;
     this.waiter = void 0;
-    resolve9?.(outcome);
+    resolve10?.(outcome);
   }
   // Shows a new question. Any older question is replaced.
   async ask(input3) {
@@ -92184,14 +92248,14 @@ var DeveloperPanel = class {
       return Promise.resolve({ kind: "answer", answer, question });
     }
     if (!this.question) return Promise.resolve({ kind: "canceled" });
-    return new Promise((resolve9) => {
+    return new Promise((resolve10) => {
       const timer2 = setTimeout(() => this.finish({ kind: "timeout" }), timeoutMs);
       const onAbort = () => this.finish({ kind: "canceled" });
       signal?.addEventListener("abort", onAbort, { once: true });
       this.waiter = (outcome) => {
         clearTimeout(timer2);
         signal?.removeEventListener("abort", onAbort);
-        resolve9(outcome);
+        resolve10(outcome);
       };
     });
   }
@@ -92238,22 +92302,22 @@ function endpointFromProfile(dir) {
   const [port, path14] = readFileSync7(file2, "utf8").trim().split("\n");
   return `ws://127.0.0.1:${port}${path14}`;
 }
-async function attachChrome(target) {
+async function attachChrome(target2) {
   try {
-    if (/^https?:\/\//.test(target)) return await puppeteer_core_default.connect({ browserURL: target });
-    if (/^wss?:\/\//.test(target)) return await puppeteer_core_default.connect({ browserWSEndpoint: target });
-    if (existsSync6(target) && statSync3(target).isDirectory()) {
-      return await puppeteer_core_default.connect({ browserWSEndpoint: endpointFromProfile(target) });
+    if (/^https?:\/\//.test(target2)) return await puppeteer_core_default.connect({ browserURL: target2 });
+    if (/^wss?:\/\//.test(target2)) return await puppeteer_core_default.connect({ browserWSEndpoint: target2 });
+    if (existsSync6(target2) && statSync3(target2).isDirectory()) {
+      return await puppeteer_core_default.connect({ browserWSEndpoint: endpointFromProfile(target2) });
     }
   } catch (error62) {
     if (error62 instanceof ToolError) throw error62;
     throw new ToolError(
-      `Could not connect to Chrome at ${target}: ${error62.message}. Start Chrome with --remote-debugging-port=9222 and a separate --user-data-dir. See docs/troubleshooting.md.`,
+      `Could not connect to Chrome at ${target2}: ${error62.message}. Start Chrome with --remote-debugging-port=9222 and a separate --user-data-dir. See docs/troubleshooting.md.`,
       "attach_failed"
     );
   }
   throw new ToolError(
-    `"${target}" is not a Chrome address. Use a URL like http://127.0.0.1:9222 or a Chrome profile folder.`,
+    `"${target2}" is not a Chrome address. Use a URL like http://127.0.0.1:9222 or a Chrome profile folder.`,
     "attach_failed"
   );
 }
@@ -92302,9 +92366,9 @@ function removeProfile(dir) {
 async function killChrome(browser) {
   const proc = browser.process();
   if (!proc || proc.exitCode !== null) return;
-  const exited = new Promise((resolve9) => proc.once("exit", resolve9));
+  const exited = new Promise((resolve10) => proc.once("exit", resolve10));
   proc.kill("SIGKILL");
-  await Promise.race([exited, new Promise((resolve9) => setTimeout(resolve9, 2e3))]);
+  await Promise.race([exited, new Promise((resolve10) => setTimeout(resolve10, 2e3))]);
 }
 
 // packages/server/src/browser/navigation-guard.ts
@@ -92392,11 +92456,11 @@ var Driver = class _Driver {
       if (this.profileDir) removeProfile(this.profileDir);
       this.removeShutdown?.();
     });
-    this.browser.on("targetcreated", (target) => this.track(this.onTarget(target)));
+    this.browser.on("targetcreated", (target2) => this.track(this.onTarget(target2)));
     this.removeShutdown = onShutdown(async () => {
       if (this.mode === "launched") {
         await killChrome(this.browser);
-        await new Promise((resolve9) => setTimeout(resolve9, 300));
+        await new Promise((resolve10) => setTimeout(resolve10, 300));
         if (this.profileDir) removeProfile(this.profileDir);
       } else {
         await this.browser.disconnect().catch(() => void 0);
@@ -92404,11 +92468,11 @@ var Driver = class _Driver {
     });
   }
   // A new tab or popup opened.
-  async onTarget(target) {
-    if (target.type() !== "page") return;
-    const page = await target.page().catch(() => null);
+  async onTarget(target2) {
+    if (target2.type() !== "page") return;
+    const page = await target2.page().catch(() => null);
     if (!page || this.findTab(page)) return;
-    const openerPage = await target.opener()?.page().catch(() => null);
+    const openerPage = await target2.opener()?.page().catch(() => null);
     const opener = openerPage ? this.findTab(openerPage) : void 0;
     if (this.mode === "attached" && !opener) return;
     const tab = await this.addTab(page, opener?.id);
@@ -92422,9 +92486,9 @@ var Driver = class _Driver {
   // After a click, Chrome reports new tabs and blocked pages a moment later.
   // Wait for those reports, so the agent hears about them in the same reply.
   async settleEvents(graceMs = 250) {
-    await new Promise((resolve9) => setTimeout(resolve9, graceMs));
+    await new Promise((resolve10) => setTimeout(resolve10, graceMs));
     const pending = Promise.allSettled([...this.inflight]);
-    await Promise.race([pending, new Promise((resolve9) => setTimeout(resolve9, 3e3))]);
+    await Promise.race([pending, new Promise((resolve10) => setTimeout(resolve10, 3e3))]);
   }
   findTab(page) {
     for (const tab of this.tabs.values()) if (tab.page === page) return tab;
@@ -92530,9 +92594,9 @@ var Driver = class _Driver {
   // Resolves when a dialog opens and waits for an answer.
   nextDialog(tabId) {
     let listener = () => void 0;
-    const promise2 = new Promise((resolve9) => {
+    const promise2 = new Promise((resolve10) => {
       listener = (d) => {
-        if (d.tabId === tabId) resolve9(d);
+        if (d.tabId === tabId) resolve10(d);
       };
       this.emitter.on("dialog", listener);
     });
@@ -92635,6 +92699,39 @@ var Mutex2 = class {
   }
 };
 
+// packages/server/src/project-files.ts
+import { existsSync as existsSync7, mkdirSync, writeFileSync } from "node:fs";
+import { join as join11 } from "node:path";
+var GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
+.env
+sessions/
+runs/
+config.local.yaml
+`;
+function ensureWalkthroughDir(projectDir) {
+  const dir = join11(projectDir, ".walkthrough");
+  mkdirSync(dir, { recursive: true });
+  const ignore = join11(dir, ".gitignore");
+  if (!existsSync7(ignore)) writeFileSync(ignore, GITIGNORE);
+  return dir;
+}
+function stamp(date5 = /* @__PURE__ */ new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    day: `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}`,
+    time: `${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`
+  };
+}
+function adhocEvidenceDir(projectDir) {
+  const dir = join11(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+function fileStamp(label) {
+  const safe = (label ?? "screenshot").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return `${stamp().time}-${safe || "screenshot"}`;
+}
+
 // packages/server/src/context.ts
 var Context = class {
   constructor(roots, clientName = () => void 0) {
@@ -92647,6 +92744,10 @@ var Context = class {
   actionLog = [];
   stepAnswers = [];
   driver;
+  // The test run in progress, if any.
+  run;
+  // Actions before this index already belong to a recorded step.
+  actionCursor = 0;
   loaded;
   // Reads the project folder, settings, and secrets again.
   async refresh(projectDirArg) {
@@ -92672,6 +92773,10 @@ var Context = class {
   }
   async guard() {
     return (await this.ensureLoaded()).guard;
+  }
+  // Where screenshots go: the run folder during a run, otherwise a folder for today.
+  evidenceDir(projectDir) {
+    return this.run?.run.status === "running" ? this.run.screenshotsDir : adhocEvidenceDir(projectDir);
   }
   // The open browser. Throws a clear message if there is none.
   requireDriver() {
@@ -92779,6 +92884,33 @@ async function goTo(tab, url2) {
     throw new ToolError(`Could not open ${url2}: ${message}`, "navigation_failed");
   }
 }
+async function openBrowser(ctx, options) {
+  const config3 = await ctx.config();
+  const guard = await ctx.guard();
+  const lines = [];
+  let driver = ctx.driver?.alive ? ctx.driver : void 0;
+  const alreadyOpen = Boolean(driver);
+  if (driver) {
+    lines.push("The browser is already open.");
+  } else {
+    driver = await ctx.startDriver(options.attach);
+    lines.push(
+      driver.mode === "attached" ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.` : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`
+    );
+  }
+  for (const warning of config3.warnings) lines.push(`Warning: ${warning}`);
+  const tab = driver.activeTab();
+  const target2 = options.url ?? (alreadyOpen && !options.alwaysGo ? void 0 : config3.baseUrl);
+  if (target2) {
+    const full = fullUrl(target2, tab.page.url(), config3.baseUrl);
+    guard.check(full);
+    const problem = await goTo(tab, full);
+    if (problem) lines.push(problem);
+  }
+  lines.push(await pageSummary(tab));
+  lines.push("Next, take a snapshot to see the page.");
+  return { text: lines.join("\n"), tab };
+}
 function registerBrowserTools(server, ctx) {
   server.registerTool(
     "doctor",
@@ -92808,31 +92940,8 @@ function registerBrowserTools(server, ctx) {
       }
     },
     ({ url: url2, attach, projectDir }) => runTool(ctx, "browser_open", async () => {
-      const config3 = await ctx.refresh(projectDir);
-      const guard = await ctx.guard();
-      const lines = [];
-      let driver = ctx.driver?.alive ? ctx.driver : void 0;
-      const alreadyOpen = Boolean(driver);
-      if (driver) {
-        lines.push("The browser is already open.");
-      } else {
-        driver = await ctx.startDriver(attach);
-        lines.push(
-          driver.mode === "attached" ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.` : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`
-        );
-      }
-      for (const warning of config3.warnings) lines.push(`Warning: ${warning}`);
-      const tab = driver.activeTab();
-      const target = url2 ?? (alreadyOpen ? void 0 : config3.baseUrl);
-      if (target) {
-        const full = fullUrl(target, tab.page.url(), config3.baseUrl);
-        guard.check(full);
-        const problem = await goTo(tab, full);
-        if (problem) lines.push(problem);
-      }
-      lines.push(await pageSummary(tab));
-      lines.push("Next, take a snapshot to see the page.");
-      return lines.join("\n");
+      await ctx.refresh(projectDir);
+      return (await openBrowser(ctx, { url: url2, attach })).text;
     })
   );
   server.registerTool(
@@ -92859,21 +92968,21 @@ function registerBrowserTools(server, ctx) {
         action: external_exports.enum(["back", "forward", "reload"]).optional().describe("Use instead of url.")
       }
     },
-    ({ url: url2, action }) => runTool(ctx, "navigate", async () => {
+    ({ url: url2, action: action2 }) => runTool(ctx, "navigate", async () => {
       const driver = ctx.requireDriver();
       const config3 = await ctx.config();
       const guard = await ctx.guard();
-      const tab = action === "reload" ? reloadableTab(driver) : driver.activeTab();
+      const tab = action2 === "reload" ? reloadableTab(driver) : driver.activeTab();
       let problem;
       if (url2) {
         const full = fullUrl(url2, tab.page.url(), config3.baseUrl);
         guard.check(full);
         problem = await goTo(tab, full);
-      } else if (action === "back") {
+      } else if (action2 === "back") {
         await tab.page.goBack({ waitUntil: "load" });
-      } else if (action === "forward") {
+      } else if (action2 === "forward") {
         await tab.page.goForward({ waitUntil: "load" });
-      } else if (action === "reload") {
+      } else if (action2 === "reload") {
         await tab.page.reload({ waitUntil: "load" });
         tab.crashed = false;
       } else {
@@ -92893,16 +93002,16 @@ function registerBrowserTools(server, ctx) {
         id: external_exports.string().optional().describe('Tab id, like "t2". Needed for switch and close.')
       }
     },
-    ({ action, id }) => runTool(ctx, "tabs", async () => {
+    ({ action: action2, id }) => runTool(ctx, "tabs", async () => {
       const driver = ctx.requireDriver();
-      if (action === "switch") {
+      if (action2 === "switch") {
         if (!id) throw new ToolError("Give the id of the tab to switch to.", "bad_input");
         const tab = driver.switchTo(id);
         return `Switched to tab ${tab.id}.
 ${await pageSummary(tab)}
 Take a snapshot to see the page.`;
       }
-      if (action === "close") {
+      if (action2 === "close") {
         if (!id) throw new ToolError("Give the id of the tab to close.", "bad_input");
         const tab = driver.tabs.get(id);
         if (!tab) throw new ToolError(`There is no tab "${id}".`, "no_tab");
@@ -92938,17 +93047,17 @@ Take a snapshot to see the page.`;
         policy: external_exports.enum(["ask", "accept", "dismiss"]).optional().describe('For action "policy".')
       }
     },
-    ({ action, text, policy }) => runTool(ctx, "dialog", async () => {
+    ({ action: action2, text, policy }) => runTool(ctx, "dialog", async () => {
       const driver = ctx.requireDriver();
-      if (action === "policy") {
+      if (action2 === "policy") {
         if (!policy) throw new ToolError("Give a policy: ask, accept, or dismiss.", "bad_input");
         driver.dialogPolicy = policy;
         return `Walkthrough now answers new confirm and prompt dialogs with: ${policy}.`;
       }
-      const answered = await driver.answerDialog(action === "accept", text);
+      const answered = await driver.answerDialog(action2 === "accept", text);
       const tab = driver.activeTab();
       return [
-        `${action === "accept" ? "Accepted" : "Dismissed"} the ${answered.type} dialog.`,
+        `${action2 === "accept" ? "Accepted" : "Dismissed"} the ${answered.type} dialog.`,
         await pageSummary(tab),
         "Take a snapshot to see what changed."
       ].join("\n");
@@ -92989,7 +93098,7 @@ async function withCleanPage(driver, tab, options, capture) {
   await panel?.hide(tab.id, true);
   if (options.annotate) await panel?.annotate(tab.id, options.annotate);
   const restore = await maskSecretFields(driver.secretFields);
-  await tab.page.evaluate(() => new Promise((resolve9) => requestAnimationFrame(() => resolve9(null)))).catch(() => void 0);
+  await tab.page.evaluate(() => new Promise((resolve10) => requestAnimationFrame(() => resolve10(null)))).catch(() => void 0);
   try {
     return await capture();
   } finally {
@@ -93007,41 +93116,6 @@ async function elementRect(handle) {
 
 // packages/server/src/evidence/screenshot.ts
 import { join as join12, relative as relative3 } from "node:path";
-
-// packages/server/src/project-files.ts
-import { existsSync as existsSync7, mkdirSync, writeFileSync } from "node:fs";
-import { join as join11 } from "node:path";
-var GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
-.env
-sessions/
-runs/
-config.local.yaml
-`;
-function ensureWalkthroughDir(projectDir) {
-  const dir = join11(projectDir, ".walkthrough");
-  mkdirSync(dir, { recursive: true });
-  const ignore = join11(dir, ".gitignore");
-  if (!existsSync7(ignore)) writeFileSync(ignore, GITIGNORE);
-  return dir;
-}
-function stamp(date5 = /* @__PURE__ */ new Date()) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return {
-    day: `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}`,
-    time: `${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`
-  };
-}
-function adhocEvidenceDir(projectDir) {
-  const dir = join11(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
-  mkdirSync(dir, { recursive: true });
-  return dir;
-}
-function fileStamp(label) {
-  const safe = (label ?? "screenshot").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-  return `${stamp().time}-${safe || "screenshot"}`;
-}
-
-// packages/server/src/evidence/screenshot.ts
 async function takeScreenshot(tab, dir, projectDir, options) {
   const path14 = join12(dir, `${fileStamp(options.label)}.png`);
   const { handle, fullPage = false } = options;
@@ -93053,6 +93127,44 @@ async function takeScreenshot(tab, dir, projectDir, options) {
   }
   const preview = handle ? await handle.screenshot({ type: "jpeg", quality: 60, encoding: "base64" }) : await tab.page.screenshot({ type: "jpeg", quality: 60, encoding: "base64" });
   return { path: path14, relativePath: relative3(projectDir, path14), preview };
+}
+
+// packages/server/src/run/record.ts
+import { isAbsolute as isAbsolute4, join as join13, relative as relative4 } from "node:path";
+function recordResult(ctx, ref, result) {
+  const store = ctx.run;
+  if (store?.run.status !== "running") return void 0;
+  const step = store.step(ref);
+  step.status = result.status;
+  step.checkedBy = result.checkedBy;
+  if (result.notes !== void 0) step.notes = result.notes || void 0;
+  if (result.actual !== void 0) step.actual = result.actual || void 0;
+  if (result.screenshot) {
+    const full = isAbsolute4(result.screenshot) ? result.screenshot : join13(store.projectDir, result.screenshot);
+    step.screenshots.push(relative4(store.dir, full));
+  }
+  if (result.logs) {
+    step.logs = formatLogs(result.logs);
+    step.errorCount = result.logs.filter((e) => e.level === "error").length;
+  }
+  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ action: action2, label, selector, value, url: url2 }) => ({
+    action: action2,
+    label,
+    selector,
+    value,
+    url: url2
+  }));
+  step.actions.push(...actions);
+  ctx.actionCursor = ctx.actionLog.length;
+  step.at = (/* @__PURE__ */ new Date()).toISOString();
+  store.save();
+  return step;
+}
+function nextStepHint(ctx) {
+  const next = ctx.run?.nextPending();
+  if (!ctx.run) return "";
+  if (!next) return "All steps have a result. Call run_finish to write the report.";
+  return `Next: step ${next.index} [${next.id}]${next.confirm ? " (confirm with the developer)" : ""}: ${next.title}`;
 }
 
 // packages/server/src/tools/developer-tools.ts
@@ -93067,7 +93179,7 @@ async function bugScreenshot(ctx, driver, tab, stepLabel) {
     driver,
     tab,
     { annotate: rect },
-    () => takeScreenshot(tab, adhocEvidenceDir(config3.projectDir), config3.projectDir, {
+    () => takeScreenshot(tab, ctx.evidenceDir(config3.projectDir), config3.projectDir, {
       label: `bug-${stepLabel}`
     })
   );
@@ -93223,6 +93335,24 @@ function registerDeveloperTools(server, ctx) {
         );
       }
       ctx.stepAnswers.push(record2);
+      const recorded = recordResult(
+        ctx,
+        {
+          id: question.stepId,
+          index: question.step,
+          title: question.title,
+          expect: question.expected
+        },
+        {
+          status: answer.result,
+          checkedBy: "developer",
+          notes: answer.note,
+          screenshot: record2.screenshot,
+          logs: stepLogs
+        }
+      );
+      if (recorded)
+        lines.push(`Saved as step ${recorded.index} in the run. ${nextStepHint(ctx)}`);
       return textResult(lines.join("\n"), extraContent);
     })
   );
@@ -93251,10 +93381,10 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/guards/paths.ts
 import { realpathSync, statSync as statSync4 } from "node:fs";
-import { basename as basename3, isAbsolute as isAbsolute4, relative as relative4, resolve as resolve8, sep as sep3 } from "node:path";
+import { basename as basename3, isAbsolute as isAbsolute5, relative as relative5, resolve as resolve8, sep as sep3 } from "node:path";
 var BLOCKED_NAMES = /* @__PURE__ */ new Set(["config.local.yaml", "config.local.yml"]);
 function checkUploadPath(file2, uploadsRoot, projectDir) {
-  const full = isAbsolute4(file2) ? file2 : resolve8(projectDir, file2);
+  const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
   let real;
   try {
     real = realpathSync(full);
@@ -93265,8 +93395,8 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
     throw new ToolError(`${file2} is not a file.`, "upload_blocked");
   }
   const root = realpathSync(uploadsRoot);
-  const rel = relative4(root, real);
-  if (rel.startsWith("..") || isAbsolute4(rel)) {
+  const rel = relative5(root, real);
+  if (rel.startsWith("..") || isAbsolute5(rel)) {
     throw new ToolError(
       `Walkthrough can only upload files inside ${root}. ${file2} is outside that folder.`,
       "upload_blocked"
@@ -93426,20 +93556,20 @@ async function selectOption(handle, wanted) {
   await handle.select(value);
   return value;
 }
-async function perform(ctx, tab, input3, target) {
-  const { action } = input3;
+async function perform(ctx, tab, input3, target2) {
+  const { action: action2 } = input3;
   const timeout2 = ctx.config.actionTimeoutMs;
   const need = () => {
-    if (!target)
-      throw new ToolError(`The ${action} action needs a "ref" or a "selector".`, "bad_input");
-    return target;
+    if (!target2)
+      throw new ToolError(`The ${action2} action needs a "ref" or a "selector".`, "bad_input");
+    return target2;
   };
-  switch (action) {
+  switch (action2) {
     case "click":
     case "dblclick": {
       const t = need();
-      await t.handle.asLocator().setTimeout(timeout2).click({ count: action === "dblclick" ? 2 : 1 });
-      return `${action === "click" ? "Clicked" : "Double-clicked"} ${t.label}.`;
+      await t.handle.asLocator().setTimeout(timeout2).click({ count: action2 === "dblclick" ? 2 : 1 });
+      return `${action2 === "click" ? "Clicked" : "Double-clicked"} ${t.label}.`;
     }
     case "hover": {
       const t = need();
@@ -93469,7 +93599,7 @@ async function perform(ctx, tab, input3, target) {
     case "check":
     case "uncheck": {
       const t = need();
-      const want = action === "check";
+      const want = action2 === "check";
       const now = await t.handle.evaluate((el) => el.checked);
       if (now !== want) await t.handle.asLocator().setTimeout(timeout2).click();
       const after = await t.handle.evaluate((el) => el.checked);
@@ -93486,14 +93616,14 @@ async function perform(ctx, tab, input3, target) {
           'The press action needs a "value", such as "Enter" or "Control+A".',
           "bad_input"
         );
-      if (target) await target.handle.focus();
+      if (target2) await target2.handle.focus();
       await pressKeys(tab, input3.value);
-      return `Pressed ${input3.value}${target ? ` in ${target.label}` : ""}.`;
+      return `Pressed ${input3.value}${target2 ? ` in ${target2.label}` : ""}.`;
     }
     case "scroll": {
-      if (target) {
-        await target.handle.scrollIntoView();
-        return `Scrolled ${target.label} into view.`;
+      if (target2) {
+        await target2.handle.scrollIntoView();
+        return `Scrolled ${target2.label} into view.`;
       }
       const amount = input3.value === "up" ? -600 : input3.value === "down" || !input3.value ? 600 : Number(input3.value);
       if (Number.isNaN(amount))
@@ -93527,15 +93657,15 @@ async function perform(ctx, tab, input3, target) {
     }
   }
 }
-async function highlightTarget(ctx, tab, target, action) {
+async function highlightTarget(ctx, tab, target2, action2) {
   const ms = ctx.config.highlightMs;
   const panel = ctx.driver.panel;
   if (!panel || ms <= 0) return;
-  await target.handle.scrollIntoView().catch(() => void 0);
-  const rect = await elementRect(target.handle);
+  await target2.handle.scrollIntoView().catch(() => void 0);
+  const rect = await elementRect(target2.handle);
   if (!rect) return;
-  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action]}`, ms);
-  await new Promise((resolve9) => setTimeout(resolve9, ms));
+  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action2]}`, ms);
+  await new Promise((resolve10) => setTimeout(resolve10, ms));
 }
 async function settle3(tab) {
   await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2e3 }).catch(() => void 0);
@@ -93550,20 +93680,20 @@ Navigate back to an allowed page first.`,
       "origin_blocked"
     );
   }
-  const target = await resolveTarget(ctx.driver, tab, input3);
-  if (target && await target.handle.evaluate((el) => Boolean(el.closest("uiwalk-panel")))) {
+  const target2 = await resolveTarget(ctx.driver, tab, input3);
+  if (target2 && await target2.handle.evaluate((el) => Boolean(el.closest("uiwalk-panel")))) {
     throw new ToolError(
       "That element is part of the Walkthrough panel. Only the developer uses the panel.",
       "bad_target"
     );
   }
-  const selector = target ? await stableSelector(target.handle, target) : void 0;
-  if (target) {
-    ctx.driver.lastTarget = { tabId: tab.id, handle: target.handle, label: target.label };
-    await highlightTarget(ctx, tab, target, input3.action);
+  const selector = target2 ? await stableSelector(target2.handle, target2) : void 0;
+  if (target2) {
+    ctx.driver.lastTarget = { tabId: tab.id, handle: target2.handle, label: target2.label };
+    await highlightTarget(ctx, tab, target2, input3.action);
   }
   const dialogWatch = ctx.driver.nextDialog(tab.id);
-  const work = perform(ctx, tab, input3, target);
+  const work = perform(ctx, tab, input3, target2);
   let outcome;
   try {
     outcome = await Promise.race([
@@ -93578,7 +93708,7 @@ Navigate back to an allowed page first.`,
     tabId: tab.id,
     action: input3.action,
     selector,
-    label: target?.label ?? "(page)",
+    label: target2?.label ?? "(page)",
     // Secrets stay as {{secret:NAME}} here. The real value is never stored.
     value: ["fill", "select", "press"].includes(input3.action) ? input3.value : void 0,
     url: startUrl
@@ -93731,7 +93861,7 @@ async function waitFor(tab, input3) {
     }
     if (input3.ms !== void 0) {
       const ms = Math.min(Math.max(input3.ms, 0), 3e4);
-      await new Promise((resolve9) => setTimeout(resolve9, ms));
+      await new Promise((resolve10) => setTimeout(resolve10, ms));
       return `Waited ${ms} ms.`;
     }
   } catch (error62) {
@@ -93836,10 +93966,10 @@ ${outline}`),
     ({ ref, selector }) => runTool(ctx, "read", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
-      const target = await resolveTarget(driver, tab, { ref, selector });
-      if (!target) throw new ToolError("Give a ref or a selector.", "bad_input");
-      const state = await readElement(target.handle);
-      return `${target.label}:
+      const target2 = await resolveTarget(driver, tab, { ref, selector });
+      if (!target2) throw new ToolError("Give a ref or a selector.", "bad_input");
+      const state = await readElement(target2.handle);
+      return `${target2.label}:
 ${untrusted(formatState(state))}`;
     })
   );
@@ -93885,25 +94015,746 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const config3 = await ctx.config();
-      const target = await resolveTarget(driver, tab, { ref, selector });
-      const dir = adhocEvidenceDir(config3.projectDir);
-      const rect = annotate && target ? await elementRect(target.handle) : void 0;
+      const target2 = await resolveTarget(driver, tab, { ref, selector });
+      const dir = ctx.evidenceDir(config3.projectDir);
+      const rect = annotate && target2 ? await elementRect(target2.handle) : void 0;
       const shot = await withCleanPage(
         driver,
         tab,
         { annotate: rect },
         () => takeScreenshot(tab, dir, config3.projectDir, {
-          handle: rect ? void 0 : target?.handle,
+          handle: rect ? void 0 : target2?.handle,
           fullPage,
           label
         })
       );
       const page = fullPage ? "the full page" : "the visible page";
-      const what = target && !rect ? target.label : rect ? `${page}, with ${target?.label} marked` : page;
-      const note = fullPage && !(target && !rect) ? " The preview shows only the visible part." : "";
+      const what = target2 && !rect ? target2.label : rect ? `${page}, with ${target2?.label} marked` : page;
+      const note = fullPage && !(target2 && !rect) ? " The preview shows only the visible part." : "";
       return textResult(`Saved a screenshot of ${what}: ${shot.relativePath}${note}`, [
         { type: "image", data: shot.preview, mimeType: "image/jpeg" }
       ]);
+    })
+  );
+}
+
+// packages/server/src/tools/run-tools.ts
+import { writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join17, relative as relative8 } from "node:path";
+
+// packages/server/src/report/common.ts
+var STATUS_LABELS = {
+  pass: "Passed",
+  fail: "Failed",
+  bug: "Bug",
+  skip: "Skipped",
+  stop: "Stopped",
+  blocked: "Blocked",
+  pending: "Not run"
+};
+function isProblem(step) {
+  return step.status === "bug" || step.status === "fail" || step.status === "blocked";
+}
+var ACTION_WORDS = {
+  click: "Click",
+  dblclick: "Double-click",
+  hover: "Point at",
+  fill: "Type into",
+  select: "Choose in",
+  check: "Check",
+  uncheck: "Uncheck",
+  press: "Press a key in",
+  scroll: "Scroll to",
+  upload: "Upload to"
+};
+function reproSteps(run, step) {
+  const before = run.steps.filter((s) => s.index < step.index && s.status !== "pending").map((s) => s.title);
+  const own2 = step.actions.length ? step.actions.map((a2) => {
+    const value = a2.value && a2.action !== "press" ? ` "${a2.value}"` : a2.action === "press" ? ` (${a2.value})` : "";
+    return `${ACTION_WORDS[a2.action] ?? a2.action} ${a2.label}${a2.action === "fill" ? ` the text${value}` : value}`;
+  }) : [step.title];
+  return [...run.baseUrl ? [`Open ${run.baseUrl}`] : [], ...before, ...own2];
+}
+function duration3(run) {
+  if (!run.endedAt) return "still running";
+  const seconds = Math.round((Date.parse(run.endedAt) - Date.parse(run.startedAt)) / 1e3);
+  const minutes = Math.floor(seconds / 60);
+  return minutes > 0 ? `${minutes} min ${seconds % 60} s` : `${seconds} s`;
+}
+function resultLine(run) {
+  const counts = {};
+  for (const step of run.steps) counts[step.status] = (counts[step.status] ?? 0) + 1;
+  const order2 = ["pass", "bug", "fail", "blocked", "skip", "stop", "pending"];
+  return order2.filter((s) => counts[s]).map((s) => `${counts[s]} ${STATUS_LABELS[s].toLowerCase()}`).join(", ");
+}
+var RUN_STATUS_LABELS = {
+  running: "Running",
+  finished: "Finished",
+  stopped: "Stopped by the developer",
+  incomplete: "Incomplete (the run ended early)"
+};
+
+// packages/server/src/report/html.ts
+import { readFileSync as readFileSync8 } from "node:fs";
+import { join as join14 } from "node:path";
+function esc2(text) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+function image(runDir, path14, alt) {
+  try {
+    const data = readFileSync8(join14(runDir, path14)).toString("base64");
+    return `<a href="${esc2(path14)}"><img src="data:image/png;base64,${data}" alt="${esc2(alt)}"></a>`;
+  } catch {
+    return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
+  }
+}
+function stepCard(run, runDir, step, open4) {
+  const parts = [
+    `<details class="step ${step.status}"${open4 ? " open" : ""}>`,
+    `<summary><span class="badge ${step.status}">${esc2(STATUS_LABELS[step.status])}</span> Step ${step.index}: ${esc2(step.title)}</summary>`,
+    "<dl>"
+  ];
+  if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc2(step.expect)}</dd>`);
+  if (step.actual) parts.push(`<dt>Actual</dt><dd>${esc2(step.actual)}</dd>`);
+  if (step.checkedBy)
+    parts.push(
+      `<dt>Checked by</dt><dd>${step.checkedBy === "developer" ? "The developer" : "The agent"}</dd>`
+    );
+  if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc2(step.notes)}</dd>`);
+  parts.push("</dl>");
+  if (isProblem(step)) {
+    parts.push(
+      "<h4>Steps to reproduce</h4><ol>",
+      ...reproSteps(run, step).map((s) => `<li>${esc2(s)}</li>`),
+      "</ol>"
+    );
+  }
+  for (const shot of step.screenshots)
+    parts.push(image(runDir, shot, `Step ${step.index} screenshot`));
+  if (step.logs && step.logs !== "(none)") {
+    parts.push("<h4>Errors and failed requests</h4>", `<pre>${esc2(step.logs)}</pre>`);
+  }
+  parts.push("</details>");
+  return parts.join("\n");
+}
+var CSS2 = `
+:root { --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #64748b; --line: #e2e8f0;
+  --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #94a3b8; --blocked: #c2410c; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; } }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 960px; margin: 0 auto; }
+h1 { margin: 0 0 4px; font-size: 24px; }
+.muted { color: var(--muted); }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; margin: 16px 0;
+  padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.meta div span { display: block; font-size: 12px; color: var(--muted); }
+.counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
+.badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
+.badge.stop { background: var(--stop); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
+h2 { margin-top: 28px; font-size: 18px; }
+.step { margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.step.bug, .step.fail, .step.blocked { border-left: 4px solid var(--bug); }
+summary { cursor: pointer; font-weight: 600; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 12px 0; }
+dt { color: var(--muted); } dd { margin: 0; white-space: pre-wrap; }
+img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
+pre { overflow-x: auto; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
+table { width: 100%; border-collapse: collapse; background: var(--card); }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+`;
+function htmlReport(run, runDir) {
+  const problems = run.steps.filter(isProblem);
+  const counts = /* @__PURE__ */ new Map();
+  for (const step of run.steps) counts.set(step.status, (counts.get(step.status) ?? 0) + 1);
+  const meta3 = [
+    ["Status", RUN_STATUS_LABELS[run.status]],
+    ["Mode", run.mode],
+    ["Started", new Date(run.startedAt).toLocaleString("en-US")],
+    ["Time", duration3(run)]
+  ];
+  if (run.planFile) meta3.push(["Plan", run.planFile]);
+  if (run.baseUrl) meta3.push(["Start page", run.baseUrl]);
+  if (run.chrome) meta3.push(["Browser", run.chrome]);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough report: ${esc2(run.name)}</title>
+<style>${CSS2}</style>
+</head>
+<body>
+<main>
+<h1>${esc2(run.name)}</h1>
+<p class="muted">Walkthrough report. Result: ${esc2(resultLine(run) || "no steps")}.</p>
+<div class="meta">${meta3.map(([k, v2]) => `<div><span>${esc2(k)}</span>${esc2(v2)}</div>`).join("")}</div>
+<div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc2(STATUS_LABELS[status])}</span>`).join("")}</div>
+${run.summary ? `<h2>Summary</h2><p>${esc2(run.summary)}</p>` : ""}
+${problems.length ? `<h2>Bugs and failures</h2>
+${problems.map((s) => stepCard(run, runDir, s, true)).join("\n")}` : ""}
+<h2>All steps</h2>
+<table>
+<thead><tr><th>#</th><th>Step</th><th>Result</th><th>Checked by</th><th>Notes</th></tr></thead>
+<tbody>
+${run.steps.map(
+    (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(STATUS_LABELS[s.status])}</span></td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
+  ).join("\n")}
+</tbody>
+</table>
+<h2>Step details</h2>
+${run.steps.filter((s) => !isProblem(s) && s.status !== "pending").map((s) => stepCard(run, runDir, s, false)).join("\n") || '<p class="muted">No other steps.</p>'}
+</main>
+</body>
+</html>
+`;
+}
+
+// packages/server/src/report/markdown.ts
+function stepDetails(run, step, withRepro) {
+  const out = [`### Step ${step.index}: ${step.title} (${STATUS_LABELS[step.status]})`, ""];
+  if (step.expect) out.push(`- **Expected:** ${step.expect}`);
+  if (step.actual) out.push(`- **Actual:** ${step.actual}`);
+  if (step.checkedBy)
+    out.push(`- **Checked by:** ${step.checkedBy === "developer" ? "the developer" : "the agent"}`);
+  if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  out.push("");
+  if (withRepro) {
+    out.push("**Steps to reproduce:**", "");
+    for (const [i, line] of reproSteps(run, step).entries()) out.push(`${i + 1}. ${line}`);
+    out.push("");
+  }
+  for (const shot of step.screenshots) out.push(`![Step ${step.index} screenshot](${shot})`, "");
+  if (step.logs && step.logs !== "(none)") {
+    out.push("**Errors and failed requests:**", "", "```text", step.logs, "```", "");
+  }
+  return out;
+}
+function markdownReport(run) {
+  const problems = run.steps.filter(isProblem);
+  const lines = [
+    `# Walkthrough report: ${run.name}`,
+    "",
+    `- **Result:** ${resultLine(run) || "no steps"}`,
+    `- **Status:** ${RUN_STATUS_LABELS[run.status]}`,
+    `- **Mode:** ${run.mode}`,
+    ...run.planFile ? [`- **Plan:** \`${run.planFile}\``] : [],
+    ...run.baseUrl ? [`- **Start page:** ${run.baseUrl}`] : [],
+    ...run.chrome ? [`- **Browser:** ${run.chrome}`] : [],
+    `- **Started:** ${run.startedAt}`,
+    `- **Time:** ${duration3(run)}`,
+    ""
+  ];
+  if (run.summary) lines.push("## Summary", "", run.summary, "");
+  if (problems.length > 0) {
+    lines.push("## Bugs and failures", "");
+    for (const step of problems) lines.push(...stepDetails(run, step, true));
+  }
+  lines.push(
+    "## All steps",
+    "",
+    "| # | Step | Result | Checked by | Notes |",
+    "|---|---|---|---|---|"
+  );
+  for (const step of run.steps) {
+    const cell = (text) => (text ?? "").replace(/\|/g, "\\|").replace(/\n+/g, " ");
+    const who = step.checkedBy === "developer" ? "Developer" : step.checkedBy === "agent" ? "Agent" : "";
+    lines.push(
+      `| ${step.index} | ${cell(step.title)} | ${STATUS_LABELS[step.status]} | ${who} | ${cell(step.notes)} |`
+    );
+  }
+  lines.push("");
+  const others = run.steps.filter((s) => !isProblem(s) && s.status !== "pending");
+  if (others.length > 0) {
+    lines.push("## Step details", "");
+    for (const step of others) lines.push(...stepDetails(run, step, false));
+  }
+  return `${lines.join("\n").trimEnd()}
+`;
+}
+
+// packages/server/src/run/plans.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+import { existsSync as existsSync8, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync9, writeFileSync as writeFileSync2 } from "node:fs";
+import { basename as basename4, extname as extname2, isAbsolute as isAbsolute6, join as join15, relative as relative6, resolve as resolve9 } from "node:path";
+function plansDir(projectDir) {
+  return join15(projectDir, ".walkthrough", "plans");
+}
+function validatePlanText(text) {
+  const lineCounter = new import_yaml2.LineCounter();
+  const doc = (0, import_yaml2.parseDocument)(text, { lineCounter, prettyErrors: false });
+  if (doc.errors.length > 0) {
+    return {
+      ok: false,
+      problems: doc.errors.map((error62) => ({
+        line: lineCounter.linePos(error62.pos[0]).line,
+        path: "(file)",
+        message: `The YAML is not valid: ${error62.message.split("\n")[0]}`
+      }))
+    };
+  }
+  const result = planSchema.safeParse(doc.toJS());
+  if (result.success) return { ok: true, plan: result.data };
+  const problems = result.error.issues.map((issue2) => {
+    const path14 = issue2.path.map((p) => typeof p === "number" ? p : String(p));
+    let line;
+    for (let depth = path14.length; depth >= 0 && line === void 0; depth--) {
+      const node2 = depth === 0 ? doc.contents : doc.getIn(path14.slice(0, depth), true);
+      const range = node2?.range;
+      if (range) line = lineCounter.linePos(range[0]).line;
+    }
+    const where = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
+    return { line, path: where, message: issue2.message };
+  });
+  return { ok: false, problems };
+}
+function formatProblems(file2, problems) {
+  return [
+    `The plan ${file2} has ${problems.length} problem(s):`,
+    ...problems.map((p) => `- ${p.line ? `Line ${p.line}` : "Plan"} (${p.path}): ${p.message}`)
+  ].join("\n");
+}
+function findPlanFile(projectDir, name) {
+  const dir = plansDir(projectDir);
+  const candidates = [
+    join15(dir, name),
+    join15(dir, `${name}.yaml`),
+    join15(dir, `${name}.yml`),
+    isAbsolute6(name) ? name : resolve9(projectDir, name)
+  ];
+  for (const file2 of candidates) {
+    if (existsSync8(file2) && [".yaml", ".yml"].includes(extname2(file2))) {
+      const rel = relative6(projectDir, file2);
+      if (rel.startsWith("..") || isAbsolute6(rel)) {
+        throw new ToolError(`The plan ${name} is outside the project folder.`, "plan_not_found");
+      }
+      return file2;
+    }
+  }
+  throw new ToolError(
+    `There is no plan "${name}". Use the plan tool with action "list" to see the plans in .walkthrough/plans.`,
+    "plan_not_found"
+  );
+}
+function loadPlan(projectDir, name) {
+  const file2 = findPlanFile(projectDir, name);
+  const result = validatePlanText(readFileSync9(file2, "utf8"));
+  if (!result.ok)
+    throw new ToolError(
+      formatProblems(relative6(projectDir, file2), result.problems),
+      "plan_invalid"
+    );
+  return { file: file2, plan: result.plan };
+}
+function laterFeatures(plan) {
+  const found = [];
+  for (const [key, phase] of Object.entries(LATER_KEYS)) {
+    if (plan[key] !== void 0) found.push(`"${key}" (comes in ${phase})`);
+  }
+  plan.steps.forEach((step, i) => {
+    for (const [key, phase] of Object.entries(LATER_STEP_KEYS)) {
+      if (step[key] !== void 0)
+        found.push(`"${key}" in step ${i + 1} (comes in ${phase})`);
+    }
+  });
+  return found;
+}
+function listPlans(projectDir) {
+  const dir = plansDir(projectDir);
+  if (!existsSync8(dir)) return [];
+  return readdirSync3(dir).filter((f) => [".yaml", ".yml"].includes(extname2(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync9(join15(dir, f), "utf8"));
+    const name = basename4(f, extname2(f));
+    const file2 = relative6(projectDir, join15(dir, f));
+    return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
+  });
+}
+function savePlan(projectDir, name, text, overwrite = false) {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
+    throw new ToolError(
+      'Use a plan name with lowercase letters, numbers, and dashes, like "checkout".',
+      "bad_input"
+    );
+  }
+  const result = validatePlanText(text);
+  if (!result.ok)
+    throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
+  const dir = plansDir(projectDir);
+  mkdirSync2(dir, { recursive: true });
+  const file2 = join15(dir, `${name}.yaml`);
+  if (existsSync8(file2) && !overwrite) {
+    throw new ToolError(
+      `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
+      "plan_exists"
+    );
+  }
+  const header = "# yaml-language-server: $schema=../plan.schema.json\n";
+  writeFileSync2(file2, text.startsWith("# yaml-language-server") ? text : header + text);
+  return file2;
+}
+
+// packages/server/src/run/run-store.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+import { mkdirSync as mkdirSync3, readFileSync as readFileSync10, renameSync, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join16, relative as relative7 } from "node:path";
+function slug(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "run";
+}
+function stamp2(date5 = /* @__PURE__ */ new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`;
+}
+function needsConfirm(mode, checkpoint) {
+  if (mode === "interactive") return true;
+  if (mode === "checkpoints") return Boolean(checkpoint);
+  return false;
+}
+var RunStore = class _RunStore {
+  constructor(dir, run, projectDir) {
+    this.dir = dir;
+    this.run = run;
+    this.projectDir = projectDir;
+  }
+  dir;
+  run;
+  projectDir;
+  static create(projectDir, input3) {
+    const id = `${stamp2()}-${slug(input3.name)}-${randomBytes3(2).toString("hex")}`;
+    const dir = join16(ensureWalkthroughDir(projectDir), "runs", id);
+    mkdirSync3(join16(dir, "screenshots"), { recursive: true });
+    const steps = (input3.plan?.steps ?? []).map((step, i) => ({
+      id: step.id ?? `step-${i + 1}`,
+      index: i + 1,
+      title: step.do,
+      expect: step.expect,
+      confirm: needsConfirm(input3.mode, step.checkpoint),
+      status: "pending",
+      screenshots: [],
+      actions: []
+    }));
+    const run = {
+      version: 1,
+      id,
+      name: input3.name,
+      planFile: input3.planFile ? relative7(projectDir, input3.planFile) : void 0,
+      mode: input3.mode,
+      status: "running",
+      startedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      baseUrl: input3.baseUrl,
+      chrome: input3.chrome,
+      steps
+    };
+    const store = new _RunStore(dir, run, projectDir);
+    store.save();
+    return store;
+  }
+  static open(projectDir, id) {
+    const dir = join16(projectDir, ".walkthrough", "runs", id);
+    try {
+      const run = JSON.parse(readFileSync10(join16(dir, "run.json"), "utf8"));
+      return new _RunStore(dir, run, projectDir);
+    } catch {
+      throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
+    }
+  }
+  get screenshotsDir() {
+    return join16(this.dir, "screenshots");
+  }
+  get relativeDir() {
+    return relative7(this.projectDir, this.dir);
+  }
+  // Writes run.json safely: a crash never leaves a half-written file.
+  save() {
+    const file2 = join16(this.dir, "run.json");
+    writeFileSync3(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
+`);
+    renameSync(`${file2}.tmp`, file2);
+  }
+  // Finds a step by id, by number, or by title. Adds a new step if none matches.
+  step(ref) {
+    const found = ref.id && this.run.steps.find((s) => s.id === ref.id) || ref.index && this.run.steps.find((s) => s.index === ref.index) || ref.title && this.run.steps.find((s) => s.title === ref.title);
+    if (found) return found;
+    const index = this.run.steps.length + 1;
+    const added = {
+      id: ref.id ?? `step-${index}`,
+      index,
+      title: ref.title ?? ref.id ?? `Step ${index}`,
+      expect: ref.expect,
+      confirm: false,
+      status: "pending",
+      screenshots: [],
+      actions: []
+    };
+    this.run.steps.push(added);
+    return added;
+  }
+  // The first step that has no result yet.
+  nextPending() {
+    return this.run.steps.find((s) => s.status === "pending");
+  }
+  finish(summary) {
+    if (this.run.status === "running") {
+      this.run.status = this.run.steps.some((s) => s.status === "stop") ? "stopped" : "finished";
+    }
+    this.run.endedAt = (/* @__PURE__ */ new Date()).toISOString();
+    if (summary) this.run.summary = summary;
+    this.save();
+  }
+  markIncomplete() {
+    this.run.status = "incomplete";
+    this.run.endedAt = (/* @__PURE__ */ new Date()).toISOString();
+    this.save();
+  }
+};
+
+// packages/server/src/tools/run-tools.ts
+function writeReports(store) {
+  const markdown = join17(store.dir, "report.md");
+  const html = join17(store.dir, "report.html");
+  writeFileSync4(markdown, markdownReport(store.run));
+  writeFileSync4(html, htmlReport(store.run, store.dir));
+  return { markdown: relative8(store.projectDir, markdown), html: relative8(store.projectDir, html) };
+}
+function describeAction(step) {
+  if (!step.action) return void 0;
+  const [kind, value] = Object.entries(step.action)[0] ?? [];
+  if (!kind) return void 0;
+  if (typeof value === "string") return `${kind} "${value}"`;
+  const t = value;
+  const where = t.selector ? `selector ${t.selector}` : `${t.role ?? "element"}${t.name ? ` "${t.name}"` : ""}`;
+  const extra = t.value !== void 0 ? ` with "${t.value}"` : t.files ? ` with ${t.files.join(", ")}` : "";
+  return `${kind} ${where}${extra}`;
+}
+function stepList(plan, mode) {
+  return plan.steps.map((step, i) => {
+    const id = step.id ?? `step-${i + 1}`;
+    const flags = [
+      needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
+      step.screenshot ? "screenshot" : ""
+    ].filter(Boolean).join(", ");
+    const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
+    if (step.expect) lines.push(`   Expect: ${step.expect}`);
+    const hint = describeAction(step);
+    if (hint) lines.push(`   Action: ${hint}`);
+    return lines.join("\n");
+  }).join("\n");
+}
+var HOW_TO = {
+  interactive: "Interactive mode: the developer confirms every step in the panel.",
+  checkpoints: 'Checkpoints mode: the developer confirms the steps marked "confirm". You check the other steps.',
+  autonomous: "Autonomous mode: you check every step yourself. Do not ask the developer, unless something blocks you."
+};
+function registerRunTools(server, ctx) {
+  server.registerTool(
+    "plan",
+    {
+      title: "Test plans",
+      description: "Work with the YAML test plans in .walkthrough/plans: list them, show one, validate one, or save a new one. Validation gives line numbers.",
+      inputSchema: {
+        action: external_exports.enum(["list", "show", "validate", "save"]),
+        name: external_exports.string().optional().describe('Plan name, like "checkout", or a path in the project.'),
+        content: external_exports.string().optional().describe("Plan YAML, for validate or save."),
+        overwrite: external_exports.boolean().optional().describe("For save: replace a plan that exists. Ask the developer first.")
+      }
+    },
+    ({ action: action2, name, content, overwrite }) => runTool(ctx, "plan", async () => {
+      const { projectDir } = await ctx.config();
+      if (action2 === "list") {
+        const plans = listPlans(projectDir);
+        if (plans.length === 0) return "There are no plans in .walkthrough/plans yet.";
+        return plans.map(
+          (p) => p.problems ? `- ${p.name} (${p.file}): ${p.problems} problem(s). Validate it to see them.` : `- ${p.name} (${p.file}): "${p.title}", ${p.steps} step(s)`
+        ).join("\n");
+      }
+      if (action2 === "save") {
+        if (!name || !content)
+          throw new ToolError("Give a name and the plan content to save.", "bad_input");
+        const file3 = savePlan(projectDir, name, content, overwrite);
+        return `Saved the plan: ${relative8(projectDir, file3)}`;
+      }
+      if (action2 === "validate" && content) {
+        const result = validatePlanText(content);
+        return result.ok ? `The plan is valid. It has ${result.plan.steps.length} step(s).` : formatProblems("(content)", result.problems);
+      }
+      if (!name) throw new ToolError("Give the name of a plan.", "bad_input");
+      const { file: file2, plan } = loadPlan(projectDir, name);
+      const later = laterFeatures(plan);
+      if (action2 === "validate") {
+        return `The plan ${relative8(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
+      }
+      const mode = plan.mode ?? "checkpoints";
+      return [
+        `Plan: ${plan.name} (${relative8(projectDir, file2)})`,
+        plan.description ? `About: ${plan.description}` : "",
+        `Mode: ${mode}`,
+        plan.baseUrl ? `Start page: ${plan.baseUrl}` : "",
+        "Steps:",
+        stepList(plan, mode)
+      ].filter(Boolean).join("\n");
+    })
+  );
+  server.registerTool(
+    "run_start",
+    {
+      title: "Start a test run",
+      description: "Start a test run from a saved plan, or an ad hoc run with a name. It opens the browser at the start page and returns the steps and how to check each one. Walkthrough saves the results after each step.",
+      inputSchema: {
+        plan: external_exports.string().optional().describe('Plan name, like "checkout".'),
+        name: external_exports.string().optional().describe("Name for an ad hoc run without a plan."),
+        mode: external_exports.enum(MODES).optional().describe("Overrides the mode in the plan. The default is checkpoints.")
+      }
+    },
+    ({ plan: planName, name, mode: modeArg }) => runTool(ctx, "run_start", async () => {
+      const config3 = await ctx.refresh();
+      if (ctx.run?.run.status === "running") {
+        throw new ToolError(
+          `The run "${ctx.run.run.name}" is still going. Call run_finish first.`,
+          "run_active"
+        );
+      }
+      if (!planName && !name)
+        throw new ToolError("Give a plan name, or a name for an ad hoc run.", "bad_input");
+      const loaded = planName ? loadPlan(config3.projectDir, planName) : void 0;
+      const plan = loaded?.plan;
+      if (plan) {
+        const later = laterFeatures(plan);
+        if (later.length) {
+          throw new ToolError(
+            `This plan uses settings that do not work yet: ${later.join(", ")}. Remove them to run the plan now.`,
+            "not_supported_yet"
+          );
+        }
+      }
+      const mode = modeArg ?? plan?.mode ?? "checkpoints";
+      const baseUrl = plan?.baseUrl ?? config3.baseUrl;
+      const opened = await openBrowser(ctx, { url: baseUrl, alwaysGo: true });
+      const driver = ctx.requireDriver();
+      ctx.actionCursor = ctx.actionLog.length;
+      driver.logs.endStep("(before the run)");
+      ctx.run = RunStore.create(config3.projectDir, {
+        name: plan?.name ?? name ?? "Ad hoc run",
+        mode,
+        plan,
+        planFile: loaded?.file,
+        baseUrl,
+        chrome: driver.chromeVersion
+      });
+      const lines = [
+        `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+        `Run folder: ${ctx.run.relativeDir}`,
+        HOW_TO[mode],
+        "",
+        "For each step:",
+        "1. Do what the step says. If it has an Action, use it.",
+        '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
+        '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
+        '4. For a "screenshot" step, call screenshot after the step.',
+        "5. When every step has a result, or the developer says stop, call run_finish.",
+        ""
+      ];
+      if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
+      else
+        lines.push(
+          "This run has no plan. Use run_step or ask_developer with a title for each step you do."
+        );
+      lines.push("", opened.text);
+      return lines.join("\n");
+    })
+  );
+  server.registerTool(
+    "run_step",
+    {
+      title: "Record a step result",
+      description: "Record the result of a step that you checked yourself. Use it for steps the developer does not confirm. On fail or blocked, it saves a screenshot and the errors from the step.",
+      inputSchema: {
+        stepId: external_exports.string().optional().describe("The step id from the plan."),
+        step: external_exports.number().int().min(1).optional().describe("The step number."),
+        title: external_exports.string().optional().describe("For ad hoc runs: what the step did."),
+        status: external_exports.enum(["pass", "fail", "skip", "blocked"]),
+        actual: external_exports.string().optional().describe("What you saw, if it was not what the step expected."),
+        notes: external_exports.string().optional(),
+        screenshot: external_exports.boolean().optional().describe("Save a screenshot. The default is yes on fail or blocked.")
+      }
+    },
+    ({ stepId, step, title, status, actual, notes, screenshot }) => runTool(ctx, "run_step", async () => {
+      const store = ctx.run;
+      if (store?.run.status !== "running") {
+        throw new ToolError("No run is going. Call run_start first.", "no_run");
+      }
+      if (!stepId && !step && !title)
+        throw new ToolError("Give the stepId, the step number, or a title.", "bad_input");
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const stepLogs = driver.logs.currentStep();
+      driver.logs.endStep(stepId ?? title ?? `step-${step}`);
+      const lines = [];
+      const extra = [];
+      let shotPath;
+      if (screenshot ?? (status === "fail" || status === "blocked")) {
+        const shot = await bugScreenshot(ctx, driver, tab, stepId ?? String(step ?? "step"));
+        shotPath = shot.relativePath;
+        lines.push(`Screenshot: ${shot.relativePath}`);
+        extra.push({ type: "image", data: shot.preview, mimeType: "image/jpeg" });
+      }
+      const recorded = recordResult(
+        ctx,
+        { id: stepId, index: step, title },
+        {
+          status,
+          checkedBy: "agent",
+          actual,
+          notes,
+          screenshot: shotPath,
+          logs: stepLogs
+        }
+      );
+      lines.unshift(`Saved step ${recorded?.index} [${recorded?.id}] as ${status}.`);
+      if (stepLogs.some((e) => e.level === "error")) {
+        lines.push("The page logged errors during this step:", untrusted(recorded?.logs ?? ""));
+      }
+      lines.push(nextStepHint(ctx));
+      return textResult(lines.join("\n"), extra);
+    })
+  );
+  server.registerTool(
+    "run_finish",
+    {
+      title: "Finish the run",
+      description: 'Finish the test run and write report.md and report.html in the run folder. Steps without a result show as "not run". With runId, it writes the reports again for an older run.',
+      inputSchema: {
+        summary: external_exports.string().optional().describe("A short summary for the report, in plain words."),
+        runId: external_exports.string().optional().describe("An older run folder name, to write its reports again.")
+      }
+    },
+    ({ summary, runId }) => runTool(ctx, "run_finish", async () => {
+      const { projectDir } = await ctx.config();
+      const store = runId ? RunStore.open(projectDir, runId) : ctx.run;
+      if (!store)
+        throw new ToolError(
+          "No run is going. Give a runId to write the reports for an older run.",
+          "no_run"
+        );
+      if (store === ctx.run) {
+        store.finish(summary);
+        ctx.run = void 0;
+      } else if (summary) {
+        store.run.summary = summary;
+        store.save();
+      }
+      const paths = writeReports(store);
+      const problems = store.run.steps.filter(isProblem);
+      return [
+        `The run "${store.run.name}" is ${store.run.status}. Result: ${resultLine(store.run) || "no steps"}.`,
+        `Reports: ${paths.markdown} and ${paths.html}`,
+        ...problems.length ? [
+          "Bugs and failures:",
+          ...problems.map(
+            (s) => `- Step ${s.index}: ${s.title}${s.notes ? `. Notes: ${s.notes}` : ""}`
+          )
+        ] : [],
+        "Tell the developer the result and where the HTML report is."
+      ].join("\n");
     })
   );
 }
@@ -93920,6 +94771,16 @@ function createServer() {
   registerBrowserTools(server, ctx);
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
+  registerRunTools(server, ctx);
+  onShutdown(() => {
+    if (ctx.run?.run.status !== "running") return;
+    try {
+      ctx.run.markIncomplete();
+      writeReports(ctx.run);
+    } catch (error62) {
+      log.warn("could not write the reports for the unfinished run", error62);
+    }
+  });
   return { server, ctx };
 }
 
@@ -93930,6 +94791,7 @@ Commands:
   serve     Start the MCP server (default).
   setup     Download Chrome for Testing, if Chrome is not installed.
   doctor    Check Node, Chrome, and the project settings.
+  schema    Print the JSON Schema for test plans.
   version   Show the version.
 `;
 async function serve() {
@@ -93998,6 +94860,10 @@ async function main() {
       break;
     case "doctor":
       await doctor();
+      break;
+    case "schema":
+      process.stdout.write(`${JSON.stringify(planJsonSchema(), null, 2)}
+`);
       break;
     case "version":
     case "--version":

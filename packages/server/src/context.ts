@@ -5,6 +5,8 @@ import { OriginGuard } from './guards/origins.js';
 import { SecretStore } from './guards/secrets.js';
 import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
+import { adhocEvidenceDir } from './project-files.js';
+import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
 
 // Shared state for all tools in one server.
@@ -13,6 +15,10 @@ export class Context {
   readonly actionLog: ActionRecord[] = [];
   readonly stepAnswers: StepAnswer[] = [];
   driver?: Driver;
+  // The test run in progress, if any.
+  run?: RunStore;
+  // Actions before this index already belong to a recorded step.
+  actionCursor = 0;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
   constructor(
@@ -49,6 +55,13 @@ export class Context {
 
   async guard(): Promise<OriginGuard> {
     return (await this.ensureLoaded()).guard;
+  }
+
+  // Where screenshots go: the run folder during a run, otherwise a folder for today.
+  evidenceDir(projectDir: string): string {
+    return this.run?.run.status === 'running'
+      ? this.run.screenshotsDir
+      : adhocEvidenceDir(projectDir);
   }
 
   // The open browser. Throws a clear message if there is none.

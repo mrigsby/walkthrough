@@ -10,7 +10,7 @@ import { formatLogs, type LogLevel } from '../evidence/logs.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
-import { adhocEvidenceDir } from '../project-files.js';
+import { nextStepHint, recordResult } from '../run/record.js';
 import { type Content, runTool, textResult } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
@@ -30,12 +30,12 @@ function defaultAskTimeoutSec(clientName?: string): number {
 }
 
 // Saves a screenshot with a red box around the element of the last action.
-async function bugScreenshot(ctx: Context, driver: Driver, tab: Tab, stepLabel: string) {
+export async function bugScreenshot(ctx: Context, driver: Driver, tab: Tab, stepLabel: string) {
   const config = await ctx.config();
   const last = driver.lastTarget?.tabId === tab.id ? driver.lastTarget : undefined;
   const rect = last ? await elementRect(last.handle) : undefined;
   return withCleanPage(driver, tab, { annotate: rect }, () =>
-    takeScreenshot(tab, adhocEvidenceDir(config.projectDir), config.projectDir, {
+    takeScreenshot(tab, ctx.evidenceDir(config.projectDir), config.projectDir, {
       label: `bug-${stepLabel}`,
     }),
   );
@@ -213,6 +213,24 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         }
 
         ctx.stepAnswers.push(record);
+        const recorded = recordResult(
+          ctx,
+          {
+            id: question.stepId,
+            index: question.step,
+            title: question.title,
+            expect: question.expected,
+          },
+          {
+            status: answer.result,
+            checkedBy: 'developer',
+            notes: answer.note,
+            screenshot: record.screenshot,
+            logs: stepLogs,
+          },
+        );
+        if (recorded)
+          lines.push(`Saved as step ${recorded.index} in the run. ${nextStepHint(ctx)}`);
         return textResult(lines.join('\n'), extraContent);
       }),
   );

@@ -6,6 +6,7 @@ import { doctorReport } from './doctor.js';
 import { SecretStore } from './guards/secrets.js';
 import { installShutdownHandlers } from './lifecycle.js';
 import { log } from './log.js';
+import { planJsonSchema } from './run/plan-schema.js';
 import { createServer } from './server.js';
 import { MIN_NODE, nodeVersionOk, VERSION } from './version.js';
 
@@ -15,6 +16,7 @@ Commands:
   serve     Start the MCP server (default).
   setup     Download Chrome for Testing, if Chrome is not installed.
   doctor    Check Node, Chrome, and the project settings.
+  schema    Print the JSON Schema for test plans.
   version   Show the version.
 `;
 
@@ -80,6 +82,9 @@ async function main(): Promise<void> {
       break;
     case 'doctor':
       await doctor();
+      break;
+    case 'schema':
+      process.stdout.write(`${JSON.stringify(planJsonSchema(), null, 2)}\n`);
       break;
     case 'version':
     case '--version':

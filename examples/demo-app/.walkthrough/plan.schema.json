@@ -1,0 +1,406 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The name of the test."
+    },
+    "description": {
+      "type": "string"
+    },
+    "baseUrl": {
+      "description": "The start page. Overrides baseUrl in config.yaml.",
+      "type": "string",
+      "format": "uri"
+    },
+    "mode": {
+      "description": "interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step.",
+      "type": "string",
+      "enum": [
+        "interactive",
+        "checkpoints",
+        "autonomous"
+      ]
+    },
+    "device": {
+      "description": "Screen preset, like \"mobile\" (Phase 5).",
+      "type": "string"
+    },
+    "colorScheme": {
+      "description": "Light or dark mode (Phase 5).",
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "network": {
+      "description": "Network speed (Phase 5).",
+      "type": "string",
+      "enum": [
+        "normal",
+        "slow-3g",
+        "fast-3g",
+        "slow-4g",
+        "fast-4g",
+        "offline"
+      ]
+    },
+    "session": {
+      "description": "A saved login to use (Phase 5).",
+      "type": "string"
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "A short id for the step. Reports and scripts use it.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "do": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What to do, in plain words."
+          },
+          "expect": {
+            "description": "What the developer should see after the step. Make it specific.",
+            "type": "string"
+          },
+          "checkpoint": {
+            "description": "In checkpoints mode, ask the developer to confirm this step.",
+            "type": "boolean"
+          },
+          "action": {
+            "type": "object",
+            "properties": {
+              "navigate": {
+                "description": "A URL or a path like \"/cart\".",
+                "type": "string"
+              },
+              "click": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "dblclick": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "hover": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "fill": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "select": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "check": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "uncheck": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "press": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "scroll": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "upload": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "description": "ARIA role, like \"button\" or \"textbox\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "The name the user sees, like \"Checkout\".",
+                    "type": "string"
+                  },
+                  "selector": {
+                    "description": "A CSS or Puppeteer selector.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Text to type, option to choose, or key to press.",
+                    "type": "string"
+                  },
+                  "files": {
+                    "description": "Files to upload, from the project folder.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "wait": {
+                "description": "Text to wait for on the page.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "description": "An exact action for this step. The agent uses it instead of guessing."
+          },
+          "screenshot": {
+            "description": "Save a screenshot after this step.",
+            "type": "boolean"
+          },
+          "visual": {
+            "description": "Compare a screenshot with the saved baseline (Phase 5).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "do"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "name",
+    "steps"
+  ],
+  "additionalProperties": false,
+  "title": "Walkthrough test plan"
+}

@@ -9,7 +9,6 @@ import { ACTIONS, act, resolveTarget } from '../page/actions.js';
 import { formatState, readElement } from '../page/read.js';
 import { buildSnapshot } from '../page/snapshot.js';
 import { waitFor } from '../page/wait.js';
-import { adhocEvidenceDir } from '../project-files.js';
 import { runTool, textResult } from './util.js';
 
 const refField = z.string().optional().describe('Element ref from the last snapshot, like "e12".');
@@ -178,7 +177,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
         const tab = driver.activeTab();
         const config = await ctx.config();
         const target = await resolveTarget(driver, tab, { ref, selector });
-        const dir = adhocEvidenceDir(config.projectDir);
+        const dir = ctx.evidenceDir(config.projectDir);
         // With annotate, the whole view is saved, with a red box on the element.
         const rect = annotate && target ? await elementRect(target.handle) : undefined;
         const shot = await withCleanPage(driver, tab, { annotate: rect }, () =>
