@@ -5,15 +5,21 @@ import { OriginGuard } from './guards/origins.js';
 import { SecretStore } from './guards/secrets.js';
 import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
+import type { StepAnswer } from './tools/developer-tools.js';
 
 // Shared state for all tools in one server.
 export class Context {
   readonly lock = new Mutex();
   readonly actionLog: ActionRecord[] = [];
+  readonly stepAnswers: StepAnswer[] = [];
   driver?: Driver;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
-  constructor(private readonly roots: () => Promise<string[]>) {}
+  constructor(
+    private readonly roots: () => Promise<string[]>,
+    // The name of the MCP client, such as "claude-code".
+    readonly clientName: () => string | undefined = () => undefined,
+  ) {}
 
   // Reads the project folder, settings, and secrets again.
   async refresh(projectDirArg?: string): Promise<Config> {

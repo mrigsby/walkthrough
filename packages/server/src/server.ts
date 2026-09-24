@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Context } from './context.js';
 import { registerBrowserTools } from './tools/browser-tools.js';
+import { registerDeveloperTools } from './tools/developer-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
 import { VERSION } from './version.js';
 
@@ -16,8 +17,9 @@ export function createServer(): { server: McpServer; ctx: Context } {
     return list.map((root) => (root.uri.startsWith('file:') ? fileURLToPath(root.uri) : root.uri));
   };
 
-  const ctx = new Context(roots);
+  const ctx = new Context(roots, () => server.server.getClientVersion()?.name);
   registerBrowserTools(server, ctx);
   registerPageTools(server, ctx);
+  registerDeveloperTools(server, ctx);
   return { server, ctx };
 }

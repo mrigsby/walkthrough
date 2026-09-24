@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
+import { elementRect, withCleanPage } from '../evidence/annotate.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import { ACTIONS, act, resolveTarget } from '../page/actions.js';
@@ -163,26 +164,35 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
           .optional()
           .describe('Capture the whole page, not only the visible part.'),
         label: z.string().optional().describe('Short name for the file, like "cart-total".'),
+        annotate: z
+          .boolean()
+          .optional()
+          .describe(
+            'With a ref or selector: capture the page and draw a red box around the element.',
+          ),
       },
     },
-    ({ ref, selector, fullPage, label }) =>
+    ({ ref, selector, fullPage, label, annotate }) =>
       runTool(ctx, 'screenshot', async () => {
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const config = await ctx.config();
         const target = await resolveTarget(driver, tab, { ref, selector });
-        const shot = await takeScreenshot(
-          tab,
-          adhocEvidenceDir(config.projectDir),
-          config.projectDir,
-          {
-            handle: target?.handle,
+        const dir = adhocEvidenceDir(config.projectDir);
+        // With annotate, the whole view is saved, with a red box on the element.
+        const rect = annotate && target ? await elementRect(target.handle) : undefined;
+        const shot = await withCleanPage(driver, tab, { annotate: rect }, () =>
+          takeScreenshot(tab, dir, config.projectDir, {
+            handle: rect ? undefined : target?.handle,
             fullPage,
             label,
-          },
+          }),
         );
-        const what = target ? target.label : fullPage ? 'the full page' : 'the visible page';
-        const note = fullPage && !target ? ' The preview shows only the visible part.' : '';
+        const page = fullPage ? 'the full page' : 'the visible page';
+        const what =
+          target && !rect ? target.label : rect ? `${page}, with ${target?.label} marked` : page;
+        const note =
+          fullPage && !(target && !rect) ? ' The preview shows only the visible part.' : '';
         return textResult(`Saved a screenshot of ${what}: ${shot.relativePath}${note}`, [
           { type: 'image', data: shot.preview, mimeType: 'image/jpeg' },
         ]);

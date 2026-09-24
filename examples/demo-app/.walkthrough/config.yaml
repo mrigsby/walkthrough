@@ -10,6 +10,15 @@ allowedOrigins:
 # How to answer confirm and prompt dialogs: ask (default), accept, or dismiss.
 dialogs: ask
 
+# Show the Pass, Bug, Skip, and Stop panel in the browser.
+panel: true
+
+# Show a box on each element for this many milliseconds before the agent uses it.
+highlightMs: 600
+
+# How long ask_developer waits for an answer before it tells the agent to wait again.
+# askTimeoutSec: 300
+
 # Browser options.
 browser:
   # Set to true to hide the browser window.

@@ -2,9 +2,11 @@ import { EventEmitter } from 'node:events';
 import type { Browser, CDPSession, Dialog, ElementHandle, Page, Target } from 'puppeteer-core';
 import type { Config, DialogPolicy } from '../config.js';
 import { ToolError } from '../errors.js';
+import { LogBook } from '../evidence/logs.js';
 import { onShutdown } from '../lifecycle.js';
 import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
+import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
 import { killChrome, launchChrome, removeProfile } from './launch.js';
 import { guardNavigation } from './navigation-guard.js';
@@ -44,6 +46,10 @@ export class Driver {
   readonly emitter = new EventEmitter();
   readonly tabs = new Map<string, Tab>();
   readonly secretFields: ElementHandle[] = [];
+  readonly logs = new LogBook();
+  readonly panel?: DeveloperPanel;
+  // The element of the last action, for the red box in bug screenshots.
+  lastTarget?: { tabId: string; handle: ElementHandle<Element>; label: string };
   activeId?: string;
   dialogPolicy: DialogPolicy;
   closedReason?: 'browser_closed' | 'closed_by_agent';
@@ -63,6 +69,7 @@ export class Driver {
     private readonly profileDir?: string,
   ) {
     this.dialogPolicy = options.config.dialogs;
+    if (options.config.panel) this.panel = new DeveloperPanel();
   }
 
   static async start(options: DriverOptions): Promise<Driver> {
@@ -91,6 +98,7 @@ export class Driver {
       if (!this.closedReason) {
         this.closedReason = 'browser_closed';
         log.info('the browser was closed');
+        this.panel?.onBrowserClosed();
         this.emitter.emit('closed');
       }
       if (this.profileDir) removeProfile(this.profileDir);
@@ -172,6 +180,8 @@ export class Driver {
     });
     page.on('close', () => this.onTabClosed(tab));
     page.on('dialog', (dialog) => void this.onDialog(tab, dialog));
+    this.logs.attach(page, tab.id);
+    await this.panel?.attach(page, tab.id);
 
     tab.cdp = await guardNavigation(
       page,
@@ -195,6 +205,7 @@ export class Driver {
     tab.closed = true;
     this.tabs.delete(tab.id);
     this.pendingDialogs.delete(tab.id);
+    this.panel?.detach(tab.id);
     if (this.activeId === tab.id) {
       const next = [...this.tabs.values()].at(-1);
       this.activeId = next?.id;
@@ -328,6 +339,7 @@ export class Driver {
       throw new ToolError(`There is no tab "${id}". Use the tabs tool to list tabs.`, 'no_tab');
     this.activeId = id;
     void tab.page.bringToFront().catch(() => undefined);
+    void this.panel?.refresh(id);
     return tab;
   }
 

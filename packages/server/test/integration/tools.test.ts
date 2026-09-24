@@ -43,17 +43,19 @@ async function snap(): Promise<string> {
 }
 
 describe('uiwalk tools', () => {
-  it('lists the Phase 1 tools', async () => {
+  it('lists the tools', async () => {
     const { tools } = await mcp.client.listTools();
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual(
       [
         'act',
+        'ask_developer',
         'browser_close',
         'browser_open',
         'dialog',
         'doctor',
         'evaluate',
+        'logs',
         'navigate',
         'read',
         'screenshot',

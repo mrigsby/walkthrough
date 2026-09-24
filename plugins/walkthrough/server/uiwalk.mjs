@@ -33205,7 +33205,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes, createHash: createHash2 } = __require("crypto");
+    var { randomBytes: randomBytes3, createHash: createHash2 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -33743,7 +33743,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes(16).toString("base64");
+      const key = randomBytes3(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -83305,7 +83305,9 @@ var sharedSchema = external_exports.object({
   }).optional(),
   dialogs: external_exports.enum(["ask", "accept", "dismiss"]).optional(),
   actionTimeoutMs: external_exports.number().int().min(1e3).max(12e4).optional(),
-  askTimeoutSec: external_exports.number().int().min(10).max(3600).optional()
+  askTimeoutSec: external_exports.number().int().min(10).max(3600).optional(),
+  panel: external_exports.boolean().optional(),
+  highlightMs: external_exports.number().int().min(0).max(5e3).optional()
 }).loose();
 var LOCAL_ONLY = ["allowEvaluate", "uploadsRoot"];
 var localSchema = sharedSchema.extend({
@@ -83362,19 +83364,23 @@ function loadConfig(projectDir, projectDirSource = "current folder") {
   const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
   const uploadsRoot = local.uploadsRoot ? isAbsolute3(local.uploadsRoot) ? local.uploadsRoot : resolve7(projectDir, local.uploadsRoot) : projectDir;
   const envHeadless = process.env.UIWALK_HEADLESS;
+  const headless = envHeadless ? envHeadless !== "0" : merged.browser.headless ?? false;
+  const panel = (merged.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === "1");
   return {
     projectDir,
     projectDirSource,
     baseUrl: merged.baseUrl,
     allowedOrigins: merged.allowedOrigins ?? DEFAULT_ORIGINS,
     browser: {
-      headless: envHeadless ? envHeadless !== "0" : merged.browser.headless ?? false,
+      headless,
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath
     },
     dialogs: merged.dialogs ?? "ask",
     actionTimeoutMs: merged.actionTimeoutMs ?? 1e4,
     askTimeoutSec: merged.askTimeoutSec,
+    panel,
+    highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
     warnings
@@ -91537,6 +91543,111 @@ var EMPTY_COMPLETION_RESULT = {
 // packages/server/src/browser/driver.ts
 import { EventEmitter as EventEmitter3 } from "node:events";
 
+// packages/server/src/evidence/scrub.ts
+var SENSITIVE_KEYS = /^(token|access_token|id_token|refresh_token|auth|authorization|key|api_key|apikey|secret|client_secret|password|pass|pwd|session|sessionid|sid|code|signature|sig|jwt)$/i;
+function scrubUrl(url2) {
+  let parsed;
+  try {
+    parsed = new URL(url2);
+  } catch {
+    return url2;
+  }
+  let changed = false;
+  for (const key of [...parsed.searchParams.keys()]) {
+    if (SENSITIVE_KEYS.test(key)) {
+      parsed.searchParams.set(key, MASK);
+      changed = true;
+    }
+  }
+  return changed ? parsed.href.replace(/%2A%2A%2A%2A/g, MASK) : url2;
+}
+function scrubText(text) {
+  return text.replace(/https?:\/\/[^\s"'<>)]+/g, (url2) => scrubUrl(url2)).replace(/\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]{5,}\b/g, MASK).replace(/\b(Bearer|Basic)\s+[\w\-.=+/]{8,}/gi, `$1 ${MASK}`).replace(/(authorization["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, `$1${MASK}`);
+}
+
+// packages/server/src/evidence/logs.ts
+var MAX_ENTRIES = 1e3;
+function consoleLevel(message) {
+  const type = message.type();
+  if (type === "error" || type === "assert") return "error";
+  if (type === "warn") return "warning";
+  return "info";
+}
+var LogBook = class {
+  entries = [];
+  seq = 0;
+  stepStart = 0;
+  get marker() {
+    return this.seq;
+  }
+  add(entry) {
+    this.seq += 1;
+    this.entries.push({
+      ...entry,
+      seq: this.seq,
+      at: (/* @__PURE__ */ new Date()).toISOString(),
+      text: scrubText(entry.text)
+    });
+    if (this.entries.length > MAX_ENTRIES) this.entries.shift();
+  }
+  attach(page, tabId) {
+    page.on("console", (message) => {
+      const where = message.location()?.url;
+      const text = message.text() + (where && consoleLevel(message) !== "info" ? ` (${scrubUrl(where)})` : "");
+      this.add({ tabId, kind: "console", level: consoleLevel(message), text });
+    });
+    page.on("pageerror", (error62) => {
+      const err = error62;
+      const firstFrame = err?.stack?.split("\n").find((line) => line.trim().startsWith("at "));
+      const text = `${err?.name ?? "Error"}: ${err?.message ?? String(error62)}${firstFrame ? ` ${firstFrame.trim()}` : ""}`;
+      this.add({ tabId, kind: "page-error", level: "error", text });
+    });
+    page.on("requestfailed", (request3) => {
+      const reason = request3.failure()?.errorText ?? "failed";
+      if (reason === "net::ERR_ABORTED") return;
+      this.add({
+        tabId,
+        kind: "network",
+        level: "error",
+        text: `${request3.method()} ${scrubUrl(request3.url())} failed: ${reason}`
+      });
+    });
+    page.on("response", (response) => {
+      const status = response.status();
+      if (status < 400) return;
+      const url2 = response.url();
+      if (/\/favicon\.ico(\?|$)/.test(url2)) return;
+      this.add({
+        tabId,
+        kind: "network",
+        level: status >= 500 ? "error" : "warning",
+        text: `${response.request().method()} ${scrubUrl(url2)} returned HTTP ${status}`
+      });
+    });
+  }
+  // Entries after a marker, filtered by level.
+  since(marker, levels = ["error", "warning"]) {
+    return this.entries.filter((e) => e.seq > marker && levels.includes(e.level));
+  }
+  // Entries since the current step started.
+  currentStep(levels) {
+    return this.since(this.stepStart, levels);
+  }
+  // Ends the current step: tags its entries and starts the next step.
+  endStep(label) {
+    for (const entry of this.entries) {
+      if (entry.seq > this.stepStart && !entry.step) entry.step = label;
+    }
+    this.stepStart = this.seq;
+  }
+};
+function formatLogs(entries) {
+  if (entries.length === 0) return "(none)";
+  return entries.map(
+    (e) => `#${e.seq} [${e.level}] ${e.kind} in ${e.tabId}${e.step ? `, step "${e.step}"` : ""}: ${e.text}`
+  ).join("\n");
+}
+
 // packages/server/src/page/refs.ts
 var RefTable = class {
   entries = /* @__PURE__ */ new Map();
@@ -91582,6 +91693,534 @@ var RefTable = class {
       );
     }
     return { handle, role: entry.node.role, name: entry.node.name ?? "" };
+  }
+};
+
+// packages/server/src/panel/controller.ts
+import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
+
+// packages/server/src/panel/bridge.ts
+import { randomBytes } from "node:crypto";
+
+// packages/server/src/panel/panel-css.ts
+var PANEL_CSS = `
+:host { all: initial; }
+* { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+.card {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --line: #cbd5e1;
+  --pass: #15803d; --bug: #b91c1c; --btn: #e2e8f0; --focus: #2563eb;
+  position: fixed; z-index: 2147483647; width: 340px; max-width: calc(100vw - 24px);
+  background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25); font-size: 14px; line-height: 1.4;
+}
+@media (prefers-color-scheme: dark) {
+  .card { --bg: #111827; --fg: #f1f5f9; --muted: #94a3b8; --line: #334155; --btn: #1f2937; --focus: #60a5fa; }
+}
+.card[data-corner="bottom-right"] { right: 12px; bottom: 12px; }
+.card[data-corner="bottom-left"] { left: 12px; bottom: 12px; }
+.card[data-corner="top-left"] { left: 12px; top: 12px; }
+.card[data-corner="top-right"] { right: 12px; top: 12px; }
+.card.asking { border: 2px solid var(--focus); }
+
+.header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: move;
+  border-bottom: 1px solid var(--line); user-select: none; }
+.card.collapsed .header { border-bottom: none; }
+.brand { font-weight: 700; }
+.step { color: var(--muted); font-size: 12px; flex: 1; }
+.icon { background: none; border: none; color: var(--fg); font-size: 16px; width: 26px; height: 26px;
+  border-radius: 6px; cursor: pointer; }
+.icon:hover { background: var(--btn); }
+
+.body { padding: 10px 12px 12px; }
+.card.collapsed .body { display: none; }
+.status { margin: 0; color: var(--muted); }
+.title { margin: 0 0 8px; font-size: 15px; }
+.label { margin: 8px 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.text { margin: 0; white-space: pre-wrap; }
+.notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
+.notes:focus { outline: 2px solid var(--focus); outline-offset: 0; }
+.error { margin: 4px 0 0; min-height: 1em; color: var(--bug); font-size: 12px; }
+.buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.buttons button { padding: 7px 0; border-radius: 6px; border: 1px solid var(--line); background: var(--btn);
+  color: var(--fg); font-size: 13px; font-weight: 600; cursor: pointer; }
+.buttons button:focus-visible { outline: 2px solid var(--focus); }
+.buttons .pass { background: var(--pass); border-color: var(--pass); color: #ffffff; }
+.buttons .bug { background: var(--bug); border-color: var(--bug); color: #ffffff; }
+
+.pulse { position: fixed; z-index: 2147483646; display: none; pointer-events: none;
+  border: 3px solid #f59e0b; border-radius: 6px; animation: uiwalk-pulse 0.6s ease-in-out infinite alternate; }
+.pulse-label { position: fixed; z-index: 2147483646; display: none; pointer-events: none;
+  padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pulse-label { background: #f59e0b; color: #111827; }
+@keyframes uiwalk-pulse { from { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); } to { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } }
+
+.annotation { position: absolute; z-index: 2147483646; display: none; pointer-events: none;
+  border: 3px solid #dc2626; border-radius: 4px; }
+`;
+
+// packages/server/src/panel/panel-script.ts
+function panelMain(opts) {
+  if (window !== window.top) return;
+  const w2 = window;
+  if (w2.__uiwalkPanel) return;
+  const send = (msg) => {
+    const fn = w2[opts.binding];
+    if (typeof fn === "function") fn(JSON.stringify(msg));
+  };
+  const host = document.createElement("uiwalk-panel");
+  host.setAttribute("aria-hidden", "true");
+  host.setAttribute("data-uiwalk", "panel");
+  const root = host.attachShadow({ mode: "closed" });
+  try {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(opts.css);
+    root.adoptedStyleSheets = [sheet];
+  } catch {
+    const style = document.createElement("style");
+    style.textContent = opts.css;
+    root.appendChild(style);
+  }
+  const el = (tag, className, text) => {
+    const node2 = document.createElement(tag);
+    if (className) node2.className = className;
+    if (text !== void 0) node2.textContent = text;
+    return node2;
+  };
+  const pulse = el("div", "pulse");
+  const pulseLabel = el("div", "pulse-label");
+  const annotation = el("div", "annotation");
+  const card = el("section", "card");
+  const header = el("header", "header");
+  const brand = el("span", "brand", "Walkthrough");
+  const stepBadge = el("span", "step");
+  const moveButton = el("button", "icon", "\u21C4");
+  moveButton.title = "Move to another corner";
+  const collapseButton = el("button", "icon", "\u2212");
+  collapseButton.title = "Collapse";
+  header.append(brand, stepBadge, moveButton, collapseButton);
+  const body = el("div", "body");
+  const status = el("p", "status");
+  const title = el("h2", "title");
+  const didLabel = el("p", "label", "What I did");
+  const didText = el("p", "text");
+  const expectLabel = el("p", "label", "What you should see");
+  const expectText = el("p", "text");
+  const notes = el("textarea", "notes");
+  notes.placeholder = "Notes (required for Bug)";
+  notes.rows = 3;
+  const error62 = el("p", "error");
+  const buttons = el("div", "buttons");
+  const passButton = el("button", "pass", "Pass");
+  const bugButton = el("button", "bug", "Bug");
+  const skipButton = el("button", "skip", "Skip");
+  const stopButton = el("button", "stop", "Stop");
+  buttons.append(passButton, bugButton, skipButton, stopButton);
+  const questionBox = el("div", "question");
+  questionBox.append(title, didLabel, didText, expectLabel, expectText, notes, error62, buttons);
+  body.append(status, questionBox);
+  card.append(header, body);
+  root.append(pulse, pulseLabel, annotation, card);
+  let question = null;
+  let corner = "bottom-right";
+  let collapsed = false;
+  let pulseTimer;
+  const placeCard = () => {
+    card.style.left = "";
+    card.style.top = "";
+    card.dataset.corner = corner;
+  };
+  const render = () => {
+    card.classList.toggle("collapsed", collapsed);
+    card.classList.toggle("asking", Boolean(question));
+    collapseButton.textContent = collapsed ? "+" : "\u2212";
+    collapseButton.title = collapsed ? "Expand" : "Collapse";
+    if (question) {
+      stepBadge.textContent = question.step ? `Step ${question.step}${question.total ? ` of ${question.total}` : ""}` : "Check";
+      title.textContent = question.title;
+      didText.textContent = question.didWhat;
+      expectText.textContent = question.expected;
+      questionBox.hidden = false;
+      status.hidden = true;
+    } else {
+      stepBadge.textContent = "";
+      questionBox.hidden = true;
+      status.hidden = false;
+    }
+  };
+  const setStatus = (text) => {
+    status.textContent = text;
+  };
+  const onTrusted = (button, fn) => {
+    button.addEventListener("click", (event) => {
+      if (!event.isTrusted) return;
+      event.preventDefault();
+      fn();
+    });
+  };
+  const answer = (result) => {
+    if (!question) return;
+    const note = notes.value.trim();
+    if (result === "bug" && !note) {
+      error62.textContent = "Describe the bug in the notes. Then click Bug.";
+      notes.focus();
+      return;
+    }
+    send({ type: "answer", id: question.id, nonce: question.nonce, result, note });
+    question = null;
+    notes.value = "";
+    error62.textContent = "";
+    setStatus(
+      `Sent: ${result === "pass" ? "Pass" : result === "bug" ? "Bug" : result === "skip" ? "Skip" : "Stop"}. The agent is working.`
+    );
+    render();
+  };
+  onTrusted(passButton, () => answer("pass"));
+  onTrusted(bugButton, () => answer("bug"));
+  onTrusted(skipButton, () => answer("skip"));
+  onTrusted(stopButton, () => answer("stop"));
+  onTrusted(collapseButton, () => {
+    collapsed = !collapsed;
+    render();
+  });
+  const corners = ["bottom-right", "bottom-left", "top-left", "top-right"];
+  onTrusted(moveButton, () => {
+    corner = corners[(corners.indexOf(corner) + 1) % corners.length];
+    placeCard();
+    send({ type: "moved", corner });
+  });
+  for (const type of ["keydown", "keyup", "keypress", "input", "beforeinput", "paste"]) {
+    card.addEventListener(type, (event) => event.stopPropagation());
+  }
+  header.addEventListener("pointerdown", (event) => {
+    if (!event.isTrusted || event.target.tagName === "BUTTON") return;
+    const box = card.getBoundingClientRect();
+    const dx = event.clientX - box.left;
+    const dy = event.clientY - box.top;
+    header.setPointerCapture(event.pointerId);
+    const move = (e) => {
+      card.dataset.corner = "free";
+      card.style.left = `${Math.max(0, Math.min(window.innerWidth - box.width, e.clientX - dx))}px`;
+      card.style.top = `${Math.max(0, Math.min(window.innerHeight - 40, e.clientY - dy))}px`;
+    };
+    const up = () => {
+      header.removeEventListener("pointermove", move);
+      header.removeEventListener("pointerup", up);
+    };
+    header.addEventListener("pointermove", move);
+    header.addEventListener("pointerup", up);
+  });
+  const avoid = (rect) => {
+    const box = card.getBoundingClientRect();
+    const overlaps = rect.x < box.right && rect.x + rect.width > box.left && rect.y < box.bottom && rect.y + rect.height > box.top;
+    if (!overlaps) return;
+    const flip = {
+      "bottom-right": "bottom-left",
+      "bottom-left": "bottom-right",
+      "top-left": "top-right",
+      "top-right": "top-left"
+    };
+    corner = flip[card.dataset.corner ?? corner] ?? "bottom-left";
+    placeCard();
+  };
+  const showPulse = (rect, label, ms) => {
+    Object.assign(pulse.style, {
+      left: `${rect.x - 4}px`,
+      top: `${rect.y - 4}px`,
+      width: `${rect.width + 8}px`,
+      height: `${rect.height + 8}px`,
+      display: "block"
+    });
+    pulseLabel.textContent = label;
+    Object.assign(pulseLabel.style, {
+      left: `${rect.x - 4}px`,
+      top: `${Math.max(0, rect.y - 30)}px`,
+      display: label ? "block" : "none"
+    });
+    avoid(rect);
+    window.clearTimeout(pulseTimer);
+    pulseTimer = window.setTimeout(() => {
+      pulse.style.display = "none";
+      pulseLabel.style.display = "none";
+    }, ms + 200);
+  };
+  const receive = (msg) => {
+    switch (msg.type) {
+      case "state": {
+        const next = msg.question ?? null;
+        if (next?.id !== question?.id) {
+          notes.value = "";
+          error62.textContent = "";
+        }
+        question = next;
+        setStatus(msg.status ?? "The agent is working.");
+        if (msg.corner) corner = msg.corner;
+        placeCard();
+        render();
+        break;
+      }
+      case "hide":
+        card.style.visibility = msg.hidden ? "hidden" : "";
+        pulse.style.visibility = msg.hidden ? "hidden" : "";
+        pulseLabel.style.visibility = msg.hidden ? "hidden" : "";
+        break;
+      case "highlight":
+        showPulse(msg.rect, msg.label ?? "", msg.ms ?? 600);
+        break;
+      case "annotate": {
+        const rect = msg.rect;
+        if (!rect) {
+          annotation.style.display = "none";
+          break;
+        }
+        Object.assign(annotation.style, {
+          left: `${rect.x + window.scrollX - 3}px`,
+          top: `${rect.y + window.scrollY - 3}px`,
+          width: `${rect.width + 6}px`,
+          height: `${rect.height + 6}px`,
+          display: "block"
+        });
+        break;
+      }
+    }
+  };
+  w2.__uiwalkPanel = { receive };
+  const mount = () => {
+    const parent = document.documentElement;
+    if (parent && host.parentNode !== parent) parent.appendChild(host);
+  };
+  const start = () => {
+    mount();
+    new MutationObserver(() => {
+      if (!host.isConnected) mount();
+    }).observe(document.documentElement, { childList: true });
+    placeCard();
+    render();
+    send({ type: "hello" });
+  };
+  if (document.documentElement) start();
+  else {
+    const wait = new MutationObserver(() => {
+      if (document.documentElement) {
+        wait.disconnect();
+        start();
+      }
+    });
+    wait.observe(document, { childList: true });
+  }
+}
+
+// packages/server/src/panel/bridge.ts
+var TOKEN2 = randomBytes(6).toString("hex");
+var WORLD_NAME = `uiwalk-${TOKEN2}`;
+var BINDING = `__uiwalk_${TOKEN2}`;
+var SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })});`;
+var PanelBridge = class _PanelBridge {
+  constructor(cdp, onMessage) {
+    this.cdp = cdp;
+    this.onMessage = onMessage;
+  }
+  cdp;
+  onMessage;
+  contextId;
+  static async install(page, onMessage) {
+    try {
+      const cdp = await page.createCDPSession();
+      const bridge = new _PanelBridge(cdp, onMessage);
+      cdp.on(
+        "Runtime.bindingCalled",
+        (event) => bridge.onBinding(event)
+      );
+      await cdp.send("Runtime.enable");
+      await cdp.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD_NAME });
+      await cdp.send("Page.enable");
+      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: SOURCE,
+        worldName: WORLD_NAME
+      });
+      const { frameTree } = await cdp.send("Page.getFrameTree");
+      const { executionContextId } = await cdp.send("Page.createIsolatedWorld", {
+        frameId: frameTree.frame.id,
+        worldName: WORLD_NAME
+      });
+      await cdp.send("Runtime.evaluate", { expression: SOURCE, contextId: executionContextId });
+      return bridge;
+    } catch (error62) {
+      log.warn("could not add the panel to a tab", error62);
+      return void 0;
+    }
+  }
+  onBinding(event) {
+    if (event.name !== BINDING) return;
+    let msg;
+    try {
+      msg = JSON.parse(event.payload);
+    } catch {
+      return;
+    }
+    this.contextId = event.executionContextId;
+    this.onMessage(msg);
+  }
+  get ready() {
+    return this.contextId !== void 0;
+  }
+  // Sends a message to the panel. Returns false if the panel is not ready.
+  async send(msg) {
+    if (this.contextId === void 0) return false;
+    try {
+      await this.cdp.send("Runtime.evaluate", {
+        expression: `window.__uiwalkPanel && window.__uiwalkPanel.receive(${JSON.stringify(msg)})`,
+        contextId: this.contextId
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+// packages/server/src/panel/controller.ts
+var WORKING = "The agent is working.";
+var RESULTS = ["pass", "bug", "skip", "stop"];
+var DeveloperPanel = class {
+  bridges = /* @__PURE__ */ new Map();
+  question;
+  stored;
+  waiter;
+  status = WORKING;
+  corner = "bottom-right";
+  async attach(page, tabId) {
+    const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
+    if (bridge) this.bridges.set(tabId, bridge);
+  }
+  detach(tabId) {
+    this.bridges.delete(tabId);
+    if (this.question?.tabId === tabId) {
+      this.question = void 0;
+      this.finish({ kind: "tab_closed" });
+    }
+  }
+  onBrowserClosed() {
+    this.question = void 0;
+    this.finish({ kind: "browser_closed" });
+  }
+  get pending() {
+    return this.question;
+  }
+  // True when the panel in this tab has started and can show a question.
+  async waitReady(tabId, ms = 3e3) {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {
+      if (this.bridges.get(tabId)?.ready) return true;
+      await new Promise((resolve9) => setTimeout(resolve9, 100));
+    }
+    return Boolean(this.bridges.get(tabId)?.ready);
+  }
+  stateFor(tabId) {
+    const q2 = this.question?.tabId === tabId ? this.question : void 0;
+    return {
+      type: "state",
+      status: this.status,
+      corner: this.corner,
+      question: q2 ? {
+        id: q2.id,
+        nonce: q2.nonce,
+        title: q2.title,
+        didWhat: q2.didWhat,
+        expected: q2.expected,
+        step: q2.step,
+        total: q2.total
+      } : null
+    };
+  }
+  async push(tabId) {
+    await this.bridges.get(tabId)?.send(this.stateFor(tabId));
+  }
+  async onMessage(tabId, msg) {
+    if (msg.type === "hello") {
+      await this.push(tabId);
+      return;
+    }
+    if (msg.type === "moved" && typeof msg.corner === "string") {
+      this.corner = msg.corner;
+      return;
+    }
+    if (msg.type === "answer") {
+      const q2 = this.question;
+      if (!q2 || q2.tabId !== tabId || msg.id !== q2.id || msg.nonce !== q2.nonce) {
+        log.warn("ignored a panel answer that did not match the current question");
+        return;
+      }
+      const result = msg.result;
+      if (!RESULTS.includes(result)) return;
+      const answer = {
+        result,
+        note: typeof msg.note === "string" ? msg.note.slice(0, 4e3) : ""
+      };
+      this.question = void 0;
+      this.status = WORKING;
+      if (this.waiter) this.finish({ kind: "answer", answer, question: q2 });
+      else this.stored = { answer, question: q2 };
+    }
+  }
+  finish(outcome) {
+    const resolve9 = this.waiter;
+    this.waiter = void 0;
+    resolve9?.(outcome);
+  }
+  // Shows a new question. Any older question is replaced.
+  async ask(input3) {
+    this.stored = void 0;
+    this.question = { ...input3, id: randomUUID(), nonce: randomBytes2(16).toString("hex") };
+    await this.push(input3.tabId);
+    return this.question;
+  }
+  // Waits for the answer, a timeout, or a cancel.
+  waitForAnswer(timeoutMs, signal) {
+    if (this.stored) {
+      const { answer, question } = this.stored;
+      this.stored = void 0;
+      return Promise.resolve({ kind: "answer", answer, question });
+    }
+    if (!this.question) return Promise.resolve({ kind: "canceled" });
+    return new Promise((resolve9) => {
+      const timer2 = setTimeout(() => this.finish({ kind: "timeout" }), timeoutMs);
+      const onAbort = () => this.finish({ kind: "canceled" });
+      signal?.addEventListener("abort", onAbort, { once: true });
+      this.waiter = (outcome) => {
+        clearTimeout(timer2);
+        signal?.removeEventListener("abort", onAbort);
+        resolve9(outcome);
+      };
+    });
+  }
+  // Removes the question from the panel.
+  async clear(status = WORKING) {
+    const tabId = this.question?.tabId;
+    this.question = void 0;
+    this.stored = void 0;
+    this.status = status;
+    await Promise.all(
+      [...this.bridges.keys()].map((id) => id === tabId || !tabId ? this.push(id) : void 0)
+    );
+  }
+  async setStatus(tabId, status) {
+    this.status = status;
+    await this.push(tabId);
+  }
+  async hide(tabId, hidden) {
+    await this.bridges.get(tabId)?.send({ type: "hide", hidden });
+  }
+  async highlight(tabId, rect, label, ms) {
+    await this.bridges.get(tabId)?.send({ type: "highlight", rect, label, ms });
+  }
+  async annotate(tabId, rect) {
+    await this.bridges.get(tabId)?.send({ type: "annotate", rect });
+  }
+  // Shows the same state again, for example after the active tab changes.
+  async refresh(tabId) {
+    await this.push(tabId);
   }
 };
 
@@ -91636,7 +92275,13 @@ async function launchChrome(config3) {
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
       defaultViewport: headless ? { width: 1280, height: 800 } : null,
-      args: ["--no-first-run", "--no-default-browser-check", "--window-size=1280,900"],
+      args: [
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--window-size=1280,900",
+        // For tests only: a fixed port lets a test connect to this Chrome.
+        ...process.env.UIWALK_DEBUG_PORT ? [`--remote-debugging-port=${process.env.UIWALK_DEBUG_PORT}`] : []
+      ],
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,
@@ -91694,6 +92339,7 @@ var Driver = class _Driver {
     this.options = options;
     this.profileDir = profileDir;
     this.dialogPolicy = options.config.dialogs;
+    if (options.config.panel) this.panel = new DeveloperPanel();
   }
   browser;
   mode;
@@ -91704,6 +92350,10 @@ var Driver = class _Driver {
   emitter = new EventEmitter3();
   tabs = /* @__PURE__ */ new Map();
   secretFields = [];
+  logs = new LogBook();
+  panel;
+  // The element of the last action, for the red box in bug screenshots.
+  lastTarget;
   activeId;
   dialogPolicy;
   closedReason;
@@ -91736,6 +92386,7 @@ var Driver = class _Driver {
       if (!this.closedReason) {
         this.closedReason = "browser_closed";
         log.info("the browser was closed");
+        this.panel?.onBrowserClosed();
         this.emitter.emit("closed");
       }
       if (this.profileDir) removeProfile(this.profileDir);
@@ -91802,6 +92453,8 @@ var Driver = class _Driver {
     });
     page.on("close", () => this.onTabClosed(tab));
     page.on("dialog", (dialog) => void this.onDialog(tab, dialog));
+    this.logs.attach(page, tab.id);
+    await this.panel?.attach(page, tab.id);
     tab.cdp = await guardNavigation(
       page,
       (url3) => this.options.isAllowed(url3),
@@ -91820,6 +92473,7 @@ var Driver = class _Driver {
     tab.closed = true;
     this.tabs.delete(tab.id);
     this.pendingDialogs.delete(tab.id);
+    this.panel?.detach(tab.id);
     if (this.activeId === tab.id) {
       const next = [...this.tabs.values()].at(-1);
       this.activeId = next?.id;
@@ -91941,6 +92595,7 @@ var Driver = class _Driver {
       throw new ToolError(`There is no tab "${id}". Use the tabs tool to list tabs.`, "no_tab");
     this.activeId = id;
     void tab.page.bringToFront().catch(() => void 0);
+    void this.panel?.refresh(id);
     return tab;
   }
   note(text) {
@@ -91982,12 +92637,15 @@ var Mutex2 = class {
 
 // packages/server/src/context.ts
 var Context = class {
-  constructor(roots) {
+  constructor(roots, clientName = () => void 0) {
     this.roots = roots;
+    this.clientName = clientName;
   }
   roots;
+  clientName;
   lock = new Mutex2();
   actionLog = [];
+  stepAnswers = [];
   driver;
   loaded;
   // Reads the project folder, settings, and secrets again.
@@ -92303,6 +92961,50 @@ function reloadableTab(driver) {
   return tab;
 }
 
+// packages/server/src/evidence/annotate.ts
+async function maskSecretFields(fields) {
+  const masked = [];
+  for (const handle of fields) {
+    const previous = await handle.evaluate((el) => {
+      const input3 = el;
+      if (!input3.isConnected || input3.type === "password") return null;
+      const old = input3.style.getPropertyValue("-webkit-text-security");
+      input3.style.setProperty("-webkit-text-security", "disc", "important");
+      return old;
+    }).catch(() => null);
+    if (previous !== null) masked.push({ handle, previous });
+  }
+  return async () => {
+    for (const { handle, previous } of masked) {
+      await handle.evaluate((el, old) => {
+        const input3 = el;
+        if (old) input3.style.setProperty("-webkit-text-security", old);
+        else input3.style.removeProperty("-webkit-text-security");
+      }, previous).catch(() => void 0);
+    }
+  };
+}
+async function withCleanPage(driver, tab, options, capture) {
+  const panel = driver.panel;
+  await panel?.hide(tab.id, true);
+  if (options.annotate) await panel?.annotate(tab.id, options.annotate);
+  const restore = await maskSecretFields(driver.secretFields);
+  await tab.page.evaluate(() => new Promise((resolve9) => requestAnimationFrame(() => resolve9(null)))).catch(() => void 0);
+  try {
+    return await capture();
+  } finally {
+    await restore();
+    if (options.annotate) await panel?.annotate(tab.id, null);
+    await panel?.hide(tab.id, false);
+  }
+}
+async function elementRect(handle) {
+  const connected = await handle.evaluate((el) => el.isConnected).catch(() => false);
+  if (!connected) return void 0;
+  const box = await handle.boundingBox().catch(() => null);
+  return box ?? void 0;
+}
+
 // packages/server/src/evidence/screenshot.ts
 import { join as join12, relative as relative3 } from "node:path";
 
@@ -92351,6 +93053,200 @@ async function takeScreenshot(tab, dir, projectDir, options) {
   }
   const preview = handle ? await handle.screenshot({ type: "jpeg", quality: 60, encoding: "base64" }) : await tab.page.screenshot({ type: "jpeg", quality: 60, encoding: "base64" });
   return { path: path14, relativePath: relative3(projectDir, path14), preview };
+}
+
+// packages/server/src/tools/developer-tools.ts
+function defaultAskTimeoutSec(clientName) {
+  return clientName === "claude-code" ? 300 : 50;
+}
+async function bugScreenshot(ctx, driver, tab, stepLabel) {
+  const config3 = await ctx.config();
+  const last2 = driver.lastTarget?.tabId === tab.id ? driver.lastTarget : void 0;
+  const rect = last2 ? await elementRect(last2.handle) : void 0;
+  return withCleanPage(
+    driver,
+    tab,
+    { annotate: rect },
+    () => takeScreenshot(tab, adhocEvidenceDir(config3.projectDir), config3.projectDir, {
+      label: `bug-${stepLabel}`
+    })
+  );
+}
+function startProgress(extra) {
+  const token = extra._meta?.progressToken;
+  if (token === void 0) return () => void 0;
+  let count = 0;
+  const timer2 = setInterval(() => {
+    count += 1;
+    void extra.sendNotification({
+      method: "notifications/progress",
+      params: {
+        progressToken: token,
+        progress: count,
+        message: "Walkthrough waits for the developer to answer in the browser."
+      }
+    }).catch(() => void 0);
+  }, 1e4);
+  return () => clearInterval(timer2);
+}
+function questionText(q2) {
+  return `Step: ${q2.title}
+What I did: ${q2.didWhat}
+What you should see: ${q2.expected}`;
+}
+function registerDeveloperTools(server, ctx) {
+  server.registerTool(
+    "ask_developer",
+    {
+      title: "Ask the developer",
+      description: [
+        "Show a step in the Walkthrough panel in the browser. Then wait for the developer to answer Pass, Bug, Skip, or Stop, with notes.",
+        "Call it after you do a step. Say what you did and what the developer should see.",
+        "On Bug, Walkthrough saves a screenshot and the errors from this step.",
+        'If the reply says "status: waiting", call it again with resume: true.',
+        'If the reply says "status: use_chat", ask the developer in chat instead.'
+      ].join(" "),
+      inputSchema: {
+        title: external_exports.string().max(200).optional().describe('Short name of the step, like "Add the mug to the cart".'),
+        didWhat: external_exports.string().max(2e3).optional().describe("What you did, in plain words."),
+        expected: external_exports.string().max(2e3).optional().describe("What the developer should see now."),
+        step: external_exports.number().int().min(1).optional().describe("Step number."),
+        total: external_exports.number().int().min(1).optional().describe("Number of steps in the test."),
+        stepId: external_exports.string().optional().describe("Step id from a test plan."),
+        resume: external_exports.boolean().optional().describe("Keep waiting for the question that is already in the panel.")
+      }
+    },
+    (input3, extra) => runTool(ctx, "ask_developer", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const config3 = await ctx.config();
+      const panel = driver.panel;
+      if (!input3.resume && (!input3.title || !input3.didWhat || !input3.expected)) {
+        throw new ToolError("Give a title, didWhat, and expected for the step.", "bad_input");
+      }
+      if (!panel || !await panel.waitReady(tab.id)) {
+        const why = config3.browser.headless ? "the browser is hidden (headless)" : "the panel could not start on this page";
+        return [
+          "status: use_chat",
+          `The developer panel is not available, because ${why}. Ask the developer in chat instead:`,
+          questionText({
+            title: input3.title ?? "",
+            didWhat: input3.didWhat ?? "",
+            expected: input3.expected ?? ""
+          })
+        ].join("\n");
+      }
+      if (input3.resume) {
+        if (!panel.pending)
+          throw new ToolError(
+            "No question is waiting in the panel. Ask a new question.",
+            "bad_input"
+          );
+      } else {
+        await panel.ask({
+          tabId: tab.id,
+          title: input3.title,
+          didWhat: input3.didWhat,
+          expected: input3.expected,
+          step: input3.step,
+          total: input3.total,
+          stepId: input3.stepId
+        });
+      }
+      const timeoutSec = config3.askTimeoutSec ?? defaultAskTimeoutSec(ctx.clientName());
+      const stopProgress = startProgress(extra);
+      let outcome;
+      try {
+        outcome = await panel.waitForAnswer(timeoutSec * 1e3, extra.signal);
+      } finally {
+        stopProgress();
+      }
+      switch (outcome.kind) {
+        case "timeout":
+          return [
+            "status: waiting",
+            `The developer has not answered after ${timeoutSec} seconds. The question is still in the panel.`,
+            "Call ask_developer with resume: true to keep waiting. Do not start the next step yet."
+          ].join("\n");
+        case "canceled":
+          await panel.clear("The agent stopped waiting.");
+          return "status: canceled\nWalkthrough removed the question from the panel.";
+        case "tab_closed":
+          return "status: canceled\nThe tab with the question was closed. Ask the developer in chat what to do next.";
+        case "browser_closed":
+          throw new ToolError(
+            "The browser was closed. Call browser_open to start a new one.",
+            "browser_closed"
+          );
+      }
+      const { answer, question } = outcome;
+      const label = question.stepId ?? question.title;
+      const stepLogs = driver.logs.currentStep();
+      driver.logs.endStep(label);
+      const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
+      const extraContent = [];
+      const record2 = {
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        question,
+        answer,
+        logs: formatLogs(stepLogs)
+      };
+      if (answer.result === "bug") {
+        try {
+          const shot = await bugScreenshot(
+            ctx,
+            driver,
+            tab,
+            question.stepId ?? String(question.step ?? "step")
+          );
+          record2.screenshot = shot.relativePath;
+          lines.push(`Screenshot: ${shot.relativePath}`);
+          extraContent.push({ type: "image", data: shot.preview, mimeType: "image/jpeg" });
+        } catch (error62) {
+          lines.push(`Walkthrough could not save a screenshot: ${error62.message}`);
+        }
+        lines.push(
+          "Errors and failed requests during this step:",
+          untrusted(formatLogs(stepLogs))
+        );
+        lines.push(
+          "Tell the developer what you saved. Ask whether to continue with the next step."
+        );
+      } else if (answer.result === "stop") {
+        lines.push("The developer asked to stop. Do not do more steps. Give a short summary.");
+      } else if (answer.result === "skip") {
+        lines.push("The developer skipped this step. Continue with the next step.");
+      } else if (stepLogs.some((e) => e.level === "error")) {
+        lines.push(
+          "Note: the page logged errors during this step:",
+          untrusted(formatLogs(stepLogs))
+        );
+      }
+      ctx.stepAnswers.push(record2);
+      return textResult(lines.join("\n"), extraContent);
+    })
+  );
+  server.registerTool(
+    "logs",
+    {
+      title: "Page logs",
+      description: "Show console messages, page errors, and failed requests from the browser. By default it shows errors and warnings since the current step started.",
+      inputSchema: {
+        since: external_exports.number().int().min(0).optional().describe("Show entries after this marker number. Use 0 for all."),
+        levels: external_exports.array(external_exports.enum(["error", "warning", "info"])).optional().describe("Default: error and warning.")
+      }
+    },
+    ({ since, levels }) => runTool(ctx, "logs", async () => {
+      const driver = ctx.requireDriver();
+      const wanted = levels ?? ["error", "warning"];
+      const entries = since === void 0 ? driver.logs.currentStep(wanted) : driver.logs.since(since, wanted);
+      return [
+        `${entries.length} entr${entries.length === 1 ? "y" : "ies"}${since === void 0 ? " since the current step started" : ` after marker ${since}`}:`,
+        untrusted(formatLogs(entries)),
+        `Latest marker: ${driver.logs.marker}`
+      ].join("\n");
+    })
+  );
 }
 
 // packages/server/src/guards/paths.ts
@@ -92470,6 +93366,18 @@ var ACTIONS = [
   "scroll",
   "upload"
 ];
+var ACTION_LABELS = {
+  click: "Click",
+  dblclick: "Double-click",
+  hover: "Point",
+  fill: "Type",
+  select: "Choose",
+  check: "Check",
+  uncheck: "Uncheck",
+  press: "Press a key",
+  scroll: "Scroll",
+  upload: "Upload"
+};
 async function resolveTarget(driver, tab, input3) {
   if (input3.ref) {
     const { handle, role, name } = await driver.refs.resolve(input3.ref, tab.id, tab.nav);
@@ -92619,6 +93527,16 @@ async function perform(ctx, tab, input3, target) {
     }
   }
 }
+async function highlightTarget(ctx, tab, target, action) {
+  const ms = ctx.config.highlightMs;
+  const panel = ctx.driver.panel;
+  if (!panel || ms <= 0) return;
+  await target.handle.scrollIntoView().catch(() => void 0);
+  const rect = await elementRect(target.handle);
+  if (!rect) return;
+  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action]}`, ms);
+  await new Promise((resolve9) => setTimeout(resolve9, ms));
+}
 async function settle3(tab) {
   await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2e3 }).catch(() => void 0);
 }
@@ -92633,7 +93551,17 @@ Navigate back to an allowed page first.`,
     );
   }
   const target = await resolveTarget(ctx.driver, tab, input3);
+  if (target && await target.handle.evaluate((el) => Boolean(el.closest("uiwalk-panel")))) {
+    throw new ToolError(
+      "That element is part of the Walkthrough panel. Only the developer uses the panel.",
+      "bad_target"
+    );
+  }
   const selector = target ? await stableSelector(target.handle, target) : void 0;
+  if (target) {
+    ctx.driver.lastTarget = { tabId: tab.id, handle: target.handle, label: target.label };
+    await highlightTarget(ctx, tab, target, input3.action);
+  }
   const dialogWatch = ctx.driver.nextDialog(tab.id);
   const work = perform(ctx, tab, input3, target);
   let outcome;
@@ -92947,26 +93875,32 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
         ref: refField,
         selector: selectorField,
         fullPage: external_exports.boolean().optional().describe("Capture the whole page, not only the visible part."),
-        label: external_exports.string().optional().describe('Short name for the file, like "cart-total".')
+        label: external_exports.string().optional().describe('Short name for the file, like "cart-total".'),
+        annotate: external_exports.boolean().optional().describe(
+          "With a ref or selector: capture the page and draw a red box around the element."
+        )
       }
     },
-    ({ ref, selector, fullPage, label }) => runTool(ctx, "screenshot", async () => {
+    ({ ref, selector, fullPage, label, annotate }) => runTool(ctx, "screenshot", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const config3 = await ctx.config();
       const target = await resolveTarget(driver, tab, { ref, selector });
-      const shot = await takeScreenshot(
+      const dir = adhocEvidenceDir(config3.projectDir);
+      const rect = annotate && target ? await elementRect(target.handle) : void 0;
+      const shot = await withCleanPage(
+        driver,
         tab,
-        adhocEvidenceDir(config3.projectDir),
-        config3.projectDir,
-        {
-          handle: target?.handle,
+        { annotate: rect },
+        () => takeScreenshot(tab, dir, config3.projectDir, {
+          handle: rect ? void 0 : target?.handle,
           fullPage,
           label
-        }
+        })
       );
-      const what = target ? target.label : fullPage ? "the full page" : "the visible page";
-      const note = fullPage && !target ? " The preview shows only the visible part." : "";
+      const page = fullPage ? "the full page" : "the visible page";
+      const what = target && !rect ? target.label : rect ? `${page}, with ${target?.label} marked` : page;
+      const note = fullPage && !(target && !rect) ? " The preview shows only the visible part." : "";
       return textResult(`Saved a screenshot of ${what}: ${shot.relativePath}${note}`, [
         { type: "image", data: shot.preview, mimeType: "image/jpeg" }
       ]);
@@ -92982,9 +93916,10 @@ function createServer() {
     const { roots: list } = await server.server.listRoots();
     return list.map((root) => root.uri.startsWith("file:") ? fileURLToPath3(root.uri) : root.uri);
   };
-  const ctx = new Context(roots);
+  const ctx = new Context(roots, () => server.server.getClientVersion()?.name);
   registerBrowserTools(server, ctx);
   registerPageTools(server, ctx);
+  registerDeveloperTools(server, ctx);
   return { server, ctx };
 }
 

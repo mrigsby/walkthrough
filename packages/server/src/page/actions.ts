@@ -3,6 +3,7 @@ import type { Driver, Tab } from '../browser/driver.js';
 import { dialogOpenMessage } from '../browser/driver.js';
 import type { Config } from '../config.js';
 import { ToolError } from '../errors.js';
+import { elementRect } from '../evidence/annotate.js';
 import type { OriginGuard } from '../guards/origins.js';
 import { checkUploadPath } from '../guards/paths.js';
 import { MASK, type SecretStore } from '../guards/secrets.js';
@@ -21,6 +22,19 @@ export const ACTIONS = [
   'upload',
 ] as const;
 export type Action = (typeof ACTIONS)[number];
+
+const ACTION_LABELS: Record<Action, string> = {
+  click: 'Click',
+  dblclick: 'Double-click',
+  hover: 'Point',
+  fill: 'Type',
+  select: 'Choose',
+  check: 'Check',
+  uncheck: 'Uncheck',
+  press: 'Press a key',
+  scroll: 'Scroll',
+  upload: 'Upload',
+};
 
 export interface ActInput {
   action: Action;
@@ -232,6 +246,23 @@ async function perform(
   }
 }
 
+// Shows a pulsing box on the element, so the developer can see what comes next.
+async function highlightTarget(
+  ctx: ActContext,
+  tab: Tab,
+  target: Target,
+  action: Action,
+): Promise<void> {
+  const ms = ctx.config.highlightMs;
+  const panel = ctx.driver.panel;
+  if (!panel || ms <= 0) return;
+  await target.handle.scrollIntoView().catch(() => undefined);
+  const rect = await elementRect(target.handle);
+  if (!rect) return;
+  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action]}`, ms);
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Waits a moment for the page to react, without failing if it stays busy.
 async function settle(tab: Tab): Promise<void> {
   await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2000 }).catch(() => undefined);
@@ -248,7 +279,17 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
   }
 
   const target = await resolveTarget(ctx.driver, tab, input);
+  if (target && (await target.handle.evaluate((el) => Boolean(el.closest('uiwalk-panel'))))) {
+    throw new ToolError(
+      'That element is part of the Walkthrough panel. Only the developer uses the panel.',
+      'bad_target',
+    );
+  }
   const selector = target ? await stableSelector(target.handle, target) : undefined;
+  if (target) {
+    ctx.driver.lastTarget = { tabId: tab.id, handle: target.handle, label: target.label };
+    await highlightTarget(ctx, tab, target, input.action);
+  }
 
   // Watch for a dialog that the action opens. It would block the action.
   const dialogWatch = ctx.driver.nextDialog(tab.id);

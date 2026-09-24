@@ -21,6 +21,9 @@ export interface Config {
   dialogs: DialogPolicy;
   actionTimeoutMs: number;
   askTimeoutSec?: number;
+  // The developer panel, and how long to highlight an element before an action.
+  panel: boolean;
+  highlightMs: number;
   // Only read from config.local.yaml.
   allowEvaluate: boolean;
   uploadsRoot: string;
@@ -42,6 +45,8 @@ const sharedSchema = z
     dialogs: z.enum(['ask', 'accept', 'dismiss']).optional(),
     actionTimeoutMs: z.number().int().min(1000).max(120_000).optional(),
     askTimeoutSec: z.number().int().min(10).max(3600).optional(),
+    panel: z.boolean().optional(),
+    highlightMs: z.number().int().min(0).max(5000).optional(),
   })
   .loose();
 
@@ -128,6 +133,9 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
 
   // Headless is useful for tests and CI.
   const envHeadless = process.env.UIWALK_HEADLESS;
+  const headless = envHeadless ? envHeadless !== '0' : (merged.browser.headless ?? false);
+  // Nobody can see a panel in a hidden browser. Tests can still force it on.
+  const panel = (merged.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === '1');
 
   return {
     projectDir,
@@ -135,13 +143,15 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
     baseUrl: merged.baseUrl,
     allowedOrigins: merged.allowedOrigins ?? DEFAULT_ORIGINS,
     browser: {
-      headless: envHeadless ? envHeadless !== '0' : (merged.browser.headless ?? false),
+      headless,
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath,
     },
     dialogs: merged.dialogs ?? 'ask',
     actionTimeoutMs: merged.actionTimeoutMs ?? 10_000,
     askTimeoutSec: merged.askTimeoutSec,
+    panel,
+    highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
     warnings,
