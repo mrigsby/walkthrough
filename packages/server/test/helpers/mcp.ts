@@ -12,7 +12,10 @@ export interface ToolReply {
 }
 
 // Starts the bundled server over stdio, like Claude Code does.
-export async function startClient(env: Record<string, string>): Promise<{
+export async function startClient(
+  env: Record<string, string>,
+  serverFile = bundle,
+): Promise<{
   call: (name: string, args?: Record<string, unknown>) => Promise<ToolReply>;
   client: Client;
   close: () => Promise<void>;
@@ -21,7 +24,7 @@ export async function startClient(env: Record<string, string>): Promise<{
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,
-      args: [bundle],
+      args: [serverFile],
       env: { ...(process.env as Record<string, string>), UIWALK_HEADLESS: '1', ...env },
       stderr: 'ignore',
     }),

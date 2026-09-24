@@ -1,8 +1,13 @@
 {
   "name": "walkthrough",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Test a web app step by step in a visible browser. The agent explains each step, and you confirm it or report a bug.",
-  "author": { "name": "TODO: author name" },
+  "author": {
+    "name": "Michael Rigsby",
+    "email": "mrigsby@oistech.com"
+  },
   "license": "MIT",
-  "keywords": ["testing", "ui", "browser", "puppeteer", "qa"]
+  "keywords": ["testing", "ui", "browser", "puppeteer", "qa"],
+  "homepage": "https://github.com/oistechnologies/walkthrough",
+  "repository": "https://github.com/oistechnologies/walkthrough"
 }

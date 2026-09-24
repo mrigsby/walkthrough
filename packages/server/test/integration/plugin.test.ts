@@ -1,10 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { repoRoot } from '../helpers/demo-server.js';
 import { startClient } from '../helpers/mcp.js';
+import { tempDir } from '../helpers/temp.js';
 
 // Checks the plugin files against the real server.
 const pluginDir = join(repoRoot, 'plugins/walkthrough');
@@ -88,6 +89,24 @@ describe('plugin files', () => {
     expect(market.plugins[0].version).toBe(server);
     expect(mcp.client.getServerVersion()?.version).toBe(server);
   });
+
+  // An installed plugin has no node_modules. The bundle must work alone.
+  it('works when the plugin folder is copied outside the repo', async () => {
+    const outside = tempDir('installed');
+    cpSync(pluginDir, join(outside, 'walkthrough'), { recursive: true });
+    const copy = await startClient(
+      { UIWALK_HEADLESS: '1', UIWALK_PROJECT_DIR: outside, TMPDIR: outside },
+      join(outside, 'walkthrough/server/uiwalk.mjs'),
+    );
+    try {
+      const open = await copy.call('browser_open', { url: 'about:blank' });
+      expect(open.isError, open.text).toBe(false);
+      const audit = await copy.call('a11y_audit');
+      expect(audit.isError, audit.text).toBe(false);
+    } finally {
+      await copy.close();
+    }
+  }, 60_000);
 
   it('passes claude plugin validate, when Claude Code is installed', () => {
     let claude = '';

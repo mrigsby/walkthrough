@@ -350,7 +350,7 @@ function errorContext(cb) {
     }
     cb();
     if (isRoot) {
-      var _a6 = context, errorThrown = _a6.errorThrown, error62 = _a6.error;
+      var _a11 = context, errorThrown = _a11.errorThrown, error62 = _a11.error;
       context = null;
       if (errorThrown) {
         throw error62;
@@ -409,8 +409,8 @@ function pipeFromArray(fns) {
   };
 }
 function getPromiseCtor(promiseCtor) {
-  var _a6;
-  return (_a6 = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config2.Promise) !== null && _a6 !== void 0 ? _a6 : Promise;
+  var _a11;
+  return (_a11 = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config2.Promise) !== null && _a11 !== void 0 ? _a11 : Promise;
 }
 function isObserver(value) {
   return value && isFunction(value.next) && isFunction(value.error) && isFunction(value.complete);
@@ -476,7 +476,7 @@ function isIterable(input3) {
 }
 function readableStreamLikeToAsyncGenerator(readableStream) {
   return __asyncGenerator(this, arguments, function readableStreamLikeToAsyncGenerator_1() {
-    var reader, _a6, value, done;
+    var reader, _a11, value, done;
     return __generator(this, function(_b2) {
       switch (_b2.label) {
         case 0:
@@ -489,7 +489,7 @@ function readableStreamLikeToAsyncGenerator(readableStream) {
           if (false) return [3, 8];
           return [4, __await(reader.read())];
         case 3:
-          _a6 = _b2.sent(), value = _a6.value, done = _a6.done;
+          _a11 = _b2.sent(), value = _a11.value, done = _a11.done;
           if (!done) return [3, 5];
           return [4, __await(void 0)];
         case 4:
@@ -572,7 +572,7 @@ function fromPromise(promise2) {
 }
 function fromIterable(iterable) {
   return new Observable(function(subscriber) {
-    var e_1, _a6;
+    var e_1, _a11;
     try {
       for (var iterable_1 = __values(iterable), iterable_1_1 = iterable_1.next(); !iterable_1_1.done; iterable_1_1 = iterable_1.next()) {
         var value = iterable_1_1.value;
@@ -585,7 +585,7 @@ function fromIterable(iterable) {
       e_1 = { error: e_1_1 };
     } finally {
       try {
-        if (iterable_1_1 && !iterable_1_1.done && (_a6 = iterable_1.return)) _a6.call(iterable_1);
+        if (iterable_1_1 && !iterable_1_1.done && (_a11 = iterable_1.return)) _a11.call(iterable_1);
       } finally {
         if (e_1) throw e_1.error;
       }
@@ -605,7 +605,7 @@ function fromReadableStreamLike(readableStream) {
 }
 function process3(asyncIterable, subscriber) {
   var asyncIterable_1, asyncIterable_1_1;
-  var e_2, _a6;
+  var e_2, _a11;
   return __awaiter(this, void 0, void 0, function() {
     var value, e_2_1;
     return __generator(this, function(_b2) {
@@ -634,8 +634,8 @@ function process3(asyncIterable, subscriber) {
           return [3, 11];
         case 6:
           _b2.trys.push([6, , 9, 10]);
-          if (!(asyncIterable_1_1 && !asyncIterable_1_1.done && (_a6 = asyncIterable_1.return))) return [3, 8];
-          return [4, _a6.call(asyncIterable_1)];
+          if (!(asyncIterable_1_1 && !asyncIterable_1_1.done && (_a11 = asyncIterable_1.return))) return [3, 8];
+          return [4, _a11.call(asyncIterable_1)];
         case 7:
           _b2.sent();
           _b2.label = 8;
@@ -730,11 +730,11 @@ function scheduleIterable(input3, scheduler) {
     executeSchedule(subscriber, scheduler, function() {
       iterator2 = input3[iterator]();
       executeSchedule(subscriber, scheduler, function() {
-        var _a6;
+        var _a11;
         var value;
         var done;
         try {
-          _a6 = iterator2.next(), value = _a6.value, done = _a6.done;
+          _a11 = iterator2.next(), value = _a11.value, done = _a11.done;
         } catch (err) {
           subscriber.error(err);
           return;
@@ -902,7 +902,7 @@ function combineLatest() {
   }
   var scheduler = popScheduler(args);
   var resultSelector = popResultSelector(args);
-  var _a6 = argsArgArrayOrObject(args), observables = _a6.args, keys = _a6.keys;
+  var _a11 = argsArgArrayOrObject(args), observables = _a11.args, keys = _a11.keys;
   if (observables.length === 0) {
     return from([], scheduler);
   }
@@ -1058,11 +1058,11 @@ function fromEvent(target2, eventName, options, resultSelector) {
   if (resultSelector) {
     return fromEvent(target2, eventName, options).pipe(mapOneOrManyArgs(resultSelector));
   }
-  var _a6 = __read(isEventTarget(target2) ? eventTargetMethods.map(function(methodName) {
+  var _a11 = __read(isEventTarget(target2) ? eventTargetMethods.map(function(methodName) {
     return function(handler) {
       return target2[methodName](eventName, handler, options);
     };
-  }) : isNodeStyleEventEmitter(target2) ? nodeEventEmitterMethods.map(toCommonHandlerRegistry(target2, eventName)) : isJQueryStyleEventEmitter(target2) ? jqueryMethods.map(toCommonHandlerRegistry(target2, eventName)) : [], 2), add = _a6[0], remove = _a6[1];
+  }) : isNodeStyleEventEmitter(target2) ? nodeEventEmitterMethods.map(toCommonHandlerRegistry(target2, eventName)) : isJQueryStyleEventEmitter(target2) ? jqueryMethods.map(toCommonHandlerRegistry(target2, eventName)) : [], 2), add = _a11[0], remove = _a11[1];
   if (!add) {
     if (isArrayLike(target2)) {
       return mergeMap(function(subTarget) {
@@ -1193,7 +1193,7 @@ function bufferCount(bufferSize, startBufferEvery) {
     var buffers = [];
     var count = 0;
     source2.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      var e_1, _a6, e_2, _b2;
+      var e_1, _a11, e_2, _b2;
       var toEmit = null;
       if (count++ % startBufferEvery === 0) {
         buffers.push([]);
@@ -1211,7 +1211,7 @@ function bufferCount(bufferSize, startBufferEvery) {
         e_1 = { error: e_1_1 };
       } finally {
         try {
-          if (buffers_1_1 && !buffers_1_1.done && (_a6 = buffers_1.return)) _a6.call(buffers_1);
+          if (buffers_1_1 && !buffers_1_1.done && (_a11 = buffers_1.return)) _a11.call(buffers_1);
         } finally {
           if (e_1) throw e_1.error;
         }
@@ -1234,7 +1234,7 @@ function bufferCount(bufferSize, startBufferEvery) {
         }
       }
     }, function() {
-      var e_3, _a6;
+      var e_3, _a11;
       try {
         for (var buffers_2 = __values(buffers), buffers_2_1 = buffers_2.next(); !buffers_2_1.done; buffers_2_1 = buffers_2.next()) {
           var buffer = buffers_2_1.value;
@@ -1244,7 +1244,7 @@ function bufferCount(bufferSize, startBufferEvery) {
         e_3 = { error: e_3_1 };
       } finally {
         try {
-          if (buffers_2_1 && !buffers_2_1.done && (_a6 = buffers_2.return)) _a6.call(buffers_2);
+          if (buffers_2_1 && !buffers_2_1.done && (_a11 = buffers_2.return)) _a11.call(buffers_2);
         } finally {
           if (e_3) throw e_3.error;
         }
@@ -1413,7 +1413,7 @@ function retry(configOrCount) {
       count: configOrCount
     };
   }
-  var _a6 = config22.count, count = _a6 === void 0 ? Infinity : _a6, delay2 = config22.delay, _b2 = config22.resetOnSuccess, resetOnSuccess = _b2 === void 0 ? false : _b2;
+  var _a11 = config22.count, count = _a11 === void 0 ? Infinity : _a11, delay2 = config22.delay, _b2 = config22.resetOnSuccess, resetOnSuccess = _b2 === void 0 ? false : _b2;
   return count <= 0 ? identity : operate(function(source2, subscriber) {
     var soFar = 0;
     var innerSub;
@@ -1505,8 +1505,8 @@ function takeUntil(notifier) {
 function tap(observerOrNext, error62, complete) {
   var tapObserver = isFunction(observerOrNext) || error62 || complete ? { next: observerOrNext, error: error62, complete } : observerOrNext;
   return tapObserver ? operate(function(source2, subscriber) {
-    var _a6;
-    (_a6 = tapObserver.subscribe) === null || _a6 === void 0 ? void 0 : _a6.call(tapObserver);
+    var _a11;
+    (_a11 = tapObserver.subscribe) === null || _a11 === void 0 ? void 0 : _a11.call(tapObserver);
     var isUnsub = true;
     source2.subscribe(createOperatorSubscriber(subscriber, function(value) {
       var _a22;
@@ -1560,7 +1560,7 @@ var init_rxjs = __esm({
         this._finalizers = null;
       }
       Subscription2.prototype.unsubscribe = function() {
-        var e_1, _a6, e_2, _b2;
+        var e_1, _a11, e_2, _b2;
         var errors;
         if (!this.closed) {
           this.closed = true;
@@ -1577,7 +1577,7 @@ var init_rxjs = __esm({
                 e_1 = { error: e_1_1 };
               } finally {
                 try {
-                  if (_parentage_1_1 && !_parentage_1_1.done && (_a6 = _parentage_1.return)) _a6.call(_parentage_1);
+                  if (_parentage_1_1 && !_parentage_1_1.done && (_a11 = _parentage_1.return)) _a11.call(_parentage_1);
                 } finally {
                   if (e_1) throw e_1.error;
                 }
@@ -1627,7 +1627,7 @@ var init_rxjs = __esm({
         }
       };
       Subscription2.prototype.add = function(teardown) {
-        var _a6;
+        var _a11;
         if (teardown && teardown !== this) {
           if (this.closed) {
             execFinalizer(teardown);
@@ -1638,7 +1638,7 @@ var init_rxjs = __esm({
               }
               teardown._addParent(this);
             }
-            (this._finalizers = (_a6 = this._finalizers) !== null && _a6 !== void 0 ? _a6 : []).push(teardown);
+            (this._finalizers = (_a11 = this._finalizers) !== null && _a11 !== void 0 ? _a11 : []).push(teardown);
           }
         }
       };
@@ -1865,7 +1865,7 @@ var init_rxjs = __esm({
         var _this = this;
         var subscriber = isSubscriber(observerOrNext) ? observerOrNext : new SafeSubscriber(observerOrNext, error62, complete);
         errorContext(function() {
-          var _a6 = _this, operator = _a6.operator, source2 = _a6.source;
+          var _a11 = _this, operator = _a11.operator, source2 = _a11.source;
           subscriber.add(operator ? operator.call(subscriber, source2) : source2 ? _this._subscribe(subscriber) : _this._trySubscribe(subscriber));
         });
         return subscriber;
@@ -1897,8 +1897,8 @@ var init_rxjs = __esm({
         });
       };
       Observable2.prototype._subscribe = function(subscriber) {
-        var _a6;
-        return (_a6 = this.source) === null || _a6 === void 0 ? void 0 : _a6.subscribe(subscriber);
+        var _a11;
+        return (_a11 = this.source) === null || _a11 === void 0 ? void 0 : _a11.subscribe(subscriber);
       };
       Observable2.prototype[observable] = function() {
         return this;
@@ -1963,11 +1963,11 @@ var init_rxjs = __esm({
         return _this;
       }
       OperatorSubscriber2.prototype.unsubscribe = function() {
-        var _a6;
+        var _a11;
         if (!this.shouldUnsubscribe || this.shouldUnsubscribe()) {
           var closed_1 = this.closed;
           _super.prototype.unsubscribe.call(this);
-          !closed_1 && ((_a6 = this.onFinalize) === null || _a6 === void 0 ? void 0 : _a6.call(this));
+          !closed_1 && ((_a11 = this.onFinalize) === null || _a11 === void 0 ? void 0 : _a11.call(this));
         }
       };
       return OperatorSubscriber2;
@@ -2004,7 +2004,7 @@ var init_rxjs = __esm({
       Subject2.prototype.next = function(value) {
         var _this = this;
         errorContext(function() {
-          var e_1, _a6;
+          var e_1, _a11;
           _this._throwIfClosed();
           if (!_this.isStopped) {
             if (!_this.currentObservers) {
@@ -2019,7 +2019,7 @@ var init_rxjs = __esm({
               e_1 = { error: e_1_1 };
             } finally {
               try {
-                if (_c2 && !_c2.done && (_a6 = _b2.return)) _a6.call(_b2);
+                if (_c2 && !_c2.done && (_a11 = _b2.return)) _a11.call(_b2);
               } finally {
                 if (e_1) throw e_1.error;
               }
@@ -2060,8 +2060,8 @@ var init_rxjs = __esm({
       };
       Object.defineProperty(Subject2.prototype, "observed", {
         get: function() {
-          var _a6;
-          return ((_a6 = this.observers) === null || _a6 === void 0 ? void 0 : _a6.length) > 0;
+          var _a11;
+          return ((_a11 = this.observers) === null || _a11 === void 0 ? void 0 : _a11.length) > 0;
         },
         enumerable: false,
         configurable: true
@@ -2077,7 +2077,7 @@ var init_rxjs = __esm({
       };
       Subject2.prototype._innerSubscribe = function(subscriber) {
         var _this = this;
-        var _a6 = this, hasError = _a6.hasError, isStopped = _a6.isStopped, observers = _a6.observers;
+        var _a11 = this, hasError = _a11.hasError, isStopped = _a11.isStopped, observers = _a11.observers;
         if (hasError || isStopped) {
           return EMPTY_SUBSCRIPTION;
         }
@@ -2089,7 +2089,7 @@ var init_rxjs = __esm({
         });
       };
       Subject2.prototype._checkFinalizedStatuses = function(subscriber) {
-        var _a6 = this, hasError = _a6.hasError, thrownError = _a6.thrownError, isStopped = _a6.isStopped;
+        var _a11 = this, hasError = _a11.hasError, thrownError = _a11.thrownError, isStopped = _a11.isStopped;
         if (hasError) {
           subscriber.error(thrownError);
         } else if (isStopped) {
@@ -2115,20 +2115,20 @@ var init_rxjs = __esm({
         return _this;
       }
       AnonymousSubject2.prototype.next = function(value) {
-        var _a6, _b2;
-        (_b2 = (_a6 = this.destination) === null || _a6 === void 0 ? void 0 : _a6.next) === null || _b2 === void 0 ? void 0 : _b2.call(_a6, value);
+        var _a11, _b2;
+        (_b2 = (_a11 = this.destination) === null || _a11 === void 0 ? void 0 : _a11.next) === null || _b2 === void 0 ? void 0 : _b2.call(_a11, value);
       };
       AnonymousSubject2.prototype.error = function(err) {
-        var _a6, _b2;
-        (_b2 = (_a6 = this.destination) === null || _a6 === void 0 ? void 0 : _a6.error) === null || _b2 === void 0 ? void 0 : _b2.call(_a6, err);
+        var _a11, _b2;
+        (_b2 = (_a11 = this.destination) === null || _a11 === void 0 ? void 0 : _a11.error) === null || _b2 === void 0 ? void 0 : _b2.call(_a11, err);
       };
       AnonymousSubject2.prototype.complete = function() {
-        var _a6, _b2;
-        (_b2 = (_a6 = this.destination) === null || _a6 === void 0 ? void 0 : _a6.complete) === null || _b2 === void 0 ? void 0 : _b2.call(_a6);
+        var _a11, _b2;
+        (_b2 = (_a11 = this.destination) === null || _a11 === void 0 ? void 0 : _a11.complete) === null || _b2 === void 0 ? void 0 : _b2.call(_a11);
       };
       AnonymousSubject2.prototype._subscribe = function(subscriber) {
-        var _a6, _b2;
-        return (_b2 = (_a6 = this.source) === null || _a6 === void 0 ? void 0 : _a6.subscribe(subscriber)) !== null && _b2 !== void 0 ? _b2 : EMPTY_SUBSCRIPTION;
+        var _a11, _b2;
+        return (_b2 = (_a11 = this.source) === null || _a11 === void 0 ? void 0 : _a11.subscribe(subscriber)) !== null && _b2 !== void 0 ? _b2 : EMPTY_SUBSCRIPTION;
       };
       return AnonymousSubject2;
     })(Subject);
@@ -2162,7 +2162,7 @@ var init_rxjs = __esm({
         return _this;
       }
       ReplaySubject2.prototype.next = function(value) {
-        var _a6 = this, isStopped = _a6.isStopped, _buffer = _a6._buffer, _infiniteTimeWindow = _a6._infiniteTimeWindow, _timestampProvider = _a6._timestampProvider, _windowTime = _a6._windowTime;
+        var _a11 = this, isStopped = _a11.isStopped, _buffer = _a11._buffer, _infiniteTimeWindow = _a11._infiniteTimeWindow, _timestampProvider = _a11._timestampProvider, _windowTime = _a11._windowTime;
         if (!isStopped) {
           _buffer.push(value);
           !_infiniteTimeWindow && _buffer.push(_timestampProvider.now() + _windowTime);
@@ -2174,7 +2174,7 @@ var init_rxjs = __esm({
         this._throwIfClosed();
         this._trimBuffer();
         var subscription = this._innerSubscribe(subscriber);
-        var _a6 = this, _infiniteTimeWindow = _a6._infiniteTimeWindow, _buffer = _a6._buffer;
+        var _a11 = this, _infiniteTimeWindow = _a11._infiniteTimeWindow, _buffer = _a11._buffer;
         var copy = _buffer.slice();
         for (var i = 0; i < copy.length && !subscriber.closed; i += _infiniteTimeWindow ? 1 : 2) {
           subscriber.next(copy[i]);
@@ -2183,7 +2183,7 @@ var init_rxjs = __esm({
         return subscription;
       };
       ReplaySubject2.prototype._trimBuffer = function() {
-        var _a6 = this, _bufferSize = _a6._bufferSize, _timestampProvider = _a6._timestampProvider, _buffer = _a6._buffer, _infiniteTimeWindow = _a6._infiniteTimeWindow;
+        var _a11 = this, _bufferSize = _a11._bufferSize, _timestampProvider = _a11._timestampProvider, _buffer = _a11._buffer, _infiniteTimeWindow = _a11._infiniteTimeWindow;
         var adjustedBufferSize = (_infiniteTimeWindow ? 1 : 2) * _bufferSize;
         _bufferSize < Infinity && adjustedBufferSize < _buffer.length && _buffer.splice(0, _buffer.length - adjustedBufferSize);
         if (!_infiniteTimeWindow) {
@@ -2238,7 +2238,7 @@ var init_rxjs = __esm({
         return _this;
       }
       AsyncAction2.prototype.schedule = function(state, delay2) {
-        var _a6;
+        var _a11;
         if (delay2 === void 0) {
           delay2 = 0;
         }
@@ -2253,7 +2253,7 @@ var init_rxjs = __esm({
         }
         this.pending = true;
         this.delay = delay2;
-        this.id = (_a6 = this.id) !== null && _a6 !== void 0 ? _a6 : this.requestAsyncId(scheduler, this.id, delay2);
+        this.id = (_a11 = this.id) !== null && _a11 !== void 0 ? _a11 : this.requestAsyncId(scheduler, this.id, delay2);
         return this;
       };
       AsyncAction2.prototype.requestAsyncId = function(scheduler, _id, delay2) {
@@ -2302,7 +2302,7 @@ var init_rxjs = __esm({
       };
       AsyncAction2.prototype.unsubscribe = function() {
         if (!this.closed) {
-          var _a6 = this, id = _a6.id, scheduler = _a6.scheduler;
+          var _a11 = this, id = _a11.id, scheduler = _a11.scheduler;
           var actions = scheduler.actions;
           this.work = this.state = this.scheduler = null;
           this.pending = false;
@@ -23525,6 +23525,11695 @@ var init_Device = __esm({
   }
 });
 
+// node_modules/mitt/dist/mitt.mjs
+function mitt_default2(n) {
+  return { all: n = n || /* @__PURE__ */ new Map(), on: function(t, e) {
+    var i = n.get(t);
+    i ? i.push(e) : n.set(t, [e]);
+  }, off: function(t, e) {
+    var i = n.get(t);
+    i && (e ? i.splice(i.indexOf(e) >>> 0, 1) : n.set(t, []));
+  }, emit: function(t, e) {
+    var i = n.get(t);
+    i && i.slice().map(function(n2) {
+      n2(e);
+    }), (i = n.get("*")) && i.slice().map(function(n2) {
+      n2(t, e);
+    });
+  } };
+}
+var init_mitt2 = __esm({
+  "node_modules/mitt/dist/mitt.mjs"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/EventEmitter.js
+var EventEmitter2;
+var init_EventEmitter2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/EventEmitter.js"() {
+    init_mitt2();
+    EventEmitter2 = class {
+      #emitter = mitt_default2();
+      on(type, handler) {
+        this.#emitter.on(type, handler);
+        return this;
+      }
+      /**
+       * Like `on` but the listener will only be fired once and then it will be removed.
+       * @param event The event you'd like to listen to
+       * @param handler The handler function to run when the event occurs
+       * @return `this` to enable chaining method calls.
+       */
+      once(event, handler) {
+        const onceHandler = (eventData) => {
+          handler(eventData);
+          this.off(event, onceHandler);
+        };
+        return this.on(event, onceHandler);
+      }
+      off(type, handler) {
+        this.#emitter.off(type, handler);
+        return this;
+      }
+      /**
+       * Emits an event and call any associated listeners.
+       *
+       * @param event The event to emit.
+       * @param eventData Any data to emit with the event.
+       * @return `true` if there are any listeners, `false` otherwise.
+       */
+      emit(event, eventData) {
+        this.#emitter.emit(event, eventData);
+      }
+      /**
+       * Removes all listeners. If given an event argument, it will remove only
+       * listeners for that event.
+       * @param event - the event to remove listeners for.
+       * @returns `this` to enable you to chain method calls.
+       */
+      removeAllListeners(event) {
+        if (event) {
+          this.#emitter.all.delete(event);
+        } else {
+          this.#emitter.all.clear();
+        }
+        return this;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/log.js
+var LogType;
+var init_log = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/log.js"() {
+    (function(LogType2) {
+      LogType2["bidi"] = "bidi";
+      LogType2["cdp"] = "cdp";
+      LogType2["debug"] = "debug";
+      LogType2["debugError"] = "debug:error";
+      LogType2["debugInfo"] = "debug:info";
+      LogType2["debugWarn"] = "debug:warn";
+    })(LogType || (LogType = {}));
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/ProcessingQueue.js
+var _a3, ProcessingQueue;
+var init_ProcessingQueue = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/ProcessingQueue.js"() {
+    init_log();
+    ProcessingQueue = class {
+      static LOGGER_PREFIX = `${LogType.debug}:queue`;
+      #logger;
+      #processor;
+      #queue = [];
+      // Flag to keep only 1 active processor.
+      #isProcessing = false;
+      constructor(processor, logger) {
+        this.#processor = processor;
+        this.#logger = logger;
+      }
+      add(entry, name) {
+        this.#queue.push([entry, name]);
+        void this.#processIfNeeded();
+      }
+      async #processIfNeeded() {
+        if (this.#isProcessing) {
+          return;
+        }
+        this.#isProcessing = true;
+        while (this.#queue.length > 0) {
+          const arrayEntry = this.#queue.shift();
+          if (!arrayEntry) {
+            continue;
+          }
+          const [entryPromise, name] = arrayEntry;
+          this.#logger?.(_a3.LOGGER_PREFIX)?.("Processing event:", name);
+          await entryPromise.then((entry) => {
+            if (entry.kind === "error") {
+              this.#logger?.(LogType.debugError)?.("Event threw before sending:", entry.error.message, entry.error.stack);
+              return;
+            }
+            return this.#processor(entry.value);
+          }).catch((error62) => {
+            this.#logger?.(LogType.debugError)?.("Event was not processed:", error62?.message);
+          });
+        }
+        this.#isProcessing = false;
+      }
+    };
+    _a3 = ProcessingQueue;
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/cdp.js
+var init_cdp2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/cdp.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/chromium-bidi.js
+var chromium_bidi_exports = {};
+__export(chromium_bidi_exports, {
+  BiDiModule: () => BiDiModule,
+  Bluetooth: () => Bluetooth,
+  BrowsingContext: () => BrowsingContext,
+  EVENT_NAMES: () => EVENT_NAMES,
+  Input: () => Input,
+  Log: () => Log,
+  Network: () => Network,
+  Script: () => Script,
+  Speculation: () => Speculation
+});
+var BiDiModule, Script, Log, BrowsingContext, Input, Network, Bluetooth, Speculation, EVENT_NAMES;
+var init_chromium_bidi = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/chromium-bidi.js"() {
+    (function(BiDiModule2) {
+      BiDiModule2["Bluetooth"] = "bluetooth";
+      BiDiModule2["Browser"] = "browser";
+      BiDiModule2["BrowsingContext"] = "browsingContext";
+      BiDiModule2["Cdp"] = "goog:cdp";
+      BiDiModule2["Input"] = "input";
+      BiDiModule2["Log"] = "log";
+      BiDiModule2["Network"] = "network";
+      BiDiModule2["Script"] = "script";
+      BiDiModule2["Session"] = "session";
+      BiDiModule2["Speculation"] = "speculation";
+    })(BiDiModule || (BiDiModule = {}));
+    (function(Script2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["Message"] = "script.message";
+        EventNames2["RealmCreated"] = "script.realmCreated";
+        EventNames2["RealmDestroyed"] = "script.realmDestroyed";
+      })(EventNames = Script2.EventNames || (Script2.EventNames = {}));
+    })(Script || (Script = {}));
+    (function(Log2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["LogEntryAdded"] = "log.entryAdded";
+      })(EventNames = Log2.EventNames || (Log2.EventNames = {}));
+    })(Log || (Log = {}));
+    (function(BrowsingContext3) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["ContextCreated"] = "browsingContext.contextCreated";
+        EventNames2["ContextDestroyed"] = "browsingContext.contextDestroyed";
+        EventNames2["DomContentLoaded"] = "browsingContext.domContentLoaded";
+        EventNames2["DownloadEnd"] = "browsingContext.downloadEnd";
+        EventNames2["DownloadWillBegin"] = "browsingContext.downloadWillBegin";
+        EventNames2["FragmentNavigated"] = "browsingContext.fragmentNavigated";
+        EventNames2["HistoryUpdated"] = "browsingContext.historyUpdated";
+        EventNames2["Load"] = "browsingContext.load";
+        EventNames2["NavigationAborted"] = "browsingContext.navigationAborted";
+        EventNames2["NavigationCommitted"] = "browsingContext.navigationCommitted";
+        EventNames2["NavigationFailed"] = "browsingContext.navigationFailed";
+        EventNames2["NavigationStarted"] = "browsingContext.navigationStarted";
+        EventNames2["UserPromptClosed"] = "browsingContext.userPromptClosed";
+        EventNames2["UserPromptOpened"] = "browsingContext.userPromptOpened";
+      })(EventNames = BrowsingContext3.EventNames || (BrowsingContext3.EventNames = {}));
+    })(BrowsingContext || (BrowsingContext = {}));
+    (function(Input2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["FileDialogOpened"] = "input.fileDialogOpened";
+      })(EventNames = Input2.EventNames || (Input2.EventNames = {}));
+    })(Input || (Input = {}));
+    (function(Network2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["AuthRequired"] = "network.authRequired";
+        EventNames2["BeforeRequestSent"] = "network.beforeRequestSent";
+        EventNames2["FetchError"] = "network.fetchError";
+        EventNames2["ResponseCompleted"] = "network.responseCompleted";
+        EventNames2["ResponseStarted"] = "network.responseStarted";
+      })(EventNames = Network2.EventNames || (Network2.EventNames = {}));
+    })(Network || (Network = {}));
+    (function(Bluetooth2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["RequestDevicePromptUpdated"] = "bluetooth.requestDevicePromptUpdated";
+        EventNames2["GattConnectionAttempted"] = "bluetooth.gattConnectionAttempted";
+        EventNames2["CharacteristicEventGenerated"] = "bluetooth.characteristicEventGenerated";
+        EventNames2["DescriptorEventGenerated"] = "bluetooth.descriptorEventGenerated";
+      })(EventNames = Bluetooth2.EventNames || (Bluetooth2.EventNames = {}));
+    })(Bluetooth || (Bluetooth = {}));
+    (function(Speculation2) {
+      let EventNames;
+      (function(EventNames2) {
+        EventNames2["PrefetchStatusUpdated"] = "speculation.prefetchStatusUpdated";
+      })(EventNames = Speculation2.EventNames || (Speculation2.EventNames = {}));
+    })(Speculation || (Speculation = {}));
+    EVENT_NAMES = /* @__PURE__ */ new Set([
+      // keep-sorted start
+      ...Object.values(BiDiModule),
+      ...Object.values(Bluetooth.EventNames),
+      ...Object.values(BrowsingContext.EventNames),
+      ...Object.values(Input.EventNames),
+      ...Object.values(Log.EventNames),
+      ...Object.values(Network.EventNames),
+      ...Object.values(Script.EventNames),
+      ...Object.values(Speculation.EventNames)
+      // keep-sorted end
+    ]);
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi.js
+var init_webdriver_bidi = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/ErrorResponse.js
+var Exception, InvalidArgumentException, InvalidSelectorException, MoveTargetOutOfBoundsException, NoSuchAlertException, NoSuchElementException, NoSuchFrameException, NoSuchHandleException, NoSuchHistoryEntryException, NoSuchInterceptException, NoSuchNodeException, NoSuchRequestException, NoSuchScriptException, NoSuchUserContextException, UnknownCommandException, UnknownErrorException, UnableToCaptureScreenException, UnsupportedOperationException, UnableToSetCookieException, UnableToSetFileInputException, InvalidWebExtensionException, NoSuchWebExtensionException, NoSuchNetworkCollectorException, NoSuchNetworkDataException;
+var init_ErrorResponse = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/ErrorResponse.js"() {
+    Exception = class extends Error {
+      error;
+      message;
+      stacktrace;
+      constructor(error62, message, stacktrace) {
+        super();
+        this.error = error62;
+        this.message = message;
+        this.stacktrace = stacktrace;
+      }
+      toErrorResponse(commandId) {
+        return {
+          type: "error",
+          id: commandId,
+          error: this.error,
+          message: this.message,
+          stacktrace: this.stacktrace
+        };
+      }
+    };
+    InvalidArgumentException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("invalid argument", message, stacktrace);
+      }
+    };
+    InvalidSelectorException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("invalid selector", message, stacktrace);
+      }
+    };
+    MoveTargetOutOfBoundsException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("move target out of bounds", message, stacktrace);
+      }
+    };
+    NoSuchAlertException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such alert", message, stacktrace);
+      }
+    };
+    NoSuchElementException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such element", message, stacktrace);
+      }
+    };
+    NoSuchFrameException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such frame", message, stacktrace);
+      }
+    };
+    NoSuchHandleException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such handle", message, stacktrace);
+      }
+    };
+    NoSuchHistoryEntryException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such history entry", message, stacktrace);
+      }
+    };
+    NoSuchInterceptException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such intercept", message, stacktrace);
+      }
+    };
+    NoSuchNodeException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such node", message, stacktrace);
+      }
+    };
+    NoSuchRequestException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such request", message, stacktrace);
+      }
+    };
+    NoSuchScriptException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such script", message, stacktrace);
+      }
+    };
+    NoSuchUserContextException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such user context", message, stacktrace);
+      }
+    };
+    UnknownCommandException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("unknown command", message, stacktrace);
+      }
+    };
+    UnknownErrorException = class extends Exception {
+      constructor(message, stacktrace = new Error().stack) {
+        super("unknown error", message, stacktrace);
+      }
+    };
+    UnableToCaptureScreenException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("unable to capture screen", message, stacktrace);
+      }
+    };
+    UnsupportedOperationException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("unsupported operation", message, stacktrace);
+      }
+    };
+    UnableToSetCookieException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("unable to set cookie", message, stacktrace);
+      }
+    };
+    UnableToSetFileInputException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("unable to set file input", message, stacktrace);
+      }
+    };
+    InvalidWebExtensionException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("invalid web extension", message, stacktrace);
+      }
+    };
+    NoSuchWebExtensionException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such web extension", message, stacktrace);
+      }
+    };
+    NoSuchNetworkCollectorException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such network collector", message, stacktrace);
+      }
+    };
+    NoSuchNetworkDataException = class extends Exception {
+      constructor(message, stacktrace) {
+        super("no such network data", message, stacktrace);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-permissions.js
+var init_webdriver_bidi_permissions = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-permissions.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-bluetooth.js
+var init_webdriver_bidi_bluetooth = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-bluetooth.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-nav-speculation.js
+var init_webdriver_bidi_nav_speculation = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-nav-speculation.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-digital-credentials.js
+var init_webdriver_bidi_digital_credentials = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-digital-credentials.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-ua-client-hints.js
+var init_webdriver_bidi_ua_client_hints = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/generated/webdriver-bidi-ua-client-hints.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/protocol/protocol.js
+var init_protocol = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/protocol/protocol.js"() {
+    init_cdp2();
+    init_chromium_bidi();
+    init_webdriver_bidi();
+    init_ErrorResponse();
+    init_webdriver_bidi_permissions();
+    init_webdriver_bidi_bluetooth();
+    init_webdriver_bidi_nav_speculation();
+    init_webdriver_bidi_digital_credentials();
+    init_webdriver_bidi_ua_client_hints();
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiNoOpParser.js
+var BidiNoOpParser;
+var init_BidiNoOpParser = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiNoOpParser.js"() {
+    BidiNoOpParser = class {
+      // Bluetooth module
+      // keep-sorted start block=yes
+      parseDisableSimulationParameters(params) {
+        return params;
+      }
+      parseHandleRequestDevicePromptParams(params) {
+        return params;
+      }
+      parseSimulateAdapterParameters(params) {
+        return params;
+      }
+      parseSimulateAdvertisementParameters(params) {
+        return params;
+      }
+      parseSimulateCharacteristicParameters(params) {
+        return params;
+      }
+      parseSimulateCharacteristicResponseParameters(params) {
+        return params;
+      }
+      parseSimulateDescriptorParameters(params) {
+        return params;
+      }
+      parseSimulateDescriptorResponseParameters(params) {
+        return params;
+      }
+      parseSimulateGattConnectionResponseParameters(params) {
+        return params;
+      }
+      parseSimulateGattDisconnectionParameters(params) {
+        return params;
+      }
+      parseSimulatePreconnectedPeripheralParameters(params) {
+        return params;
+      }
+      parseSimulateServiceParameters(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Browser module
+      // keep-sorted start block=yes
+      parseCreateUserContextParameters(params) {
+        return params;
+      }
+      parseRemoveUserContextParameters(params) {
+        return params;
+      }
+      parseSetClientWindowStateParameters(params) {
+        return params;
+      }
+      parseSetDownloadBehaviorParameters(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Browsing Context module
+      // keep-sorted start block=yes
+      parseActivateParams(params) {
+        return params;
+      }
+      parseCaptureScreenshotParams(params) {
+        return params;
+      }
+      parseCloseParams(params) {
+        return params;
+      }
+      parseCreateParams(params) {
+        return params;
+      }
+      parseGetTreeParams(params) {
+        return params;
+      }
+      parseHandleUserPromptParams(params) {
+        return params;
+      }
+      parseLocateNodesParams(params) {
+        return params;
+      }
+      parseNavigateParams(params) {
+        return params;
+      }
+      parsePrintParams(params) {
+        return params;
+      }
+      parseReloadParams(params) {
+        return params;
+      }
+      parseSetBypassCspParams(params) {
+        return params;
+      }
+      parseSetViewportParams(params) {
+        return params;
+      }
+      parseStartScreencastParams(params) {
+        return params;
+      }
+      parseStopScreencastParams(params) {
+        return params;
+      }
+      parseTraverseHistoryParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // CDP module
+      // keep-sorted start block=yes
+      parseGetSessionParams(params) {
+        return params;
+      }
+      parseResolveRealmParams(params) {
+        return params;
+      }
+      parseSendCommandParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Emulation module
+      // keep-sorted start block=yes
+      parseSetClientHintsOverrideParams(params) {
+        return params;
+      }
+      parseSetForcedColorsModeThemeOverrideParams(params) {
+        return params;
+      }
+      parseSetGeolocationOverrideParams(params) {
+        return params;
+      }
+      parseSetLocaleOverrideParams(params) {
+        return params;
+      }
+      parseSetNetworkConditionsParams(params) {
+        return params;
+      }
+      parseSetScreenOrientationOverrideParams(params) {
+        return params;
+      }
+      parseSetScreenSettingsOverrideParams(params) {
+        return params;
+      }
+      parseSetScriptingEnabledParams(params) {
+        return params;
+      }
+      parseSetScrollbarTypeOverrideParams(params) {
+        return params;
+      }
+      parseSetTimezoneOverrideParams(params) {
+        return params;
+      }
+      parseSetTouchOverrideParams(params) {
+        return params;
+      }
+      parseSetUserAgentOverrideParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Script module
+      // keep-sorted start block=yes
+      parseAddPreloadScriptParams(params) {
+        return params;
+      }
+      parseCallFunctionParams(params) {
+        return params;
+      }
+      parseDisownParams(params) {
+        return params;
+      }
+      parseEvaluateParams(params) {
+        return params;
+      }
+      parseGetRealmsParams(params) {
+        return params;
+      }
+      parseRemovePreloadScriptParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Input module
+      // keep-sorted start block=yes
+      parsePerformActionsParams(params) {
+        return params;
+      }
+      parseReleaseActionsParams(params) {
+        return params;
+      }
+      parseSetFilesParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Network module
+      // keep-sorted start block=yes
+      parseAddDataCollectorParams(params) {
+        return params;
+      }
+      parseAddInterceptParams(params) {
+        return params;
+      }
+      parseContinueRequestParams(params) {
+        return params;
+      }
+      parseContinueResponseParams(params) {
+        return params;
+      }
+      parseContinueWithAuthParams(params) {
+        return params;
+      }
+      parseDisownDataParams(params) {
+        return params;
+      }
+      parseFailRequestParams(params) {
+        return params;
+      }
+      parseGetDataParams(params) {
+        return params;
+      }
+      parseProvideResponseParams(params) {
+        return params;
+      }
+      parseRemoveDataCollectorParams(params) {
+        return params;
+      }
+      parseRemoveInterceptParams(params) {
+        return params;
+      }
+      parseSetCacheBehaviorParams(params) {
+        return params;
+      }
+      parseSetExtraHeadersParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Permissions module
+      // keep-sorted start block=yes
+      parseSetPermissionsParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Session module
+      // keep-sorted start block=yes
+      parseSubscribeParams(params) {
+        return params;
+      }
+      parseUnsubscribeParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // Storage module
+      // keep-sorted start block=yes
+      parseDeleteCookiesParams(params) {
+        return params;
+      }
+      parseGetCookiesParams(params) {
+        return params;
+      }
+      parseSetCookieParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // WebExtenstion module
+      // keep-sorted start block=yes
+      parseInstallParams(params) {
+        return params;
+      }
+      parseUninstallParams(params) {
+        return params;
+      }
+      // keep-sorted end
+      // DigitalCredentials module
+      // keep-sorted start block=yes
+      parseSetVirtualWalletBehaviorParams(params) {
+        return params;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/BrowserProcessor.js
+function getProxyStr(proxyConfig) {
+  if (proxyConfig.proxyType === "direct" || proxyConfig.proxyType === "system") {
+    return void 0;
+  }
+  if (proxyConfig.proxyType === "pac") {
+    throw new UnsupportedOperationException(`PAC proxy configuration is not supported per user context`);
+  }
+  if (proxyConfig.proxyType === "autodetect") {
+    throw new UnsupportedOperationException(`Autodetect proxy is not supported per user context`);
+  }
+  if (proxyConfig.proxyType === "manual") {
+    const servers = [];
+    if (proxyConfig.httpProxy !== void 0) {
+      servers.push(`http=${proxyConfig.httpProxy}`);
+    }
+    if (proxyConfig.sslProxy !== void 0) {
+      servers.push(`https=${proxyConfig.sslProxy}`);
+    }
+    if (proxyConfig.socksProxy !== void 0 || proxyConfig.socksVersion !== void 0) {
+      if (proxyConfig.socksProxy === void 0) {
+        throw new InvalidArgumentException(`'socksVersion' cannot be set without 'socksProxy'`);
+      }
+      if (proxyConfig.socksVersion === void 0 || typeof proxyConfig.socksVersion !== "number" || !Number.isInteger(proxyConfig.socksVersion) || proxyConfig.socksVersion < 0 || proxyConfig.socksVersion > 255) {
+        throw new InvalidArgumentException(`'socksVersion' must be between 0 and 255`);
+      }
+      servers.push(`socks=socks${proxyConfig.socksVersion}://${proxyConfig.socksProxy}`);
+    }
+    if (servers.length === 0) {
+      return void 0;
+    }
+    return servers.join(";");
+  }
+  throw new UnknownErrorException(`Unknown proxy type`);
+}
+var BrowserProcessor;
+var init_BrowserProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/BrowserProcessor.js"() {
+    init_protocol();
+    BrowserProcessor = class {
+      #browserCdpClient;
+      #browsingContextStorage;
+      #configStorage;
+      #userContextStorage;
+      constructor(browserCdpClient, browsingContextStorage, configStorage, userContextStorage) {
+        this.#browserCdpClient = browserCdpClient;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#configStorage = configStorage;
+        this.#userContextStorage = userContextStorage;
+      }
+      close() {
+        setTimeout(() => this.#browserCdpClient.sendCommand("Browser.close").catch(() => {
+        }), 0);
+        return {};
+      }
+      async createUserContext(params) {
+        const w3cParams = params;
+        const globalConfig2 = this.#configStorage.getGlobalConfig();
+        if (w3cParams.acceptInsecureCerts !== void 0) {
+          if (w3cParams.acceptInsecureCerts === false && globalConfig2.acceptInsecureCerts === true)
+            throw new UnknownErrorException(`Cannot set user context's "acceptInsecureCerts" to false, when a capability "acceptInsecureCerts" is set to true`);
+        }
+        const request3 = {};
+        if (w3cParams.proxy) {
+          const proxyStr = getProxyStr(w3cParams.proxy);
+          if (proxyStr) {
+            request3.proxyServer = proxyStr;
+          }
+          if (w3cParams.proxy.noProxy) {
+            request3.proxyBypassList = w3cParams.proxy.noProxy.join(",");
+          }
+        } else {
+          if (params["goog:proxyServer"] !== void 0) {
+            request3.proxyServer = params["goog:proxyServer"];
+          }
+          const proxyBypassList = params["goog:proxyBypassList"] ?? void 0;
+          if (proxyBypassList) {
+            request3.proxyBypassList = proxyBypassList.join(",");
+          }
+        }
+        const context2 = await this.#browserCdpClient.sendCommand("Target.createBrowserContext", request3);
+        await this.#applyDownloadBehavior(globalConfig2.downloadBehavior ?? null, context2.browserContextId);
+        this.#configStorage.updateUserContextConfig(context2.browserContextId, {
+          acceptInsecureCerts: params["acceptInsecureCerts"],
+          userPromptHandler: params["unhandledPromptBehavior"]
+        });
+        return {
+          userContext: context2.browserContextId
+        };
+      }
+      async removeUserContext(params) {
+        const userContext = params.userContext;
+        if (userContext === "default") {
+          throw new InvalidArgumentException("`default` user context cannot be removed");
+        }
+        try {
+          await this.#browserCdpClient.sendCommand("Target.disposeBrowserContext", {
+            browserContextId: userContext
+          });
+        } catch (err) {
+          if (err.message.startsWith("Failed to find context with id")) {
+            throw new NoSuchUserContextException(err.message);
+          }
+          throw err;
+        }
+        return {};
+      }
+      async getUserContexts() {
+        return {
+          userContexts: await this.#userContextStorage.getUserContexts()
+        };
+      }
+      async #getWindowInfo(targetId) {
+        const windowInfo = await this.#browserCdpClient.sendCommand("Browser.getWindowForTarget", { targetId });
+        return {
+          // `active` is not supported in CDP yet.
+          active: false,
+          clientWindow: `${windowInfo.windowId}`,
+          state: windowInfo.bounds.windowState ?? "normal",
+          height: windowInfo.bounds.height ?? 0,
+          width: windowInfo.bounds.width ?? 0,
+          x: windowInfo.bounds.left ?? 0,
+          y: windowInfo.bounds.top ?? 0
+        };
+      }
+      async setClientWindowState(params) {
+        const { clientWindow } = params;
+        const bounds = {
+          windowState: params.state
+        };
+        if (params.state === "normal") {
+          if (params.width !== void 0) {
+            bounds.width = params.width;
+          }
+          if (params.height !== void 0) {
+            bounds.height = params.height;
+          }
+          if (params.x !== void 0) {
+            bounds.left = params.x;
+          }
+          if (params.y !== void 0) {
+            bounds.top = params.y;
+          }
+        }
+        const windowId = Number.parseInt(clientWindow);
+        if (isNaN(windowId)) {
+          throw new InvalidArgumentException("no such client window");
+        }
+        await this.#browserCdpClient.sendCommand("Browser.setWindowBounds", {
+          windowId,
+          bounds
+        });
+        const result = await this.#browserCdpClient.sendCommand("Browser.getWindowBounds", {
+          windowId
+        });
+        return {
+          active: false,
+          clientWindow: `${windowId}`,
+          state: result.bounds.windowState ?? "normal",
+          height: result.bounds.height ?? 0,
+          width: result.bounds.width ?? 0,
+          x: result.bounds.left ?? 0,
+          y: result.bounds.top ?? 0
+        };
+      }
+      async getClientWindows() {
+        const topLevelTargetIds = this.#browsingContextStorage.getTopLevelContexts().map((b2) => b2.cdpTarget.id);
+        const clientWindows = await Promise.all(topLevelTargetIds.map(async (targetId) => await this.#getWindowInfo(targetId)));
+        const uniqueClientWindowIds = /* @__PURE__ */ new Set();
+        const uniqueClientWindows = new Array();
+        for (const window2 of clientWindows) {
+          if (!uniqueClientWindowIds.has(window2.clientWindow)) {
+            uniqueClientWindowIds.add(window2.clientWindow);
+            uniqueClientWindows.push(window2);
+          }
+        }
+        return { clientWindows: uniqueClientWindows };
+      }
+      #toCdpDownloadBehavior(downloadBehavior) {
+        if (downloadBehavior === null)
+          return {
+            behavior: "default"
+          };
+        if (downloadBehavior?.type === "denied")
+          return {
+            behavior: "deny"
+          };
+        if (downloadBehavior?.type === "allowed") {
+          return {
+            behavior: "allow",
+            downloadPath: downloadBehavior.destinationFolder
+          };
+        }
+        throw new UnknownErrorException("Unexpected download behavior");
+      }
+      async #applyDownloadBehavior(downloadBehavior, userContext) {
+        await this.#browserCdpClient.sendCommand("Browser.setDownloadBehavior", {
+          ...this.#toCdpDownloadBehavior(downloadBehavior),
+          browserContextId: userContext === "default" ? void 0 : userContext,
+          // Required for enabling download events.
+          eventsEnabled: true
+        });
+      }
+      async setDownloadBehavior(params) {
+        let userContexts;
+        if (params.userContexts === void 0) {
+          userContexts = (await this.#userContextStorage.getUserContexts()).map((c) => c.userContext);
+        } else {
+          userContexts = Array.from(await this.#userContextStorage.verifyUserContextIdList(params.userContexts));
+        }
+        if (params.userContexts === void 0) {
+          this.#configStorage.updateGlobalConfig({
+            downloadBehavior: params.downloadBehavior
+          });
+        } else {
+          params.userContexts.map((userContext) => this.#configStorage.updateUserContextConfig(userContext, {
+            downloadBehavior: params.downloadBehavior
+          }));
+        }
+        await Promise.all(userContexts.map(async (userContext) => {
+          const downloadBehavior = this.#configStorage.getActiveConfig(void 0, userContext).downloadBehavior ?? null;
+          await this.#applyDownloadBehavior(downloadBehavior, userContext);
+        }));
+        return {};
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpProcessor.js
+var CdpProcessor;
+var init_CdpProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpProcessor.js"() {
+    init_protocol();
+    CdpProcessor = class {
+      #browsingContextStorage;
+      #realmStorage;
+      #cdpConnection;
+      #browserCdpClient;
+      constructor(browsingContextStorage, realmStorage, cdpConnection, browserCdpClient) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#realmStorage = realmStorage;
+        this.#cdpConnection = cdpConnection;
+        this.#browserCdpClient = browserCdpClient;
+      }
+      getSession(params) {
+        const context2 = params.context;
+        const sessionId = this.#browsingContextStorage.getContext(context2).cdpTarget.cdpSessionId;
+        if (sessionId === void 0) {
+          return {};
+        }
+        return { session: sessionId };
+      }
+      resolveRealm(params) {
+        const context2 = params.realm;
+        const realm = this.#realmStorage.getRealm({ realmId: context2 });
+        if (realm === void 0) {
+          throw new UnknownErrorException(`Could not find realm ${params.realm}`);
+        }
+        return { executionContextId: realm.executionContextId };
+      }
+      async sendCommand(params) {
+        const client = params.session ? this.#cdpConnection.getCdpClient(params.session) : this.#browserCdpClient;
+        const result = await client.sendCommand(params.method, params.params);
+        return {
+          result,
+          session: params.session
+        };
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextProcessor.js
+var BrowsingContextProcessor;
+var init_BrowsingContextProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextProcessor.js"() {
+    init_protocol();
+    BrowsingContextProcessor = class {
+      #browserCdpClient;
+      #browsingContextStorage;
+      #contextConfigStorage;
+      #eventManager;
+      #userContextStorage;
+      constructor(browserCdpClient, browsingContextStorage, userContextStorage, contextConfigStorage, eventManager) {
+        this.#contextConfigStorage = contextConfigStorage;
+        this.#userContextStorage = userContextStorage;
+        this.#browserCdpClient = browserCdpClient;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#eventManager = eventManager;
+        this.#eventManager.addSubscribeHook(chromium_bidi_exports.BrowsingContext.EventNames.ContextCreated, this.#onContextCreatedSubscribeHook.bind(this));
+      }
+      getTree(params) {
+        const resultContexts = params.root === void 0 ? this.#browsingContextStorage.getTopLevelContexts() : [this.#browsingContextStorage.getContext(params.root)];
+        return {
+          contexts: resultContexts.map((c) => c.serializeToBidiValue(params.maxDepth ?? Number.MAX_VALUE))
+        };
+      }
+      async create(params) {
+        let referenceContext;
+        let userContext = "default";
+        if (params.referenceContext !== void 0) {
+          referenceContext = this.#browsingContextStorage.getContext(params.referenceContext);
+          if (!referenceContext.isTopLevelContext()) {
+            throw new InvalidArgumentException(`referenceContext should be a top-level context`);
+          }
+          userContext = referenceContext.userContext;
+        }
+        if (params.userContext !== void 0) {
+          userContext = params.userContext;
+        }
+        const existingContexts = this.#browsingContextStorage.getAllContexts().filter((context3) => context3.userContext === userContext);
+        let newWindow = false;
+        switch (params.type) {
+          case "tab":
+            newWindow = false;
+            break;
+          case "window":
+            newWindow = true;
+            break;
+        }
+        if (!existingContexts.length) {
+          newWindow = true;
+        }
+        let result;
+        try {
+          result = await this.#browserCdpClient.sendCommand("Target.createTarget", {
+            url: "about:blank",
+            newWindow,
+            browserContextId: userContext === "default" ? void 0 : userContext,
+            background: params.background === true
+          });
+        } catch (err) {
+          if (
+            // See https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/devtools/protocol/target_handler.cc;l=90;drc=e80392ac11e48a691f4309964cab83a3a59e01c8
+            err.message.startsWith("Failed to find browser context with id") || // See https://source.chromium.org/chromium/chromium/src/+/main:headless/lib/browser/protocol/target_handler.cc;l=49;drc=e80392ac11e48a691f4309964cab83a3a59e01c8
+            err.message === "browserContextId"
+          ) {
+            throw new NoSuchUserContextException(`The context ${userContext} was not found`);
+          }
+          throw err;
+        }
+        const context2 = await this.#browsingContextStorage.waitForContext(result.targetId);
+        await context2.lifecycleLoaded();
+        return { context: context2.id };
+      }
+      navigate(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        return context2.navigate(
+          params.url,
+          params.wait ?? "none"
+          /* BrowsingContext.ReadinessState.None */
+        );
+      }
+      reload(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        return context2.reload(
+          params.ignoreCache ?? false,
+          params.wait ?? "none"
+          /* BrowsingContext.ReadinessState.None */
+        );
+      }
+      async activate(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        if (!context2.isTopLevelContext()) {
+          throw new InvalidArgumentException("Activation is only supported on the top-level context");
+        }
+        await context2.activate();
+        return {};
+      }
+      async captureScreenshot(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        return await context2.captureScreenshot(params);
+      }
+      async print(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        return await context2.print(params);
+      }
+      async setViewport(params) {
+        const maxDimensionSize = 1e7;
+        if ((params.viewport?.height ?? 0) > maxDimensionSize || (params.viewport?.width ?? 0) > maxDimensionSize) {
+          throw new UnsupportedOperationException(`Viewport dimension over ${maxDimensionSize} are not supported`);
+        }
+        const config3 = {};
+        if (params.devicePixelRatio !== void 0) {
+          config3.devicePixelRatio = params.devicePixelRatio;
+        }
+        if (params.viewport !== void 0) {
+          config3.viewport = params.viewport;
+        }
+        const impactedTopLevelContexts = await this.#getRelatedTopLevelBrowsingContexts(params.context, params.userContexts);
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, config3);
+        }
+        if (params.context !== void 0) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(params.context, config3);
+        }
+        await Promise.all(impactedTopLevelContexts.map(async (context2) => {
+          const config4 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setViewport(config4.viewport ?? null, config4.devicePixelRatio ?? null, config4.screenOrientation ?? null);
+        }));
+        return {};
+      }
+      /**
+       * Returns a list of top-level browsing context ids.
+       */
+      async #getRelatedTopLevelBrowsingContexts(browsingContextId, userContextIds) {
+        if (browsingContextId === void 0 && userContextIds === void 0) {
+          throw new InvalidArgumentException("Either userContexts or context must be provided");
+        }
+        if (browsingContextId !== void 0 && userContextIds !== void 0) {
+          throw new InvalidArgumentException("userContexts and context are mutually exclusive");
+        }
+        if (browsingContextId !== void 0) {
+          const context2 = this.#browsingContextStorage.getContext(browsingContextId);
+          if (!context2.isTopLevelContext()) {
+            throw new InvalidArgumentException("Emulating viewport is only supported on the top-level context");
+          }
+          return [context2];
+        }
+        await this.#userContextStorage.verifyUserContextIdList(userContextIds);
+        const result = [];
+        for (const userContextId of userContextIds) {
+          const topLevelBrowsingContexts = this.#browsingContextStorage.getTopLevelContexts().filter((browsingContext) => browsingContext.userContext === userContextId);
+          result.push(...topLevelBrowsingContexts);
+        }
+        return [...new Set(result).values()];
+      }
+      async traverseHistory(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        if (!context2) {
+          throw new InvalidArgumentException(`No browsing context with id ${params.context}`);
+        }
+        if (!context2.isTopLevelContext()) {
+          throw new InvalidArgumentException("Traversing history is only supported on the top-level context");
+        }
+        await context2.traverseHistory(params.delta);
+        return {};
+      }
+      async handleUserPrompt(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        try {
+          await context2.handleUserPrompt(params.accept, params.userText);
+        } catch (error62) {
+          if (error62.message?.includes("No dialog is showing")) {
+            throw new NoSuchAlertException("No dialog is showing");
+          }
+          throw error62;
+        }
+        return {};
+      }
+      async close(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        if (!context2.isTopLevelContext()) {
+          throw new InvalidArgumentException(`Non top-level browsing context ${context2.id} cannot be closed.`);
+        }
+        const parentCdpClient = context2.cdpTarget.parentCdpClient;
+        try {
+          const detachedFromTargetPromise = new Promise((resolve10) => {
+            const onContextDestroyed = (event) => {
+              if (event.targetId === params.context) {
+                parentCdpClient.off("Target.detachedFromTarget", onContextDestroyed);
+                resolve10();
+              }
+            };
+            parentCdpClient.on("Target.detachedFromTarget", onContextDestroyed);
+          });
+          try {
+            if (params.promptUnload) {
+              await context2.close();
+            } else {
+              await parentCdpClient.sendCommand("Target.closeTarget", {
+                targetId: params.context
+              });
+            }
+          } catch (error62) {
+            if (!parentCdpClient.isCloseError(error62)) {
+              throw error62;
+            }
+          }
+          await detachedFromTargetPromise;
+        } catch (error62) {
+          if (!(error62.code === -32e3 && error62.message === "Not attached to an active page")) {
+            throw error62;
+          }
+        }
+        return {};
+      }
+      async locateNodes(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        return await context2.locateNodes(params);
+      }
+      #onContextCreatedSubscribeHook(contextId) {
+        const context2 = this.#browsingContextStorage.getContext(contextId);
+        const contextsToReport = [
+          context2,
+          ...this.#browsingContextStorage.getContext(contextId).allChildren
+        ];
+        contextsToReport.forEach((context3) => {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.ContextCreated,
+            params: context3.serializeToBidiValue()
+          }, context3.id);
+        });
+        return Promise.resolve();
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/emulation/EmulationProcessor.js
+function isValidLocale(locale) {
+  try {
+    new Intl.Locale(locale);
+    return true;
+  } catch (e) {
+    if (e instanceof RangeError) {
+      return false;
+    }
+    throw e;
+  }
+}
+function isValidTimezone(timezone) {
+  try {
+    Intl.DateTimeFormat(void 0, { timeZone: timezone });
+    return true;
+  } catch (e) {
+    if (e instanceof RangeError) {
+      return false;
+    }
+    throw e;
+  }
+}
+function isTimeZoneOffsetString(timezone) {
+  return /^[+-](?:2[0-3]|[01]\d)(?::[0-5]\d)?$/.test(timezone);
+}
+var EmulationProcessor;
+var init_EmulationProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/emulation/EmulationProcessor.js"() {
+    init_protocol();
+    EmulationProcessor = class {
+      #userContextStorage;
+      #browsingContextStorage;
+      #contextConfigStorage;
+      constructor(browsingContextStorage, userContextStorage, contextConfigStorage) {
+        this.#userContextStorage = userContextStorage;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#contextConfigStorage = contextConfigStorage;
+      }
+      async setGeolocationOverride(params) {
+        if ("coordinates" in params && "error" in params) {
+          throw new InvalidArgumentException("Coordinates and error cannot be set at the same time");
+        }
+        let geolocation = null;
+        if ("coordinates" in params) {
+          if ((params.coordinates?.altitude ?? null) === null && (params.coordinates?.altitudeAccuracy ?? null) !== null) {
+            throw new InvalidArgumentException("Geolocation altitudeAccuracy can be set only with altitude");
+          }
+          geolocation = params.coordinates;
+        } else if ("error" in params) {
+          if (params.error.type !== "positionUnavailable") {
+            throw new InvalidArgumentException(`Unknown geolocation error ${params.error.type}`);
+          }
+          geolocation = params.error;
+        } else {
+          throw new InvalidArgumentException(`Coordinates or error should be set`);
+        }
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            geolocation
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            geolocation
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setGeolocationOverride(config3.geolocation ?? null);
+        }));
+        return {};
+      }
+      async setLocaleOverride(params) {
+        const locale = params.locale ?? null;
+        if (locale !== null && !isValidLocale(locale)) {
+          throw new InvalidArgumentException(`Invalid locale "${locale}"`);
+        }
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            locale
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            locale
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await Promise.all([
+            context2.setLocaleOverride(config3.locale ?? null),
+            // Set `AcceptLanguage` to locale.
+            context2.setUserAgentAndAcceptLanguage(config3.userAgent, config3.locale, config3.clientHints)
+          ]);
+        }));
+        return {};
+      }
+      async setScriptingEnabled(params) {
+        const scriptingEnabled = params.enabled;
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            scriptingEnabled
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            scriptingEnabled
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setScriptingEnabled(config3.scriptingEnabled ?? null);
+        }));
+        return {};
+      }
+      async setScrollbarTypeOverride(params) {
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            scrollbarType: params.scrollbarType
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            scrollbarType: params.scrollbarType
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setScrollbarTypeOverride(config3.scrollbarType ?? null);
+        }));
+        return {};
+      }
+      async setScreenOrientationOverride(params) {
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            screenOrientation: params.screenOrientation
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            screenOrientation: params.screenOrientation
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setViewport(config3.viewport ?? null, config3.devicePixelRatio ?? null, config3.screenOrientation ?? null);
+        }));
+        return {};
+      }
+      async setScreenSettingsOverride(params) {
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            screenArea: params.screenArea
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            screenArea: params.screenArea
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setViewport(config3.viewport ?? null, config3.devicePixelRatio ?? null, config3.screenOrientation ?? null);
+        }));
+        return {};
+      }
+      /**
+       * Returns a list of top-level browsing contexts.
+       */
+      async #getRelatedTopLevelBrowsingContexts(browsingContextIds, userContextIds, allowGlobal = false) {
+        if (browsingContextIds === void 0 && userContextIds === void 0) {
+          if (allowGlobal) {
+            return this.#browsingContextStorage.getTopLevelContexts();
+          }
+          throw new InvalidArgumentException("Either user contexts or browsing contexts must be provided");
+        }
+        if (browsingContextIds !== void 0 && userContextIds !== void 0) {
+          throw new InvalidArgumentException("User contexts and browsing contexts are mutually exclusive");
+        }
+        const result = [];
+        if (browsingContextIds === void 0) {
+          if (userContextIds.length === 0) {
+            throw new InvalidArgumentException("user context should be provided");
+          }
+          await this.#userContextStorage.verifyUserContextIdList(userContextIds);
+          for (const userContextId of userContextIds) {
+            const topLevelBrowsingContexts = this.#browsingContextStorage.getTopLevelContexts().filter((browsingContext) => browsingContext.userContext === userContextId);
+            result.push(...topLevelBrowsingContexts);
+          }
+        } else {
+          if (browsingContextIds.length === 0) {
+            throw new InvalidArgumentException("browsing context should be provided");
+          }
+          for (const browsingContextId of browsingContextIds) {
+            const browsingContext = this.#browsingContextStorage.getContext(browsingContextId);
+            if (!browsingContext.isTopLevelContext()) {
+              throw new InvalidArgumentException("The command is only supported on the top-level context");
+            }
+            result.push(browsingContext);
+          }
+        }
+        return [...new Set(result).values()];
+      }
+      async setTimezoneOverride(params) {
+        let timezone = params.timezone ?? null;
+        if (timezone !== null && !isValidTimezone(timezone)) {
+          throw new InvalidArgumentException(`Invalid timezone "${timezone}"`);
+        }
+        if (timezone !== null && isTimeZoneOffsetString(timezone)) {
+          timezone = `GMT${timezone}`;
+        }
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            timezone
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            timezone
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setTimezoneOverride(config3.timezone ?? null);
+        }));
+        return {};
+      }
+      async setTouchOverride(params) {
+        const maxTouchPoints = params.maxTouchPoints;
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts, true);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            maxTouchPoints
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            maxTouchPoints
+          });
+        }
+        if (params.contexts === void 0 && params.userContexts === void 0) {
+          this.#contextConfigStorage.updateGlobalConfig({
+            maxTouchPoints
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setTouchOverride(config3.maxTouchPoints ?? null);
+        }));
+        return {};
+      }
+      async setUserAgentOverrideParams(params) {
+        if (params.userAgent === "") {
+          throw new UnsupportedOperationException("empty user agent string is not supported");
+        }
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts, true);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            userAgent: params.userAgent
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            userAgent: params.userAgent
+          });
+        }
+        if (params.contexts === void 0 && params.userContexts === void 0) {
+          this.#contextConfigStorage.updateGlobalConfig({
+            userAgent: params.userAgent
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setUserAgentAndAcceptLanguage(config3.userAgent, config3.locale, config3.clientHints);
+        }));
+        return {};
+      }
+      async setClientHintsOverride(params) {
+        const clientHints = params.clientHints ?? null;
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts, true);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            clientHints
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            clientHints
+          });
+        }
+        if (params.contexts === void 0 && params.userContexts === void 0) {
+          this.#contextConfigStorage.updateGlobalConfig({
+            clientHints
+          });
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setUserAgentAndAcceptLanguage(config3.userAgent, config3.locale, config3.clientHints);
+        }));
+        return {};
+      }
+      async setNetworkConditions(params) {
+        const browsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts, true);
+        for (const browsingContextId of params.contexts ?? []) {
+          this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, {
+            emulatedNetworkConditions: params.networkConditions
+          });
+        }
+        for (const userContextId of params.userContexts ?? []) {
+          this.#contextConfigStorage.updateUserContextConfig(userContextId, {
+            emulatedNetworkConditions: params.networkConditions
+          });
+        }
+        if (params.contexts === void 0 && params.userContexts === void 0) {
+          this.#contextConfigStorage.updateGlobalConfig({
+            emulatedNetworkConditions: params.networkConditions
+          });
+        }
+        if (params.networkConditions !== null && params.networkConditions.type !== "offline") {
+          throw new UnsupportedOperationException(`Unsupported network conditions ${params.networkConditions.type}`);
+        }
+        await Promise.all(browsingContexts.map(async (context2) => {
+          const config3 = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext);
+          await context2.setEmulatedNetworkConditions(config3.emulatedNetworkConditions ?? null);
+        }));
+        return {};
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/assert.js
+function assert3(predicate, message) {
+  if (!predicate) {
+    throw new Error(message ?? "Internal assertion failed.");
+  }
+}
+var init_assert2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/assert.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/graphemeTools.js
+function isSingleComplexGrapheme(value) {
+  return isSingleGrapheme(value) && value.length > 1;
+}
+function isSingleGrapheme(value) {
+  const segmenter4 = new Intl.Segmenter("en", { granularity: "grapheme" });
+  return [...segmenter4.segment(value)].length === 1;
+}
+var init_graphemeTools = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/graphemeTools.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputSource.js
+var NoneSource, KeySource, ClickContext, PointerSource, WheelSource;
+var init_InputSource = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputSource.js"() {
+    NoneSource = class {
+      type = "none";
+    };
+    KeySource = class {
+      type = "key";
+      pressed = /* @__PURE__ */ new Set();
+      // This is a bitfield that matches the modifiers parameter of
+      // https://chromedevtools.github.io/devtools-protocol/tot/Input/#method-dispatchKeyEvent
+      #modifiers = 0;
+      get modifiers() {
+        return this.#modifiers;
+      }
+      get alt() {
+        return (this.#modifiers & 1) === 1;
+      }
+      set alt(value) {
+        this.#setModifier(value, 1);
+      }
+      get ctrl() {
+        return (this.#modifiers & 2) === 2;
+      }
+      set ctrl(value) {
+        this.#setModifier(value, 2);
+      }
+      get meta() {
+        return (this.#modifiers & 4) === 4;
+      }
+      set meta(value) {
+        this.#setModifier(value, 4);
+      }
+      get shift() {
+        return (this.#modifiers & 8) === 8;
+      }
+      set shift(value) {
+        this.#setModifier(value, 8);
+      }
+      #setModifier(value, bit) {
+        if (value) {
+          this.#modifiers |= bit;
+        } else {
+          this.#modifiers &= ~bit;
+        }
+      }
+    };
+    ClickContext = class _ClickContext {
+      static #DOUBLE_CLICK_TIME_MS = 500;
+      static #MAX_DOUBLE_CLICK_RADIUS = 2;
+      count = 0;
+      #x;
+      #y;
+      #time;
+      constructor(x2, y, time3) {
+        this.#x = x2;
+        this.#y = y;
+        this.#time = time3;
+      }
+      compare(context2) {
+        return (
+          // The click needs to be within a certain amount of ms.
+          context2.#time - this.#time > _ClickContext.#DOUBLE_CLICK_TIME_MS || // The click needs to be within a certain square radius.
+          Math.abs(context2.#x - this.#x) > _ClickContext.#MAX_DOUBLE_CLICK_RADIUS || Math.abs(context2.#y - this.#y) > _ClickContext.#MAX_DOUBLE_CLICK_RADIUS
+        );
+      }
+    };
+    PointerSource = class {
+      type = "pointer";
+      subtype;
+      pointerId;
+      pressed = /* @__PURE__ */ new Set();
+      x = 0;
+      y = 0;
+      radiusX;
+      radiusY;
+      force;
+      constructor(id, subtype) {
+        this.pointerId = id;
+        this.subtype = subtype;
+      }
+      // This is a bitfield that matches the buttons parameter of
+      // https://chromedevtools.github.io/devtools-protocol/tot/Input/#method-dispatchMouseEvent
+      get buttons() {
+        let buttons = 0;
+        for (const button of this.pressed) {
+          switch (button) {
+            case 0:
+              buttons |= 1;
+              break;
+            case 1:
+              buttons |= 4;
+              break;
+            case 2:
+              buttons |= 2;
+              break;
+            case 3:
+              buttons |= 8;
+              break;
+            case 4:
+              buttons |= 16;
+              break;
+          }
+        }
+        return buttons;
+      }
+      // --- Platform-specific code starts here ---
+      // Input.dispatchMouseEvent doesn't know the concept of double click, so we
+      // need to create the logic, similar to how it's done for OSes:
+      // https://source.chromium.org/chromium/chromium/src/+/refs/heads/main:ui/events/event.cc;l=479
+      #clickContexts = /* @__PURE__ */ new Map();
+      setClickCount(button, context2) {
+        let storedContext = this.#clickContexts.get(button);
+        if (!storedContext || storedContext.compare(context2)) {
+          storedContext = context2;
+        }
+        ++storedContext.count;
+        this.#clickContexts.set(button, storedContext);
+        return storedContext.count;
+      }
+      getClickCount(button) {
+        return this.#clickContexts.get(button)?.count ?? 0;
+      }
+      /**
+       * Resets click count. Resets consequent click counter. Prevents grouping clicks in
+       * different `performActions` calls, so that they are not grouped as double, triple etc
+       * clicks. Required for https://github.com/GoogleChromeLabs/chromium-bidi/issues/3043.
+       */
+      resetClickCount() {
+        this.#clickContexts = /* @__PURE__ */ new Map();
+      }
+    };
+    WheelSource = class {
+      type = "wheel";
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/keyUtils.js
+function getNormalizedKey(value) {
+  switch (value) {
+    case "\uE000":
+      return "Unidentified";
+    case "\uE001":
+      return "Cancel";
+    case "\uE002":
+      return "Help";
+    case "\uE003":
+      return "Backspace";
+    case "\uE004":
+      return "Tab";
+    case "\uE005":
+      return "Clear";
+    // Specification declares the '\uE006' to be `Return`, but it is not supported by
+    // Chrome, so fall back to `Enter`, which aligns with WPT.
+    case "\uE006":
+    case "\uE007":
+      return "Enter";
+    case "\uE008":
+      return "Shift";
+    case "\uE009":
+      return "Control";
+    case "\uE00A":
+      return "Alt";
+    case "\uE00B":
+      return "Pause";
+    case "\uE00C":
+      return "Escape";
+    case "\uE00D":
+      return " ";
+    case "\uE00E":
+      return "PageUp";
+    case "\uE00F":
+      return "PageDown";
+    case "\uE010":
+      return "End";
+    case "\uE011":
+      return "Home";
+    case "\uE012":
+      return "ArrowLeft";
+    case "\uE013":
+      return "ArrowUp";
+    case "\uE014":
+      return "ArrowRight";
+    case "\uE015":
+      return "ArrowDown";
+    case "\uE016":
+      return "Insert";
+    case "\uE017":
+      return "Delete";
+    case "\uE018":
+      return ";";
+    case "\uE019":
+      return "=";
+    case "\uE01A":
+      return "0";
+    case "\uE01B":
+      return "1";
+    case "\uE01C":
+      return "2";
+    case "\uE01D":
+      return "3";
+    case "\uE01E":
+      return "4";
+    case "\uE01F":
+      return "5";
+    case "\uE020":
+      return "6";
+    case "\uE021":
+      return "7";
+    case "\uE022":
+      return "8";
+    case "\uE023":
+      return "9";
+    case "\uE024":
+      return "*";
+    case "\uE025":
+      return "+";
+    case "\uE026":
+      return ",";
+    case "\uE027":
+      return "-";
+    case "\uE028":
+      return ".";
+    case "\uE029":
+      return "/";
+    case "\uE031":
+      return "F1";
+    case "\uE032":
+      return "F2";
+    case "\uE033":
+      return "F3";
+    case "\uE034":
+      return "F4";
+    case "\uE035":
+      return "F5";
+    case "\uE036":
+      return "F6";
+    case "\uE037":
+      return "F7";
+    case "\uE038":
+      return "F8";
+    case "\uE039":
+      return "F9";
+    case "\uE03A":
+      return "F10";
+    case "\uE03B":
+      return "F11";
+    case "\uE03C":
+      return "F12";
+    case "\uE03D":
+      return "Meta";
+    case "\uE040":
+      return "ZenkakuHankaku";
+    case "\uE050":
+      return "Shift";
+    case "\uE051":
+      return "Control";
+    case "\uE052":
+      return "Alt";
+    case "\uE053":
+      return "Meta";
+    case "\uE054":
+      return "PageUp";
+    case "\uE055":
+      return "PageDown";
+    case "\uE056":
+      return "End";
+    case "\uE057":
+      return "Home";
+    case "\uE058":
+      return "ArrowLeft";
+    case "\uE059":
+      return "ArrowUp";
+    case "\uE05A":
+      return "ArrowRight";
+    case "\uE05B":
+      return "ArrowDown";
+    case "\uE05C":
+      return "Insert";
+    case "\uE05D":
+      return "Delete";
+    default:
+      return value;
+  }
+}
+function getKeyCode(key) {
+  switch (key) {
+    case "`":
+    case "~":
+      return "Backquote";
+    case "\\":
+    case "|":
+      return "Backslash";
+    case "\uE003":
+      return "Backspace";
+    case "[":
+    case "{":
+      return "BracketLeft";
+    case "]":
+    case "}":
+      return "BracketRight";
+    case ",":
+    case "<":
+      return "Comma";
+    case "0":
+    case ")":
+      return "Digit0";
+    case "1":
+    case "!":
+      return "Digit1";
+    case "2":
+    case "@":
+      return "Digit2";
+    case "3":
+    case "#":
+      return "Digit3";
+    case "4":
+    case "$":
+      return "Digit4";
+    case "5":
+    case "%":
+      return "Digit5";
+    case "6":
+    case "^":
+      return "Digit6";
+    case "7":
+    case "&":
+      return "Digit7";
+    case "8":
+    case "*":
+      return "Digit8";
+    case "9":
+    case "(":
+      return "Digit9";
+    case "=":
+    case "+":
+      return "Equal";
+    // The spec declares the '<' to be `IntlBackslash` as well, but it is already covered
+    // in the `Comma` above.
+    case ">":
+      return "IntlBackslash";
+    case "a":
+    case "A":
+      return "KeyA";
+    case "b":
+    case "B":
+      return "KeyB";
+    case "c":
+    case "C":
+      return "KeyC";
+    case "d":
+    case "D":
+      return "KeyD";
+    case "e":
+    case "E":
+      return "KeyE";
+    case "f":
+    case "F":
+      return "KeyF";
+    case "g":
+    case "G":
+      return "KeyG";
+    case "h":
+    case "H":
+      return "KeyH";
+    case "i":
+    case "I":
+      return "KeyI";
+    case "j":
+    case "J":
+      return "KeyJ";
+    case "k":
+    case "K":
+      return "KeyK";
+    case "l":
+    case "L":
+      return "KeyL";
+    case "m":
+    case "M":
+      return "KeyM";
+    case "n":
+    case "N":
+      return "KeyN";
+    case "o":
+    case "O":
+      return "KeyO";
+    case "p":
+    case "P":
+      return "KeyP";
+    case "q":
+    case "Q":
+      return "KeyQ";
+    case "r":
+    case "R":
+      return "KeyR";
+    case "s":
+    case "S":
+      return "KeyS";
+    case "t":
+    case "T":
+      return "KeyT";
+    case "u":
+    case "U":
+      return "KeyU";
+    case "v":
+    case "V":
+      return "KeyV";
+    case "w":
+    case "W":
+      return "KeyW";
+    case "x":
+    case "X":
+      return "KeyX";
+    case "y":
+    case "Y":
+      return "KeyY";
+    case "z":
+    case "Z":
+      return "KeyZ";
+    case "-":
+    case "_":
+      return "Minus";
+    case ".":
+      return "Period";
+    case "'":
+    case '"':
+      return "Quote";
+    case ";":
+    case ":":
+      return "Semicolon";
+    case "/":
+    case "?":
+      return "Slash";
+    case "\uE00A":
+      return "AltLeft";
+    case "\uE052":
+      return "AltRight";
+    case "\uE009":
+      return "ControlLeft";
+    case "\uE051":
+      return "ControlRight";
+    case "\uE006":
+      return "Enter";
+    case "\uE00B":
+      return "Pause";
+    case "\uE03D":
+      return "MetaLeft";
+    case "\uE053":
+      return "MetaRight";
+    case "\uE008":
+      return "ShiftLeft";
+    case "\uE050":
+      return "ShiftRight";
+    case " ":
+    case "\uE00D":
+      return "Space";
+    case "\uE004":
+      return "Tab";
+    case "\uE017":
+      return "Delete";
+    case "\uE010":
+      return "End";
+    case "\uE002":
+      return "Help";
+    case "\uE011":
+      return "Home";
+    case "\uE016":
+      return "Insert";
+    case "\uE00F":
+      return "PageDown";
+    case "\uE00E":
+      return "PageUp";
+    case "\uE015":
+      return "ArrowDown";
+    case "\uE012":
+      return "ArrowLeft";
+    case "\uE014":
+      return "ArrowRight";
+    case "\uE013":
+      return "ArrowUp";
+    case "\uE00C":
+      return "Escape";
+    case "\uE031":
+      return "F1";
+    case "\uE032":
+      return "F2";
+    case "\uE033":
+      return "F3";
+    case "\uE034":
+      return "F4";
+    case "\uE035":
+      return "F5";
+    case "\uE036":
+      return "F6";
+    case "\uE037":
+      return "F7";
+    case "\uE038":
+      return "F8";
+    case "\uE039":
+      return "F9";
+    case "\uE03A":
+      return "F10";
+    case "\uE03B":
+      return "F11";
+    case "\uE03C":
+      return "F12";
+    case "\uE019":
+      return "NumpadEqual";
+    case "\uE01A":
+    case "\uE05C":
+      return "Numpad0";
+    case "\uE01B":
+    case "\uE056":
+      return "Numpad1";
+    case "\uE01C":
+    case "\uE05B":
+      return "Numpad2";
+    case "\uE01D":
+    case "\uE055":
+      return "Numpad3";
+    case "\uE01E":
+    case "\uE058":
+      return "Numpad4";
+    case "\uE01F":
+      return "Numpad5";
+    case "\uE020":
+    case "\uE05A":
+      return "Numpad6";
+    case "\uE021":
+    case "\uE057":
+      return "Numpad7";
+    case "\uE022":
+    case "\uE059":
+      return "Numpad8";
+    case "\uE023":
+    case "\uE054":
+      return "Numpad9";
+    case "\uE025":
+      return "NumpadAdd";
+    case "\uE026":
+      return "NumpadComma";
+    case "\uE028":
+    case "\uE05D":
+      return "NumpadDecimal";
+    case "\uE029":
+      return "NumpadDivide";
+    case "\uE007":
+      return "NumpadEnter";
+    case "\uE024":
+      return "NumpadMultiply";
+    case "\uE027":
+      return "NumpadSubtract";
+    default:
+      return;
+  }
+}
+function getKeyLocation(key) {
+  switch (key) {
+    case "\uE007":
+    case "\uE008":
+    case "\uE009":
+    case "\uE00A":
+    case "\uE03D":
+      return 1;
+    case "\uE019":
+    case "\uE01A":
+    case "\uE01B":
+    case "\uE01C":
+    case "\uE01D":
+    case "\uE01E":
+    case "\uE01F":
+    case "\uE020":
+    case "\uE021":
+    case "\uE022":
+    case "\uE023":
+    case "\uE024":
+    case "\uE025":
+    case "\uE026":
+    case "\uE027":
+    case "\uE028":
+    case "\uE029":
+    case "\uE054":
+    case "\uE055":
+    case "\uE056":
+    case "\uE057":
+    case "\uE058":
+    case "\uE059":
+    case "\uE05A":
+    case "\uE05B":
+    case "\uE05C":
+    case "\uE05D":
+      return 3;
+    case "\uE050":
+    case "\uE051":
+    case "\uE052":
+    case "\uE053":
+      return 2;
+    default:
+      return 0;
+  }
+}
+var init_keyUtils = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/keyUtils.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/USKeyboardLayout.js
+var KeyToKeyCode;
+var init_USKeyboardLayout2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/USKeyboardLayout.js"() {
+    KeyToKeyCode = {
+      "0": 48,
+      "1": 49,
+      "2": 50,
+      "3": 51,
+      "4": 52,
+      "5": 53,
+      "6": 54,
+      "7": 55,
+      "8": 56,
+      "9": 57,
+      Abort: 3,
+      Help: 6,
+      Backspace: 8,
+      Tab: 9,
+      Numpad5: 12,
+      NumpadEnter: 13,
+      Enter: 13,
+      "\\r": 13,
+      "\\n": 13,
+      ShiftLeft: 16,
+      ShiftRight: 16,
+      ControlLeft: 17,
+      ControlRight: 17,
+      AltLeft: 18,
+      AltRight: 18,
+      Pause: 19,
+      CapsLock: 20,
+      Escape: 27,
+      Convert: 28,
+      NonConvert: 29,
+      Space: 32,
+      Numpad9: 33,
+      PageUp: 33,
+      Numpad3: 34,
+      PageDown: 34,
+      End: 35,
+      Numpad1: 35,
+      Home: 36,
+      Numpad7: 36,
+      ArrowLeft: 37,
+      Numpad4: 37,
+      Numpad8: 38,
+      ArrowUp: 38,
+      ArrowRight: 39,
+      Numpad6: 39,
+      Numpad2: 40,
+      ArrowDown: 40,
+      Select: 41,
+      Open: 43,
+      PrintScreen: 44,
+      Insert: 45,
+      Numpad0: 45,
+      Delete: 46,
+      NumpadDecimal: 46,
+      Digit0: 48,
+      Digit1: 49,
+      Digit2: 50,
+      Digit3: 51,
+      Digit4: 52,
+      Digit5: 53,
+      Digit6: 54,
+      Digit7: 55,
+      Digit8: 56,
+      Digit9: 57,
+      KeyA: 65,
+      KeyB: 66,
+      KeyC: 67,
+      KeyD: 68,
+      KeyE: 69,
+      KeyF: 70,
+      KeyG: 71,
+      KeyH: 72,
+      KeyI: 73,
+      KeyJ: 74,
+      KeyK: 75,
+      KeyL: 76,
+      KeyM: 77,
+      KeyN: 78,
+      KeyO: 79,
+      KeyP: 80,
+      KeyQ: 81,
+      KeyR: 82,
+      KeyS: 83,
+      KeyT: 84,
+      KeyU: 85,
+      KeyV: 86,
+      KeyW: 87,
+      KeyX: 88,
+      KeyY: 89,
+      KeyZ: 90,
+      MetaLeft: 91,
+      MetaRight: 92,
+      ContextMenu: 93,
+      NumpadMultiply: 106,
+      NumpadAdd: 107,
+      NumpadSubtract: 109,
+      NumpadDivide: 111,
+      F1: 112,
+      F2: 113,
+      F3: 114,
+      F4: 115,
+      F5: 116,
+      F6: 117,
+      F7: 118,
+      F8: 119,
+      F9: 120,
+      F10: 121,
+      F11: 122,
+      F12: 123,
+      F13: 124,
+      F14: 125,
+      F15: 126,
+      F16: 127,
+      F17: 128,
+      F18: 129,
+      F19: 130,
+      F20: 131,
+      F21: 132,
+      F22: 133,
+      F23: 134,
+      F24: 135,
+      NumLock: 144,
+      ScrollLock: 145,
+      AudioVolumeMute: 173,
+      AudioVolumeDown: 174,
+      AudioVolumeUp: 175,
+      MediaTrackNext: 176,
+      MediaTrackPrevious: 177,
+      MediaStop: 178,
+      MediaPlayPause: 179,
+      Semicolon: 186,
+      Equal: 187,
+      NumpadEqual: 187,
+      Comma: 188,
+      Minus: 189,
+      Period: 190,
+      Slash: 191,
+      Backquote: 192,
+      BracketLeft: 219,
+      Backslash: 220,
+      BracketRight: 221,
+      Quote: 222,
+      AltGraph: 225,
+      Props: 247,
+      Cancel: 3,
+      Clear: 12,
+      Shift: 16,
+      Control: 17,
+      Alt: 18,
+      Accept: 30,
+      ModeChange: 31,
+      " ": 32,
+      Print: 42,
+      Execute: 43,
+      "\\u0000": 46,
+      a: 65,
+      b: 66,
+      c: 67,
+      d: 68,
+      e: 69,
+      f: 70,
+      g: 71,
+      h: 72,
+      i: 73,
+      j: 74,
+      k: 75,
+      l: 76,
+      m: 77,
+      n: 78,
+      o: 79,
+      p: 80,
+      q: 81,
+      r: 82,
+      s: 83,
+      t: 84,
+      u: 85,
+      v: 86,
+      w: 87,
+      x: 88,
+      y: 89,
+      z: 90,
+      Meta: 91,
+      "*": 106,
+      "+": 107,
+      "-": 109,
+      "/": 111,
+      ";": 186,
+      "=": 187,
+      ",": 188,
+      ".": 190,
+      "`": 192,
+      "[": 219,
+      "\\\\": 220,
+      "]": 221,
+      "'": 222,
+      Attn: 246,
+      CrSel: 247,
+      ExSel: 248,
+      EraseEof: 249,
+      Play: 250,
+      ZoomOut: 251,
+      ")": 48,
+      "!": 49,
+      "@": 50,
+      "#": 51,
+      $: 52,
+      "%": 53,
+      "^": 54,
+      "&": 55,
+      "(": 57,
+      A: 65,
+      B: 66,
+      C: 67,
+      D: 68,
+      E: 69,
+      F: 70,
+      G: 71,
+      H: 72,
+      I: 73,
+      J: 74,
+      K: 75,
+      L: 76,
+      M: 77,
+      N: 78,
+      O: 79,
+      P: 80,
+      Q: 81,
+      R: 82,
+      S: 83,
+      T: 84,
+      U: 85,
+      V: 86,
+      W: 87,
+      X: 88,
+      Y: 89,
+      Z: 90,
+      ":": 186,
+      "<": 188,
+      _: 189,
+      ">": 190,
+      "?": 191,
+      "~": 192,
+      "{": 219,
+      "|": 220,
+      "}": 221,
+      '"': 222,
+      Camera: 44,
+      EndCall: 95,
+      VolumeDown: 182,
+      VolumeUp: 183
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/ActionDispatcher.js
+async function getElementCenter(context2, element) {
+  const hiddenSandboxRealm = await context2.getOrCreateHiddenSandbox();
+  const result = await hiddenSandboxRealm.callFunction(CALCULATE_IN_VIEW_CENTER_PT_DECL, false, { type: "undefined" }, [element]);
+  if (result.type === "exception") {
+    throw new NoSuchElementException(`Origin element ${element.sharedId} was not found`);
+  }
+  assert3(result.result.type === "array");
+  assert3(result.result.value?.[0]?.type === "number");
+  assert3(result.result.value?.[1]?.type === "number");
+  const { result: { value: [{ value: x2 }, { value: y }] } } = result;
+  return { x: x2, y };
+}
+function getCdpButton(button) {
+  switch (button) {
+    case 0:
+      return "left";
+    case 1:
+      return "middle";
+    case 2:
+      return "right";
+    case 3:
+      return "back";
+    case 4:
+      return "forward";
+    default:
+      return "none";
+  }
+}
+function getTilt(action2) {
+  const altitudeAngle = action2.altitudeAngle ?? Math.PI / 2;
+  const azimuthAngle = action2.azimuthAngle ?? 0;
+  let tiltXRadians = 0;
+  let tiltYRadians = 0;
+  if (altitudeAngle === 0) {
+    if (azimuthAngle === 0 || azimuthAngle === 2 * Math.PI) {
+      tiltXRadians = Math.PI / 2;
+    }
+    if (azimuthAngle === Math.PI / 2) {
+      tiltYRadians = Math.PI / 2;
+    }
+    if (azimuthAngle === Math.PI) {
+      tiltXRadians = -Math.PI / 2;
+    }
+    if (azimuthAngle === 3 * Math.PI / 2) {
+      tiltYRadians = -Math.PI / 2;
+    }
+    if (azimuthAngle > 0 && azimuthAngle < Math.PI / 2) {
+      tiltXRadians = Math.PI / 2;
+      tiltYRadians = Math.PI / 2;
+    }
+    if (azimuthAngle > Math.PI / 2 && azimuthAngle < Math.PI) {
+      tiltXRadians = -Math.PI / 2;
+      tiltYRadians = Math.PI / 2;
+    }
+    if (azimuthAngle > Math.PI && azimuthAngle < 3 * Math.PI / 2) {
+      tiltXRadians = -Math.PI / 2;
+      tiltYRadians = -Math.PI / 2;
+    }
+    if (azimuthAngle > 3 * Math.PI / 2 && azimuthAngle < 2 * Math.PI) {
+      tiltXRadians = Math.PI / 2;
+      tiltYRadians = -Math.PI / 2;
+    }
+  }
+  if (altitudeAngle !== 0) {
+    const tanAlt = Math.tan(altitudeAngle);
+    tiltXRadians = Math.atan(Math.cos(azimuthAngle) / tanAlt);
+    tiltYRadians = Math.atan(Math.sin(azimuthAngle) / tanAlt);
+  }
+  const factor = 180 / Math.PI;
+  return {
+    tiltX: Math.round(tiltXRadians * factor),
+    tiltY: Math.round(tiltYRadians * factor)
+  };
+}
+function getRadii(width, height) {
+  return {
+    radiusX: width ? width / 2 : 0.5,
+    radiusY: height ? height / 2 : 0.5
+  };
+}
+var CALCULATE_IN_VIEW_CENTER_PT_DECL, IS_MAC_DECL, ActionDispatcher, getKeyEventUnmodifiedText, getKeyEventText;
+var init_ActionDispatcher = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/ActionDispatcher.js"() {
+    init_protocol();
+    init_assert2();
+    init_graphemeTools();
+    init_InputSource();
+    init_keyUtils();
+    init_USKeyboardLayout2();
+    CALCULATE_IN_VIEW_CENTER_PT_DECL = ((i) => {
+      const t = i.getClientRects()[0], e = Math.max(0, Math.min(t.x, t.x + t.width)), n = Math.min(window.innerWidth, Math.max(t.x, t.x + t.width)), h = Math.max(0, Math.min(t.y, t.y + t.height)), m = Math.min(window.innerHeight, Math.max(t.y, t.y + t.height));
+      return [e + (n - e >> 1), h + (m - h >> 1)];
+    }).toString();
+    IS_MAC_DECL = (() => {
+      return navigator.platform.toLowerCase().includes("mac");
+    }).toString();
+    ActionDispatcher = class {
+      static isMacOS = async (context2) => {
+        const hiddenSandboxRealm = await context2.getOrCreateHiddenSandbox();
+        const result = await hiddenSandboxRealm.callFunction(IS_MAC_DECL, false);
+        assert3(result.type !== "exception");
+        assert3(result.result.type === "boolean");
+        return result.result.value;
+      };
+      #browsingContextStorage;
+      #tickStart = 0;
+      #tickDuration = 0;
+      #inputState;
+      #contextId;
+      #isMacOS;
+      constructor(inputState, browsingContextStorage, contextId, isMacOS) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#inputState = inputState;
+        this.#contextId = contextId;
+        this.#isMacOS = isMacOS;
+      }
+      /**
+       * The context can be disposed between action ticks, so need to get it each time.
+       */
+      get #context() {
+        return this.#browsingContextStorage.getContext(this.#contextId);
+      }
+      async dispatchActions(optionsByTick) {
+        await this.#inputState.queue.run(async () => {
+          for (const options of optionsByTick) {
+            await this.dispatchTickActions(options);
+          }
+        });
+      }
+      async dispatchTickActions(options) {
+        this.#tickStart = performance.now();
+        this.#tickDuration = 0;
+        for (const { action: action2 } of options) {
+          if ("duration" in action2 && action2.duration !== void 0) {
+            this.#tickDuration = Math.max(this.#tickDuration, action2.duration);
+          }
+        }
+        const promises = [
+          new Promise((resolve10) => setTimeout(resolve10, this.#tickDuration))
+        ];
+        for (const option of options) {
+          promises.push(this.#dispatchAction(option));
+        }
+        await Promise.all(promises);
+      }
+      async #dispatchAction({ id, action: action2 }) {
+        const source2 = this.#inputState.get(id);
+        const keyState = this.#inputState.getGlobalKeyState();
+        switch (action2.type) {
+          case "keyDown": {
+            await this.#dispatchKeyDownAction(source2, action2);
+            this.#inputState.cancelList.push({
+              id,
+              action: {
+                ...action2,
+                type: "keyUp"
+              }
+            });
+            break;
+          }
+          case "keyUp": {
+            await this.#dispatchKeyUpAction(source2, action2);
+            break;
+          }
+          case "pause": {
+            break;
+          }
+          case "pointerDown": {
+            await this.#dispatchPointerDownAction(source2, keyState, action2);
+            this.#inputState.cancelList.push({
+              id,
+              action: {
+                ...action2,
+                type: "pointerUp"
+              }
+            });
+            break;
+          }
+          case "pointerMove": {
+            await this.#dispatchPointerMoveAction(source2, keyState, action2);
+            break;
+          }
+          case "pointerUp": {
+            await this.#dispatchPointerUpAction(source2, keyState, action2);
+            break;
+          }
+          case "scroll": {
+            await this.#dispatchScrollAction(source2, keyState, action2);
+            break;
+          }
+        }
+      }
+      async #dispatchPointerDownAction(source2, keyState, action2) {
+        const { button } = action2;
+        if (source2.pressed.has(button)) {
+          return;
+        }
+        source2.pressed.add(button);
+        const { x: x2, y, subtype: pointerType } = source2;
+        const { width, height, pressure, twist, tangentialPressure } = action2;
+        const { tiltX, tiltY } = getTilt(action2);
+        const { modifiers } = keyState;
+        const { radiusX, radiusY } = getRadii(width ?? 1, height ?? 1);
+        switch (pointerType) {
+          case "mouse":
+          case "pen":
+            await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchMouseEvent", {
+              type: "mousePressed",
+              x: x2,
+              y,
+              modifiers,
+              button: getCdpButton(button),
+              buttons: source2.buttons,
+              clickCount: source2.setClickCount(button, new ClickContext(x2, y, performance.now())),
+              pointerType,
+              tangentialPressure,
+              tiltX,
+              tiltY,
+              twist,
+              force: pressure
+            });
+            break;
+          case "touch":
+            await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchTouchEvent", {
+              type: "touchStart",
+              touchPoints: [
+                {
+                  x: x2,
+                  y,
+                  radiusX,
+                  radiusY,
+                  tangentialPressure,
+                  tiltX,
+                  tiltY,
+                  twist,
+                  force: pressure,
+                  id: source2.pointerId
+                }
+              ],
+              modifiers
+            });
+            break;
+        }
+        source2.radiusX = radiusX;
+        source2.radiusY = radiusY;
+        source2.force = pressure;
+      }
+      #dispatchPointerUpAction(source2, keyState, action2) {
+        const { button } = action2;
+        if (!source2.pressed.has(button)) {
+          return;
+        }
+        source2.pressed.delete(button);
+        const { x: x2, y, force, radiusX, radiusY, subtype: pointerType } = source2;
+        const { modifiers } = keyState;
+        switch (pointerType) {
+          case "mouse":
+          case "pen":
+            return this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchMouseEvent", {
+              type: "mouseReleased",
+              x: x2,
+              y,
+              modifiers,
+              button: getCdpButton(button),
+              buttons: source2.buttons,
+              clickCount: source2.getClickCount(button),
+              pointerType
+            });
+          case "touch":
+            return this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchTouchEvent", {
+              type: "touchEnd",
+              touchPoints: [
+                {
+                  x: x2,
+                  y,
+                  id: source2.pointerId,
+                  force,
+                  radiusX,
+                  radiusY
+                }
+              ],
+              modifiers
+            });
+        }
+      }
+      async #dispatchPointerMoveAction(source2, keyState, action2) {
+        const { x: startX, y: startY, subtype: pointerType } = source2;
+        const { width, height, pressure, twist, tangentialPressure, x: offsetX, y: offsetY, origin = "viewport", duration: duration4 = this.#tickDuration } = action2;
+        const { tiltX, tiltY } = getTilt(action2);
+        const { radiusX, radiusY } = getRadii(width ?? 1, height ?? 1);
+        const { targetX, targetY } = await this.#getCoordinateFromOrigin(origin, offsetX, offsetY, startX, startY);
+        if (targetX < 0 || targetY < 0) {
+          throw new MoveTargetOutOfBoundsException(`Cannot move beyond viewport (x: ${targetX}, y: ${targetY})`);
+        }
+        let last2;
+        do {
+          const ratio = duration4 > 0 ? (performance.now() - this.#tickStart) / duration4 : 1;
+          last2 = ratio >= 1;
+          let x2;
+          let y;
+          if (last2) {
+            x2 = targetX;
+            y = targetY;
+          } else {
+            x2 = Math.round(ratio * (targetX - startX) + startX);
+            y = Math.round(ratio * (targetY - startY) + startY);
+          }
+          if (source2.x !== x2 || source2.y !== y) {
+            const { modifiers } = keyState;
+            switch (pointerType) {
+              case "mouse":
+                await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchMouseEvent", {
+                  type: "mouseMoved",
+                  x: x2,
+                  y,
+                  modifiers,
+                  clickCount: 0,
+                  button: getCdpButton(source2.pressed.values().next().value ?? 5),
+                  buttons: source2.buttons,
+                  pointerType,
+                  tangentialPressure,
+                  tiltX,
+                  tiltY,
+                  twist,
+                  force: pressure
+                });
+                break;
+              case "pen":
+                if (source2.pressed.size !== 0) {
+                  await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchMouseEvent", {
+                    type: "mouseMoved",
+                    x: x2,
+                    y,
+                    modifiers,
+                    clickCount: 0,
+                    button: getCdpButton(source2.pressed.values().next().value ?? 5),
+                    buttons: source2.buttons,
+                    pointerType,
+                    tangentialPressure,
+                    tiltX,
+                    tiltY,
+                    twist,
+                    force: pressure ?? 0.5
+                  });
+                }
+                break;
+              case "touch":
+                if (source2.pressed.size !== 0) {
+                  await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchTouchEvent", {
+                    type: "touchMove",
+                    touchPoints: [
+                      {
+                        x: x2,
+                        y,
+                        radiusX,
+                        radiusY,
+                        tangentialPressure,
+                        tiltX,
+                        tiltY,
+                        twist,
+                        force: pressure,
+                        id: source2.pointerId
+                      }
+                    ],
+                    modifiers
+                  });
+                }
+                break;
+            }
+            source2.x = x2;
+            source2.y = y;
+            source2.radiusX = radiusX;
+            source2.radiusY = radiusY;
+            source2.force = pressure;
+          }
+        } while (!last2);
+      }
+      async #getFrameOffset() {
+        if (this.#context.id === this.#context.cdpTarget.id) {
+          return { x: 0, y: 0 };
+        }
+        const { backendNodeId } = await this.#context.cdpTarget.cdpClient.sendCommand("DOM.getFrameOwner", { frameId: this.#context.id });
+        const { model: frameBoxModel } = await this.#context.cdpTarget.cdpClient.sendCommand("DOM.getBoxModel", {
+          backendNodeId
+        });
+        return { x: frameBoxModel.content[0], y: frameBoxModel.content[1] };
+      }
+      async #getCoordinateFromOrigin(origin, offsetX, offsetY, startX, startY) {
+        let targetX;
+        let targetY;
+        const frameOffset = await this.#getFrameOffset();
+        switch (origin) {
+          case "viewport":
+            targetX = offsetX + frameOffset.x;
+            targetY = offsetY + frameOffset.y;
+            break;
+          case "pointer":
+            targetX = startX + offsetX + frameOffset.x;
+            targetY = startY + offsetY + frameOffset.y;
+            break;
+          default: {
+            const { x: posX, y: posY } = await getElementCenter(this.#context, origin.element);
+            targetX = posX + offsetX + frameOffset.x;
+            targetY = posY + offsetY + frameOffset.y;
+            break;
+          }
+        }
+        return { targetX, targetY };
+      }
+      async #dispatchScrollAction(_source, keyState, action2) {
+        const { deltaX: targetDeltaX, deltaY: targetDeltaY, x: offsetX, y: offsetY, origin = "viewport", duration: duration4 = this.#tickDuration } = action2;
+        if (origin === "pointer") {
+          throw new InvalidArgumentException('"pointer" origin is invalid for scrolling.');
+        }
+        const { targetX, targetY } = await this.#getCoordinateFromOrigin(origin, offsetX, offsetY, 0, 0);
+        if (targetX < 0 || targetY < 0) {
+          throw new MoveTargetOutOfBoundsException(`Cannot move beyond viewport (x: ${targetX}, y: ${targetY})`);
+        }
+        let currentDeltaX = 0;
+        let currentDeltaY = 0;
+        let last2;
+        do {
+          const ratio = duration4 > 0 ? (performance.now() - this.#tickStart) / duration4 : 1;
+          last2 = ratio >= 1;
+          let deltaX;
+          let deltaY;
+          if (last2) {
+            deltaX = targetDeltaX - currentDeltaX;
+            deltaY = targetDeltaY - currentDeltaY;
+          } else {
+            deltaX = Math.round(ratio * targetDeltaX - currentDeltaX);
+            deltaY = Math.round(ratio * targetDeltaY - currentDeltaY);
+          }
+          if (deltaX !== 0 || deltaY !== 0) {
+            const { modifiers } = keyState;
+            await this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchMouseEvent", {
+              type: "mouseWheel",
+              deltaX,
+              deltaY,
+              x: targetX,
+              y: targetY,
+              modifiers
+            });
+            currentDeltaX += deltaX;
+            currentDeltaY += deltaY;
+          }
+        } while (!last2);
+      }
+      async #dispatchKeyDownAction(source2, action2) {
+        const rawKey = action2.value;
+        if (!isSingleGrapheme(rawKey)) {
+          throw new InvalidArgumentException(`Invalid key value: ${rawKey}`);
+        }
+        const isGrapheme = isSingleComplexGrapheme(rawKey);
+        const key = getNormalizedKey(rawKey);
+        const repeat = source2.pressed.has(key);
+        const code = getKeyCode(rawKey);
+        const location2 = getKeyLocation(rawKey);
+        switch (key) {
+          case "Alt":
+            source2.alt = true;
+            break;
+          case "Shift":
+            source2.shift = true;
+            break;
+          case "Control":
+            source2.ctrl = true;
+            break;
+          case "Meta":
+            source2.meta = true;
+            break;
+        }
+        source2.pressed.add(key);
+        const { modifiers } = source2;
+        const unmodifiedText = getKeyEventUnmodifiedText(key, source2, isGrapheme);
+        const text = getKeyEventText(code ?? "", source2) ?? unmodifiedText;
+        let command2;
+        if (this.#isMacOS && source2.meta) {
+          switch (code) {
+            case "KeyA":
+              command2 = "SelectAll";
+              break;
+            case "KeyC":
+              command2 = "Copy";
+              break;
+            case "KeyV":
+              command2 = source2.shift ? "PasteAndMatchStyle" : "Paste";
+              break;
+            case "KeyX":
+              command2 = "Cut";
+              break;
+            case "KeyZ":
+              command2 = source2.shift ? "Redo" : "Undo";
+              break;
+            default:
+          }
+        }
+        const promises = [
+          this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchKeyEvent", {
+            type: text ? "keyDown" : "rawKeyDown",
+            windowsVirtualKeyCode: KeyToKeyCode[key],
+            key,
+            code,
+            text,
+            unmodifiedText,
+            autoRepeat: repeat,
+            isSystemKey: source2.alt || void 0,
+            location: location2 < 3 ? location2 : void 0,
+            isKeypad: location2 === 3,
+            modifiers,
+            commands: command2 ? [command2] : void 0
+          })
+        ];
+        if (key === "Escape") {
+          if (!source2.alt && (this.#isMacOS && !source2.ctrl && !source2.meta || !this.#isMacOS)) {
+            promises.push(this.#context.cdpTarget.cdpClient.sendCommand("Input.cancelDragging"));
+          }
+        }
+        await Promise.all(promises);
+      }
+      #dispatchKeyUpAction(source2, action2) {
+        const rawKey = action2.value;
+        if (!isSingleGrapheme(rawKey)) {
+          throw new InvalidArgumentException(`Invalid key value: ${rawKey}`);
+        }
+        const isGrapheme = isSingleComplexGrapheme(rawKey);
+        const key = getNormalizedKey(rawKey);
+        if (!source2.pressed.has(key)) {
+          return;
+        }
+        const code = getKeyCode(rawKey);
+        const location2 = getKeyLocation(rawKey);
+        switch (key) {
+          case "Alt":
+            source2.alt = false;
+            break;
+          case "Shift":
+            source2.shift = false;
+            break;
+          case "Control":
+            source2.ctrl = false;
+            break;
+          case "Meta":
+            source2.meta = false;
+            break;
+        }
+        source2.pressed.delete(key);
+        const { modifiers } = source2;
+        const unmodifiedText = getKeyEventUnmodifiedText(key, source2, isGrapheme);
+        const text = getKeyEventText(code ?? "", source2) ?? unmodifiedText;
+        return this.#context.cdpTarget.cdpClient.sendCommand("Input.dispatchKeyEvent", {
+          type: "keyUp",
+          windowsVirtualKeyCode: KeyToKeyCode[key],
+          key,
+          code,
+          text,
+          unmodifiedText,
+          location: location2 < 3 ? location2 : void 0,
+          isSystemKey: source2.alt || void 0,
+          isKeypad: location2 === 3,
+          modifiers
+        });
+      }
+    };
+    getKeyEventUnmodifiedText = (key, source2, isGrapheme) => {
+      if (isGrapheme) {
+        return key;
+      }
+      if (key === "Enter") {
+        return "\r";
+      }
+      return [...key].length === 1 ? source2.shift ? key.toLocaleUpperCase("en-US") : key : void 0;
+    };
+    getKeyEventText = (code, source2) => {
+      if (source2.ctrl) {
+        switch (code) {
+          case "Digit2":
+            if (source2.shift) {
+              return "\0";
+            }
+            break;
+          case "KeyA":
+            return "";
+          case "KeyB":
+            return "";
+          case "KeyC":
+            return "";
+          case "KeyD":
+            return "";
+          case "KeyE":
+            return "";
+          case "KeyF":
+            return "";
+          case "KeyG":
+            return "\x07";
+          case "KeyH":
+            return "\b";
+          case "KeyI":
+            return "	";
+          case "KeyJ":
+            return "\n";
+          case "KeyK":
+            return "\v";
+          case "KeyL":
+            return "\f";
+          case "KeyM":
+            return "\r";
+          case "KeyN":
+            return "";
+          case "KeyO":
+            return "";
+          case "KeyP":
+            return "";
+          case "KeyQ":
+            return "";
+          case "KeyR":
+            return "";
+          case "KeyS":
+            return "";
+          case "KeyT":
+            return "";
+          case "KeyU":
+            return "";
+          case "KeyV":
+            return "";
+          case "KeyW":
+            return "";
+          case "KeyX":
+            return "";
+          case "KeyY":
+            return "";
+          case "KeyZ":
+            return "";
+          case "BracketLeft":
+            return "\x1B";
+          case "Backslash":
+            return "";
+          case "BracketRight":
+            return "";
+          case "Digit6":
+            if (source2.shift) {
+              return "";
+            }
+            break;
+          case "Minus":
+            return "";
+        }
+        return "";
+      }
+      if (source2.alt) {
+        return "";
+      }
+      return;
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/Mutex.js
+var Mutex2;
+var init_Mutex2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/Mutex.js"() {
+    Mutex2 = class {
+      #locked = false;
+      #acquirers = [];
+      // This is FIFO.
+      acquire() {
+        const state = { resolved: false };
+        if (this.#locked) {
+          return new Promise((resolve10) => {
+            this.#acquirers.push(() => resolve10(this.#release.bind(this, state)));
+          });
+        }
+        this.#locked = true;
+        return Promise.resolve(this.#release.bind(this, state));
+      }
+      #release(state) {
+        if (state.resolved) {
+          throw new Error("Cannot release more than once.");
+        }
+        state.resolved = true;
+        const resolve10 = this.#acquirers.shift();
+        if (!resolve10) {
+          this.#locked = false;
+          return;
+        }
+        resolve10();
+      }
+      async run(action2) {
+        const release = await this.acquire();
+        try {
+          const result = await action2();
+          return result;
+        } finally {
+          release();
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputState.js
+var InputState;
+var init_InputState = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputState.js"() {
+    init_protocol();
+    init_Mutex2();
+    init_InputSource();
+    InputState = class {
+      cancelList = [];
+      #sources = /* @__PURE__ */ new Map();
+      #mutex = new Mutex2();
+      getOrCreate(id, type, subtype) {
+        let source2 = this.#sources.get(id);
+        if (!source2) {
+          switch (type) {
+            case "none":
+              source2 = new NoneSource();
+              break;
+            case "key":
+              source2 = new KeySource();
+              break;
+            case "pointer": {
+              let pointerId = subtype === "mouse" ? 0 : 2;
+              const pointerIds = /* @__PURE__ */ new Set();
+              for (const [, source3] of this.#sources) {
+                if (source3.type === "pointer") {
+                  pointerIds.add(source3.pointerId);
+                }
+              }
+              while (pointerIds.has(pointerId)) {
+                ++pointerId;
+              }
+              source2 = new PointerSource(pointerId, subtype);
+              break;
+            }
+            case "wheel":
+              source2 = new WheelSource();
+              break;
+            default:
+              throw new InvalidArgumentException(`Expected "${"none"}", "${"key"}", "${"pointer"}", or "${"wheel"}". Found unknown source type ${type}.`);
+          }
+          this.#sources.set(id, source2);
+          return source2;
+        }
+        if (source2.type !== type) {
+          throw new InvalidArgumentException(`Input source type of ${id} is ${source2.type}, but received ${type}.`);
+        }
+        return source2;
+      }
+      get(id) {
+        const source2 = this.#sources.get(id);
+        if (!source2) {
+          throw new UnknownErrorException(`Internal error.`);
+        }
+        return source2;
+      }
+      getGlobalKeyState() {
+        const state = new KeySource();
+        for (const [, source2] of this.#sources) {
+          if (source2.type !== "key") {
+            continue;
+          }
+          for (const pressed of source2.pressed) {
+            state.pressed.add(pressed);
+          }
+          state.alt ||= source2.alt;
+          state.ctrl ||= source2.ctrl;
+          state.meta ||= source2.meta;
+          state.shift ||= source2.shift;
+        }
+        return state;
+      }
+      get queue() {
+        return this.#mutex;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputStateManager.js
+var InputStateManager;
+var init_InputStateManager = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputStateManager.js"() {
+    init_assert2();
+    init_InputState();
+    InputStateManager = class extends WeakMap {
+      get(context2) {
+        assert3(context2.isTopLevelContext());
+        if (!this.has(context2)) {
+          this.set(context2, new InputState());
+        }
+        return super.get(context2);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputProcessor.js
+var InputProcessor;
+var init_InputProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/input/InputProcessor.js"() {
+    init_protocol();
+    init_assert2();
+    init_ActionDispatcher();
+    init_InputStateManager();
+    InputProcessor = class {
+      #browsingContextStorage;
+      #inputStateManager = new InputStateManager();
+      constructor(browsingContextStorage) {
+        this.#browsingContextStorage = browsingContextStorage;
+      }
+      async performActions(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        const inputState = this.#inputStateManager.get(context2.top);
+        const actionsByTick = this.#getActionsByTick(params, inputState);
+        const dispatcher = new ActionDispatcher(inputState, this.#browsingContextStorage, params.context, await ActionDispatcher.isMacOS(context2).catch(() => false));
+        await dispatcher.dispatchActions(actionsByTick);
+        return {};
+      }
+      async releaseActions(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        const topContext = context2.top;
+        const inputState = this.#inputStateManager.get(topContext);
+        const dispatcher = new ActionDispatcher(inputState, this.#browsingContextStorage, params.context, await ActionDispatcher.isMacOS(context2).catch(() => false));
+        await dispatcher.dispatchTickActions(inputState.cancelList.reverse());
+        this.#inputStateManager.delete(topContext);
+        return {};
+      }
+      async setFiles(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        const hiddenSandboxRealm = await context2.getOrCreateHiddenSandbox();
+        let result;
+        try {
+          result = await hiddenSandboxRealm.callFunction(String(function getFiles(fileListLength) {
+            if (!(this instanceof HTMLInputElement)) {
+              if (this instanceof Element) {
+                return 1;
+              }
+              return 0;
+            }
+            if (this.type !== "file") {
+              return 2;
+            }
+            if (this.disabled) {
+              return 3;
+            }
+            if (fileListLength > 1 && !this.multiple) {
+              return 4;
+            }
+            return;
+          }), false, params.element, [{ type: "number", value: params.files.length }]);
+        } catch {
+          throw new NoSuchNodeException(`Could not find element ${params.element.sharedId}`);
+        }
+        assert3(result.type === "success");
+        if (result.result.type === "number") {
+          switch (result.result.value) {
+            case 0: {
+              throw new NoSuchElementException(`Could not find element ${params.element.sharedId}`);
+            }
+            case 1: {
+              throw new UnableToSetFileInputException(`Element ${params.element.sharedId} is not a input`);
+            }
+            case 2: {
+              throw new UnableToSetFileInputException(`Input element ${params.element.sharedId} is not a file type`);
+            }
+            case 3: {
+              throw new UnableToSetFileInputException(`Input element ${params.element.sharedId} is disabled`);
+            }
+            case 4: {
+              throw new UnableToSetFileInputException(`Cannot set multiple files on a non-multiple input element`);
+            }
+          }
+        }
+        if (params.files.length === 0) {
+          await hiddenSandboxRealm.callFunction(String(function dispatchEvent() {
+            if (this.files?.length === 0) {
+              this.dispatchEvent(new Event("cancel", {
+                bubbles: true
+              }));
+              return;
+            }
+            this.files = new DataTransfer().files;
+            this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+            this.dispatchEvent(new Event("change", { bubbles: true }));
+          }), false, params.element);
+          return {};
+        }
+        const paths = [];
+        for (let i = 0; i < params.files.length; ++i) {
+          const result2 = await hiddenSandboxRealm.callFunction(
+            String(function getFiles(index) {
+              return this.files?.item(index);
+            }),
+            false,
+            params.element,
+            [{ type: "number", value: 0 }],
+            "root"
+            /* Script.ResultOwnership.Root */
+          );
+          assert3(result2.type === "success");
+          if (result2.result.type !== "object") {
+            break;
+          }
+          const { handle } = result2.result;
+          assert3(handle !== void 0);
+          const { path: path14 } = await hiddenSandboxRealm.cdpClient.sendCommand("DOM.getFileInfo", {
+            objectId: handle
+          });
+          paths.push(path14);
+          void hiddenSandboxRealm.disown(handle).catch(void 0);
+        }
+        paths.sort();
+        const sortedFiles = [...params.files].sort();
+        if (paths.length !== params.files.length || sortedFiles.some((path14, index) => {
+          return paths[index] !== path14;
+        })) {
+          const { objectId } = await hiddenSandboxRealm.deserializeForCdp(params.element);
+          assert3(objectId !== void 0);
+          await hiddenSandboxRealm.cdpClient.sendCommand("DOM.setFileInputFiles", {
+            files: params.files,
+            objectId
+          });
+        } else {
+          await hiddenSandboxRealm.callFunction(String(function dispatchEvent() {
+            this.dispatchEvent(new Event("cancel", {
+              bubbles: true
+            }));
+          }), false, params.element);
+        }
+        return {};
+      }
+      #getActionsByTick(params, inputState) {
+        const actionsByTick = [];
+        for (const action2 of params.actions) {
+          switch (action2.type) {
+            case "pointer": {
+              action2.parameters ??= {
+                pointerType: "mouse"
+                /* Input.PointerType.Mouse */
+              };
+              action2.parameters.pointerType ??= "mouse";
+              const source2 = inputState.getOrCreate(action2.id, "pointer", action2.parameters.pointerType);
+              if (source2.subtype !== action2.parameters.pointerType) {
+                throw new InvalidArgumentException(`Expected input source ${action2.id} to be ${source2.subtype}; got ${action2.parameters.pointerType}.`);
+              }
+              source2.resetClickCount();
+              break;
+            }
+            default:
+              inputState.getOrCreate(action2.id, action2.type);
+          }
+          const actions = action2.actions.map((item) => ({
+            id: action2.id,
+            action: item
+          }));
+          for (let i = 0; i < actions.length; i++) {
+            if (actionsByTick.length === i) {
+              actionsByTick.push([]);
+            }
+            actionsByTick[i].push(actions[i]);
+          }
+        }
+        return actionsByTick;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/base64.js
+function base64ToString(base64Str) {
+  if ("atob" in globalThis) {
+    return globalThis.atob(base64Str);
+  }
+  return Buffer.from(base64Str, "base64").toString("ascii");
+}
+var init_base64 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/base64.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkUtils.js
+function computeHeadersSize(headers) {
+  const requestHeaders = headers.reduce((acc, header) => {
+    return `${acc}${header.name}: ${header.value.value}\r
+`;
+  }, "");
+  return new TextEncoder().encode(requestHeaders).length;
+}
+function stringToBase642(str) {
+  return typedArrayToBase642(new TextEncoder().encode(str));
+}
+function typedArrayToBase642(typedArray) {
+  const chunkSize = 65534;
+  const chunks = [];
+  for (let i = 0; i < typedArray.length; i += chunkSize) {
+    const chunk = typedArray.subarray(i, i + chunkSize);
+    chunks.push(String.fromCodePoint.apply(null, chunk));
+  }
+  const binaryString = chunks.join("");
+  return btoa(binaryString);
+}
+function bidiNetworkHeadersFromCdpNetworkHeaders(headers) {
+  if (!headers) {
+    return [];
+  }
+  return Object.entries(headers).map(([name, value]) => ({
+    name,
+    value: {
+      type: "string",
+      value
+    }
+  }));
+}
+function cdpFetchHeadersFromBidiNetworkHeaders(headers) {
+  if (headers === void 0) {
+    return void 0;
+  }
+  return headers.map(({ name, value }) => ({
+    name,
+    value: value.value
+  }));
+}
+function networkHeaderFromCookieHeaders(headers) {
+  if (headers === void 0) {
+    return void 0;
+  }
+  const value = headers.reduce((acc, value2, index) => {
+    if (index > 0) {
+      acc += ";";
+    }
+    const cookieValue = value2.value.type === "base64" ? btoa(value2.value.value) : value2.value.value;
+    acc += `${value2.name}=${cookieValue}`;
+    return acc;
+  }, "");
+  return {
+    name: "Cookie",
+    value: {
+      type: "string",
+      value
+    }
+  };
+}
+function cdpAuthChallengeResponseFromBidiAuthContinueWithAuthAction(action2) {
+  switch (action2) {
+    case "default":
+      return "Default";
+    case "cancel":
+      return "CancelAuth";
+    case "provideCredentials":
+      return "ProvideCredentials";
+  }
+}
+function cdpToBiDiCookie(cookie) {
+  const result = {
+    name: cookie.name,
+    value: { type: "string", value: cookie.value },
+    domain: cookie.domain,
+    path: cookie.path,
+    size: cookie.size,
+    httpOnly: cookie.httpOnly,
+    secure: cookie.secure,
+    sameSite: cookie.sameSite === void 0 ? "none" : sameSiteCdpToBiDi(cookie.sameSite),
+    ...cookie.expires >= 0 ? { expiry: Math.round(cookie.expires) } : void 0
+  };
+  result[`goog:session`] = cookie.session;
+  result[`goog:priority`] = cookie.priority;
+  result[`goog:sourceScheme`] = cookie.sourceScheme;
+  result[`goog:sourcePort`] = cookie.sourcePort;
+  if (cookie.partitionKey !== void 0) {
+    result[`goog:partitionKey`] = cookie.partitionKey;
+  }
+  if (cookie.partitionKeyOpaque !== void 0) {
+    result[`goog:partitionKeyOpaque`] = cookie.partitionKeyOpaque;
+  }
+  return result;
+}
+function deserializeByteValue(value) {
+  if (value.type === "base64") {
+    return base64ToString(value.value);
+  }
+  return value.value;
+}
+function bidiToCdpCookie(params, partitionKey) {
+  const deserializedValue = deserializeByteValue(params.cookie.value);
+  const result = {
+    name: params.cookie.name,
+    value: deserializedValue,
+    domain: params.cookie.domain,
+    path: params.cookie.path ?? "/",
+    secure: params.cookie.secure ?? false,
+    httpOnly: params.cookie.httpOnly ?? false,
+    ...partitionKey.sourceOrigin !== void 0 && {
+      partitionKey: {
+        hasCrossSiteAncestor: false,
+        // CDP's `partitionKey.topLevelSite` is the BiDi's `partition.sourceOrigin`.
+        topLevelSite: partitionKey.sourceOrigin
+      }
+    },
+    ...params.cookie.expiry !== void 0 && {
+      expires: params.cookie.expiry
+    },
+    ...params.cookie.sameSite !== void 0 && {
+      sameSite: sameSiteBiDiToCdp(params.cookie.sameSite)
+    }
+  };
+  if (params.cookie[`goog:url`] !== void 0) {
+    result.url = params.cookie[`goog:url`];
+  }
+  if (params.cookie[`goog:priority`] !== void 0) {
+    result.priority = params.cookie[`goog:priority`];
+  }
+  if (params.cookie[`goog:sourceScheme`] !== void 0) {
+    result.sourceScheme = params.cookie[`goog:sourceScheme`];
+  }
+  if (params.cookie[`goog:sourcePort`] !== void 0) {
+    result.sourcePort = params.cookie[`goog:sourcePort`];
+  }
+  return result;
+}
+function sameSiteCdpToBiDi(sameSite) {
+  switch (sameSite) {
+    case "Strict":
+      return "strict";
+    case "None":
+      return "none";
+    case "Lax":
+      return "lax";
+    default:
+      return "lax";
+  }
+}
+function sameSiteBiDiToCdp(sameSite) {
+  switch (sameSite) {
+    case "none":
+      return "None";
+    case "strict":
+      return "Strict";
+    // Defaults to `Lax`:
+    // https://web.dev/articles/samesite-cookies-explained#samesitelax_by_default
+    case "default":
+    case "lax":
+      return "Lax";
+  }
+  throw new InvalidArgumentException(`Unknown 'sameSite' value ${sameSite}`);
+}
+function isSpecialScheme(protocol) {
+  return ["ftp", "file", "http", "https", "ws", "wss"].includes(protocol.replace(/:$/, ""));
+}
+function getScheme(url2) {
+  return url2.protocol.replace(/:$/, "");
+}
+function matchUrlPattern(pattern, url2) {
+  const parsedUrl = new URL(url2);
+  if (pattern.protocol !== void 0 && pattern.protocol !== getScheme(parsedUrl)) {
+    return false;
+  }
+  if (pattern.hostname !== void 0 && pattern.hostname !== parsedUrl.hostname) {
+    return false;
+  }
+  if (pattern.port !== void 0 && pattern.port !== parsedUrl.port) {
+    return false;
+  }
+  if (pattern.pathname !== void 0 && pattern.pathname !== parsedUrl.pathname) {
+    return false;
+  }
+  if (pattern.search !== void 0 && pattern.search !== parsedUrl.search) {
+    return false;
+  }
+  return true;
+}
+function bidiBodySizeFromCdpPostDataEntries(entries) {
+  let size = 0;
+  for (const entry of entries) {
+    size += atob(entry.bytes ?? "").length;
+  }
+  return size;
+}
+function getTiming(timing, offset = 0) {
+  if (!timing) {
+    return 0;
+  }
+  if (timing <= 0 || timing + offset <= 0) {
+    return 0;
+  }
+  return timing + offset;
+}
+var init_NetworkUtils = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkUtils.js"() {
+    init_ErrorResponse();
+    init_base64();
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkProcessor.js
+function unescapeURLPattern(pattern) {
+  const forbidden = /* @__PURE__ */ new Set(["(", ")", "*", "{", "}"]);
+  let result = "";
+  let isEscaped = false;
+  for (const c of pattern) {
+    if (!isEscaped) {
+      if (forbidden.has(c)) {
+        throw new InvalidArgumentException("Forbidden characters");
+      }
+      if (c === "\\") {
+        isEscaped = true;
+        continue;
+      }
+    }
+    result += c;
+    isEscaped = false;
+  }
+  return result;
+}
+function includesChar(str, chars) {
+  for (const char of str) {
+    if (chars.has(char)) {
+      return true;
+    }
+  }
+  return false;
+}
+function parseBiDiHeaders(headers) {
+  const parsedHeaders = {};
+  for (const bidiHeader of headers) {
+    if (bidiHeader.value.type === "string") {
+      const name = bidiHeader.name;
+      const value = bidiHeader.value.value;
+      if (name.length === 0) {
+        throw new InvalidArgumentException(`Empty header name is not allowed`);
+      }
+      if (includesChar(name, FORBIDDEN_HEADER_NAME_SYMBOLS)) {
+        throw new InvalidArgumentException(`Header name '${name}' contains forbidden symbols`);
+      }
+      if (includesChar(value, FORBIDDEN_HEADER_VALUE_SYMBOLS)) {
+        throw new InvalidArgumentException(`Header value '${value}' contains forbidden symbols`);
+      }
+      if (value.trim() !== value) {
+        throw new InvalidArgumentException(`Header value should not contain trailing or ending whitespaces`);
+      }
+      parsedHeaders[bidiHeader.name] = bidiHeader.value.value;
+    } else {
+      throw new UnsupportedOperationException("Only string headers values are supported");
+    }
+  }
+  return parsedHeaders;
+}
+var NetworkProcessor, FORBIDDEN_HEADER_NAME_SYMBOLS, FORBIDDEN_HEADER_VALUE_SYMBOLS;
+var init_NetworkProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkProcessor.js"() {
+    init_protocol();
+    init_NetworkUtils();
+    NetworkProcessor = class _NetworkProcessor {
+      #browsingContextStorage;
+      #networkStorage;
+      #userContextStorage;
+      #contextConfigStorage;
+      constructor(browsingContextStorage, networkStorage, userContextStorage, contextConfigStorage) {
+        this.#userContextStorage = userContextStorage;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#networkStorage = networkStorage;
+        this.#contextConfigStorage = contextConfigStorage;
+      }
+      async addIntercept(params) {
+        this.#browsingContextStorage.verifyTopLevelContextsList(params.contexts);
+        const urlPatterns = params.urlPatterns ?? [];
+        const parsedUrlPatterns = _NetworkProcessor.parseUrlPatterns(urlPatterns);
+        const intercept = this.#networkStorage.addIntercept({
+          urlPatterns: parsedUrlPatterns,
+          phases: params.phases,
+          contexts: params.contexts
+        });
+        await this.#toggleNetwork();
+        return {
+          intercept
+        };
+      }
+      async continueRequest(params) {
+        if (params.url !== void 0) {
+          _NetworkProcessor.parseUrlString(params.url);
+        }
+        if (params.method !== void 0) {
+          if (!_NetworkProcessor.isMethodValid(params.method)) {
+            throw new InvalidArgumentException(`Method '${params.method}' is invalid.`);
+          }
+        }
+        if (params.headers) {
+          _NetworkProcessor.validateHeaders(params.headers);
+        }
+        const request3 = this.#getBlockedRequestOrFail(params.request, [
+          "beforeRequestSent"
+        ]);
+        try {
+          await request3.continueRequest(params);
+        } catch (error62) {
+          throw _NetworkProcessor.wrapInterceptionError(error62);
+        }
+        return {};
+      }
+      async continueResponse(params) {
+        if (params.headers) {
+          _NetworkProcessor.validateHeaders(params.headers);
+        }
+        const request3 = this.#getBlockedRequestOrFail(params.request, [
+          "authRequired",
+          "responseStarted"
+        ]);
+        try {
+          await request3.continueResponse(params);
+        } catch (error62) {
+          throw _NetworkProcessor.wrapInterceptionError(error62);
+        }
+        return {};
+      }
+      async continueWithAuth(params) {
+        const networkId = params.request;
+        const request3 = this.#getBlockedRequestOrFail(networkId, [
+          "authRequired"
+        ]);
+        await request3.continueWithAuth(params);
+        return {};
+      }
+      async failRequest({ request: networkId }) {
+        const request3 = this.#getRequestOrFail(networkId);
+        if (request3.interceptPhase === "authRequired") {
+          throw new InvalidArgumentException(`Request '${networkId}' in 'authRequired' phase cannot be failed`);
+        }
+        if (!request3.interceptPhase) {
+          throw new NoSuchRequestException(`No blocked request found for network id '${networkId}'`);
+        }
+        await request3.failRequest("Failed");
+        return {};
+      }
+      async provideResponse(params) {
+        if (params.headers) {
+          _NetworkProcessor.validateHeaders(params.headers);
+        }
+        const request3 = this.#getBlockedRequestOrFail(params.request, [
+          "beforeRequestSent",
+          "responseStarted",
+          "authRequired"
+        ]);
+        try {
+          await request3.provideResponse(params);
+        } catch (error62) {
+          throw _NetworkProcessor.wrapInterceptionError(error62);
+        }
+        return {};
+      }
+      /**
+       * In some states CDP Network and Fetch domains are not required, but in some they have
+       * to be updated. Whenever potential change in these kinds of states is introduced,
+       * update the states of all the CDP targets.
+       */
+      async #toggleNetwork() {
+        await Promise.all(this.#browsingContextStorage.getAllContexts().map((context2) => {
+          return context2.cdpTarget.toggleNetwork();
+        }));
+      }
+      async removeIntercept(params) {
+        this.#networkStorage.removeIntercept(params.intercept);
+        await this.#toggleNetwork();
+        return {};
+      }
+      async setCacheBehavior(params) {
+        const contexts = this.#browsingContextStorage.verifyTopLevelContextsList(params.contexts);
+        if (contexts.size === 0) {
+          this.#networkStorage.defaultCacheBehavior = params.cacheBehavior;
+          await Promise.all(this.#browsingContextStorage.getAllContexts().map((context2) => {
+            return context2.cdpTarget.toggleSetCacheDisabled();
+          }));
+          return {};
+        }
+        const cacheDisabled = params.cacheBehavior === "bypass";
+        await Promise.all([...contexts.values()].map((context2) => {
+          return context2.cdpTarget.toggleSetCacheDisabled(cacheDisabled);
+        }));
+        return {};
+      }
+      #getRequestOrFail(id) {
+        const request3 = this.#networkStorage.getRequestById(id);
+        if (!request3) {
+          throw new NoSuchRequestException(`Network request with ID '${id}' doesn't exist`);
+        }
+        return request3;
+      }
+      #getBlockedRequestOrFail(id, phases) {
+        const request3 = this.#getRequestOrFail(id);
+        if (!request3.interceptPhase) {
+          throw new NoSuchRequestException(`No blocked request found for network id '${id}'`);
+        }
+        if (request3.interceptPhase && !phases.includes(request3.interceptPhase)) {
+          throw new InvalidArgumentException(`Blocked request for network id '${id}' is in '${request3.interceptPhase}' phase`);
+        }
+        return request3;
+      }
+      /**
+       * Validate https://fetch.spec.whatwg.org/#header-value
+       */
+      static validateHeaders(headers) {
+        for (const header of headers) {
+          let headerValue;
+          if (header.value.type === "string") {
+            headerValue = header.value.value;
+          } else {
+            headerValue = atob(header.value.value);
+          }
+          if (headerValue !== headerValue.trim() || headerValue.includes("\n") || headerValue.includes("\0")) {
+            throw new InvalidArgumentException(`Header value '${headerValue}' is not acceptable value`);
+          }
+        }
+      }
+      static isMethodValid(method) {
+        return /^[!#$%&'*+\-.^_`|~a-zA-Z\d]+$/.test(method);
+      }
+      /**
+       * Attempts to parse the given url.
+       * Throws an InvalidArgumentException if the url is invalid.
+       */
+      static parseUrlString(url2) {
+        try {
+          return new URL(url2);
+        } catch (error62) {
+          throw new InvalidArgumentException(`Invalid URL '${url2}': ${error62}`);
+        }
+      }
+      static parseUrlPatterns(urlPatterns) {
+        return urlPatterns.map((urlPattern) => {
+          let patternUrl = "";
+          let hasProtocol = true;
+          let hasHostname = true;
+          let hasPort = true;
+          let hasPathname = true;
+          let hasSearch = true;
+          switch (urlPattern.type) {
+            case "string": {
+              patternUrl = unescapeURLPattern(urlPattern.pattern);
+              break;
+            }
+            case "pattern": {
+              if (urlPattern.protocol === void 0) {
+                hasProtocol = false;
+                patternUrl += "http";
+              } else {
+                if (urlPattern.protocol === "") {
+                  throw new InvalidArgumentException("URL pattern must specify a protocol");
+                }
+                urlPattern.protocol = unescapeURLPattern(urlPattern.protocol);
+                if (!urlPattern.protocol.match(/^[a-zA-Z+-.]+$/)) {
+                  throw new InvalidArgumentException("Forbidden characters");
+                }
+                patternUrl += urlPattern.protocol;
+              }
+              const scheme = patternUrl.toLocaleLowerCase();
+              patternUrl += ":";
+              if (isSpecialScheme(scheme)) {
+                patternUrl += "//";
+              }
+              if (urlPattern.hostname === void 0) {
+                if (scheme !== "file") {
+                  patternUrl += "placeholder";
+                }
+                hasHostname = false;
+              } else {
+                if (urlPattern.hostname === "") {
+                  throw new InvalidArgumentException("URL pattern must specify a hostname");
+                }
+                if (urlPattern.protocol === "file") {
+                  throw new InvalidArgumentException(`URL pattern protocol cannot be 'file'`);
+                }
+                urlPattern.hostname = unescapeURLPattern(urlPattern.hostname);
+                let insideBrackets = false;
+                for (const c of urlPattern.hostname) {
+                  if (c === "/" || c === "?" || c === "#") {
+                    throw new InvalidArgumentException(`'/', '?', '#' are forbidden in hostname`);
+                  }
+                  if (!insideBrackets && c === ":") {
+                    throw new InvalidArgumentException(`':' is only allowed inside brackets in hostname`);
+                  }
+                  if (c === "[") {
+                    insideBrackets = true;
+                  }
+                  if (c === "]") {
+                    insideBrackets = false;
+                  }
+                }
+                patternUrl += urlPattern.hostname;
+              }
+              if (urlPattern.port === void 0) {
+                hasPort = false;
+              } else {
+                if (urlPattern.port === "") {
+                  throw new InvalidArgumentException(`URL pattern must specify a port`);
+                }
+                urlPattern.port = unescapeURLPattern(urlPattern.port);
+                patternUrl += ":";
+                if (!urlPattern.port.match(/^\d+$/)) {
+                  throw new InvalidArgumentException("Forbidden characters");
+                }
+                patternUrl += urlPattern.port;
+              }
+              if (urlPattern.pathname === void 0) {
+                hasPathname = false;
+              } else {
+                urlPattern.pathname = unescapeURLPattern(urlPattern.pathname);
+                if (urlPattern.pathname[0] !== "/") {
+                  patternUrl += "/";
+                }
+                if (urlPattern.pathname.includes("#") || urlPattern.pathname.includes("?")) {
+                  throw new InvalidArgumentException("Forbidden characters");
+                }
+                patternUrl += urlPattern.pathname;
+              }
+              if (urlPattern.search === void 0) {
+                hasSearch = false;
+              } else {
+                urlPattern.search = unescapeURLPattern(urlPattern.search);
+                if (urlPattern.search[0] !== "?") {
+                  patternUrl += "?";
+                }
+                if (urlPattern.search.includes("#")) {
+                  throw new InvalidArgumentException("Forbidden characters");
+                }
+                patternUrl += urlPattern.search;
+              }
+              break;
+            }
+          }
+          const serializePort = (url2) => {
+            const defaultPorts = {
+              "ftp:": 21,
+              "file:": null,
+              "http:": 80,
+              "https:": 443,
+              "ws:": 80,
+              "wss:": 443
+            };
+            if (isSpecialScheme(url2.protocol) && defaultPorts[url2.protocol] !== null && (!url2.port || String(defaultPorts[url2.protocol]) === url2.port)) {
+              return "";
+            } else if (url2.port) {
+              return url2.port;
+            }
+            return void 0;
+          };
+          try {
+            const url2 = new URL(patternUrl);
+            return {
+              protocol: hasProtocol ? url2.protocol.replace(/:$/, "") : void 0,
+              hostname: hasHostname ? url2.hostname : void 0,
+              port: hasPort ? serializePort(url2) : void 0,
+              pathname: hasPathname && url2.pathname ? url2.pathname : void 0,
+              search: hasSearch ? url2.search : void 0
+            };
+          } catch (err) {
+            throw new InvalidArgumentException(`${err.message} '${patternUrl}'`);
+          }
+        });
+      }
+      static wrapInterceptionError(error62) {
+        if (error62?.message.includes("Invalid header") || error62?.message.includes("Unsafe header")) {
+          return new InvalidArgumentException(error62.message);
+        }
+        return error62;
+      }
+      async addDataCollector(params) {
+        if (params.userContexts !== void 0 && params.contexts !== void 0) {
+          throw new InvalidArgumentException("'contexts' and 'userContexts' are mutually exclusive");
+        }
+        if (params.userContexts !== void 0) {
+          await this.#userContextStorage.verifyUserContextIdList(params.userContexts);
+        }
+        if (params.contexts !== void 0) {
+          for (const browsingContextId of params.contexts) {
+            const browsingContext = this.#browsingContextStorage.getContext(browsingContextId);
+            if (!browsingContext.isTopLevelContext()) {
+              throw new InvalidArgumentException(`Data collectors are available only on top-level browsing contexts`);
+            }
+          }
+        }
+        const collectorId = this.#networkStorage.addDataCollector(params);
+        await this.#toggleNetwork();
+        return { collector: collectorId };
+      }
+      async getData(params) {
+        return await this.#networkStorage.getCollectedData(params);
+      }
+      async removeDataCollector(params) {
+        this.#networkStorage.removeDataCollector(params);
+        await this.#toggleNetwork();
+        return {};
+      }
+      disownData(params) {
+        this.#networkStorage.disownData(params);
+        return {};
+      }
+      async #getRelatedTopLevelBrowsingContexts(browsingContextIds, userContextIds) {
+        if (browsingContextIds === void 0 && userContextIds === void 0) {
+          return this.#browsingContextStorage.getTopLevelContexts();
+        }
+        if (browsingContextIds !== void 0 && userContextIds !== void 0) {
+          throw new InvalidArgumentException("User contexts and browsing contexts are mutually exclusive");
+        }
+        const result = [];
+        if (userContextIds !== void 0) {
+          if (userContextIds.length === 0) {
+            throw new InvalidArgumentException("user context should be provided");
+          }
+          await this.#userContextStorage.verifyUserContextIdList(userContextIds);
+          for (const userContextId of userContextIds) {
+            const topLevelBrowsingContexts = this.#browsingContextStorage.getTopLevelContexts().filter((browsingContext) => browsingContext.userContext === userContextId);
+            result.push(...topLevelBrowsingContexts);
+          }
+        }
+        if (browsingContextIds !== void 0) {
+          if (browsingContextIds.length === 0) {
+            throw new InvalidArgumentException("browsing context should be provided");
+          }
+          for (const browsingContextId of browsingContextIds) {
+            const browsingContext = this.#browsingContextStorage.getContext(browsingContextId);
+            if (!browsingContext.isTopLevelContext()) {
+              throw new InvalidArgumentException("The command is only supported on the top-level context");
+            }
+            result.push(browsingContext);
+          }
+        }
+        return [...new Set(result).values()];
+      }
+      async setExtraHeaders(params) {
+        const affectedBrowsingContexts = await this.#getRelatedTopLevelBrowsingContexts(params.contexts, params.userContexts);
+        const cdpExtraHeaders = parseBiDiHeaders(params.headers);
+        if (params.userContexts === void 0 && params.contexts === void 0) {
+          this.#contextConfigStorage.updateGlobalConfig({
+            extraHeaders: cdpExtraHeaders
+          });
+        }
+        if (params.userContexts !== void 0) {
+          params.userContexts.forEach((userContext) => {
+            this.#contextConfigStorage.updateUserContextConfig(userContext, {
+              extraHeaders: cdpExtraHeaders
+            });
+          });
+        }
+        if (params.contexts !== void 0) {
+          params.contexts.forEach((browsingContextId) => {
+            this.#contextConfigStorage.updateBrowsingContextConfig(browsingContextId, { extraHeaders: cdpExtraHeaders });
+          });
+        }
+        await Promise.all(affectedBrowsingContexts.map(async (context2) => {
+          const extraHeaders = this.#contextConfigStorage.getActiveConfig(context2.id, context2.userContext).extraHeaders ?? {};
+          await context2.setExtraHeaders(extraHeaders);
+        }));
+        return {};
+      }
+    };
+    FORBIDDEN_HEADER_NAME_SYMBOLS = /* @__PURE__ */ new Set([
+      " ",
+      "	",
+      "\n",
+      '"',
+      "(",
+      ")",
+      ",",
+      "/",
+      ":",
+      ";",
+      "<",
+      "=",
+      ">",
+      "?",
+      "@",
+      "[",
+      "\\",
+      "]",
+      "{",
+      "}"
+    ]);
+    FORBIDDEN_HEADER_VALUE_SYMBOLS = /* @__PURE__ */ new Set(["\0", "\n", "\r"]);
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/permissions/PermissionsProcessor.js
+var PermissionsProcessor;
+var init_PermissionsProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/permissions/PermissionsProcessor.js"() {
+    init_protocol();
+    PermissionsProcessor = class {
+      #browserCdpClient;
+      constructor(browserCdpClient) {
+        this.#browserCdpClient = browserCdpClient;
+      }
+      async setPermissions(params) {
+        try {
+          const userContextId = params["goog:userContext"] || params.userContext;
+          await this.#browserCdpClient.sendCommand("Browser.setPermission", {
+            origin: params.origin,
+            embeddedOrigin: params.embeddedOrigin,
+            browserContextId: userContextId && userContextId !== "default" ? userContextId : void 0,
+            permission: {
+              name: params.descriptor.name
+            },
+            setting: params.state
+          });
+        } catch (err) {
+          if (err.message === `Permission can't be granted to opaque origins.`) {
+            return {};
+          }
+          throw new InvalidArgumentException(err.message);
+        }
+        return {};
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/uuid.js
+function bytesToHex(bytes) {
+  return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
+}
+function uuidv42() {
+  if ("crypto" in globalThis && "randomUUID" in globalThis.crypto) {
+    return globalThis.crypto.randomUUID();
+  }
+  const randomValues = new Uint8Array(16);
+  if ("crypto" in globalThis && "getRandomValues" in globalThis.crypto) {
+    globalThis.crypto.getRandomValues(randomValues);
+  }
+  randomValues[6] = randomValues[6] & 15 | 64;
+  randomValues[8] = randomValues[8] & 63 | 128;
+  return [
+    bytesToHex(randomValues.subarray(0, 4)),
+    bytesToHex(randomValues.subarray(4, 6)),
+    bytesToHex(randomValues.subarray(6, 8)),
+    bytesToHex(randomValues.subarray(8, 10)),
+    bytesToHex(randomValues.subarray(10, 16))
+  ].join("-");
+}
+var init_uuid = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/uuid.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/ChannelProxy.js
+var ChannelProxy;
+var init_ChannelProxy = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/ChannelProxy.js"() {
+    init_protocol();
+    init_log();
+    init_uuid();
+    ChannelProxy = class _ChannelProxy {
+      #properties;
+      #id = uuidv42();
+      #logger;
+      constructor(channel, logger) {
+        this.#properties = channel;
+        this.#logger = logger;
+      }
+      /**
+       * Creates a channel proxy in the given realm, initialises listener and
+       * returns a handle to `sendMessage` delegate.
+       */
+      async init(realm, eventManager) {
+        const channelHandle = await _ChannelProxy.#createAndGetHandleInRealm(realm);
+        const sendMessageHandle = await _ChannelProxy.#createSendMessageHandle(realm, channelHandle);
+        void this.#startListener(realm, channelHandle, eventManager);
+        return sendMessageHandle;
+      }
+      /** Gets a ChannelProxy from window and returns its handle. */
+      async startListenerFromWindow(realm, eventManager) {
+        try {
+          const channelHandle = await this.#getHandleFromWindow(realm);
+          void this.#startListener(realm, channelHandle, eventManager);
+        } catch (error62) {
+          this.#logger?.(LogType.debugError)?.(error62);
+        }
+      }
+      /**
+       * Evaluation string which creates a ChannelProxy object on the client side.
+       */
+      static #createChannelProxyEvalStr() {
+        const functionStr = String(() => {
+          const queue = [];
+          let queueNonEmptyResolver = null;
+          return {
+            /**
+             * Gets a promise, which is resolved as soon as a message occurs
+             * in the queue.
+             */
+            async getMessage() {
+              const onMessage = queue.length > 0 ? Promise.resolve() : new Promise((resolve10) => {
+                queueNonEmptyResolver = resolve10;
+              });
+              await onMessage;
+              return queue.shift();
+            },
+            /**
+             * Adds a message to the queue.
+             * Resolves the pending promise if needed.
+             */
+            sendMessage(message) {
+              queue.push(message);
+              if (queueNonEmptyResolver !== null) {
+                queueNonEmptyResolver();
+                queueNonEmptyResolver = null;
+              }
+            }
+          };
+        });
+        return `(${functionStr})()`;
+      }
+      /** Creates a ChannelProxy in the given realm. */
+      static async #createAndGetHandleInRealm(realm) {
+        const createChannelHandleResult = await realm.cdpClient.sendCommand("Runtime.evaluate", {
+          expression: this.#createChannelProxyEvalStr(),
+          contextId: realm.executionContextId,
+          serializationOptions: {
+            serialization: "idOnly"
+          }
+        });
+        if (createChannelHandleResult.exceptionDetails || createChannelHandleResult.result.objectId === void 0) {
+          throw new Error(`Cannot create channel`);
+        }
+        return createChannelHandleResult.result.objectId;
+      }
+      /** Gets a handle to `sendMessage` delegate from the ChannelProxy handle. */
+      static async #createSendMessageHandle(realm, channelHandle) {
+        const sendMessageArgResult = await realm.cdpClient.sendCommand("Runtime.callFunctionOn", {
+          functionDeclaration: String((channelHandle2) => {
+            return channelHandle2.sendMessage;
+          }),
+          arguments: [{ objectId: channelHandle }],
+          executionContextId: realm.executionContextId,
+          serializationOptions: {
+            serialization: "idOnly"
+          }
+        });
+        return sendMessageArgResult.result.objectId;
+      }
+      /** Starts listening for the channel events of the provided ChannelProxy. */
+      async #startListener(realm, channelHandle, eventManager) {
+        for (; ; ) {
+          try {
+            const message = await realm.cdpClient.sendCommand("Runtime.callFunctionOn", {
+              functionDeclaration: String(async (channelHandle2) => await channelHandle2.getMessage()),
+              arguments: [
+                {
+                  objectId: channelHandle
+                }
+              ],
+              awaitPromise: true,
+              executionContextId: realm.executionContextId,
+              serializationOptions: {
+                serialization: "deep",
+                maxDepth: this.#properties.serializationOptions?.maxObjectDepth ?? void 0
+              }
+            });
+            if (message.exceptionDetails) {
+              throw new Error("Runtime.callFunctionOn in ChannelProxy", {
+                cause: message.exceptionDetails
+              });
+            }
+            for (const browsingContext of realm.associatedBrowsingContexts) {
+              eventManager.registerEvent({
+                type: "event",
+                method: chromium_bidi_exports.Script.EventNames.Message,
+                params: {
+                  channel: this.#properties.channel,
+                  data: realm.cdpToBidiValue(
+                    message,
+                    this.#properties.ownership ?? "none"
+                    /* Script.ResultOwnership.None */
+                  ),
+                  source: realm.source
+                }
+              }, browsingContext.id);
+            }
+          } catch (error62) {
+            this.#logger?.(LogType.debugError)?.(error62);
+            break;
+          }
+        }
+      }
+      /**
+       * Returns a handle of ChannelProxy from window's property which was set there
+       * by `getEvalInWindowStr`. If window property is not set yet, sets a promise
+       * resolver to the window property, so that `getEvalInWindowStr` can resolve
+       * the promise later on with the channel.
+       * This is needed because `getEvalInWindowStr` can be called before or
+       * after this method.
+       */
+      async #getHandleFromWindow(realm) {
+        const channelHandleResult = await realm.cdpClient.sendCommand("Runtime.callFunctionOn", {
+          functionDeclaration: String((id) => {
+            const w2 = window;
+            if (w2[id] === void 0) {
+              return new Promise((resolve10) => w2[id] = resolve10);
+            }
+            const channelProxy = w2[id];
+            delete w2[id];
+            return channelProxy;
+          }),
+          arguments: [{ value: this.#id }],
+          executionContextId: realm.executionContextId,
+          awaitPromise: true,
+          serializationOptions: {
+            serialization: "idOnly"
+          }
+        });
+        if (channelHandleResult.exceptionDetails !== void 0 || channelHandleResult.result.objectId === void 0) {
+          throw new Error(`ChannelHandle not found in window["${this.#id}"]`);
+        }
+        return channelHandleResult.result.objectId;
+      }
+      /**
+       * String to be evaluated to create a ProxyChannel and put it to window.
+       * Returns the delegate `sendMessage`. Used to provide an argument for preload
+       * script. Does the following:
+       * 1. Creates a ChannelProxy.
+       * 2. Puts the ChannelProxy to window['${this.#id}'] or resolves the promise
+       *    by calling delegate stored in window['${this.#id}'].
+       *    This is needed because `#getHandleFromWindow` can be called before or
+       *    after this method.
+       * 3. Returns the delegate `sendMessage` of the created ChannelProxy.
+       */
+      getEvalInWindowStr() {
+        const delegate = String((id, channelProxy) => {
+          const w2 = window;
+          if (w2[id] === void 0) {
+            w2[id] = channelProxy;
+          } else {
+            w2[id](channelProxy);
+            delete w2[id];
+          }
+          return channelProxy.sendMessage;
+        });
+        const channelProxyEval = _ChannelProxy.#createChannelProxyEvalStr();
+        return `(${delegate})('${this.#id}',${channelProxyEval})`;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/PreloadScript.js
+var PreloadScript;
+var init_PreloadScript = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/PreloadScript.js"() {
+    init_uuid();
+    init_ChannelProxy();
+    PreloadScript = class {
+      /** BiDi ID, an automatically generated UUID. */
+      #id = uuidv42();
+      /** CDP preload scripts. */
+      #cdpPreloadScripts = [];
+      /** The script itself, in a format expected by the spec i.e. a function. */
+      #functionDeclaration;
+      /** Targets, in which the preload script is initialized. */
+      #targetIds = /* @__PURE__ */ new Set();
+      /** Channels to be added as arguments to functionDeclaration. */
+      #channels;
+      /** The script sandbox / world name. */
+      #sandbox;
+      /** The browsing contexts to execute the preload scripts in, if any. */
+      #contexts;
+      /** The browsing contexts to execute the preload scripts in, if any. */
+      #userContexts;
+      get id() {
+        return this.#id;
+      }
+      get targetIds() {
+        return this.#targetIds;
+      }
+      constructor(params, logger) {
+        this.#channels = params.arguments?.map((a2) => new ChannelProxy(a2.value, logger)) ?? [];
+        this.#functionDeclaration = params.functionDeclaration;
+        this.#sandbox = params.sandbox;
+        this.#contexts = params.contexts;
+        this.#userContexts = params.userContexts;
+      }
+      /** Channels of the preload script. */
+      get channels() {
+        return this.#channels;
+      }
+      /** Contexts of the preload script, if any */
+      get contexts() {
+        return this.#contexts;
+      }
+      /** UserContexts of the preload script, if any */
+      get userContexts() {
+        return this.#userContexts;
+      }
+      /**
+       * String to be evaluated. Wraps user-provided function so that the following
+       * steps are run:
+       * 1. Create channels.
+       * 2. Store the created channels in window.
+       * 3. Call the user-provided function with channels as arguments.
+       */
+      #getEvaluateString() {
+        const channelsArgStr = `[${this.channels.map((c) => c.getEvalInWindowStr()).join(", ")}]`;
+        return `(()=>{(${this.#functionDeclaration})(...${channelsArgStr})})()`;
+      }
+      /**
+       * Adds the script to the given CDP targets by calling the
+       * `Page.addScriptToEvaluateOnNewDocument` command.
+       */
+      async initInTargets(cdpTargets, runImmediately) {
+        await Promise.all(Array.from(cdpTargets).map((cdpTarget) => this.initInTarget(cdpTarget, runImmediately)));
+      }
+      /**
+       * Adds the script to the given CDP target by calling the
+       * `Page.addScriptToEvaluateOnNewDocument` command.
+       */
+      async initInTarget(cdpTarget, runImmediately) {
+        const addCdpPreloadScriptResult = await cdpTarget.cdpClient.sendCommand("Page.addScriptToEvaluateOnNewDocument", {
+          source: this.#getEvaluateString(),
+          worldName: this.#sandbox,
+          runImmediately
+        });
+        this.#cdpPreloadScripts.push({
+          target: cdpTarget,
+          preloadScriptId: addCdpPreloadScriptResult.identifier
+        });
+        this.#targetIds.add(cdpTarget.id);
+      }
+      /**
+       * Removes this script from all CDP targets.
+       */
+      async remove() {
+        await Promise.all([
+          this.#cdpPreloadScripts.map(async (cdpPreloadScript) => {
+            const cdpTarget = cdpPreloadScript.target;
+            const cdpPreloadScriptId = cdpPreloadScript.preloadScriptId;
+            return await cdpTarget.cdpClient.sendCommand("Page.removeScriptToEvaluateOnNewDocument", {
+              identifier: cdpPreloadScriptId
+            });
+          })
+        ]);
+      }
+      /** Removes the provided cdp target from the list of cdp preload scripts. */
+      dispose(cdpTargetId) {
+        this.#cdpPreloadScripts = this.#cdpPreloadScripts.filter((cdpPreloadScript) => cdpPreloadScript.target?.id !== cdpTargetId);
+        this.#targetIds.delete(cdpTargetId);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/ScriptProcessor.js
+var ScriptProcessor;
+var init_ScriptProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/ScriptProcessor.js"() {
+    init_protocol();
+    init_PreloadScript();
+    ScriptProcessor = class {
+      #eventManager;
+      #browsingContextStorage;
+      #realmStorage;
+      #preloadScriptStorage;
+      #userContextStorage;
+      #logger;
+      constructor(eventManager, browsingContextStorage, realmStorage, preloadScriptStorage, userContextStorage, logger) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#realmStorage = realmStorage;
+        this.#preloadScriptStorage = preloadScriptStorage;
+        this.#userContextStorage = userContextStorage;
+        this.#logger = logger;
+        this.#eventManager = eventManager;
+        this.#eventManager.addSubscribeHook(chromium_bidi_exports.Script.EventNames.RealmCreated, this.#onRealmCreatedSubscribeHook.bind(this));
+      }
+      #onRealmCreatedSubscribeHook(contextId) {
+        const context2 = this.#browsingContextStorage.getContext(contextId);
+        const contextsToReport = [
+          context2,
+          ...this.#browsingContextStorage.getContext(contextId).allChildren
+        ];
+        const realms = /* @__PURE__ */ new Set();
+        for (const reportContext of contextsToReport) {
+          const realmsForContext = this.#realmStorage.findRealms({
+            browsingContextId: reportContext.id
+          });
+          for (const realm of realmsForContext) {
+            realms.add(realm);
+          }
+        }
+        for (const realm of realms) {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.Script.EventNames.RealmCreated,
+            params: realm.realmInfo
+          }, context2.id);
+        }
+        return Promise.resolve();
+      }
+      async addPreloadScript(params) {
+        if (params.userContexts?.length && params.contexts?.length) {
+          throw new InvalidArgumentException("Both userContexts and contexts cannot be specified.");
+        }
+        const userContexts = await this.#userContextStorage.verifyUserContextIdList(params.userContexts ?? []);
+        const browsingContexts = this.#browsingContextStorage.verifyTopLevelContextsList(params.contexts);
+        const preloadScript = new PreloadScript(params, this.#logger);
+        this.#preloadScriptStorage.add(preloadScript);
+        let contextsToRunIn = [];
+        if (userContexts.size) {
+          contextsToRunIn = this.#browsingContextStorage.getTopLevelContexts().filter((context2) => {
+            return userContexts.has(context2.userContext);
+          });
+        } else if (browsingContexts.size) {
+          contextsToRunIn = [...browsingContexts.values()];
+        } else {
+          contextsToRunIn = this.#browsingContextStorage.getTopLevelContexts();
+        }
+        const cdpTargets = new Set(contextsToRunIn.map((context2) => context2.cdpTarget));
+        await preloadScript.initInTargets(cdpTargets, false);
+        return {
+          script: preloadScript.id
+        };
+      }
+      async removePreloadScript(params) {
+        const { script: id } = params;
+        const script = this.#preloadScriptStorage.getPreloadScript(id);
+        await script.remove();
+        this.#preloadScriptStorage.remove(id);
+        return {};
+      }
+      async callFunction(params) {
+        const realm = await this.#getRealm(params.target);
+        return await realm.callFunction(params.functionDeclaration, params.awaitPromise, params.this, params.arguments, params.resultOwnership, params.serializationOptions, params.userActivation);
+      }
+      async evaluate(params) {
+        const realm = await this.#getRealm(params.target);
+        return await realm.evaluate(params.expression, params.awaitPromise, params.resultOwnership, params.serializationOptions, params.userActivation);
+      }
+      async disown(params) {
+        const realm = await this.#getRealm(params.target);
+        await Promise.all(params.handles.map(async (handle) => await realm.disown(handle)));
+        return {};
+      }
+      getRealms(params) {
+        if (params.context !== void 0) {
+          this.#browsingContextStorage.getContext(params.context);
+        }
+        const realms = this.#realmStorage.findRealms({
+          browsingContextId: params.context,
+          type: params.type,
+          isHidden: false
+        }).map((realm) => realm.realmInfo);
+        return { realms };
+      }
+      async #getRealm(target2) {
+        if ("context" in target2) {
+          const context2 = this.#browsingContextStorage.getContext(target2.context);
+          return await context2.getOrCreateUserSandbox(target2.sandbox);
+        }
+        return this.#realmStorage.getRealm({
+          realmId: target2.realm,
+          isHidden: false
+        });
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/SessionProcessor.js
+var SessionProcessor;
+var init_SessionProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/SessionProcessor.js"() {
+    init_protocol();
+    SessionProcessor = class {
+      #eventManager;
+      #browserCdpClient;
+      #initConnection;
+      #created = false;
+      constructor(eventManager, browserCdpClient, initConnection) {
+        this.#eventManager = eventManager;
+        this.#browserCdpClient = browserCdpClient;
+        this.#initConnection = initConnection;
+      }
+      status() {
+        return { ready: false, message: "already connected" };
+      }
+      #mergeCapabilities(capabilitiesRequest) {
+        const mergedCapabilities = [];
+        for (const first2 of capabilitiesRequest.firstMatch ?? [{}]) {
+          const result = {
+            ...capabilitiesRequest.alwaysMatch
+          };
+          for (const key of Object.keys(first2)) {
+            if (result[key] !== void 0) {
+              throw new InvalidArgumentException(`Capability ${key} in firstMatch is already defined in alwaysMatch`);
+            }
+            result[key] = first2[key];
+          }
+          mergedCapabilities.push(result);
+        }
+        const match = mergedCapabilities.find((c) => c.browserName === "chrome") ?? mergedCapabilities[0] ?? {};
+        match.unhandledPromptBehavior = this.#getUnhandledPromptBehavior(match.unhandledPromptBehavior);
+        return match;
+      }
+      #getUnhandledPromptBehavior(capabilityValue) {
+        if (capabilityValue === void 0) {
+          return void 0;
+        }
+        if (typeof capabilityValue === "object") {
+          return capabilityValue;
+        }
+        if (typeof capabilityValue !== "string") {
+          throw new InvalidArgumentException(`Unexpected 'unhandledPromptBehavior' type: ${typeof capabilityValue}`);
+        }
+        switch (capabilityValue) {
+          // `beforeUnload: accept` has higher priority over string capability, as the latest
+          // one is set to "fallbackDefault".
+          // https://w3c.github.io/webdriver/#dfn-deserialize-as-an-unhandled-prompt-behavior
+          // https://w3c.github.io/webdriver/#dfn-get-the-prompt-handler
+          case "accept":
+          case "accept and notify":
+            return {
+              default: "accept",
+              beforeUnload: "accept"
+            };
+          case "dismiss":
+          case "dismiss and notify":
+            return {
+              default: "dismiss",
+              beforeUnload: "accept"
+            };
+          case "ignore":
+            return {
+              default: "ignore",
+              beforeUnload: "accept"
+            };
+          default:
+            throw new InvalidArgumentException(`Unexpected 'unhandledPromptBehavior' value: ${capabilityValue}`);
+        }
+      }
+      async new(params) {
+        if (this.#created) {
+          throw new Error("Session has been already created.");
+        }
+        this.#created = true;
+        const matchedCapabitlites = this.#mergeCapabilities(params.capabilities);
+        await this.#initConnection(matchedCapabitlites);
+        const version2 = await this.#browserCdpClient.sendCommand("Browser.getVersion");
+        return {
+          sessionId: "unknown",
+          capabilities: {
+            ...matchedCapabitlites,
+            acceptInsecureCerts: matchedCapabitlites.acceptInsecureCerts ?? false,
+            browserName: version2.product,
+            browserVersion: version2.revision,
+            platformName: "",
+            setWindowRect: false,
+            webSocketUrl: "",
+            userAgent: version2.userAgent
+          }
+        };
+      }
+      async subscribe(params, googChannel = null) {
+        const subscription = await this.#eventManager.subscribe(params.events, params.contexts ?? [], params.userContexts ?? [], googChannel);
+        return {
+          subscription
+        };
+      }
+      async unsubscribe(params, googChannel = null) {
+        if ("subscriptions" in params) {
+          await this.#eventManager.unsubscribeByIds(params.subscriptions);
+          return {};
+        }
+        await this.#eventManager.unsubscribe(params.events, googChannel);
+        return {};
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/storage/StorageProcessor.js
+var StorageProcessor;
+var init_StorageProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/storage/StorageProcessor.js"() {
+    init_protocol();
+    init_assert2();
+    init_log();
+    init_NetworkProcessor();
+    init_NetworkUtils();
+    StorageProcessor = class {
+      #browserCdpClient;
+      #browsingContextStorage;
+      #logger;
+      constructor(browserCdpClient, browsingContextStorage, logger) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#browserCdpClient = browserCdpClient;
+        this.#logger = logger;
+      }
+      async deleteCookies(params) {
+        const partitionKey = this.#expandStoragePartitionSpec(params.partition);
+        let cdpResponse;
+        try {
+          cdpResponse = await this.#browserCdpClient.sendCommand("Storage.getCookies", {
+            browserContextId: this.#getCdpBrowserContextId(partitionKey)
+          });
+        } catch (err) {
+          if (this.#isNoSuchUserContextError(err)) {
+            throw new NoSuchUserContextException(err.message);
+          }
+          throw err;
+        }
+        const cdpCookiesToDelete = cdpResponse.cookies.filter(
+          // CDP's partition key is the source origin. If the request specifies the
+          // `sourceOrigin` partition key, only cookies with the requested source origin
+          // are returned.
+          (c) => partitionKey.sourceOrigin === void 0 || c.partitionKey?.topLevelSite === partitionKey.sourceOrigin
+        ).filter((cdpCookie) => {
+          const bidiCookie = cdpToBiDiCookie(cdpCookie);
+          return this.#matchCookie(bidiCookie, params.filter);
+        }).map((cookie) => ({
+          ...cookie,
+          // Set expiry to pass date to delete the cookie.
+          expires: 1
+        }));
+        await this.#browserCdpClient.sendCommand("Storage.setCookies", {
+          cookies: cdpCookiesToDelete,
+          browserContextId: this.#getCdpBrowserContextId(partitionKey)
+        });
+        return {
+          partitionKey
+        };
+      }
+      async getCookies(params) {
+        const partitionKey = this.#expandStoragePartitionSpec(params.partition);
+        let cdpResponse;
+        try {
+          cdpResponse = await this.#browserCdpClient.sendCommand("Storage.getCookies", {
+            browserContextId: this.#getCdpBrowserContextId(partitionKey)
+          });
+        } catch (err) {
+          if (this.#isNoSuchUserContextError(err)) {
+            throw new NoSuchUserContextException(err.message);
+          }
+          throw err;
+        }
+        const filteredBiDiCookies = cdpResponse.cookies.filter(
+          // CDP's partition key is the source origin. If the request specifies the
+          // `sourceOrigin` partition key, only cookies with the requested source origin
+          // are returned.
+          (c) => partitionKey.sourceOrigin === void 0 || c.partitionKey?.topLevelSite === partitionKey.sourceOrigin
+        ).map((c) => cdpToBiDiCookie(c)).filter((c) => this.#matchCookie(c, params.filter));
+        return {
+          cookies: filteredBiDiCookies,
+          partitionKey
+        };
+      }
+      async setCookie(params) {
+        const partitionKey = this.#expandStoragePartitionSpec(params.partition);
+        const cdpCookie = bidiToCdpCookie(params, partitionKey);
+        try {
+          await this.#browserCdpClient.sendCommand("Storage.setCookies", {
+            cookies: [cdpCookie],
+            browserContextId: this.#getCdpBrowserContextId(partitionKey)
+          });
+        } catch (err) {
+          if (this.#isNoSuchUserContextError(err)) {
+            throw new NoSuchUserContextException(err.message);
+          }
+          this.#logger?.(LogType.debugError)?.(err);
+          throw new UnableToSetCookieException(err.toString());
+        }
+        return {
+          partitionKey
+        };
+      }
+      #isNoSuchUserContextError(err) {
+        return err.message?.startsWith("Failed to find browser context for id");
+      }
+      #getCdpBrowserContextId(partitionKey) {
+        return partitionKey.userContext === "default" ? void 0 : partitionKey.userContext;
+      }
+      #expandStoragePartitionSpecByBrowsingContext(descriptor) {
+        const browsingContextId = descriptor.context;
+        const browsingContext = this.#browsingContextStorage.getContext(browsingContextId);
+        return {
+          userContext: browsingContext.userContext
+        };
+      }
+      #expandStoragePartitionSpecByStorageKey(descriptor) {
+        const unsupportedPartitionKeys = /* @__PURE__ */ new Map();
+        let sourceOrigin = descriptor.sourceOrigin;
+        if (sourceOrigin !== void 0) {
+          const url2 = NetworkProcessor.parseUrlString(sourceOrigin);
+          if (url2.origin === "null") {
+            sourceOrigin = url2.origin;
+          } else {
+            sourceOrigin = `${url2.protocol}//${url2.hostname}`;
+          }
+        }
+        for (const [key, value] of Object.entries(descriptor)) {
+          if (key !== void 0 && value !== void 0 && !["type", "sourceOrigin", "userContext"].includes(key)) {
+            unsupportedPartitionKeys.set(key, value);
+          }
+        }
+        if (unsupportedPartitionKeys.size > 0) {
+          this.#logger?.(LogType.debugInfo)?.(`Unsupported partition keys: ${JSON.stringify(Object.fromEntries(unsupportedPartitionKeys))}`);
+        }
+        const userContext = descriptor.userContext ?? "default";
+        return {
+          userContext,
+          ...sourceOrigin === void 0 ? {} : { sourceOrigin }
+        };
+      }
+      #expandStoragePartitionSpec(partitionSpec) {
+        if (partitionSpec === void 0) {
+          return { userContext: "default" };
+        }
+        if (partitionSpec.type === "context") {
+          return this.#expandStoragePartitionSpecByBrowsingContext(partitionSpec);
+        }
+        assert3(partitionSpec.type === "storageKey", "Unknown partition type");
+        return this.#expandStoragePartitionSpecByStorageKey(partitionSpec);
+      }
+      #matchCookie(cookie, filter2) {
+        if (filter2 === void 0) {
+          return true;
+        }
+        return (filter2.domain === void 0 || filter2.domain === cookie.domain) && (filter2.name === void 0 || filter2.name === cookie.name) && // `value` contains fields `type` and `value`.
+        (filter2.value === void 0 || deserializeByteValue(filter2.value) === deserializeByteValue(cookie.value)) && (filter2.path === void 0 || filter2.path === cookie.path) && (filter2.size === void 0 || filter2.size === cookie.size) && (filter2.httpOnly === void 0 || filter2.httpOnly === cookie.httpOnly) && (filter2.secure === void 0 || filter2.secure === cookie.secure) && (filter2.sameSite === void 0 || filter2.sameSite === cookie.sameSite) && (filter2.expiry === void 0 || filter2.expiry === cookie.expiry);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/webExtension/WebExtensionProcessor.js
+var WebExtensionProcessor;
+var init_WebExtensionProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/webExtension/WebExtensionProcessor.js"() {
+    init_protocol();
+    WebExtensionProcessor = class {
+      #browserCdpClient;
+      constructor(browserCdpClient) {
+        this.#browserCdpClient = browserCdpClient;
+      }
+      async install(params) {
+        switch (params.extensionData.type) {
+          case "archivePath":
+          case "base64":
+            throw new UnsupportedOperationException("Archived and Base64 extensions are not supported");
+          case "path":
+            break;
+        }
+        try {
+          const response = await this.#browserCdpClient.sendCommand("Extensions.loadUnpacked", {
+            path: params.extensionData.path
+          });
+          return {
+            extension: response.id
+          };
+        } catch (err) {
+          if (err.message.startsWith("invalid web extension")) {
+            throw new InvalidWebExtensionException(err.message);
+          }
+          throw err;
+        }
+      }
+      async uninstall(params) {
+        try {
+          await this.#browserCdpClient.sendCommand("Extensions.uninstall", {
+            id: params.extension
+          });
+          return {};
+        } catch (err) {
+          if (err.message === "Uninstall failed. Reason: could not find extension.") {
+            throw new NoSuchWebExtensionException("no such web extension");
+          }
+          throw err;
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/OutgoingMessage.js
+var OutgoingMessage;
+var init_OutgoingMessage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/OutgoingMessage.js"() {
+    OutgoingMessage = class _OutgoingMessage {
+      #message;
+      #googChannel;
+      constructor(message, googChannel = null) {
+        this.#message = message;
+        this.#googChannel = googChannel;
+      }
+      static createFromPromise(messagePromise, googChannel) {
+        return messagePromise.then((message) => {
+          if (message.kind === "success") {
+            return {
+              kind: "success",
+              value: new _OutgoingMessage(message.value, googChannel)
+            };
+          }
+          return message;
+        });
+      }
+      static createResolved(message, googChannel = null) {
+        return Promise.resolve({
+          kind: "success",
+          value: new _OutgoingMessage(message, googChannel)
+        });
+      }
+      get message() {
+        return this.#message;
+      }
+      get googChannel() {
+        return this.#googChannel;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/CommandProcessor.js
+var CommandProcessor;
+var init_CommandProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/CommandProcessor.js"() {
+    init_protocol();
+    init_EventEmitter2();
+    init_log();
+    init_BidiNoOpParser();
+    init_BrowserProcessor();
+    init_CdpProcessor();
+    init_BrowsingContextProcessor();
+    init_EmulationProcessor();
+    init_InputProcessor();
+    init_NetworkProcessor();
+    init_PermissionsProcessor();
+    init_ScriptProcessor();
+    init_SessionProcessor();
+    init_StorageProcessor();
+    init_WebExtensionProcessor();
+    init_OutgoingMessage();
+    CommandProcessor = class extends EventEmitter2 {
+      // keep-sorted start
+      #bluetoothProcessor;
+      #browserCdpClient;
+      #browserProcessor;
+      #browsingContextProcessor;
+      #cdpProcessor;
+      #digitalCredentialsProcessor;
+      #emulationProcessor;
+      #inputProcessor;
+      #networkProcessor;
+      #permissionsProcessor;
+      #scriptProcessor;
+      #sessionProcessor;
+      #storageProcessor;
+      #webExtensionProcessor;
+      // keep-sorted end
+      #parser;
+      #logger;
+      constructor(cdpConnection, browserCdpClient, eventManager, browsingContextStorage, realmStorage, preloadScriptStorage, networkStorage, contextConfigStorage, bluetoothProcessor, digitalCredentialsProcessor, userContextStorage, parser2 = new BidiNoOpParser(), initConnection, logger) {
+        super();
+        this.#browserCdpClient = browserCdpClient;
+        this.#parser = parser2;
+        this.#logger = logger;
+        this.#bluetoothProcessor = bluetoothProcessor;
+        this.#digitalCredentialsProcessor = digitalCredentialsProcessor;
+        this.#browserProcessor = new BrowserProcessor(browserCdpClient, browsingContextStorage, contextConfigStorage, userContextStorage);
+        this.#browsingContextProcessor = new BrowsingContextProcessor(browserCdpClient, browsingContextStorage, userContextStorage, contextConfigStorage, eventManager);
+        this.#cdpProcessor = new CdpProcessor(browsingContextStorage, realmStorage, cdpConnection, browserCdpClient);
+        this.#emulationProcessor = new EmulationProcessor(browsingContextStorage, userContextStorage, contextConfigStorage);
+        this.#inputProcessor = new InputProcessor(browsingContextStorage);
+        this.#networkProcessor = new NetworkProcessor(browsingContextStorage, networkStorage, userContextStorage, contextConfigStorage);
+        this.#permissionsProcessor = new PermissionsProcessor(browserCdpClient);
+        this.#scriptProcessor = new ScriptProcessor(eventManager, browsingContextStorage, realmStorage, preloadScriptStorage, userContextStorage, logger);
+        this.#sessionProcessor = new SessionProcessor(eventManager, browserCdpClient, initConnection);
+        this.#storageProcessor = new StorageProcessor(browserCdpClient, browsingContextStorage, logger);
+        this.#webExtensionProcessor = new WebExtensionProcessor(browserCdpClient);
+      }
+      async #processCommand(command2) {
+        switch (command2.method) {
+          // Bluetooth module
+          // keep-sorted start block=yes
+          case "bluetooth.disableSimulation":
+            return await this.#bluetoothProcessor.disableSimulation(this.#parser.parseDisableSimulationParameters(command2.params));
+          case "bluetooth.handleRequestDevicePrompt":
+            return await this.#bluetoothProcessor.handleRequestDevicePrompt(this.#parser.parseHandleRequestDevicePromptParams(command2.params));
+          case "bluetooth.simulateAdapter":
+            return await this.#bluetoothProcessor.simulateAdapter(this.#parser.parseSimulateAdapterParameters(command2.params));
+          case "bluetooth.simulateAdvertisement":
+            return await this.#bluetoothProcessor.simulateAdvertisement(this.#parser.parseSimulateAdvertisementParameters(command2.params));
+          case "bluetooth.simulateCharacteristic":
+            return await this.#bluetoothProcessor.simulateCharacteristic(this.#parser.parseSimulateCharacteristicParameters(command2.params));
+          case "bluetooth.simulateCharacteristicResponse":
+            return await this.#bluetoothProcessor.simulateCharacteristicResponse(this.#parser.parseSimulateCharacteristicResponseParameters(command2.params));
+          case "bluetooth.simulateDescriptor":
+            return await this.#bluetoothProcessor.simulateDescriptor(this.#parser.parseSimulateDescriptorParameters(command2.params));
+          case "bluetooth.simulateDescriptorResponse":
+            return await this.#bluetoothProcessor.simulateDescriptorResponse(this.#parser.parseSimulateDescriptorResponseParameters(command2.params));
+          case "bluetooth.simulateGattConnectionResponse":
+            return await this.#bluetoothProcessor.simulateGattConnectionResponse(this.#parser.parseSimulateGattConnectionResponseParameters(command2.params));
+          case "bluetooth.simulateGattDisconnection":
+            return await this.#bluetoothProcessor.simulateGattDisconnection(this.#parser.parseSimulateGattDisconnectionParameters(command2.params));
+          case "bluetooth.simulatePreconnectedPeripheral":
+            return await this.#bluetoothProcessor.simulatePreconnectedPeripheral(this.#parser.parseSimulatePreconnectedPeripheralParameters(command2.params));
+          case "bluetooth.simulateService":
+            return await this.#bluetoothProcessor.simulateService(this.#parser.parseSimulateServiceParameters(command2.params));
+          // keep-sorted end
+          // Browser module
+          // keep-sorted start block=yes
+          case "browser.close":
+            return this.#browserProcessor.close();
+          case "browser.createUserContext":
+            return await this.#browserProcessor.createUserContext(this.#parser.parseCreateUserContextParameters(command2.params));
+          case "browser.getClientWindows":
+            return await this.#browserProcessor.getClientWindows();
+          case "browser.getUserContexts":
+            return await this.#browserProcessor.getUserContexts();
+          case "browser.removeUserContext":
+            return await this.#browserProcessor.removeUserContext(this.#parser.parseRemoveUserContextParameters(command2.params));
+          case "browser.setClientWindowState":
+            return await this.#browserProcessor.setClientWindowState(this.#parser.parseSetClientWindowStateParameters(command2.params));
+          case "browser.setDownloadBehavior":
+            return await this.#browserProcessor.setDownloadBehavior(this.#parser.parseSetDownloadBehaviorParameters(command2.params));
+          // keep-sorted end
+          // Browsing Context module
+          // keep-sorted start block=yes
+          case "browsingContext.activate":
+            return await this.#browsingContextProcessor.activate(this.#parser.parseActivateParams(command2.params));
+          case "browsingContext.captureScreenshot":
+            return await this.#browsingContextProcessor.captureScreenshot(this.#parser.parseCaptureScreenshotParams(command2.params));
+          case "browsingContext.close":
+            return await this.#browsingContextProcessor.close(this.#parser.parseCloseParams(command2.params));
+          case "browsingContext.create":
+            return await this.#browsingContextProcessor.create(this.#parser.parseCreateParams(command2.params));
+          case "browsingContext.getTree":
+            return this.#browsingContextProcessor.getTree(this.#parser.parseGetTreeParams(command2.params));
+          case "browsingContext.handleUserPrompt":
+            return await this.#browsingContextProcessor.handleUserPrompt(this.#parser.parseHandleUserPromptParams(command2.params));
+          case "browsingContext.locateNodes":
+            return await this.#browsingContextProcessor.locateNodes(this.#parser.parseLocateNodesParams(command2.params));
+          case "browsingContext.navigate":
+            return await this.#browsingContextProcessor.navigate(this.#parser.parseNavigateParams(command2.params));
+          case "browsingContext.print":
+            return await this.#browsingContextProcessor.print(this.#parser.parsePrintParams(command2.params));
+          case "browsingContext.reload":
+            return await this.#browsingContextProcessor.reload(this.#parser.parseReloadParams(command2.params));
+          case "browsingContext.setBypassCSP":
+            this.#parser.parseSetBypassCspParams(command2.params);
+            throw new UnsupportedOperationException(`Method ${command2.method} is not implemented.`);
+          case "browsingContext.setViewport":
+            return await this.#browsingContextProcessor.setViewport(this.#parser.parseSetViewportParams(command2.params));
+          case "browsingContext.startScreencast":
+            this.#parser.parseStartScreencastParams(command2.params);
+            throw new UnsupportedOperationException(`Method ${command2.method} is not implemented.`);
+          case "browsingContext.stopScreencast":
+            this.#parser.parseStopScreencastParams(command2.params);
+            throw new UnsupportedOperationException(`Method ${command2.method} is not implemented.`);
+          case "browsingContext.traverseHistory":
+            return await this.#browsingContextProcessor.traverseHistory(this.#parser.parseTraverseHistoryParams(command2.params));
+          // keep-sorted end
+          // CDP module
+          // keep-sorted start block=yes
+          case "goog:cdp.getSession":
+            return this.#cdpProcessor.getSession(this.#parser.parseGetSessionParams(command2.params));
+          case "goog:cdp.resolveRealm":
+            return this.#cdpProcessor.resolveRealm(this.#parser.parseResolveRealmParams(command2.params));
+          case "goog:cdp.sendCommand":
+            return await this.#cdpProcessor.sendCommand(this.#parser.parseSendCommandParams(command2.params));
+          // keep-sorted end
+          // DigitalCredentials module
+          // keep-sorted start block=yes
+          case "digitalCredentials.setVirtualWalletBehavior":
+            return await this.#digitalCredentialsProcessor.setVirtualWalletBehavior(this.#parser.parseSetVirtualWalletBehaviorParams(command2.params));
+          // keep-sorted end
+          // Emulation module
+          // keep-sorted start block=yes
+          case "emulation.setForcedColorsModeThemeOverride":
+            this.#parser.parseSetForcedColorsModeThemeOverrideParams(command2.params);
+            throw new UnsupportedOperationException(`Method ${command2.method} is not implemented.`);
+          case "emulation.setGeolocationOverride":
+            return await this.#emulationProcessor.setGeolocationOverride(this.#parser.parseSetGeolocationOverrideParams(command2.params));
+          case "emulation.setLocaleOverride":
+            return await this.#emulationProcessor.setLocaleOverride(this.#parser.parseSetLocaleOverrideParams(command2.params));
+          case "emulation.setNetworkConditions":
+            return await this.#emulationProcessor.setNetworkConditions(this.#parser.parseSetNetworkConditionsParams(command2.params));
+          case "emulation.setScreenOrientationOverride":
+            return await this.#emulationProcessor.setScreenOrientationOverride(this.#parser.parseSetScreenOrientationOverrideParams(command2.params));
+          case "emulation.setScreenSettingsOverride":
+            return await this.#emulationProcessor.setScreenSettingsOverride(this.#parser.parseSetScreenSettingsOverrideParams(command2.params));
+          case "emulation.setScriptingEnabled":
+            return await this.#emulationProcessor.setScriptingEnabled(this.#parser.parseSetScriptingEnabledParams(command2.params));
+          case "emulation.setScrollbarTypeOverride":
+            return await this.#emulationProcessor.setScrollbarTypeOverride(this.#parser.parseSetScrollbarTypeOverrideParams(command2.params));
+          case "emulation.setTimezoneOverride":
+            return await this.#emulationProcessor.setTimezoneOverride(this.#parser.parseSetTimezoneOverrideParams(command2.params));
+          case "emulation.setTouchOverride":
+            return await this.#emulationProcessor.setTouchOverride(this.#parser.parseSetTouchOverrideParams(command2.params));
+          case "emulation.setUserAgentOverride":
+            return await this.#emulationProcessor.setUserAgentOverrideParams(this.#parser.parseSetUserAgentOverrideParams(command2.params));
+          case "userAgentClientHints.setClientHintsOverride":
+            return await this.#emulationProcessor.setClientHintsOverride(this.#parser.parseSetClientHintsOverrideParams(command2.params));
+          // keep-sorted end
+          // Input module
+          // keep-sorted start block=yes
+          case "input.performActions":
+            return await this.#inputProcessor.performActions(this.#parser.parsePerformActionsParams(command2.params));
+          case "input.releaseActions":
+            return await this.#inputProcessor.releaseActions(this.#parser.parseReleaseActionsParams(command2.params));
+          case "input.setFiles":
+            return await this.#inputProcessor.setFiles(this.#parser.parseSetFilesParams(command2.params));
+          // keep-sorted end
+          // Network module
+          // keep-sorted start block=yes
+          case "network.addDataCollector":
+            return await this.#networkProcessor.addDataCollector(this.#parser.parseAddDataCollectorParams(command2.params));
+          case "network.addIntercept":
+            return await this.#networkProcessor.addIntercept(this.#parser.parseAddInterceptParams(command2.params));
+          case "network.continueRequest":
+            return await this.#networkProcessor.continueRequest(this.#parser.parseContinueRequestParams(command2.params));
+          case "network.continueResponse":
+            return await this.#networkProcessor.continueResponse(this.#parser.parseContinueResponseParams(command2.params));
+          case "network.continueWithAuth":
+            return await this.#networkProcessor.continueWithAuth(this.#parser.parseContinueWithAuthParams(command2.params));
+          case "network.disownData":
+            return this.#networkProcessor.disownData(this.#parser.parseDisownDataParams(command2.params));
+          case "network.failRequest":
+            return await this.#networkProcessor.failRequest(this.#parser.parseFailRequestParams(command2.params));
+          case "network.getData":
+            return await this.#networkProcessor.getData(this.#parser.parseGetDataParams(command2.params));
+          case "network.provideResponse":
+            return await this.#networkProcessor.provideResponse(this.#parser.parseProvideResponseParams(command2.params));
+          case "network.removeDataCollector":
+            return await this.#networkProcessor.removeDataCollector(this.#parser.parseRemoveDataCollectorParams(command2.params));
+          case "network.removeIntercept":
+            return await this.#networkProcessor.removeIntercept(this.#parser.parseRemoveInterceptParams(command2.params));
+          case "network.setCacheBehavior":
+            return await this.#networkProcessor.setCacheBehavior(this.#parser.parseSetCacheBehaviorParams(command2.params));
+          case "network.setExtraHeaders":
+            return await this.#networkProcessor.setExtraHeaders(this.#parser.parseSetExtraHeadersParams(command2.params));
+          // keep-sorted end
+          // Permissions module
+          // keep-sorted start block=yes
+          case "permissions.setPermission":
+            return await this.#permissionsProcessor.setPermissions(this.#parser.parseSetPermissionsParams(command2.params));
+          // keep-sorted end
+          // Script module
+          // keep-sorted start block=yes
+          case "script.addPreloadScript":
+            return await this.#scriptProcessor.addPreloadScript(this.#parser.parseAddPreloadScriptParams(command2.params));
+          case "script.callFunction":
+            return await this.#scriptProcessor.callFunction(this.#parser.parseCallFunctionParams(this.#processTargetParams(command2.params)));
+          case "script.disown":
+            return await this.#scriptProcessor.disown(this.#parser.parseDisownParams(this.#processTargetParams(command2.params)));
+          case "script.evaluate":
+            return await this.#scriptProcessor.evaluate(this.#parser.parseEvaluateParams(this.#processTargetParams(command2.params)));
+          case "script.getRealms":
+            return this.#scriptProcessor.getRealms(this.#parser.parseGetRealmsParams(command2.params));
+          case "script.removePreloadScript":
+            return await this.#scriptProcessor.removePreloadScript(this.#parser.parseRemovePreloadScriptParams(command2.params));
+          // keep-sorted end
+          // Session module
+          // keep-sorted start block=yes
+          case "session.end":
+            throw new UnsupportedOperationException(`Method ${command2.method} is not implemented.`);
+          case "session.new":
+            return await this.#sessionProcessor.new(command2.params);
+          case "session.status":
+            return this.#sessionProcessor.status();
+          case "session.subscribe":
+            return await this.#sessionProcessor.subscribe(this.#parser.parseSubscribeParams(command2.params), command2["goog:channel"]);
+          case "session.unsubscribe":
+            return await this.#sessionProcessor.unsubscribe(this.#parser.parseUnsubscribeParams(command2.params), command2["goog:channel"]);
+          // keep-sorted end
+          // Storage module
+          // keep-sorted start block=yes
+          case "storage.deleteCookies":
+            return await this.#storageProcessor.deleteCookies(this.#parser.parseDeleteCookiesParams(command2.params));
+          case "storage.getCookies":
+            return await this.#storageProcessor.getCookies(this.#parser.parseGetCookiesParams(command2.params));
+          case "storage.setCookie":
+            return await this.#storageProcessor.setCookie(this.#parser.parseSetCookieParams(command2.params));
+          // keep-sorted end
+          // WebExtension module
+          // keep-sorted start block=yes
+          case "webExtension.install":
+            return await this.#webExtensionProcessor.install(this.#parser.parseInstallParams(command2.params));
+          case "webExtension.uninstall":
+            return await this.#webExtensionProcessor.uninstall(this.#parser.parseUninstallParams(command2.params));
+        }
+        throw new UnknownCommandException(`Unknown command '${command2?.method}'.`);
+      }
+      // Workaround for as zod.union always take the first schema
+      // https://github.com/w3c/webdriver-bidi/issues/635
+      #processTargetParams(params) {
+        if (typeof params === "object" && params && "target" in params && typeof params.target === "object" && params.target && "context" in params.target) {
+          delete params.target["realm"];
+        }
+        return params;
+      }
+      async processCommand(command2) {
+        try {
+          const result = await this.#processCommand(command2);
+          const response = {
+            type: "success",
+            id: command2.id,
+            result
+          };
+          this.emit("response", {
+            message: OutgoingMessage.createResolved(response, command2["goog:channel"]),
+            event: command2.method
+          });
+        } catch (e) {
+          if (e instanceof Exception) {
+            this.emit("response", {
+              message: OutgoingMessage.createResolved(e.toErrorResponse(command2.id), command2["goog:channel"]),
+              event: command2.method
+            });
+          } else {
+            const error62 = e;
+            this.#logger?.(LogType.bidi)?.(error62);
+            const errorException = this.#browserCdpClient.isCloseError(e) ? new NoSuchFrameException(`Browsing context is gone`) : new UnknownErrorException(error62.message, error62.stack);
+            this.emit("response", {
+              message: OutgoingMessage.createResolved(errorException.toErrorResponse(command2.id), command2["goog:channel"]),
+              event: command2.method
+            });
+          }
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/bluetooth/BluetoothProcessor.js
+var BluetoothGattItem, BluetoothDescriptor, BluetoothCharacteristic, BluetoothService, BluetoothDevice, BluetoothProcessor;
+var init_BluetoothProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/bluetooth/BluetoothProcessor.js"() {
+    init_protocol();
+    BluetoothGattItem = class {
+      id;
+      uuid;
+      constructor(id, uuid3) {
+        this.id = id;
+        this.uuid = uuid3;
+      }
+    };
+    BluetoothDescriptor = class extends BluetoothGattItem {
+      characteristic;
+      constructor(id, uuid3, characteristic) {
+        super(id, uuid3);
+        this.characteristic = characteristic;
+      }
+    };
+    BluetoothCharacteristic = class extends BluetoothGattItem {
+      descriptors = /* @__PURE__ */ new Map();
+      service;
+      constructor(id, uuid3, service) {
+        super(id, uuid3);
+        this.service = service;
+      }
+    };
+    BluetoothService = class extends BluetoothGattItem {
+      characteristics = /* @__PURE__ */ new Map();
+      device;
+      constructor(id, uuid3, device) {
+        super(id, uuid3);
+        this.device = device;
+      }
+    };
+    BluetoothDevice = class {
+      address;
+      services = /* @__PURE__ */ new Map();
+      constructor(address) {
+        this.address = address;
+      }
+    };
+    BluetoothProcessor = class {
+      #eventManager;
+      #browsingContextStorage;
+      #bluetoothDevices = /* @__PURE__ */ new Map();
+      // A map from a characteristic id from CDP to its BluetoothCharacteristic object.
+      #bluetoothCharacteristics = /* @__PURE__ */ new Map();
+      // A map from a descriptor id from CDP to its BluetoothDescriptor object.
+      #bluetoothDescriptors = /* @__PURE__ */ new Map();
+      constructor(eventManager, browsingContextStorage) {
+        this.#eventManager = eventManager;
+        this.#browsingContextStorage = browsingContextStorage;
+      }
+      #getDevice(address) {
+        const device = this.#bluetoothDevices.get(address);
+        if (!device) {
+          throw new InvalidArgumentException(`Bluetooth device with address ${address} does not exist`);
+        }
+        return device;
+      }
+      #getService(device, serviceUuid) {
+        const service = device.services.get(serviceUuid);
+        if (!service) {
+          throw new InvalidArgumentException(`Service with UUID ${serviceUuid} on device ${device.address} does not exist`);
+        }
+        return service;
+      }
+      #getCharacteristic(service, characteristicUuid) {
+        const characteristic = service.characteristics.get(characteristicUuid);
+        if (!characteristic) {
+          throw new InvalidArgumentException(`Characteristic with UUID ${characteristicUuid} does not exist for service ${service.uuid} on device ${service.device.address}`);
+        }
+        return characteristic;
+      }
+      #getDescriptor(characteristic, descriptorUuid) {
+        const descriptor = characteristic.descriptors.get(descriptorUuid);
+        if (!descriptor) {
+          throw new InvalidArgumentException(`Descriptor with UUID ${descriptorUuid} does not exist for characteristic ${characteristic.uuid} on service ${characteristic.service.uuid} on device ${characteristic.service.device.address}`);
+        }
+        return descriptor;
+      }
+      async simulateAdapter(params) {
+        if (params.state === void 0) {
+          throw new InvalidArgumentException(`Parameter "state" is required for creating a Bluetooth adapter`);
+        }
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.disable");
+        this.#bluetoothDevices.clear();
+        this.#bluetoothCharacteristics.clear();
+        this.#bluetoothDescriptors.clear();
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.enable", {
+          state: params.state,
+          leSupported: params.leSupported ?? true
+        });
+        return {};
+      }
+      async disableSimulation(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.disable");
+        this.#bluetoothDevices.clear();
+        this.#bluetoothCharacteristics.clear();
+        this.#bluetoothDescriptors.clear();
+        return {};
+      }
+      async simulatePreconnectedPeripheral(params) {
+        if (this.#bluetoothDevices.has(params.address)) {
+          throw new InvalidArgumentException(`Bluetooth device with address ${params.address} already exists`);
+        }
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulatePreconnectedPeripheral", {
+          address: params.address,
+          name: params.name,
+          knownServiceUuids: params.knownServiceUuids,
+          manufacturerData: params.manufacturerData
+        });
+        this.#bluetoothDevices.set(params.address, new BluetoothDevice(params.address));
+        return {};
+      }
+      async simulateAdvertisement(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateAdvertisement", {
+          entry: params.scanEntry
+        });
+        return {};
+      }
+      async simulateCharacteristic(params) {
+        const device = this.#getDevice(params.address);
+        const service = this.#getService(device, params.serviceUuid);
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        switch (params.type) {
+          case "add": {
+            if (params.characteristicProperties === void 0) {
+              throw new InvalidArgumentException(`Parameter "characteristicProperties" is required for adding a Bluetooth characteristic`);
+            }
+            if (service.characteristics.has(params.characteristicUuid)) {
+              throw new InvalidArgumentException(`Characteristic with UUID ${params.characteristicUuid} already exists`);
+            }
+            const response = await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.addCharacteristic", {
+              serviceId: service.id,
+              characteristicUuid: params.characteristicUuid,
+              properties: params.characteristicProperties
+            });
+            const characteristic = new BluetoothCharacteristic(response.characteristicId, params.characteristicUuid, service);
+            service.characteristics.set(params.characteristicUuid, characteristic);
+            this.#bluetoothCharacteristics.set(characteristic.id, characteristic);
+            return {};
+          }
+          case "remove": {
+            if (params.characteristicProperties !== void 0) {
+              throw new InvalidArgumentException(`Parameter "characteristicProperties" should not be provided for removing a Bluetooth characteristic`);
+            }
+            const characteristic = this.#getCharacteristic(service, params.characteristicUuid);
+            await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.removeCharacteristic", {
+              characteristicId: characteristic.id
+            });
+            service.characteristics.delete(params.characteristicUuid);
+            this.#bluetoothCharacteristics.delete(characteristic.id);
+            return {};
+          }
+          default:
+            throw new InvalidArgumentException(`Parameter "type" of ${params.type} is not supported`);
+        }
+      }
+      async simulateCharacteristicResponse(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        const device = this.#getDevice(params.address);
+        const service = this.#getService(device, params.serviceUuid);
+        const characteristic = this.#getCharacteristic(service, params.characteristicUuid);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateCharacteristicOperationResponse", {
+          characteristicId: characteristic.id,
+          type: params.type,
+          code: params.code,
+          ...params.data && {
+            data: btoa(String.fromCharCode(...params.data))
+          }
+        });
+        return {};
+      }
+      async simulateDescriptor(params) {
+        const device = this.#getDevice(params.address);
+        const service = this.#getService(device, params.serviceUuid);
+        const characteristic = this.#getCharacteristic(service, params.characteristicUuid);
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        switch (params.type) {
+          case "add": {
+            if (characteristic.descriptors.has(params.descriptorUuid)) {
+              throw new InvalidArgumentException(`Descriptor with UUID ${params.descriptorUuid} already exists`);
+            }
+            const response = await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.addDescriptor", {
+              characteristicId: characteristic.id,
+              descriptorUuid: params.descriptorUuid
+            });
+            const descriptor = new BluetoothDescriptor(response.descriptorId, params.descriptorUuid, characteristic);
+            characteristic.descriptors.set(params.descriptorUuid, descriptor);
+            this.#bluetoothDescriptors.set(descriptor.id, descriptor);
+            return {};
+          }
+          case "remove": {
+            const descriptor = this.#getDescriptor(characteristic, params.descriptorUuid);
+            await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.removeDescriptor", {
+              descriptorId: descriptor.id
+            });
+            characteristic.descriptors.delete(params.descriptorUuid);
+            this.#bluetoothDescriptors.delete(descriptor.id);
+            return {};
+          }
+          default:
+            throw new InvalidArgumentException(`Parameter "type" of ${params.type} is not supported`);
+        }
+      }
+      async simulateDescriptorResponse(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        const device = this.#getDevice(params.address);
+        const service = this.#getService(device, params.serviceUuid);
+        const characteristic = this.#getCharacteristic(service, params.characteristicUuid);
+        const descriptor = this.#getDescriptor(characteristic, params.descriptorUuid);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateDescriptorOperationResponse", {
+          descriptorId: descriptor.id,
+          type: params.type,
+          code: params.code,
+          ...params.data && {
+            data: btoa(String.fromCharCode(...params.data))
+          }
+        });
+        return {};
+      }
+      async simulateGattConnectionResponse(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateGATTOperationResponse", {
+          address: params.address,
+          type: "connection",
+          code: params.code
+        });
+        return {};
+      }
+      async simulateGattDisconnection(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateGATTDisconnection", {
+          address: params.address
+        });
+        return {};
+      }
+      async simulateService(params) {
+        const device = this.#getDevice(params.address);
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        switch (params.type) {
+          case "add": {
+            if (device.services.has(params.uuid)) {
+              throw new InvalidArgumentException(`Service with UUID ${params.uuid} already exists`);
+            }
+            const response = await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.addService", {
+              address: params.address,
+              serviceUuid: params.uuid
+            });
+            device.services.set(params.uuid, new BluetoothService(response.serviceId, params.uuid, device));
+            return {};
+          }
+          case "remove": {
+            const service = this.#getService(device, params.uuid);
+            await context2.cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.removeService", {
+              serviceId: service.id
+            });
+            device.services.delete(params.uuid);
+            return {};
+          }
+          default:
+            throw new InvalidArgumentException(`Parameter "type" of ${params.type} is not supported`);
+        }
+      }
+      onCdpTargetCreated(cdpTarget) {
+        cdpTarget.cdpClient.on("DeviceAccess.deviceRequestPrompted", (event) => {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: "bluetooth.requestDevicePromptUpdated",
+            params: {
+              context: cdpTarget.id,
+              prompt: event.id,
+              devices: event.devices
+            }
+          }, cdpTarget.id);
+        });
+        cdpTarget.browserCdpClient.on("BluetoothEmulation.gattOperationReceived", async (event) => {
+          switch (event.type) {
+            case "connection":
+              this.#eventManager.registerEvent({
+                type: "event",
+                method: "bluetooth.gattConnectionAttempted",
+                params: {
+                  context: cdpTarget.id,
+                  address: event.address
+                }
+              }, cdpTarget.id);
+              return;
+            case "discovery":
+              await cdpTarget.browserCdpClient.sendCommand("BluetoothEmulation.simulateGATTOperationResponse", {
+                address: event.address,
+                type: "discovery",
+                code: 0
+              });
+          }
+        });
+        cdpTarget.browserCdpClient.on("BluetoothEmulation.characteristicOperationReceived", (event) => {
+          if (!this.#bluetoothCharacteristics.has(event.characteristicId)) {
+            return;
+          }
+          let type;
+          if (event.type === "write") {
+            if (event.writeType === "write-default-deprecated") {
+              return;
+            }
+            type = event.writeType;
+          } else {
+            type = event.type;
+          }
+          const characteristic = this.#bluetoothCharacteristics.get(event.characteristicId);
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: "bluetooth.characteristicEventGenerated",
+            params: {
+              context: cdpTarget.id,
+              address: characteristic.service.device.address,
+              serviceUuid: characteristic.service.uuid,
+              characteristicUuid: characteristic.uuid,
+              type,
+              ...event.data && {
+                data: Array.from(atob(event.data), (c) => c.charCodeAt(0))
+              }
+            }
+          }, cdpTarget.id);
+        });
+        cdpTarget.browserCdpClient.on("BluetoothEmulation.descriptorOperationReceived", (event) => {
+          if (!this.#bluetoothDescriptors.has(event.descriptorId)) {
+            return;
+          }
+          const descriptor = this.#bluetoothDescriptors.get(event.descriptorId);
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: "bluetooth.descriptorEventGenerated",
+            params: {
+              context: cdpTarget.id,
+              address: descriptor.characteristic.service.device.address,
+              serviceUuid: descriptor.characteristic.service.uuid,
+              characteristicUuid: descriptor.characteristic.uuid,
+              descriptorUuid: descriptor.uuid,
+              type: event.type,
+              ...event.data && {
+                data: Array.from(atob(event.data), (c) => c.charCodeAt(0))
+              }
+            }
+          }, cdpTarget.id);
+        });
+      }
+      async handleRequestDevicePrompt(params) {
+        const context2 = this.#browsingContextStorage.getContext(params.context);
+        if (params.accept) {
+          await context2.cdpTarget.cdpClient.sendCommand("DeviceAccess.selectPrompt", {
+            id: params.prompt,
+            deviceId: params.device
+          });
+        } else {
+          await context2.cdpTarget.cdpClient.sendCommand("DeviceAccess.cancelPrompt", {
+            id: params.prompt
+          });
+        }
+        return {};
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/ContextConfig.js
+var ContextConfig;
+var init_ContextConfig = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/ContextConfig.js"() {
+    ContextConfig = class _ContextConfig {
+      // keep-sorted start block=yes
+      acceptInsecureCerts;
+      clientHints;
+      devicePixelRatio;
+      digitalCredentialsBehavior;
+      disableNetworkDurableMessages;
+      downloadBehavior;
+      emulatedNetworkConditions;
+      // Extra headers are kept in CDP format.
+      extraHeaders;
+      geolocation;
+      locale;
+      maxTouchPoints;
+      prerenderingDisabled;
+      screenArea;
+      screenOrientation;
+      scriptingEnabled;
+      scrollbarType;
+      // Timezone is kept in CDP format with GMT prefix for offset values.
+      timezone;
+      userAgent;
+      userPromptHandler;
+      viewport;
+      // keep-sorted end
+      /**
+       * Merges multiple `ContextConfig` objects. The configs are merged in the order they are
+       * provided. For each property, the value from the last config that defines it will be
+       * used. The final result will not contain any `undefined` or `null` properties.
+       * `undefined` values are ignored. `null` values remove the already set value.
+       */
+      static merge(...configs) {
+        const result = new _ContextConfig();
+        for (const config3 of configs) {
+          if (!config3) {
+            continue;
+          }
+          for (const key in config3) {
+            const value = config3[key];
+            if (value === null) {
+              delete result[key];
+            } else if (value !== void 0) {
+              result[key] = value;
+            }
+          }
+        }
+        return result;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/ContextConfigStorage.js
+var ContextConfigStorage;
+var init_ContextConfigStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/ContextConfigStorage.js"() {
+    init_ContextConfig();
+    ContextConfigStorage = class {
+      #global = new ContextConfig();
+      #userContextConfigs = /* @__PURE__ */ new Map();
+      #browsingContextConfigs = /* @__PURE__ */ new Map();
+      /**
+       * Updates the global configuration. Properties with `undefined` values in the
+       * provided `config` are ignored.
+       */
+      updateGlobalConfig(config3) {
+        this.#global = ContextConfig.merge(this.#global, config3);
+      }
+      /**
+       * Updates the configuration for a specific browsing context. Properties with
+       * `undefined` values in the provided `config` are ignored.
+       */
+      updateBrowsingContextConfig(browsingContextId, config3) {
+        this.#browsingContextConfigs.set(browsingContextId, ContextConfig.merge(this.#browsingContextConfigs.get(browsingContextId), config3));
+      }
+      /**
+       * Updates the configuration for a specific user context. Properties with
+       * `undefined` values in the provided `config` are ignored.
+       */
+      updateUserContextConfig(userContext, config3) {
+        this.#userContextConfigs.set(userContext, ContextConfig.merge(this.#userContextConfigs.get(userContext), config3));
+      }
+      /**
+       * Returns the current global configuration.
+       */
+      getGlobalConfig() {
+        return this.#global;
+      }
+      /**
+       * Extra headers is a special case. The headers from the different levels have to be
+       * merged instead of being overridden.
+       */
+      #getExtraHeaders(topLevelBrowsingContextId, userContext) {
+        const globalHeaders = this.#global.extraHeaders ?? {};
+        const userContextHeaders = this.#userContextConfigs.get(userContext)?.extraHeaders ?? {};
+        const browsingContextHeaders = topLevelBrowsingContextId === void 0 ? {} : this.#browsingContextConfigs.get(topLevelBrowsingContextId)?.extraHeaders ?? {};
+        return { ...globalHeaders, ...userContextHeaders, ...browsingContextHeaders };
+      }
+      /**
+       * Calculates the active configuration by merging global, user context, and
+       * browsing context settings.
+       */
+      getActiveConfig(topLevelBrowsingContextId, userContext) {
+        let result = ContextConfig.merge(this.#global, this.#userContextConfigs.get(userContext));
+        if (topLevelBrowsingContextId !== void 0) {
+          result = ContextConfig.merge(result, this.#browsingContextConfigs.get(topLevelBrowsingContextId));
+        }
+        const extraHeaders = this.#getExtraHeaders(topLevelBrowsingContextId, userContext);
+        result.extraHeaders = Object.keys(extraHeaders).length > 0 ? extraHeaders : void 0;
+        return result;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/UserContextStorage.js
+var UserContextStorage;
+var init_UserContextStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/browser/UserContextStorage.js"() {
+    init_protocol();
+    UserContextStorage = class {
+      #browserClient;
+      constructor(browserClient) {
+        this.#browserClient = browserClient;
+      }
+      async getUserContexts() {
+        const result = await this.#browserClient.sendCommand("Target.getBrowserContexts");
+        return [
+          {
+            userContext: "default"
+          },
+          ...result.browserContextIds.map((id) => {
+            return {
+              userContext: id
+            };
+          })
+        ];
+      }
+      async verifyUserContextIdList(userContextIds) {
+        const foundContexts = /* @__PURE__ */ new Set();
+        if (!userContextIds.length) {
+          return foundContexts;
+        }
+        const userContexts = await this.getUserContexts();
+        const knownUserContextIds = new Set(userContexts.map((userContext) => userContext.userContext));
+        for (const userContextId of userContextIds) {
+          if (!knownUserContextIds.has(userContextId)) {
+            throw new NoSuchUserContextException(`User context ${userContextId} not found`);
+          }
+          foundContexts.add(userContextId);
+        }
+        return foundContexts;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/Deferred.js
+var Deferred2;
+var init_Deferred2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/Deferred.js"() {
+    Deferred2 = class {
+      #isFinished = false;
+      #promise;
+      #result;
+      #resolve;
+      #reject;
+      get isFinished() {
+        return this.#isFinished;
+      }
+      get result() {
+        if (!this.#isFinished) {
+          throw new Error("Deferred is not finished yet");
+        }
+        return this.#result;
+      }
+      constructor() {
+        this.#promise = new Promise((resolve10, reject) => {
+          this.#resolve = resolve10;
+          this.#reject = reject;
+        });
+        this.#promise.catch((_error) => {
+        });
+      }
+      then(onFulfilled, onRejected) {
+        return this.#promise.then(onFulfilled, onRejected);
+      }
+      catch(onRejected) {
+        return this.#promise.catch(onRejected);
+      }
+      resolve(value) {
+        this.#result = value;
+        if (!this.#isFinished) {
+          this.#isFinished = true;
+          this.#resolve(value);
+        }
+      }
+      reject(reason) {
+        if (!this.#isFinished) {
+          this.#isFinished = true;
+          this.#reject(reason);
+        }
+      }
+      finally(onFinally) {
+        return this.#promise.finally(onFinally);
+      }
+      [Symbol.toStringTag] = "Promise";
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/time.js
+function getTimestamp() {
+  return (/* @__PURE__ */ new Date()).getTime();
+}
+var init_time = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/time.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/unitConversions.js
+function inchesFromCm(cm) {
+  return cm / 2.54;
+}
+var init_unitConversions = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/unitConversions.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/SharedId.js
+function getSharedId(frameId, documentId, backendNodeId) {
+  return `f.${frameId}.d.${documentId}.e.${backendNodeId}`;
+}
+function parseLegacySharedId(sharedId) {
+  const match = sharedId.match(new RegExp(`(.*)${SHARED_ID_DIVIDER}(.*)`));
+  if (!match) {
+    return null;
+  }
+  const documentId = match[1];
+  const elementId = match[2];
+  if (documentId === void 0 || elementId === void 0) {
+    return null;
+  }
+  const backendNodeId = parseInt(elementId ?? "");
+  if (isNaN(backendNodeId)) {
+    return null;
+  }
+  return {
+    documentId,
+    backendNodeId
+  };
+}
+function parseSharedId(sharedId) {
+  const legacyFormattedSharedId = parseLegacySharedId(sharedId);
+  if (legacyFormattedSharedId !== null) {
+    return { ...legacyFormattedSharedId, frameId: void 0 };
+  }
+  const match = sharedId.match(/f\.(.*)\.d\.(.*)\.e\.([0-9]*)/);
+  if (!match) {
+    return null;
+  }
+  const frameId = match[1];
+  const documentId = match[2];
+  const elementId = match[3];
+  if (frameId === void 0 || documentId === void 0 || elementId === void 0) {
+    return null;
+  }
+  const backendNodeId = parseInt(elementId ?? "");
+  if (isNaN(backendNodeId)) {
+    return null;
+  }
+  return {
+    frameId,
+    documentId,
+    backendNodeId
+  };
+}
+var SHARED_ID_DIVIDER;
+var init_SharedId = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/SharedId.js"() {
+    SHARED_ID_DIVIDER = "_element_";
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/Realm.js
+var Realm2;
+var init_Realm2 = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/Realm.js"() {
+    init_protocol();
+    init_log();
+    init_uuid();
+    init_ChannelProxy();
+    Realm2 = class _Realm {
+      #cdpClient;
+      #eventManager;
+      #executionContextId;
+      #logger;
+      #origin;
+      #realmId;
+      realmStorage;
+      constructor(cdpClient, eventManager, executionContextId, logger, origin, realmId, realmStorage) {
+        this.#cdpClient = cdpClient;
+        this.#eventManager = eventManager;
+        this.#executionContextId = executionContextId;
+        this.#logger = logger;
+        this.#origin = origin;
+        this.#realmId = realmId;
+        this.realmStorage = realmStorage;
+        this.realmStorage.addRealm(this);
+      }
+      cdpToBidiValue(cdpValue, resultOwnership) {
+        const bidiValue = this.serializeForBiDi(cdpValue.result.deepSerializedValue, /* @__PURE__ */ new Map());
+        if (cdpValue.result.objectId) {
+          const objectId = cdpValue.result.objectId;
+          if (resultOwnership === "root") {
+            bidiValue.handle = objectId;
+            this.realmStorage.knownHandlesToRealmMap.set(objectId, this.realmId);
+          } else {
+            void this.#releaseObject(objectId).catch((error62) => this.#logger?.(LogType.debugError)?.(error62));
+          }
+        }
+        return bidiValue;
+      }
+      isHidden() {
+        return false;
+      }
+      /**
+       * Relies on the CDP to implement proper BiDi serialization, except:
+       * * CDP integer property `backendNodeId` is replaced with `sharedId` of
+       * `{documentId}_element_{backendNodeId}`;
+       * * CDP integer property `weakLocalObjectReference` is replaced with UUID `internalId`
+       * using unique-per serialization `internalIdMap`.
+       * * CDP type `platformobject` is replaced with `object`.
+       * @param deepSerializedValue - CDP value to be converted to BiDi.
+       * @param internalIdMap - Map from CDP integer `weakLocalObjectReference` to BiDi UUID
+       * `internalId`.
+       */
+      serializeForBiDi(deepSerializedValue, internalIdMap) {
+        if (Object.hasOwn(deepSerializedValue, "weakLocalObjectReference")) {
+          const weakLocalObjectReference = deepSerializedValue.weakLocalObjectReference;
+          if (!internalIdMap.has(weakLocalObjectReference)) {
+            internalIdMap.set(weakLocalObjectReference, uuidv42());
+          }
+          deepSerializedValue.internalId = internalIdMap.get(weakLocalObjectReference);
+          delete deepSerializedValue["weakLocalObjectReference"];
+        }
+        if (deepSerializedValue.type === "node" && deepSerializedValue.value && Object.hasOwn(deepSerializedValue.value, "frameId")) {
+          delete deepSerializedValue.value["frameId"];
+        }
+        if (deepSerializedValue.type === "platformobject") {
+          return { type: "object" };
+        }
+        const bidiValue = deepSerializedValue.value;
+        if (bidiValue === void 0) {
+          return deepSerializedValue;
+        }
+        if (["array", "set", "htmlcollection", "nodelist"].includes(deepSerializedValue.type)) {
+          for (const i in bidiValue) {
+            bidiValue[i] = this.serializeForBiDi(bidiValue[i], internalIdMap);
+          }
+        }
+        if (["object", "map"].includes(deepSerializedValue.type)) {
+          for (const i in bidiValue) {
+            bidiValue[i] = [
+              this.serializeForBiDi(bidiValue[i][0], internalIdMap),
+              this.serializeForBiDi(bidiValue[i][1], internalIdMap)
+            ];
+          }
+        }
+        return deepSerializedValue;
+      }
+      get realmId() {
+        return this.#realmId;
+      }
+      get executionContextId() {
+        return this.#executionContextId;
+      }
+      get origin() {
+        return this.#origin;
+      }
+      get source() {
+        return {
+          realm: this.realmId
+        };
+      }
+      get cdpClient() {
+        return this.#cdpClient;
+      }
+      get baseInfo() {
+        return {
+          realm: this.realmId,
+          origin: this.origin
+        };
+      }
+      async evaluate(expression, awaitPromise, resultOwnership = "none", serializationOptions = {}, userActivation = false, includeCommandLineApi = false) {
+        const cdpEvaluateResult = await this.cdpClient.sendCommand("Runtime.evaluate", {
+          contextId: this.executionContextId,
+          expression,
+          awaitPromise,
+          serializationOptions: _Realm.#getSerializationOptions("deep", serializationOptions),
+          userGesture: userActivation,
+          includeCommandLineAPI: includeCommandLineApi
+        });
+        if (cdpEvaluateResult.exceptionDetails) {
+          return await this.#getExceptionResult(cdpEvaluateResult.exceptionDetails, 0, resultOwnership);
+        }
+        return {
+          realm: this.realmId,
+          result: this.cdpToBidiValue(cdpEvaluateResult, resultOwnership),
+          type: "success"
+        };
+      }
+      #registerEvent(event) {
+        if (this.associatedBrowsingContexts.length === 0) {
+          this.#eventManager.registerGlobalEvent(event);
+        } else {
+          for (const browsingContext of this.associatedBrowsingContexts) {
+            this.#eventManager.registerEvent(event, browsingContext.id);
+          }
+        }
+      }
+      initialize() {
+        if (!this.isHidden()) {
+          this.#registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.Script.EventNames.RealmCreated,
+            params: this.realmInfo
+          });
+        }
+      }
+      /**
+       * Serializes a given CDP object into BiDi, keeping references in the
+       * target's `globalThis`.
+       */
+      async serializeCdpObject(cdpRemoteObject, resultOwnership) {
+        const argument = _Realm.#cdpRemoteObjectToCallArgument(cdpRemoteObject);
+        const cdpValue = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+          functionDeclaration: String((remoteObject) => remoteObject),
+          awaitPromise: false,
+          arguments: [argument],
+          serializationOptions: {
+            serialization: "deep"
+          },
+          executionContextId: this.executionContextId
+        });
+        return this.cdpToBidiValue(cdpValue, resultOwnership);
+      }
+      static #cdpRemoteObjectToCallArgument(cdpRemoteObject) {
+        if (cdpRemoteObject.objectId !== void 0) {
+          return { objectId: cdpRemoteObject.objectId };
+        }
+        if (cdpRemoteObject.unserializableValue !== void 0) {
+          return { unserializableValue: cdpRemoteObject.unserializableValue };
+        }
+        return { value: cdpRemoteObject.value };
+      }
+      /**
+       * Gets the string representation of an object. This is equivalent to
+       * calling `toString()` on the object value.
+       */
+      async stringifyObject(cdpRemoteObject) {
+        const { result } = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+          functionDeclaration: String((remoteObject) => String(remoteObject)),
+          awaitPromise: false,
+          arguments: [cdpRemoteObject],
+          returnByValue: true,
+          executionContextId: this.executionContextId
+        });
+        return result.value;
+      }
+      async #flattenKeyValuePairs(mappingLocalValue) {
+        const keyValueArray = await Promise.all(mappingLocalValue.map(async ([key, value]) => {
+          let keyArg;
+          if (typeof key === "string") {
+            keyArg = { value: key };
+          } else {
+            keyArg = await this.deserializeForCdp(key);
+          }
+          const valueArg = await this.deserializeForCdp(value);
+          return [keyArg, valueArg];
+        }));
+        return keyValueArray.flat();
+      }
+      async #flattenValueList(listLocalValue) {
+        return await Promise.all(listLocalValue.map((localValue) => this.deserializeForCdp(localValue)));
+      }
+      async #serializeCdpExceptionDetails(cdpExceptionDetails, lineOffset, resultOwnership) {
+        const callFrames = cdpExceptionDetails.stackTrace?.callFrames.map((frame) => ({
+          url: frame.url,
+          functionName: frame.functionName,
+          lineNumber: frame.lineNumber - lineOffset,
+          columnNumber: frame.columnNumber
+        })) ?? [];
+        const exception = cdpExceptionDetails.exception;
+        return {
+          exception: await this.serializeCdpObject(exception, resultOwnership),
+          columnNumber: cdpExceptionDetails.columnNumber,
+          lineNumber: cdpExceptionDetails.lineNumber - lineOffset,
+          stackTrace: {
+            callFrames
+          },
+          text: await this.stringifyObject(exception) || cdpExceptionDetails.text
+        };
+      }
+      async callFunction(functionDeclaration, awaitPromise, thisLocalValue = {
+        type: "undefined"
+      }, argumentsLocalValues = [], resultOwnership = "none", serializationOptions = {}, userActivation = false) {
+        const callFunctionAndSerializeScript = `(...args) => {
+      function callFunction(f, args) {
+        const deserializedThis = args.shift();
+        const deserializedArgs = args;
+        return f.apply(deserializedThis, deserializedArgs);
+      }
+      return callFunction((
+        ${functionDeclaration}
+      ), args);
+    }`;
+        const thisAndArgumentsList = [
+          await this.deserializeForCdp(thisLocalValue),
+          ...await Promise.all(argumentsLocalValues.map(async (argumentLocalValue) => await this.deserializeForCdp(argumentLocalValue)))
+        ];
+        let cdpCallFunctionResult;
+        try {
+          cdpCallFunctionResult = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+            functionDeclaration: callFunctionAndSerializeScript,
+            awaitPromise,
+            arguments: thisAndArgumentsList,
+            serializationOptions: _Realm.#getSerializationOptions("deep", serializationOptions),
+            executionContextId: this.executionContextId,
+            userGesture: userActivation
+          });
+        } catch (error62) {
+          if (error62.code === -32e3 && [
+            "Could not find object with given id",
+            "Argument should belong to the same JavaScript world as target object",
+            "Invalid remote object id"
+          ].includes(error62.message)) {
+            throw new NoSuchHandleException("Handle was not found.");
+          }
+          throw error62;
+        }
+        if (cdpCallFunctionResult.exceptionDetails) {
+          return await this.#getExceptionResult(cdpCallFunctionResult.exceptionDetails, 1, resultOwnership);
+        }
+        return {
+          type: "success",
+          result: this.cdpToBidiValue(cdpCallFunctionResult, resultOwnership),
+          realm: this.realmId
+        };
+      }
+      async deserializeForCdp(localValue) {
+        if ("handle" in localValue && localValue.handle) {
+          return { objectId: localValue.handle };
+        } else if ("handle" in localValue || "sharedId" in localValue) {
+          throw new NoSuchHandleException("Handle was not found.");
+        }
+        switch (localValue.type) {
+          case "undefined":
+            return { unserializableValue: "undefined" };
+          case "null":
+            return { unserializableValue: "null" };
+          case "string":
+            return { value: localValue.value };
+          case "number":
+            if (localValue.value === "NaN") {
+              return { unserializableValue: "NaN" };
+            } else if (localValue.value === "-0") {
+              return { unserializableValue: "-0" };
+            } else if (localValue.value === "Infinity") {
+              return { unserializableValue: "Infinity" };
+            } else if (localValue.value === "-Infinity") {
+              return { unserializableValue: "-Infinity" };
+            }
+            return {
+              value: localValue.value
+            };
+          case "boolean":
+            return { value: Boolean(localValue.value) };
+          case "bigint":
+            return {
+              unserializableValue: `BigInt(${JSON.stringify(localValue.value)})`
+            };
+          case "date":
+            return {
+              unserializableValue: `new Date(Date.parse(${JSON.stringify(localValue.value)}))`
+            };
+          case "regexp":
+            return {
+              unserializableValue: `new RegExp(${JSON.stringify(localValue.value.pattern)}, ${JSON.stringify(localValue.value.flags)})`
+            };
+          case "map": {
+            const keyValueArray = await this.#flattenKeyValuePairs(localValue.value);
+            const { result } = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+              functionDeclaration: String((...args) => {
+                const result2 = /* @__PURE__ */ new Map();
+                for (let i = 0; i < args.length; i += 2) {
+                  result2.set(args[i], args[i + 1]);
+                }
+                return result2;
+              }),
+              awaitPromise: false,
+              arguments: keyValueArray,
+              returnByValue: false,
+              executionContextId: this.executionContextId
+            });
+            return { objectId: result.objectId };
+          }
+          case "object": {
+            const keyValueArray = await this.#flattenKeyValuePairs(localValue.value);
+            const { result } = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+              functionDeclaration: String((...args) => {
+                const result2 = {};
+                for (let i = 0; i < args.length; i += 2) {
+                  const key = args[i];
+                  result2[key] = args[i + 1];
+                }
+                return result2;
+              }),
+              awaitPromise: false,
+              arguments: keyValueArray,
+              returnByValue: false,
+              executionContextId: this.executionContextId
+            });
+            return { objectId: result.objectId };
+          }
+          case "array": {
+            const args = await this.#flattenValueList(localValue.value);
+            const { result } = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+              functionDeclaration: String((...args2) => args2),
+              awaitPromise: false,
+              arguments: args,
+              returnByValue: false,
+              executionContextId: this.executionContextId
+            });
+            return { objectId: result.objectId };
+          }
+          case "set": {
+            const args = await this.#flattenValueList(localValue.value);
+            const { result } = await this.cdpClient.sendCommand("Runtime.callFunctionOn", {
+              functionDeclaration: String((...args2) => new Set(args2)),
+              awaitPromise: false,
+              arguments: args,
+              returnByValue: false,
+              executionContextId: this.executionContextId
+            });
+            return { objectId: result.objectId };
+          }
+          case "channel": {
+            const channelProxy = new ChannelProxy(localValue.value, this.#logger);
+            const channelProxySendMessageHandle = await channelProxy.init(this, this.#eventManager);
+            return { objectId: channelProxySendMessageHandle };
+          }
+        }
+        throw new Error(`Value ${JSON.stringify(localValue)} is not deserializable.`);
+      }
+      async #getExceptionResult(exceptionDetails, lineOffset, resultOwnership) {
+        return {
+          exceptionDetails: await this.#serializeCdpExceptionDetails(exceptionDetails, lineOffset, resultOwnership),
+          realm: this.realmId,
+          type: "exception"
+        };
+      }
+      static #getSerializationOptions(serialization, serializationOptions) {
+        return {
+          serialization,
+          additionalParameters: _Realm.#getAdditionalSerializationParameters(serializationOptions),
+          ..._Realm.#getMaxObjectDepth(serializationOptions)
+        };
+      }
+      static #getAdditionalSerializationParameters(serializationOptions) {
+        const additionalParameters = {};
+        if (serializationOptions.maxDomDepth !== void 0) {
+          additionalParameters["maxNodeDepth"] = serializationOptions.maxDomDepth === null ? 1e3 : serializationOptions.maxDomDepth;
+        }
+        if (serializationOptions.includeShadowTree !== void 0) {
+          additionalParameters["includeShadowTree"] = serializationOptions.includeShadowTree;
+        }
+        return additionalParameters;
+      }
+      static #getMaxObjectDepth(serializationOptions) {
+        return serializationOptions.maxObjectDepth === void 0 || serializationOptions.maxObjectDepth === null ? {} : { maxDepth: serializationOptions.maxObjectDepth };
+      }
+      async #releaseObject(handle) {
+        try {
+          await this.cdpClient.sendCommand("Runtime.releaseObject", {
+            objectId: handle
+          });
+        } catch (error62) {
+          if (!(error62.code === -32e3 && error62.message === "Invalid remote object id")) {
+            throw error62;
+          }
+        }
+      }
+      async disown(handle) {
+        if (this.realmStorage.knownHandlesToRealmMap.get(handle) !== this.realmId) {
+          return;
+        }
+        await this.#releaseObject(handle);
+        this.realmStorage.knownHandlesToRealmMap.delete(handle);
+      }
+      dispose() {
+        if (!this.isHidden()) {
+          this.#registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.Script.EventNames.RealmDestroyed,
+            params: {
+              realm: this.realmId
+            }
+          });
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/WindowRealm.js
+var WindowRealm;
+var init_WindowRealm = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/WindowRealm.js"() {
+    init_protocol();
+    init_Realm2();
+    init_SharedId();
+    WindowRealm = class extends Realm2 {
+      #browsingContextId;
+      #browsingContextStorage;
+      sandbox;
+      constructor(browsingContextId, browsingContextStorage, cdpClient, eventManager, executionContextId, logger, origin, realmId, realmStorage, sandbox) {
+        super(cdpClient, eventManager, executionContextId, logger, origin, realmId, realmStorage);
+        this.#browsingContextId = browsingContextId;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.sandbox = sandbox;
+        this.initialize();
+      }
+      #getBrowsingContextId(navigableId) {
+        const maybeBrowsingContext = this.#browsingContextStorage.getAllContexts().find((context2) => context2.navigableId === navigableId);
+        return maybeBrowsingContext?.id ?? "UNKNOWN";
+      }
+      get browsingContext() {
+        return this.#browsingContextStorage.getContext(this.#browsingContextId);
+      }
+      /**
+       * Do not expose to user hidden realms.
+       */
+      isHidden() {
+        return this.realmStorage.hiddenSandboxes.has(this.sandbox);
+      }
+      get associatedBrowsingContexts() {
+        return [this.browsingContext];
+      }
+      get realmType() {
+        return "window";
+      }
+      get realmInfo() {
+        return {
+          ...this.baseInfo,
+          type: this.realmType,
+          context: this.#browsingContextId,
+          sandbox: this.sandbox
+        };
+      }
+      get source() {
+        return {
+          realm: this.realmId,
+          context: this.browsingContext.id
+        };
+      }
+      serializeForBiDi(deepSerializedValue, internalIdMap) {
+        const bidiValue = deepSerializedValue.value;
+        if (deepSerializedValue.type === "node" && bidiValue !== void 0) {
+          if (Object.hasOwn(bidiValue, "backendNodeId")) {
+            let navigableId = this.browsingContext.navigableId ?? "UNKNOWN";
+            if (Object.hasOwn(bidiValue, "loaderId")) {
+              navigableId = bidiValue.loaderId;
+              delete bidiValue["loaderId"];
+            }
+            deepSerializedValue.sharedId = getSharedId(this.#getBrowsingContextId(navigableId), navigableId, bidiValue.backendNodeId);
+            delete bidiValue["backendNodeId"];
+          }
+          if (Object.hasOwn(bidiValue, "children")) {
+            for (const i in bidiValue.children) {
+              bidiValue.children[i] = this.serializeForBiDi(bidiValue.children[i], internalIdMap);
+            }
+          }
+          if (Object.hasOwn(bidiValue, "shadowRoot") && bidiValue.shadowRoot !== null) {
+            bidiValue.shadowRoot = this.serializeForBiDi(bidiValue.shadowRoot, internalIdMap);
+          }
+          if (bidiValue.namespaceURI === "") {
+            bidiValue.namespaceURI = null;
+          }
+        }
+        return super.serializeForBiDi(deepSerializedValue, internalIdMap);
+      }
+      async deserializeForCdp(localValue) {
+        if ("sharedId" in localValue && localValue.sharedId) {
+          const parsedSharedId = parseSharedId(localValue.sharedId);
+          if (parsedSharedId === null) {
+            throw new NoSuchNodeException(`SharedId "${localValue.sharedId}" was not found.`);
+          }
+          const { documentId, backendNodeId } = parsedSharedId;
+          if (this.browsingContext.navigableId !== documentId) {
+            throw new NoSuchNodeException(`SharedId "${localValue.sharedId}" belongs to different document. Current document is ${this.browsingContext.navigableId}.`);
+          }
+          try {
+            const { object: object3 } = await this.cdpClient.sendCommand("DOM.resolveNode", {
+              backendNodeId,
+              executionContextId: this.executionContextId
+            });
+            return { objectId: object3.objectId };
+          } catch (error62) {
+            if (error62.code === -32e3 && error62.message === "No node with given id found") {
+              throw new NoSuchNodeException(`SharedId "${localValue.sharedId}" was not found.`);
+            }
+            throw new UnknownErrorException(error62.message, error62.stack);
+          }
+        }
+        return await super.deserializeForCdp(localValue);
+      }
+      async evaluate(expression, awaitPromise, resultOwnership, serializationOptions, userActivation, includeCommandLineApi) {
+        await this.#browsingContextStorage.getContext(this.#browsingContextId).targetUnblockedOrThrow();
+        return await super.evaluate(expression, awaitPromise, resultOwnership, serializationOptions, userActivation, includeCommandLineApi);
+      }
+      async callFunction(functionDeclaration, awaitPromise, thisLocalValue, argumentsLocalValues, resultOwnership, serializationOptions, userActivation) {
+        await this.#browsingContextStorage.getContext(this.#browsingContextId).targetUnblockedOrThrow();
+        return await super.callFunction(functionDeclaration, awaitPromise, thisLocalValue, argumentsLocalValues, resultOwnership, serializationOptions, userActivation);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/urlHelpers.js
+function urlMatchesAboutBlank(url2) {
+  if (url2 === "") {
+    return true;
+  }
+  try {
+    const parsedUrl = new URL(url2);
+    const schema = parsedUrl.protocol.replace(/:$/, "");
+    return schema.toLowerCase() === "about" && parsedUrl.pathname.toLowerCase() === "blank" && parsedUrl.username === "" && parsedUrl.password === "" && parsedUrl.host === "";
+  } catch (err) {
+    if (err instanceof TypeError) {
+      return false;
+    }
+    throw err;
+  }
+}
+var init_urlHelpers = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/urlHelpers.js"() {
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/NavigationTracker.js
+var NavigationResult, NavigationState, NavigationTracker;
+var init_NavigationTracker = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/NavigationTracker.js"() {
+    init_protocol();
+    init_Deferred2();
+    init_log();
+    init_time();
+    init_urlHelpers();
+    init_uuid();
+    NavigationResult = class {
+      eventName;
+      message;
+      constructor(eventName, message) {
+        this.eventName = eventName;
+        this.message = message;
+      }
+    };
+    NavigationState = class {
+      navigationId = uuidv42();
+      #browsingContextId;
+      #started = false;
+      #finished = new Deferred2();
+      url;
+      loaderId;
+      #isInitial;
+      #eventManager;
+      committed = new Deferred2();
+      isFragmentNavigation;
+      get finished() {
+        return this.#finished;
+      }
+      constructor(url2, browsingContextId, isInitial, eventManager) {
+        this.#browsingContextId = browsingContextId;
+        this.url = url2;
+        this.#isInitial = isInitial;
+        this.#eventManager = eventManager;
+      }
+      navigationInfo() {
+        return {
+          context: this.#browsingContextId,
+          navigation: this.navigationId,
+          timestamp: getTimestamp(),
+          url: this.url
+        };
+      }
+      start() {
+        if (
+          // Initial navigation should not be reported.
+          !this.#isInitial && // No need in reporting started navigation twice.
+          !this.#started && // No need for reporting fragment navigations. Step 13 vs step 16 of the spec:
+          // https://html.spec.whatwg.org/#beginning-navigation:webdriver-bidi-navigation-started
+          !this.isFragmentNavigation
+        ) {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.NavigationStarted,
+            params: this.navigationInfo()
+          }, this.#browsingContextId);
+        }
+        this.#started = true;
+      }
+      #finish(navigationResult) {
+        this.#started = true;
+        if (!this.#isInitial && !this.#finished.isFinished && navigationResult.eventName !== "browsingContext.load") {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: navigationResult.eventName,
+            params: this.navigationInfo()
+          }, this.#browsingContextId);
+        }
+        this.#finished.resolve(navigationResult);
+      }
+      frameNavigated() {
+        this.committed.resolve();
+        if (!this.#isInitial) {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.NavigationCommitted,
+            params: this.navigationInfo()
+          }, this.#browsingContextId);
+        }
+      }
+      fragmentNavigated() {
+        this.committed.resolve();
+        this.#finish(new NavigationResult(
+          "browsingContext.fragmentNavigated"
+          /* NavigationEventName.FragmentNavigated */
+        ));
+      }
+      load() {
+        this.#finish(new NavigationResult(
+          "browsingContext.load"
+          /* NavigationEventName.Load */
+        ));
+      }
+      fail(message) {
+        this.#finish(new NavigationResult(this.committed.isFinished ? "browsingContext.navigationAborted" : "browsingContext.navigationFailed", message));
+      }
+    };
+    NavigationTracker = class _NavigationTracker {
+      #eventManager;
+      #logger;
+      #loaderIdToNavigationsMap = /* @__PURE__ */ new Map();
+      #browsingContextId;
+      /**
+       * Last committed navigation is committed, but is not guaranteed to be finished, as it
+       * can still wait for `load` or `DOMContentLoaded` events.
+       */
+      #lastCommittedNavigation;
+      /**
+       * Pending navigation is a navigation that is started but not yet committed.
+       */
+      #pendingNavigation;
+      // Flags if the initial navigation to `about:blank` is in progress.
+      #isInitialNavigation = true;
+      constructor(url2, browsingContextId, eventManager, logger) {
+        this.#browsingContextId = browsingContextId;
+        this.#eventManager = eventManager;
+        this.#logger = logger;
+        this.#isInitialNavigation = true;
+        this.#lastCommittedNavigation = new NavigationState(url2, browsingContextId, urlMatchesAboutBlank(url2), this.#eventManager);
+      }
+      /**
+       * Returns current started ongoing navigation. It can be either a started pending
+       * navigation, or one is already navigated.
+       */
+      get currentNavigationId() {
+        if (this.#pendingNavigation?.isFragmentNavigation === false) {
+          return this.#pendingNavigation.navigationId;
+        }
+        return this.#lastCommittedNavigation.navigationId;
+      }
+      /**
+       * Flags if the current navigation relates to the initial to `about:blank` navigation.
+       */
+      get isInitialNavigation() {
+        return this.#isInitialNavigation;
+      }
+      /**
+       * Url of the last navigated navigation.
+       */
+      get url() {
+        return this.#lastCommittedNavigation.url;
+      }
+      /**
+       * Creates a pending navigation e.g. when navigation command is called. Required to
+       * provide navigation id before the actual navigation is started. It will be used when
+       * navigation started. Can be aborted, failed, fragment navigated, or became a current
+       * navigation.
+       */
+      createPendingNavigation(url2, canBeInitialNavigation = false) {
+        this.#logger?.(LogType.debug)?.("createCommandNavigation");
+        this.#isInitialNavigation = canBeInitialNavigation && this.#isInitialNavigation && urlMatchesAboutBlank(url2);
+        this.#pendingNavigation?.fail("navigation canceled by concurrent navigation");
+        const navigation = new NavigationState(url2, this.#browsingContextId, this.#isInitialNavigation, this.#eventManager);
+        this.#pendingNavigation = navigation;
+        return navigation;
+      }
+      dispose() {
+        this.#pendingNavigation?.fail("navigation canceled by context disposal");
+        this.#lastCommittedNavigation.fail("navigation canceled by context disposal");
+      }
+      // Update the current url.
+      onTargetInfoChanged(url2) {
+        this.#logger?.(LogType.debug)?.(`onTargetInfoChanged ${url2}`);
+        this.#lastCommittedNavigation.url = url2;
+      }
+      #getNavigationForFrameNavigated(url2, loaderId) {
+        if (this.#loaderIdToNavigationsMap.has(loaderId)) {
+          return this.#loaderIdToNavigationsMap.get(loaderId);
+        }
+        if (this.#pendingNavigation !== void 0 && this.#pendingNavigation.loaderId === void 0) {
+          return this.#pendingNavigation;
+        }
+        return this.createPendingNavigation(url2, true);
+      }
+      /**
+       * @param {string} unreachableUrl indicated the navigation is actually failed.
+       */
+      frameNavigated(url2, loaderId, unreachableUrl) {
+        this.#logger?.(LogType.debug)?.(`frameNavigated ${url2}`);
+        if (unreachableUrl !== void 0) {
+          const navigation2 = this.#loaderIdToNavigationsMap.get(loaderId) ?? this.#pendingNavigation ?? this.createPendingNavigation(unreachableUrl, true);
+          navigation2.url = unreachableUrl;
+          navigation2.start();
+          navigation2.fail("the requested url is unreachable");
+          return;
+        }
+        const navigation = this.#getNavigationForFrameNavigated(url2, loaderId);
+        if (navigation !== this.#lastCommittedNavigation) {
+          this.#lastCommittedNavigation.fail("navigation canceled by concurrent navigation");
+        }
+        navigation.url = url2;
+        navigation.loaderId = loaderId;
+        this.#loaderIdToNavigationsMap.set(loaderId, navigation);
+        navigation.start();
+        navigation.frameNavigated();
+        this.#lastCommittedNavigation = navigation;
+        if (this.#pendingNavigation === navigation) {
+          this.#pendingNavigation = void 0;
+        }
+      }
+      navigatedWithinDocument(url2, navigationType) {
+        this.#logger?.(LogType.debug)?.(`navigatedWithinDocument ${url2}, ${navigationType}`);
+        this.#lastCommittedNavigation.url = url2;
+        if (navigationType !== "fragment") {
+          return;
+        }
+        const fragmentNavigation = this.#pendingNavigation?.isFragmentNavigation === true ? this.#pendingNavigation : new NavigationState(url2, this.#browsingContextId, false, this.#eventManager);
+        fragmentNavigation.fragmentNavigated();
+        if (fragmentNavigation === this.#pendingNavigation) {
+          this.#pendingNavigation = void 0;
+        }
+      }
+      /**
+       * Required to mark navigation as fully complete.
+       * TODO: navigation should be complete when it became the current one on
+       * `Page.frameNavigated` or on navigating command finished with a new loader Id.
+       */
+      loadPageEvent(loaderId) {
+        this.#logger?.(LogType.debug)?.("loadPageEvent");
+        this.#isInitialNavigation = false;
+        this.#loaderIdToNavigationsMap.get(loaderId)?.load();
+      }
+      /**
+       * Fail navigation due to navigation command failed.
+       */
+      failNavigation(navigation, errorText) {
+        this.#logger?.(LogType.debug)?.("failCommandNavigation");
+        navigation.fail(errorText);
+      }
+      /**
+       * Updates the navigation's `loaderId` and sets it as current one, if it is a
+       * cross-document navigation.
+       */
+      navigationCommandFinished(navigation, loaderId) {
+        this.#logger?.(LogType.debug)?.(`finishCommandNavigation ${navigation.navigationId}, ${loaderId}`);
+        if (loaderId !== void 0) {
+          navigation.loaderId = loaderId;
+          this.#loaderIdToNavigationsMap.set(loaderId, navigation);
+        }
+        navigation.isFragmentNavigation = loaderId === void 0;
+      }
+      frameStartedNavigating(url2, loaderId, navigationType) {
+        this.#logger?.(LogType.debug)?.(`frameStartedNavigating ${url2}, ${loaderId}`);
+        if (this.#pendingNavigation && this.#pendingNavigation?.loaderId !== void 0 && this.#pendingNavigation?.loaderId !== loaderId) {
+          this.#pendingNavigation?.fail("navigation canceled by concurrent navigation");
+          this.#pendingNavigation = void 0;
+        }
+        if (this.#loaderIdToNavigationsMap.has(loaderId)) {
+          const existingNavigation = this.#loaderIdToNavigationsMap.get(loaderId);
+          existingNavigation.isFragmentNavigation = _NavigationTracker.#isFragmentNavigation(navigationType);
+          this.#pendingNavigation = existingNavigation;
+          return;
+        }
+        const pendingNavigation = this.#pendingNavigation ?? this.createPendingNavigation(url2, true);
+        this.#loaderIdToNavigationsMap.set(loaderId, pendingNavigation);
+        pendingNavigation.isFragmentNavigation = _NavigationTracker.#isFragmentNavigation(navigationType);
+        pendingNavigation.url = url2;
+        pendingNavigation.loaderId = loaderId;
+        pendingNavigation.start();
+      }
+      static #isFragmentNavigation(navigationType) {
+        return ["historySameDocument", "sameDocument"].includes(navigationType);
+      }
+      /**
+       * If there is a navigation with the loaderId equals to the network request id, it means
+       * that the navigation failed.
+       */
+      networkLoadingFailed(loaderId, errorText) {
+        this.#loaderIdToNavigationsMap.get(loaderId)?.fail(errorText);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextImpl.js
+function serializeOrigin(origin) {
+  if (["://", ""].includes(origin)) {
+    origin = "null";
+  }
+  return origin;
+}
+function getImageFormatParameters(params) {
+  const { quality, type } = params.format ?? {
+    type: "image/png"
+  };
+  switch (type) {
+    case "image/png": {
+      return { format: "png" };
+    }
+    case "image/jpeg": {
+      return {
+        format: "jpeg",
+        ...quality === void 0 ? {} : { quality: Math.round(quality * 100) }
+      };
+    }
+    case "image/webp": {
+      return {
+        format: "webp",
+        ...quality === void 0 ? {} : { quality: Math.round(quality * 100) }
+      };
+    }
+  }
+  throw new InvalidArgumentException(`Image format '${type}' is not a supported format`);
+}
+function deserializeDOMRect(result) {
+  if (result.type !== "object" || result.value === void 0) {
+    return;
+  }
+  const x2 = result.value.find(([key]) => {
+    return key === "x";
+  })?.[1];
+  const y = result.value.find(([key]) => {
+    return key === "y";
+  })?.[1];
+  const height = result.value.find(([key]) => {
+    return key === "height";
+  })?.[1];
+  const width = result.value.find(([key]) => {
+    return key === "width";
+  })?.[1];
+  if (x2?.type !== "number" || y?.type !== "number" || height?.type !== "number" || width?.type !== "number") {
+    return;
+  }
+  return {
+    x: x2.value,
+    y: y.value,
+    width: width.value,
+    height: height.value
+  };
+}
+function normalizeRect(box) {
+  return {
+    ...box.width < 0 ? {
+      x: box.x + box.width,
+      width: -box.width
+    } : {
+      x: box.x,
+      width: box.width
+    },
+    ...box.height < 0 ? {
+      y: box.y + box.height,
+      height: -box.height
+    } : {
+      y: box.y,
+      height: box.height
+    }
+  };
+}
+function getIntersectionRect2(first2, second) {
+  first2 = normalizeRect(first2);
+  second = normalizeRect(second);
+  const x2 = Math.max(first2.x, second.x);
+  const y = Math.max(first2.y, second.y);
+  return {
+    x: x2,
+    y,
+    width: Math.max(Math.min(first2.x + first2.width, second.x + second.width) - x2, 0),
+    height: Math.max(Math.min(first2.y + first2.height, second.y + second.height) - y, 0)
+  };
+}
+function parseInteger(value) {
+  value = value.trim();
+  if (!/^[0-9]+$/.test(value)) {
+    throw new InvalidArgumentException(`Invalid integer: ${value}`);
+  }
+  return parseInt(value);
+}
+var _a4, BrowsingContextImpl;
+var init_BrowsingContextImpl = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextImpl.js"() {
+    init_protocol();
+    init_assert2();
+    init_Deferred2();
+    init_log();
+    init_time();
+    init_unitConversions();
+    init_uuid();
+    init_SharedId();
+    init_WindowRealm();
+    init_NavigationTracker();
+    BrowsingContextImpl = class {
+      static LOGGER_PREFIX = `${LogType.debug}:browsingContext`;
+      /** Direct children browsing contexts. */
+      #children = /* @__PURE__ */ new Set();
+      /** The ID of this browsing context. */
+      #id;
+      userContext;
+      // Used for running helper scripts.
+      #hiddenSandbox = uuidv42();
+      #downloadIdToUrlMap = /* @__PURE__ */ new Map();
+      /**
+       * The ID of the parent browsing context.
+       * If null, this is a top-level context.
+       */
+      #loaderId;
+      #parentId = null;
+      #originalOpener;
+      #lifecycle = {
+        DOMContentLoaded: new Deferred2(),
+        load: new Deferred2()
+      };
+      #cdpTarget;
+      #defaultRealmDeferred = new Deferred2();
+      #browsingContextStorage;
+      #eventManager;
+      #logger;
+      #navigationTracker;
+      #realmStorage;
+      #configStorage;
+      // Set when the user prompt is opened. Required to provide the type in closing event.
+      #lastUserPromptType;
+      constructor(id, parentId, userContext, cdpTarget, eventManager, browsingContextStorage, realmStorage, configStorage, url2, originalOpener, logger) {
+        this.#cdpTarget = cdpTarget;
+        this.#id = id;
+        this.#parentId = parentId;
+        this.userContext = userContext;
+        this.#eventManager = eventManager;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#realmStorage = realmStorage;
+        this.#configStorage = configStorage;
+        this.#logger = logger;
+        this.#originalOpener = originalOpener;
+        this.#realmStorage.hiddenSandboxes.add(this.#hiddenSandbox);
+        this.#navigationTracker = new NavigationTracker(url2, id, eventManager, logger);
+      }
+      static create(id, parentId, userContext, cdpTarget, eventManager, browsingContextStorage, realmStorage, configStorage, url2, originalOpener, logger) {
+        const context2 = new _a4(id, parentId, userContext, cdpTarget, eventManager, browsingContextStorage, realmStorage, configStorage, url2, originalOpener, logger);
+        context2.#initListeners();
+        browsingContextStorage.addContext(context2);
+        if (!context2.isTopLevelContext()) {
+          context2.parent.addChild(context2.id);
+        }
+        eventManager.registerPromiseEvent(context2.targetUnblockedOrThrow().then(() => {
+          return {
+            kind: "success",
+            value: {
+              type: "event",
+              method: chromium_bidi_exports.BrowsingContext.EventNames.ContextCreated,
+              params: {
+                ...context2.serializeToBidiValue(),
+                // Hack to provide the initial URL of the context, as it can be changed
+                // between the page target is attached and unblocked, as the page is not
+                // fully paused in MPArch session (https://crbug.com/372842894).
+                // TODO: remove once https://crbug.com/372842894 is addressed.
+                url: url2
+              }
+            }
+          };
+        }, (error62) => {
+          return {
+            kind: "error",
+            error: error62
+          };
+        }), context2.id, chromium_bidi_exports.BrowsingContext.EventNames.ContextCreated);
+        return context2;
+      }
+      /**
+       * @see https://html.spec.whatwg.org/multipage/document-sequences.html#navigable
+       */
+      get navigableId() {
+        return this.#loaderId;
+      }
+      get navigationId() {
+        return this.#navigationTracker.currentNavigationId;
+      }
+      dispose(emitContextDestroyed) {
+        this.#navigationTracker.dispose();
+        this.#realmStorage.deleteRealms({
+          browsingContextId: this.id
+        });
+        if (!this.isTopLevelContext()) {
+          this.parent.#children.delete(this.id);
+        }
+        this.#failLifecycleIfNotFinished();
+        if (emitContextDestroyed) {
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.ContextDestroyed,
+            params: this.serializeToBidiValue(null)
+          }, this.id);
+        }
+        this.#deleteAllChildren();
+        this.#eventManager.clearBufferedEvents(this.id);
+        this.#browsingContextStorage.deleteContextById(this.id);
+      }
+      /** Returns the ID of this context. */
+      get id() {
+        return this.#id;
+      }
+      /** Returns the parent context ID. */
+      get parentId() {
+        return this.#parentId;
+      }
+      /** Sets the parent context ID and updates parent's children. */
+      set parentId(parentId) {
+        if (this.#parentId !== null) {
+          this.#logger?.(LogType.debugError)?.("Parent context already set");
+          return;
+        }
+        this.#parentId = parentId;
+        if (!this.isTopLevelContext()) {
+          this.parent.addChild(this.id);
+        }
+      }
+      /** Returns the parent context. */
+      get parent() {
+        if (this.parentId === null) {
+          return null;
+        }
+        return this.#browsingContextStorage.getContext(this.parentId);
+      }
+      /** Returns all direct children contexts. */
+      get directChildren() {
+        return [...this.#children].map((id) => this.#browsingContextStorage.getContext(id));
+      }
+      /** Returns all children contexts, flattened. */
+      get allChildren() {
+        const children = this.directChildren;
+        return children.concat(...children.map((child) => child.allChildren));
+      }
+      /**
+       * Returns true if this is a top-level context.
+       * This is the case whenever the parent context ID is null.
+       */
+      isTopLevelContext() {
+        return this.#parentId === null;
+      }
+      get top() {
+        let topContext = this;
+        let parent = topContext.parent;
+        while (parent) {
+          topContext = parent;
+          parent = topContext.parent;
+        }
+        return topContext;
+      }
+      addChild(childId) {
+        this.#children.add(childId);
+      }
+      #deleteAllChildren(emitContextDestroyed = false) {
+        this.directChildren.map((child) => child.dispose(emitContextDestroyed));
+      }
+      get cdpTarget() {
+        return this.#cdpTarget;
+      }
+      updateCdpTarget(cdpTarget) {
+        this.#cdpTarget = cdpTarget;
+        this.#initListeners();
+      }
+      get url() {
+        return this.#navigationTracker.url;
+      }
+      async lifecycleLoaded() {
+        await this.#lifecycle.load;
+      }
+      async targetUnblockedOrThrow() {
+        const result = await this.#cdpTarget.unblocked;
+        if (result.kind === "error") {
+          throw result.error;
+        }
+      }
+      /** Returns a sandbox for internal helper scripts which is not exposed to the user.*/
+      async getOrCreateHiddenSandbox() {
+        return await this.#getOrCreateSandboxInternal(this.#hiddenSandbox);
+      }
+      /** Returns a sandbox which is exposed to user. */
+      async getOrCreateUserSandbox(sandbox) {
+        const realm = await this.#getOrCreateSandboxInternal(sandbox);
+        if (realm.isHidden()) {
+          throw new NoSuchFrameException(`Realm "${sandbox}" not found`);
+        }
+        return realm;
+      }
+      async #getOrCreateSandboxInternal(sandbox) {
+        if (sandbox === void 0 || sandbox === "") {
+          return await this.#defaultRealmDeferred;
+        }
+        let maybeSandboxes = this.#realmStorage.findRealms({
+          browsingContextId: this.id,
+          sandbox
+        });
+        if (maybeSandboxes.length === 0) {
+          await this.#cdpTarget.cdpClient.sendCommand("Page.createIsolatedWorld", {
+            frameId: this.id,
+            worldName: sandbox
+          });
+          maybeSandboxes = this.#realmStorage.findRealms({
+            browsingContextId: this.id,
+            sandbox
+          });
+          assert3(maybeSandboxes.length !== 0);
+        }
+        return maybeSandboxes[0];
+      }
+      /**
+       * Implements https://w3c.github.io/webdriver-bidi/#get-the-navigable-info.
+       */
+      serializeToBidiValue(maxDepth = 0, addParentField = true) {
+        return {
+          context: this.#id,
+          url: this.url,
+          userContext: this.userContext,
+          originalOpener: this.#originalOpener ?? null,
+          clientWindow: `${this.cdpTarget.windowId}`,
+          children: maxDepth === null || maxDepth > 0 ? this.directChildren.map((c) => c.serializeToBidiValue(maxDepth === null ? maxDepth : maxDepth - 1, false)) : null,
+          ...addParentField ? { parent: this.#parentId } : {}
+        };
+      }
+      onTargetInfoChanged(params) {
+        this.#navigationTracker.onTargetInfoChanged(params.targetInfo.url);
+      }
+      #initListeners() {
+        this.#cdpTarget.cdpClient.on("Network.loadingFailed", (params) => {
+          this.#navigationTracker.networkLoadingFailed(params.requestId, params.errorText);
+        });
+        this.#cdpTarget.cdpClient.on("Page.fileChooserOpened", (params) => {
+          if (this.id !== params.frameId) {
+            return;
+          }
+          if (this.#loaderId === void 0) {
+            this.#logger?.(LogType.debugError)?.("LoaderId should be defined when file upload is shown", params);
+            return;
+          }
+          const element = params.backendNodeId === void 0 ? void 0 : {
+            sharedId: getSharedId(this.id, this.#loaderId, params.backendNodeId)
+          };
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.Input.EventNames.FileDialogOpened,
+            params: {
+              context: this.id,
+              multiple: params.mode === "selectMultiple",
+              element
+            }
+          }, this.id);
+        });
+        this.#cdpTarget.cdpClient.on("Page.frameNavigated", (params) => {
+          if (this.id !== params.frame.id) {
+            return;
+          }
+          this.#navigationTracker.frameNavigated(
+            params.frame.url + (params.frame.urlFragment ?? ""),
+            params.frame.loaderId,
+            // `unreachableUrl` indicates if the navigation failed.
+            params.frame.unreachableUrl
+          );
+          this.#deleteAllChildren();
+          this.#documentChanged(params.frame.loaderId);
+        });
+        this.#cdpTarget.cdpClient.on("Page.frameStartedNavigating", (params) => {
+          if (this.id !== params.frameId) {
+            return;
+          }
+          this.#navigationTracker.frameStartedNavigating(params.url, params.loaderId, params.navigationType);
+        });
+        this.#cdpTarget.cdpClient.on("Page.navigatedWithinDocument", (params) => {
+          if (this.id !== params.frameId) {
+            return;
+          }
+          this.#navigationTracker.navigatedWithinDocument(params.url, params.navigationType);
+          if (params.navigationType === "historyApi") {
+            this.#eventManager.registerEvent({
+              type: "event",
+              method: "browsingContext.historyUpdated",
+              params: {
+                context: this.id,
+                timestamp: getTimestamp(),
+                url: this.#navigationTracker.url
+              }
+            }, this.id);
+            return;
+          }
+        });
+        this.#cdpTarget.cdpClient.on("Page.lifecycleEvent", (params) => {
+          if (this.id !== params.frameId) {
+            return;
+          }
+          if (params.name === "init") {
+            this.#documentChanged(params.loaderId);
+            return;
+          }
+          if (params.name === "commit") {
+            this.#loaderId = params.loaderId;
+            return;
+          }
+          if (!this.#loaderId) {
+            this.#loaderId = params.loaderId;
+          }
+          if (params.loaderId !== this.#loaderId) {
+            return;
+          }
+          switch (params.name) {
+            case "DOMContentLoaded":
+              if (!this.#navigationTracker.isInitialNavigation) {
+                this.#eventManager.registerEvent({
+                  type: "event",
+                  method: chromium_bidi_exports.BrowsingContext.EventNames.DomContentLoaded,
+                  params: {
+                    context: this.id,
+                    navigation: this.#navigationTracker.currentNavigationId,
+                    timestamp: getTimestamp(),
+                    url: this.#navigationTracker.url
+                  }
+                }, this.id);
+              }
+              this.#lifecycle.DOMContentLoaded.resolve();
+              break;
+            case "load":
+              if (!this.#navigationTracker.isInitialNavigation) {
+                this.#eventManager.registerEvent({
+                  type: "event",
+                  method: chromium_bidi_exports.BrowsingContext.EventNames.Load,
+                  params: {
+                    context: this.id,
+                    navigation: this.#navigationTracker.currentNavigationId,
+                    timestamp: getTimestamp(),
+                    url: this.#navigationTracker.url
+                  }
+                }, this.id);
+              }
+              this.#navigationTracker.loadPageEvent(params.loaderId);
+              this.#lifecycle.load.resolve();
+              break;
+          }
+        });
+        this.#cdpTarget.cdpClient.on("Runtime.executionContextCreated", (params) => {
+          const { auxData, name, uniqueId, id } = params.context;
+          if (!auxData || auxData.frameId !== this.id) {
+            return;
+          }
+          if (auxData.type === "isolated" && name === "") {
+            return;
+          }
+          let origin;
+          let sandbox;
+          switch (auxData.type) {
+            case "isolated":
+              sandbox = name;
+              if (!this.#defaultRealmDeferred.isFinished) {
+                this.#logger?.(LogType.debugError)?.("Unexpectedly, isolated realm created before the default one");
+              }
+              origin = this.#defaultRealmDeferred.isFinished ? this.#defaultRealmDeferred.result.origin : (
+                // This fallback is not expected to be ever reached.
+                ""
+              );
+              break;
+            case "default":
+              origin = serializeOrigin(params.context.origin);
+              break;
+            default:
+              return;
+          }
+          const realm = new WindowRealm(this.id, this.#browsingContextStorage, this.#cdpTarget.cdpClient, this.#eventManager, id, this.#logger, origin, uniqueId, this.#realmStorage, sandbox);
+          if (auxData.isDefault) {
+            this.#defaultRealmDeferred.resolve(realm);
+            void Promise.all(this.#cdpTarget.getChannels().map((channel) => channel.startListenerFromWindow(realm, this.#eventManager)));
+          }
+        });
+        this.#cdpTarget.cdpClient.on("Runtime.executionContextDestroyed", (params) => {
+          if (this.#defaultRealmDeferred.isFinished && this.#defaultRealmDeferred.result.executionContextId === params.executionContextId) {
+            this.#defaultRealmDeferred = new Deferred2();
+          }
+          this.#realmStorage.deleteRealms({
+            cdpSessionId: this.#cdpTarget.cdpSessionId,
+            executionContextId: params.executionContextId
+          });
+        });
+        this.#cdpTarget.cdpClient.on("Runtime.executionContextsCleared", () => {
+          if (!this.#defaultRealmDeferred.isFinished) {
+            this.#defaultRealmDeferred.reject(new UnknownErrorException("execution contexts cleared"));
+          }
+          this.#defaultRealmDeferred = new Deferred2();
+          this.#realmStorage.deleteRealms({
+            cdpSessionId: this.#cdpTarget.cdpSessionId
+          });
+        });
+        this.#cdpTarget.cdpClient.on("Page.javascriptDialogClosed", (params) => {
+          if (params.frameId && this.id !== params.frameId) {
+            return;
+          }
+          if (!params.frameId && this.#parentId && this.#cdpTarget.cdpClient !== this.#browsingContextStorage.getContext(this.#parentId)?.cdpTarget.cdpClient) {
+            return;
+          }
+          const accepted = params.result;
+          if (this.#lastUserPromptType === void 0) {
+            this.#logger?.(LogType.debugError)?.("Unexpectedly no opening prompt event before closing one");
+          }
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.UserPromptClosed,
+            params: {
+              context: this.id,
+              accepted,
+              // `lastUserPromptType` should never be undefined here, so fallback to
+              // `UNKNOWN`. The fallback is required to prevent tests from hanging while
+              // waiting for the closing event. The cast is required, as the `UNKNOWN` value
+              // is not standard.
+              type: this.#lastUserPromptType ?? "UNKNOWN",
+              userText: accepted && params.userInput ? params.userInput : void 0
+            }
+          }, this.id);
+          this.#lastUserPromptType = void 0;
+        });
+        this.#cdpTarget.cdpClient.on("Page.javascriptDialogOpening", (params) => {
+          if (params.frameId && this.id !== params.frameId) {
+            return;
+          }
+          if (!params.frameId && this.#parentId && this.#cdpTarget.cdpClient !== this.#browsingContextStorage.getContext(this.#parentId)?.cdpTarget.cdpClient) {
+            return;
+          }
+          const promptType = _a4.#getPromptType(params.type);
+          this.#lastUserPromptType = promptType;
+          const promptHandler = this.#getPromptHandler(promptType);
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: chromium_bidi_exports.BrowsingContext.EventNames.UserPromptOpened,
+            params: {
+              context: this.id,
+              handler: promptHandler,
+              type: promptType,
+              message: params.message,
+              ...params.type === "prompt" ? { defaultValue: params.defaultPrompt } : {}
+            }
+          }, this.id);
+          switch (promptHandler) {
+            // Based on `unhandledPromptBehavior`, check if the prompt should be handled
+            // automatically (`accept`, `dismiss`) or wait for the user to do it.
+            case "accept":
+              void this.handleUserPrompt(true);
+              break;
+            case "dismiss":
+              void this.handleUserPrompt(false);
+              break;
+            case "ignore":
+              break;
+          }
+        });
+        this.#cdpTarget.browserCdpClient.on("Browser.downloadWillBegin", (params) => {
+          if (this.id !== params.frameId) {
+            return;
+          }
+          this.#downloadIdToUrlMap.set(params.guid, params.url);
+          this.#eventManager.registerEvent(
+            // @ts-expect-error we do not support download yet. https://github.com/GoogleChromeLabs/chromium-bidi/issues/4155.
+            {
+              type: "event",
+              method: chromium_bidi_exports.BrowsingContext.EventNames.DownloadWillBegin,
+              params: {
+                context: this.id,
+                suggestedFilename: params.suggestedFilename,
+                navigation: params.guid,
+                timestamp: getTimestamp(),
+                url: params.url
+              }
+            },
+            this.id
+          );
+        });
+        this.#cdpTarget.browserCdpClient.on("Browser.downloadProgress", (params) => {
+          if (!this.#downloadIdToUrlMap.has(params.guid)) {
+            return;
+          }
+          if (params.state === "inProgress") {
+            return;
+          }
+          const url2 = this.#downloadIdToUrlMap.get(params.guid);
+          switch (params.state) {
+            case "canceled":
+              this.#eventManager.registerEvent(
+                // @ts-expect-error we do not support download yet. https://github.com/GoogleChromeLabs/chromium-bidi/issues/4155.
+                {
+                  type: "event",
+                  method: chromium_bidi_exports.BrowsingContext.EventNames.DownloadEnd,
+                  params: {
+                    status: "canceled",
+                    context: this.id,
+                    navigation: params.guid,
+                    timestamp: getTimestamp(),
+                    url: url2
+                  }
+                },
+                this.id
+              );
+              break;
+            case "completed":
+              this.#eventManager.registerEvent(
+                // @ts-expect-error we do not support download yet. https://github.com/GoogleChromeLabs/chromium-bidi/issues/4155.
+                {
+                  type: "event",
+                  method: chromium_bidi_exports.BrowsingContext.EventNames.DownloadEnd,
+                  params: {
+                    filepath: params.filePath ?? null,
+                    status: "complete",
+                    context: this.id,
+                    navigation: params.guid,
+                    timestamp: getTimestamp(),
+                    url: url2
+                  }
+                },
+                this.id
+              );
+              break;
+            default:
+              throw new UnknownErrorException(`Unknown download state: ${params.state}`);
+          }
+        });
+      }
+      static #getPromptType(cdpType) {
+        switch (cdpType) {
+          case "alert":
+            return "alert";
+          case "beforeunload":
+            return "beforeunload";
+          case "confirm":
+            return "confirm";
+          case "prompt":
+            return "prompt";
+        }
+      }
+      /**
+       * Returns either custom UserContext's prompt handler, global or default one.
+       */
+      #getPromptHandler(promptType) {
+        const defaultPromptHandler = "dismiss";
+        const contextConfig = this.#configStorage.getActiveConfig(this.top.id, this.userContext);
+        switch (promptType) {
+          case "alert":
+            return contextConfig.userPromptHandler?.alert ?? contextConfig.userPromptHandler?.default ?? defaultPromptHandler;
+          case "beforeunload":
+            return contextConfig.userPromptHandler?.beforeUnload ?? contextConfig.userPromptHandler?.default ?? "accept";
+          case "confirm":
+            return contextConfig.userPromptHandler?.confirm ?? contextConfig.userPromptHandler?.default ?? defaultPromptHandler;
+          case "prompt":
+            return contextConfig.userPromptHandler?.prompt ?? contextConfig.userPromptHandler?.default ?? defaultPromptHandler;
+        }
+      }
+      #documentChanged(loaderId) {
+        if (loaderId === void 0 || this.#loaderId === loaderId) {
+          return;
+        }
+        this.#resetLifecycleIfFinished();
+        this.#loaderId = loaderId;
+        this.#deleteAllChildren(true);
+      }
+      #resetLifecycleIfFinished() {
+        if (this.#lifecycle.DOMContentLoaded.isFinished) {
+          this.#lifecycle.DOMContentLoaded = new Deferred2();
+        } else {
+          this.#logger?.(_a4.LOGGER_PREFIX)?.("Document changed (DOMContentLoaded)");
+        }
+        if (this.#lifecycle.load.isFinished) {
+          this.#lifecycle.load = new Deferred2();
+        } else {
+          this.#logger?.(_a4.LOGGER_PREFIX)?.("Document changed (load)");
+        }
+      }
+      #failLifecycleIfNotFinished() {
+        if (!this.#lifecycle.DOMContentLoaded.isFinished) {
+          this.#lifecycle.DOMContentLoaded.reject(new UnknownErrorException("navigation canceled"));
+        }
+        if (!this.#lifecycle.load.isFinished) {
+          this.#lifecycle.load.reject(new UnknownErrorException("navigation canceled"));
+        }
+      }
+      async navigate(url2, wait) {
+        try {
+          new URL(url2);
+        } catch {
+          throw new InvalidArgumentException(`Invalid URL: ${url2}`);
+        }
+        const navigationState = this.#navigationTracker.createPendingNavigation(url2);
+        const cdpNavigatePromise = (async () => {
+          const cdpNavigateResult = await this.#cdpTarget.cdpClient.sendCommand("Page.navigate", {
+            url: url2,
+            frameId: this.id
+          });
+          if (cdpNavigateResult.errorText) {
+            this.#navigationTracker.failNavigation(navigationState, cdpNavigateResult.errorText);
+            throw new UnknownErrorException(cdpNavigateResult.errorText);
+          }
+          this.#navigationTracker.navigationCommandFinished(navigationState, cdpNavigateResult.loaderId);
+          this.#documentChanged(cdpNavigateResult.loaderId);
+        })();
+        const result = await Promise.race([
+          // No `loaderId` means same-document navigation.
+          this.#waitNavigation(wait, cdpNavigatePromise, navigationState),
+          // Throw an error if the navigation is canceled.
+          navigationState.finished
+        ]);
+        if (result instanceof NavigationResult) {
+          if (
+            // TODO: check after decision on the spec is done:
+            //  https://github.com/w3c/webdriver-bidi/issues/799.
+            result.eventName === "browsingContext.navigationAborted" || result.eventName === "browsingContext.navigationFailed"
+          ) {
+            throw new UnknownErrorException(result.message ?? "unknown exception");
+          }
+        }
+        return {
+          navigation: navigationState.navigationId,
+          // Url can change due to redirects. Get the one from commandNavigation.
+          url: navigationState.url
+        };
+      }
+      async #waitNavigation(wait, cdpCommandPromise, navigationState) {
+        await Promise.all([navigationState.committed, cdpCommandPromise]);
+        if (wait === "none") {
+          return;
+        }
+        if (navigationState.isFragmentNavigation === true) {
+          await navigationState.finished;
+          return;
+        }
+        if (wait === "interactive") {
+          await this.#lifecycle.DOMContentLoaded;
+          return;
+        }
+        if (wait === "complete") {
+          await this.#lifecycle.load;
+          return;
+        }
+        throw new InvalidArgumentException(`Wait condition ${wait} is not supported`);
+      }
+      // TODO: support concurrent navigations analogous to `navigate`.
+      async reload(ignoreCache, wait) {
+        await this.targetUnblockedOrThrow();
+        this.#resetLifecycleIfFinished();
+        const navigationState = this.#navigationTracker.createPendingNavigation(this.#navigationTracker.url);
+        const cdpReloadPromise = this.#cdpTarget.cdpClient.sendCommand("Page.reload", {
+          ignoreCache
+        });
+        const result = await Promise.race([
+          // No `loaderId` means same-document navigation.
+          this.#waitNavigation(wait, cdpReloadPromise, navigationState),
+          // Throw an error if the navigation is canceled.
+          navigationState.finished
+        ]);
+        if (result instanceof NavigationResult) {
+          if (result.eventName === "browsingContext.navigationAborted" || result.eventName === "browsingContext.navigationFailed") {
+            throw new UnknownErrorException(result.message ?? "unknown exception");
+          }
+        }
+        return {
+          navigation: navigationState.navigationId,
+          // Url can change due to redirects. Get the one from commandNavigation.
+          url: navigationState.url
+        };
+      }
+      async setViewport(viewport, devicePixelRatio, screenOrientation) {
+        const config3 = this.#configStorage.getActiveConfig(this.id, this.userContext);
+        await this.cdpTarget.setDeviceMetricsOverride(viewport, devicePixelRatio, screenOrientation, config3.screenArea ?? null, config3.scrollbarType ?? null);
+      }
+      async handleUserPrompt(accept, userText) {
+        await this.top.#cdpTarget.cdpClient.sendCommand("Page.handleJavaScriptDialog", {
+          accept: accept ?? true,
+          promptText: userText
+        });
+      }
+      async activate() {
+        await this.#cdpTarget.cdpClient.sendCommand("Page.bringToFront");
+      }
+      async captureScreenshot(params) {
+        if (!this.isTopLevelContext()) {
+          throw new UnsupportedOperationException(`Non-top-level 'context' (${params.context}) is currently not supported`);
+        }
+        const formatParameters = getImageFormatParameters(params);
+        let captureBeyondViewport = false;
+        let script;
+        params.origin ??= "viewport";
+        switch (params.origin) {
+          case "document": {
+            script = String(() => {
+              const element = document.documentElement;
+              return {
+                x: 0,
+                y: 0,
+                width: element.scrollWidth,
+                height: element.scrollHeight
+              };
+            });
+            captureBeyondViewport = true;
+            break;
+          }
+          case "viewport": {
+            script = String(() => {
+              const viewport = window.visualViewport;
+              return {
+                x: viewport.pageLeft,
+                y: viewport.pageTop,
+                width: viewport.width,
+                height: viewport.height
+              };
+            });
+            break;
+          }
+        }
+        const hiddenSandboxRealm = await this.getOrCreateHiddenSandbox();
+        const originResult = await hiddenSandboxRealm.callFunction(script, false);
+        assert3(originResult.type === "success");
+        const origin = deserializeDOMRect(originResult.result);
+        assert3(origin);
+        let rect = origin;
+        if (params.clip) {
+          const clip2 = params.clip;
+          if (params.origin === "viewport" && clip2.type === "box") {
+            clip2.x += origin.x;
+            clip2.y += origin.y;
+          }
+          rect = getIntersectionRect2(await this.#parseRect(clip2), origin);
+        }
+        if (rect.width === 0 || rect.height === 0) {
+          throw new UnableToCaptureScreenException(`Unable to capture screenshot with zero dimensions: width=${rect.width}, height=${rect.height}`);
+        }
+        return await this.#cdpTarget.cdpClient.sendCommand("Page.captureScreenshot", {
+          clip: { ...rect, scale: 1 },
+          ...formatParameters,
+          captureBeyondViewport
+        });
+      }
+      async print(params) {
+        if (!this.isTopLevelContext()) {
+          throw new UnsupportedOperationException("Printing of non-top level contexts is not supported");
+        }
+        const cdpParams = {};
+        if (params.background !== void 0) {
+          cdpParams.printBackground = params.background;
+        }
+        if (params.margin?.bottom !== void 0) {
+          cdpParams.marginBottom = inchesFromCm(params.margin.bottom);
+        }
+        if (params.margin?.left !== void 0) {
+          cdpParams.marginLeft = inchesFromCm(params.margin.left);
+        }
+        if (params.margin?.right !== void 0) {
+          cdpParams.marginRight = inchesFromCm(params.margin.right);
+        }
+        if (params.margin?.top !== void 0) {
+          cdpParams.marginTop = inchesFromCm(params.margin.top);
+        }
+        if (params.orientation !== void 0) {
+          cdpParams.landscape = params.orientation === "landscape";
+        }
+        if (params.page?.height !== void 0) {
+          cdpParams.paperHeight = inchesFromCm(params.page.height);
+        }
+        if (params.page?.width !== void 0) {
+          cdpParams.paperWidth = inchesFromCm(params.page.width);
+        }
+        if (params.pageRanges !== void 0) {
+          for (const range of params.pageRanges) {
+            if (typeof range === "number") {
+              continue;
+            }
+            const rangeParts = range.split("-");
+            if (rangeParts.length < 1 || rangeParts.length > 2) {
+              throw new InvalidArgumentException(`Invalid page range: ${range} is not a valid integer range.`);
+            }
+            if (rangeParts.length === 1) {
+              void parseInteger(rangeParts[0] ?? "");
+              continue;
+            }
+            let lowerBound;
+            let upperBound;
+            const [rangeLowerPart = "", rangeUpperPart = ""] = rangeParts;
+            if (rangeLowerPart === "") {
+              lowerBound = 1;
+            } else {
+              lowerBound = parseInteger(rangeLowerPart);
+            }
+            if (rangeUpperPart === "") {
+              upperBound = Number.MAX_SAFE_INTEGER;
+            } else {
+              upperBound = parseInteger(rangeUpperPart);
+            }
+            if (lowerBound > upperBound) {
+              throw new InvalidArgumentException(`Invalid page range: ${rangeLowerPart} > ${rangeUpperPart}`);
+            }
+          }
+          cdpParams.pageRanges = params.pageRanges.join(",");
+        }
+        if (params.scale !== void 0) {
+          cdpParams.scale = params.scale;
+        }
+        if (params.shrinkToFit !== void 0) {
+          cdpParams.preferCSSPageSize = !params.shrinkToFit;
+        }
+        try {
+          const result = await this.#cdpTarget.cdpClient.sendCommand("Page.printToPDF", cdpParams);
+          return {
+            data: result.data
+          };
+        } catch (error62) {
+          if (error62.message === "invalid print parameters: content area is empty") {
+            throw new UnsupportedOperationException(error62.message);
+          }
+          throw error62;
+        }
+      }
+      /**
+       * See
+       * https://w3c.github.io/webdriver-bidi/#:~:text=If%20command%20parameters%20contains%20%22clip%22%3A
+       */
+      async #parseRect(clip2) {
+        switch (clip2.type) {
+          case "box":
+            return { x: clip2.x, y: clip2.y, width: clip2.width, height: clip2.height };
+          case "element": {
+            const hiddenSandboxRealm = await this.getOrCreateHiddenSandbox();
+            const result = await hiddenSandboxRealm.callFunction(String((element) => {
+              return element instanceof Element;
+            }), false, { type: "undefined" }, [clip2.element]);
+            if (result.type === "exception") {
+              throw new NoSuchElementException(`Element '${clip2.element.sharedId}' was not found`);
+            }
+            assert3(result.result.type === "boolean");
+            if (!result.result.value) {
+              throw new NoSuchElementException(`Node '${clip2.element.sharedId}' is not an Element`);
+            }
+            {
+              const result2 = await hiddenSandboxRealm.callFunction(String((element) => {
+                const rect2 = element.getBoundingClientRect();
+                return {
+                  x: rect2.x,
+                  y: rect2.y,
+                  height: rect2.height,
+                  width: rect2.width
+                };
+              }), false, { type: "undefined" }, [clip2.element]);
+              assert3(result2.type === "success");
+              const rect = deserializeDOMRect(result2.result);
+              if (!rect) {
+                throw new UnableToCaptureScreenException(`Could not get bounding box for Element '${clip2.element.sharedId}'`);
+              }
+              return rect;
+            }
+          }
+        }
+      }
+      async close() {
+        await this.#cdpTarget.cdpClient.sendCommand("Page.close");
+      }
+      async traverseHistory(delta) {
+        if (delta === 0) {
+          return;
+        }
+        const history = await this.#cdpTarget.cdpClient.sendCommand("Page.getNavigationHistory");
+        const entry = history.entries[history.currentIndex + delta];
+        if (!entry) {
+          throw new NoSuchHistoryEntryException(`No history entry at delta ${delta}`);
+        }
+        await this.#cdpTarget.cdpClient.sendCommand("Page.navigateToHistoryEntry", {
+          entryId: entry.id
+        });
+      }
+      async toggleModulesIfNeeded() {
+        await Promise.all([
+          this.#cdpTarget.toggleNetworkIfNeeded(),
+          this.#cdpTarget.toggleDeviceAccessIfNeeded(),
+          this.#cdpTarget.togglePreloadIfNeeded()
+        ]);
+      }
+      async locateNodes(params) {
+        return await this.#locateNodesByLocator(await this.#defaultRealmDeferred, params.locator, params.startNodes ?? [], params.maxNodeCount, params.serializationOptions);
+      }
+      #getLocatorDelegate(locator, maxNodeCount, startNodes) {
+        switch (locator.type) {
+          case "context":
+          case "accessibility":
+            throw new Error("Unreachable");
+          case "css":
+            return {
+              functionDeclaration: String((cssSelector, maxNodeCount2, ...startNodes2) => {
+                const locateNodesUsingCss = (element) => {
+                  if (!(element instanceof HTMLElement || element instanceof Document || element instanceof DocumentFragment || element instanceof SVGElement)) {
+                    throw new Error("startNodes in css selector should be HTMLElement, SVGElement or Document or DocumentFragment");
+                  }
+                  return [...element.querySelectorAll(cssSelector)];
+                };
+                startNodes2 = startNodes2.length > 0 ? startNodes2 : [document];
+                const returnedNodes = startNodes2.map((startNode) => (
+                  // TODO: stop search early if `maxNodeCount` is reached.
+                  locateNodesUsingCss(startNode)
+                )).flat(1);
+                return maxNodeCount2 === 0 ? returnedNodes : returnedNodes.slice(0, maxNodeCount2);
+              }),
+              argumentsLocalValues: [
+                // `cssSelector`
+                { type: "string", value: locator.value },
+                // `maxNodeCount` with `0` means no limit.
+                { type: "number", value: maxNodeCount ?? 0 },
+                // `startNodes`
+                ...startNodes
+              ]
+            };
+          case "xpath":
+            return {
+              functionDeclaration: String((xPathSelector, maxNodeCount2, ...startNodes2) => {
+                const evaluator = new XPathEvaluator();
+                const expression = evaluator.createExpression(xPathSelector);
+                const locateNodesUsingXpath = (element) => {
+                  const xPathResult = expression.evaluate(element, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE);
+                  const returnedNodes2 = [];
+                  for (let i = 0; i < xPathResult.snapshotLength; i++) {
+                    returnedNodes2.push(xPathResult.snapshotItem(i));
+                  }
+                  return returnedNodes2;
+                };
+                startNodes2 = startNodes2.length > 0 ? startNodes2 : [document];
+                const returnedNodes = startNodes2.map((startNode) => (
+                  // TODO: stop search early if `maxNodeCount` is reached.
+                  locateNodesUsingXpath(startNode)
+                )).flat(1);
+                return maxNodeCount2 === 0 ? returnedNodes : returnedNodes.slice(0, maxNodeCount2);
+              }),
+              argumentsLocalValues: [
+                // `xPathSelector`
+                { type: "string", value: locator.value },
+                // `maxNodeCount` with `0` means no limit.
+                { type: "number", value: maxNodeCount ?? 0 },
+                // `startNodes`
+                ...startNodes
+              ]
+            };
+          case "innerText":
+            if (locator.value === "") {
+              throw new InvalidSelectorException("innerText locator cannot be empty");
+            }
+            return {
+              functionDeclaration: String((innerTextSelector, fullMatch, ignoreCase, maxNodeCount2, maxDepth, ...startNodes2) => {
+                const searchText = ignoreCase ? innerTextSelector.toUpperCase() : innerTextSelector;
+                const locateNodesUsingInnerText = (node2, currentMaxDepth) => {
+                  const returnedNodes2 = [];
+                  if (node2 instanceof DocumentFragment || node2 instanceof Document) {
+                    const children = [...node2.children];
+                    children.forEach((child) => (
+                      // `currentMaxDepth` is not decremented intentionally according to
+                      // https://github.com/w3c/webdriver-bidi/pull/713.
+                      returnedNodes2.push(...locateNodesUsingInnerText(child, currentMaxDepth))
+                    ));
+                    return returnedNodes2;
+                  }
+                  if (!(node2 instanceof HTMLElement)) {
+                    return [];
+                  }
+                  const element = node2;
+                  const nodeInnerText = ignoreCase ? element.innerText?.toUpperCase() : element.innerText;
+                  if (!nodeInnerText.includes(searchText)) {
+                    return [];
+                  }
+                  const childNodes = [];
+                  for (const child of element.children) {
+                    if (child instanceof HTMLElement) {
+                      childNodes.push(child);
+                    }
+                  }
+                  if (childNodes.length === 0) {
+                    if (fullMatch && nodeInnerText === searchText) {
+                      returnedNodes2.push(element);
+                    } else {
+                      if (!fullMatch) {
+                        returnedNodes2.push(element);
+                      }
+                    }
+                  } else {
+                    const childNodeMatches = (
+                      // Don't search deeper if `maxDepth` is reached.
+                      currentMaxDepth <= 0 ? [] : childNodes.map((child) => locateNodesUsingInnerText(child, currentMaxDepth - 1)).flat(1)
+                    );
+                    if (childNodeMatches.length === 0) {
+                      if (!fullMatch || nodeInnerText === searchText) {
+                        returnedNodes2.push(element);
+                      }
+                    } else {
+                      returnedNodes2.push(...childNodeMatches);
+                    }
+                  }
+                  return returnedNodes2;
+                };
+                startNodes2 = startNodes2.length > 0 ? startNodes2 : [document];
+                const returnedNodes = startNodes2.map((startNode) => (
+                  // TODO: stop search early if `maxNodeCount` is reached.
+                  locateNodesUsingInnerText(startNode, maxDepth)
+                )).flat(1);
+                return maxNodeCount2 === 0 ? returnedNodes : returnedNodes.slice(0, maxNodeCount2);
+              }),
+              argumentsLocalValues: [
+                // `innerTextSelector`
+                { type: "string", value: locator.value },
+                // `fullMatch` with default `true`.
+                { type: "boolean", value: locator.matchType !== "partial" },
+                // `ignoreCase` with default `false`.
+                { type: "boolean", value: locator.ignoreCase === true },
+                // `maxNodeCount` with `0` means no limit.
+                { type: "number", value: maxNodeCount ?? 0 },
+                // `maxDepth` with default `1000` (same as default full serialization depth).
+                { type: "number", value: locator.maxDepth ?? 1e3 },
+                // `startNodes`
+                ...startNodes
+              ]
+            };
+        }
+      }
+      async #locateNodesByLocator(realm, locator, startNodes, maxNodeCount, serializationOptions) {
+        if (locator.type === "context") {
+          return await this.#locateNodesByContextLocator(locator, startNodes, realm, serializationOptions);
+        }
+        if (locator.type === "accessibility") {
+          return await this.#locateNodesByAccessibility(locator, startNodes, maxNodeCount, realm);
+        }
+        const locatorDelegate = this.#getLocatorDelegate(locator, maxNodeCount, startNodes);
+        serializationOptions = {
+          ...serializationOptions,
+          // The returned object is an array of nodes, so no need in deeper JS serialization.
+          maxObjectDepth: 1
+        };
+        const locatorResult = await realm.callFunction(locatorDelegate.functionDeclaration, false, { type: "undefined" }, locatorDelegate.argumentsLocalValues, "none", serializationOptions);
+        if (locatorResult.type !== "success") {
+          this.#logger?.(_a4.LOGGER_PREFIX)?.("Failed locateNodesByLocator", locatorResult);
+          if (
+            // CSS selector.
+            locatorResult.exceptionDetails.text?.endsWith("is not a valid selector.") || // XPath selector.
+            locatorResult.exceptionDetails.text?.endsWith("is not a valid XPath expression.")
+          ) {
+            throw new InvalidSelectorException(`Not valid selector ${typeof locator.value === "string" ? locator.value : JSON.stringify(locator.value)}`);
+          }
+          if (locatorResult.exceptionDetails.text === "Error: startNodes in css selector should be HTMLElement, SVGElement or Document or DocumentFragment") {
+            throw new InvalidArgumentException("startNodes in css selector should be HTMLElement, SVGElement or Document or DocumentFragment");
+          }
+          throw new UnknownErrorException(`Unexpected error in selector script: ${locatorResult.exceptionDetails.text}`);
+        }
+        if (locatorResult.result.type !== "array") {
+          throw new UnknownErrorException(`Unexpected selector script result type: ${locatorResult.result.type}`);
+        }
+        const nodes = locatorResult.result.value.map((value) => {
+          if (value.type !== "node") {
+            throw new UnknownErrorException(`Unexpected selector script result element: ${value.type}`);
+          }
+          return value;
+        });
+        return { nodes };
+      }
+      async #locateNodesByContextLocator(locator, startNodes, realm, serializationOptions) {
+        if (startNodes.length !== 0) {
+          throw new InvalidArgumentException("Start nodes are not supported");
+        }
+        const contextId = locator.value.context;
+        if (!contextId) {
+          throw new InvalidSelectorException("Invalid context");
+        }
+        const context2 = this.#browsingContextStorage.getContext(contextId);
+        const parent = context2.parent;
+        if (!parent) {
+          throw new InvalidArgumentException("This context has no container");
+        }
+        try {
+          const { backendNodeId } = await parent.#cdpTarget.cdpClient.sendCommand("DOM.getFrameOwner", {
+            frameId: contextId
+          });
+          const { object: object3 } = await parent.#cdpTarget.cdpClient.sendCommand("DOM.resolveNode", {
+            backendNodeId
+          });
+          const locatorResult = await realm.callFunction(`function () { return this; }`, false, { handle: object3.objectId }, [], "none", serializationOptions);
+          if (locatorResult.type === "exception") {
+            throw new Error("Unknown exception");
+          }
+          return { nodes: [locatorResult.result] };
+        } catch {
+          throw new InvalidArgumentException("Context does not exist");
+        }
+      }
+      async #locateNodesByAccessibility(locator, startNodes, maxNodeCount, realm) {
+        if (!locator.value.name && !locator.value.role) {
+          throw new InvalidSelectorException("Either name or role has to be specified");
+        }
+        await this.#cdpTarget.cdpClient.sendCommand("Accessibility.enable");
+        const startBackendNodeIds = [];
+        if (startNodes.length === 0) {
+          const { root: documentRoot } = await this.#cdpTarget.cdpClient.sendCommand("DOM.getDocument");
+          startBackendNodeIds.push(documentRoot.backendNodeId);
+        } else {
+          for (const node2 of startNodes) {
+            if (node2.sharedId) {
+              const parsed = parseSharedId(node2.sharedId);
+              if (!parsed) {
+                throw new NoSuchNodeException(`Invalid sharedId: ${node2.sharedId}`);
+              }
+              startBackendNodeIds.push(parsed.backendNodeId);
+            } else {
+              if (node2.handle) {
+                const { nodeId } = await this.#cdpTarget.cdpClient.sendCommand("DOM.requestNode", {
+                  objectId: node2.handle
+                });
+                const { node: describedNode } = await this.#cdpTarget.cdpClient.sendCommand("DOM.describeNode", {
+                  nodeId
+                });
+                startBackendNodeIds.push(describedNode.backendNodeId);
+              } else {
+                throw new NoSuchNodeException("Start node must have sharedId or handle");
+              }
+            }
+          }
+        }
+        const matchedBackendNodeIds = /* @__PURE__ */ new Set();
+        for (const backendNodeId of startBackendNodeIds) {
+          const { nodes } = await this.#cdpTarget.cdpClient.sendCommand("Accessibility.queryAXTree", {
+            backendNodeId,
+            accessibleName: locator.value.name,
+            role: locator.value.role
+          });
+          for (const node2 of nodes) {
+            if (node2.backendDOMNodeId && node2.role?.type === "role") {
+              matchedBackendNodeIds.add(node2.backendDOMNodeId);
+              if (maxNodeCount !== void 0 && maxNodeCount > 0 && matchedBackendNodeIds.size >= maxNodeCount) {
+                break;
+              }
+            }
+          }
+        }
+        const resultNodes = await Promise.all(Array.from(matchedBackendNodeIds).map(async (backendNodeId) => {
+          const { object: object3 } = await this.#cdpTarget.cdpClient.sendCommand("DOM.resolveNode", {
+            backendNodeId
+          });
+          return await realm.serializeCdpObject(
+            object3,
+            "none"
+            /* Script.ResultOwnership.None */
+          );
+        }));
+        return {
+          nodes: resultNodes.filter((result) => result.type === "node")
+        };
+      }
+      #getAllRelatedCdpTargets() {
+        const targets = /* @__PURE__ */ new Set();
+        targets.add(this.cdpTarget);
+        this.allChildren.forEach((c) => targets.add(c.cdpTarget));
+        return Array.from(targets);
+      }
+      async setTimezoneOverride(timezone) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setTimezoneOverride(timezone)));
+      }
+      async setLocaleOverride(locale) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setLocaleOverride(locale)));
+      }
+      async setGeolocationOverride(geolocation) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setGeolocationOverride(geolocation)));
+      }
+      async setScriptingEnabled(scriptingEnabled) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setScriptingEnabled(scriptingEnabled)));
+      }
+      async setUserAgentAndAcceptLanguage(userAgent, acceptLanguage, clientHints) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setUserAgentAndAcceptLanguage(userAgent, acceptLanguage, clientHints)));
+      }
+      async setEmulatedNetworkConditions(networkConditions) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setEmulatedNetworkConditions(networkConditions)));
+      }
+      async setTouchOverride(maxTouchPoints) {
+        await Promise.allSettled(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setTouchOverride(maxTouchPoints)));
+      }
+      async setExtraHeaders(cdpExtraHeaders) {
+        await Promise.all(this.#getAllRelatedCdpTargets().map(async (cdpTarget) => await cdpTarget.setExtraHeaders(cdpExtraHeaders)));
+      }
+      async setScrollbarTypeOverride(scrollbarType) {
+        const config3 = this.#configStorage.getActiveConfig(this.id, this.userContext);
+        await this.cdpTarget.setDeviceMetricsOverride(config3.viewport ?? null, config3.devicePixelRatio ?? null, config3.screenOrientation ?? null, config3.screenArea ?? null, scrollbarType);
+      }
+    };
+    _a4 = BrowsingContextImpl;
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/WorkerRealm.js
+var WorkerRealm;
+var init_WorkerRealm = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/WorkerRealm.js"() {
+    init_Realm2();
+    WorkerRealm = class extends Realm2 {
+      #realmType;
+      #ownerRealms;
+      constructor(cdpClient, eventManager, executionContextId, logger, origin, ownerRealms, realmId, realmStorage, realmType) {
+        super(cdpClient, eventManager, executionContextId, logger, origin, realmId, realmStorage);
+        this.#ownerRealms = ownerRealms;
+        this.#realmType = realmType;
+        this.initialize();
+      }
+      get associatedBrowsingContexts() {
+        return this.#ownerRealms.flatMap((realm) => realm.associatedBrowsingContexts);
+      }
+      get realmType() {
+        return this.#realmType;
+      }
+      get source() {
+        return {
+          realm: this.realmId,
+          // This is a hack to make Puppeteer able to track workers.
+          // TODO: remove after Puppeteer tracks workers by owners and use the base version.
+          context: this.associatedBrowsingContexts[0]?.id
+        };
+      }
+      get realmInfo() {
+        const owners = this.#ownerRealms.map((realm) => realm.realmId);
+        const { realmType } = this;
+        switch (realmType) {
+          case "dedicated-worker": {
+            const owner = owners[0];
+            if (owner === void 0 || owners.length !== 1) {
+              throw new Error("Dedicated worker must have exactly one owner");
+            }
+            return {
+              ...this.baseInfo,
+              type: realmType,
+              owners: [owner]
+            };
+          }
+          case "service-worker":
+          case "shared-worker": {
+            return {
+              ...this.baseInfo,
+              type: realmType
+            };
+          }
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/log/logHelper.js
+function isFormatSpecifier(str) {
+  return specifiers.some((spec) => str.includes(spec));
+}
+function logMessageFormatter(args) {
+  let output3 = "";
+  const argFormat = args[0].value.toString();
+  const argValues = args.slice(1, void 0);
+  const tokens = argFormat.split(new RegExp(specifiers.map((spec) => `(${spec})`).join("|"), "g"));
+  for (const token of tokens) {
+    if (token === void 0 || token === "") {
+      continue;
+    }
+    if (isFormatSpecifier(token)) {
+      const arg = argValues.shift();
+      assert3(arg, `Less value is provided: "${getRemoteValuesText(args, false)}"`);
+      if (token === "%s") {
+        output3 += stringFromArg(arg);
+      } else if (token === "%d" || token === "%i") {
+        if (arg.type === "bigint" || arg.type === "number" || arg.type === "string") {
+          output3 += parseInt(arg.value.toString(), 10);
+        } else {
+          output3 += "NaN";
+        }
+      } else if (token === "%f") {
+        if (arg.type === "bigint" || arg.type === "number" || arg.type === "string") {
+          output3 += parseFloat(arg.value.toString());
+        } else {
+          output3 += "NaN";
+        }
+      } else {
+        output3 += toJson(arg);
+      }
+    } else {
+      output3 += token;
+    }
+  }
+  if (argValues.length > 0) {
+    throw new Error(`More value is provided: "${getRemoteValuesText(args, false)}"`);
+  }
+  return output3;
+}
+function toJson(arg) {
+  if (arg.type !== "array" && arg.type !== "bigint" && arg.type !== "date" && arg.type !== "number" && arg.type !== "object" && arg.type !== "string") {
+    return stringFromArg(arg);
+  }
+  if (arg.type === "bigint") {
+    return `${arg.value.toString()}n`;
+  }
+  if (arg.type === "number") {
+    return arg.value.toString();
+  }
+  if (["date", "string"].includes(arg.type)) {
+    return JSON.stringify(arg.value);
+  }
+  if (arg.type === "object") {
+    return `{${arg.value.map((pair) => {
+      return `${JSON.stringify(pair[0])}:${toJson(pair[1])}`;
+    }).join(",")}}`;
+  }
+  if (arg.type === "array") {
+    return `[${arg.value?.map((val) => toJson(val)).join(",") ?? ""}]`;
+  }
+  throw Error(`Invalid value type: ${arg}`);
+}
+function stringFromArg(arg) {
+  if (!Object.hasOwn(arg, "value")) {
+    return arg.type;
+  }
+  switch (arg.type) {
+    case "string":
+    case "number":
+    case "boolean":
+    case "bigint":
+      return String(arg.value);
+    case "regexp":
+      return `/${arg.value.pattern}/${arg.value.flags ?? ""}`;
+    case "date":
+      return new Date(arg.value).toString();
+    case "object":
+      return `Object(${arg.value?.length ?? ""})`;
+    case "array":
+      return `Array(${arg.value?.length ?? ""})`;
+    case "map":
+      return `Map(${arg.value?.length})`;
+    case "set":
+      return `Set(${arg.value?.length})`;
+    default:
+      return arg.type;
+  }
+}
+function getRemoteValuesText(args, formatText) {
+  const arg = args[0];
+  if (!arg) {
+    return "";
+  }
+  if (arg.type === "string" && isFormatSpecifier(arg.value.toString()) && formatText) {
+    return logMessageFormatter(args);
+  }
+  return args.map((arg2) => {
+    return stringFromArg(arg2);
+  }).join(" ");
+}
+var specifiers;
+var init_logHelper = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/log/logHelper.js"() {
+    init_assert2();
+    specifiers = ["%s", "%d", "%i", "%f", "%o", "%O", "%c"];
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/log/LogManager.js
+function getBidiStackTrace(cdpStackTrace) {
+  const stackFrames = cdpStackTrace?.callFrames.map((callFrame) => {
+    return {
+      columnNumber: callFrame.columnNumber,
+      functionName: callFrame.functionName,
+      lineNumber: callFrame.lineNumber,
+      url: callFrame.url
+    };
+  });
+  return stackFrames ? { callFrames: stackFrames } : void 0;
+}
+function getLogLevel(consoleApiType) {
+  if (["error", "assert"].includes(consoleApiType)) {
+    return "error";
+  }
+  if (["debug", "trace"].includes(consoleApiType)) {
+    return "debug";
+  }
+  if (["warn", "warning"].includes(consoleApiType)) {
+    return "warn";
+  }
+  return "info";
+}
+function getLogMethod(consoleApiType) {
+  switch (consoleApiType) {
+    case "warning":
+      return "warn";
+    case "startGroup":
+      return "group";
+    case "startGroupCollapsed":
+      return "groupCollapsed";
+    case "endGroup":
+      return "groupEnd";
+  }
+  return consoleApiType;
+}
+var _a5, LogManager;
+var init_LogManager = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/log/LogManager.js"() {
+    init_protocol();
+    init_log();
+    init_logHelper();
+    LogManager = class {
+      #eventManager;
+      #realmStorage;
+      #cdpTarget;
+      #logger;
+      constructor(cdpTarget, realmStorage, eventManager, logger) {
+        this.#cdpTarget = cdpTarget;
+        this.#realmStorage = realmStorage;
+        this.#eventManager = eventManager;
+        this.#logger = logger;
+      }
+      static create(cdpTarget, realmStorage, eventManager, logger) {
+        const logManager = new _a5(cdpTarget, realmStorage, eventManager, logger);
+        logManager.#initializeEntryAddedEventListener();
+        return logManager;
+      }
+      /**
+       * Heuristic serialization of CDP remote object. If possible, return the BiDi value
+       * without deep serialization.
+       */
+      async #heuristicSerializeArg(arg, realm) {
+        switch (arg.type) {
+          // TODO: Implement regexp, array, object, map and set heuristics base on
+          //  preview.
+          case "undefined":
+            return { type: "undefined" };
+          case "boolean":
+            return { type: "boolean", value: arg.value };
+          case "string":
+            return { type: "string", value: arg.value };
+          case "number":
+            return { type: "number", value: arg.unserializableValue ?? arg.value };
+          case "bigint":
+            if (arg.unserializableValue !== void 0 && arg.unserializableValue[arg.unserializableValue.length - 1] === "n") {
+              return {
+                type: arg.type,
+                value: arg.unserializableValue.slice(0, -1)
+              };
+            }
+            break;
+          case "object":
+            if (arg.subtype === "null") {
+              return { type: "null" };
+            }
+            break;
+          default:
+            break;
+        }
+        return await realm.serializeCdpObject(
+          arg,
+          "none"
+          /* Script.ResultOwnership.None */
+        );
+      }
+      #initializeEntryAddedEventListener() {
+        this.#cdpTarget.cdpClient.on("Runtime.consoleAPICalled", (params) => {
+          const realm = this.#realmStorage.findRealm({
+            cdpSessionId: this.#cdpTarget.cdpSessionId,
+            executionContextId: params.executionContextId
+          });
+          if (realm === void 0) {
+            this.#logger?.(LogType.cdp)?.(params);
+            return;
+          }
+          const argsPromise = Promise.all(params.args.map((arg) => this.#heuristicSerializeArg(arg, realm)));
+          for (const browsingContext of realm.associatedBrowsingContexts) {
+            this.#eventManager.registerPromiseEvent(argsPromise.then((args) => ({
+              kind: "success",
+              value: {
+                type: "event",
+                method: chromium_bidi_exports.Log.EventNames.LogEntryAdded,
+                params: {
+                  level: getLogLevel(params.type),
+                  source: realm.source,
+                  text: getRemoteValuesText(args, true),
+                  timestamp: Math.round(params.timestamp),
+                  stackTrace: getBidiStackTrace(params.stackTrace),
+                  type: "console",
+                  method: getLogMethod(params.type),
+                  args
+                }
+              }
+            }), (error62) => ({
+              kind: "error",
+              error: error62
+            })), browsingContext.id, chromium_bidi_exports.Log.EventNames.LogEntryAdded);
+          }
+        });
+        this.#cdpTarget.cdpClient.on("Runtime.exceptionThrown", (params) => {
+          const realm = this.#realmStorage.findRealm({
+            cdpSessionId: this.#cdpTarget.cdpSessionId,
+            executionContextId: params.exceptionDetails.executionContextId
+          });
+          if (realm === void 0) {
+            this.#logger?.(LogType.cdp)?.(params);
+            return;
+          }
+          for (const browsingContext of realm.associatedBrowsingContexts) {
+            this.#eventManager.registerPromiseEvent(_a5.#getExceptionText(params, realm).then((text) => ({
+              kind: "success",
+              value: {
+                type: "event",
+                method: chromium_bidi_exports.Log.EventNames.LogEntryAdded,
+                params: {
+                  level: "error",
+                  source: realm.source,
+                  text,
+                  timestamp: Math.round(params.timestamp),
+                  stackTrace: getBidiStackTrace(params.exceptionDetails.stackTrace),
+                  type: "javascript"
+                }
+              }
+            }), (error62) => ({
+              kind: "error",
+              error: error62
+            })), browsingContext.id, chromium_bidi_exports.Log.EventNames.LogEntryAdded);
+          }
+        });
+      }
+      /**
+       * Try the best to get the exception text.
+       */
+      static async #getExceptionText(params, realm) {
+        if (!params.exceptionDetails.exception) {
+          return params.exceptionDetails.text;
+        }
+        if (realm === void 0) {
+          return JSON.stringify(params.exceptionDetails.exception);
+        }
+        return await realm.stringifyObject(params.exceptionDetails.exception);
+      }
+    };
+    _a5 = LogManager;
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/CollectorsStorage.js
+var CollectorsStorage;
+var init_CollectorsStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/CollectorsStorage.js"() {
+    init_ErrorResponse();
+    init_log();
+    init_uuid();
+    CollectorsStorage = class {
+      #collectors = /* @__PURE__ */ new Map();
+      #responseCollectors = /* @__PURE__ */ new Map();
+      #requestBodyCollectors = /* @__PURE__ */ new Map();
+      #maxEncodedDataSize;
+      #logger;
+      constructor(maxEncodedDataSize, logger) {
+        this.#maxEncodedDataSize = maxEncodedDataSize;
+        this.#logger = logger;
+      }
+      addDataCollector(params) {
+        if (params.maxEncodedDataSize < 1 || params.maxEncodedDataSize > this.#maxEncodedDataSize) {
+          throw new InvalidArgumentException(`Max encoded data size should be between 1 and ${this.#maxEncodedDataSize}`);
+        }
+        const collectorId = uuidv42();
+        this.#collectors.set(collectorId, params);
+        return collectorId;
+      }
+      isCollected(requestId, dataType, collectorId) {
+        if (collectorId !== void 0 && !this.#collectors.has(collectorId)) {
+          throw new NoSuchNetworkCollectorException(`Unknown collector ${collectorId}`);
+        }
+        if (dataType === void 0) {
+          return this.isCollected(requestId, "response", collectorId) || this.isCollected(requestId, "request", collectorId);
+        }
+        const requestToCollectorsMap = this.#getRequestToCollectorMap(dataType).get(requestId);
+        if (requestToCollectorsMap === void 0 || requestToCollectorsMap.size === 0) {
+          return false;
+        }
+        if (collectorId === void 0) {
+          return true;
+        }
+        if (!requestToCollectorsMap.has(collectorId)) {
+          return false;
+        }
+        return true;
+      }
+      #getRequestToCollectorMap(dataType) {
+        switch (dataType) {
+          case "response":
+            return this.#responseCollectors;
+          case "request":
+            return this.#requestBodyCollectors;
+          default:
+            throw new UnsupportedOperationException(`Unsupported data type ${dataType}`);
+        }
+      }
+      disownData(requestId, dataType, collectorId) {
+        const requestToCollectorsMap = this.#getRequestToCollectorMap(dataType);
+        if (collectorId !== void 0) {
+          requestToCollectorsMap.get(requestId)?.delete(collectorId);
+        }
+        if (collectorId === void 0 || requestToCollectorsMap.get(requestId)?.size === 0) {
+          requestToCollectorsMap.delete(requestId);
+        }
+      }
+      #shouldCollectRequest(collectorId, request3, dataType, topLevelBrowsingContext, userContext) {
+        const collector = this.#collectors.get(collectorId);
+        if (collector === void 0) {
+          throw new NoSuchNetworkCollectorException(`Unknown collector ${collectorId}`);
+        }
+        if (collector.userContexts && !collector.userContexts.includes(userContext)) {
+          return false;
+        }
+        if (collector.contexts && !collector.contexts.includes(topLevelBrowsingContext)) {
+          return false;
+        }
+        if (!collector.dataTypes.includes(dataType)) {
+          return false;
+        }
+        if (dataType === "request" && request3.bodySize > collector.maxEncodedDataSize) {
+          this.#logger?.(LogType.debug)?.(`Request's ${request3.id} body size is too big for the collector ${collectorId}`);
+          return false;
+        }
+        if (dataType === "response" && request3.encodedResponseBodySize > collector.maxEncodedDataSize) {
+          this.#logger?.(LogType.debug)?.(`Request's ${request3.id} response is too big for the collector ${collectorId}`);
+          return false;
+        }
+        this.#logger?.(LogType.debug)?.(`Collector ${collectorId} collected ${dataType} of ${request3.id}`);
+        return true;
+      }
+      collectIfNeeded(request3, dataType, topLevelBrowsingContext, userContext) {
+        const collectorIds = [...this.#collectors.keys()].filter((collectorId) => this.#shouldCollectRequest(collectorId, request3, dataType, topLevelBrowsingContext, userContext));
+        if (collectorIds.length > 0) {
+          this.#getRequestToCollectorMap(dataType).set(request3.id, new Set(collectorIds));
+        }
+      }
+      removeDataCollector(collectorId) {
+        if (!this.#collectors.has(collectorId)) {
+          throw new NoSuchNetworkCollectorException(`Collector ${collectorId} does not exist`);
+        }
+        this.#collectors.delete(collectorId);
+        const affectedRequests = [];
+        for (const [requestId, collectorIds] of this.#responseCollectors) {
+          if (collectorIds.has(collectorId)) {
+            collectorIds.delete(collectorId);
+            if (collectorIds.size === 0) {
+              this.#responseCollectors.delete(requestId);
+              affectedRequests.push(requestId);
+            }
+          }
+        }
+        for (const [requestId, collectorIds] of this.#requestBodyCollectors) {
+          if (collectorIds.has(collectorId)) {
+            collectorIds.delete(collectorId);
+            if (collectorIds.size === 0) {
+              this.#requestBodyCollectors.delete(requestId);
+              affectedRequests.push(requestId);
+            }
+          }
+        }
+        return affectedRequests;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/DefaultMap.js
+var DefaultMap;
+var init_DefaultMap = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/DefaultMap.js"() {
+    DefaultMap = class extends Map {
+      /** The default value to return whenever a key is not present in the map. */
+      #getDefaultValue;
+      constructor(getDefaultValue, entries) {
+        super(entries);
+        this.#getDefaultValue = getDefaultValue;
+      }
+      get(key) {
+        if (!this.has(key)) {
+          this.set(key, this.#getDefaultValue(key));
+        }
+        return super.get(key);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkRequest.js
+function getCdpBodyFromBiDiBytesValue(body) {
+  let parsedBody;
+  if (body?.type === "string") {
+    parsedBody = stringToBase642(body.value);
+  } else if (body?.type === "base64") {
+    parsedBody = body.value;
+  }
+  return parsedBody;
+}
+function getSizeFromBiDiBytesValue(body) {
+  if (body?.type === "string") {
+    return body.value.length;
+  } else if (body?.type === "base64") {
+    return atob(body.value).length;
+  }
+  return 0;
+}
+var _a6, REALM_REGEX, NetworkRequest;
+var init_NetworkRequest = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkRequest.js"() {
+    init_protocol();
+    init_assert2();
+    init_DefaultMap();
+    init_Deferred2();
+    init_log();
+    init_NetworkUtils();
+    REALM_REGEX = /(?<=realm=").*(?=")/;
+    NetworkRequest = class {
+      static unknownParameter = "UNKNOWN";
+      /**
+       * Each network request has an associated request id, which is a string
+       * uniquely identifying that request.
+       *
+       * The identifier for a request resulting from a redirect matches that of the
+       * request that initiated it.
+       */
+      #id;
+      #fetchId;
+      /**
+       * Indicates the network intercept phase, if the request is currently blocked.
+       * Undefined necessarily implies that the request is not blocked.
+       */
+      #interceptPhase;
+      #servedFromCache = false;
+      #redirectCount;
+      #bodySize = 0;
+      // Tracked encoded data size while the response is loading.
+      #encodedResponseBodySize = 0;
+      // Tracked decoded data size while the response is loading.
+      #decodedResponseBodySize = 0;
+      #request = {};
+      #requestOverrides;
+      #responseOverrides;
+      #response = {};
+      #eventManager;
+      #networkStorage;
+      #cdpTarget;
+      #logger;
+      #emittedEvents = {
+        [chromium_bidi_exports.Network.EventNames.AuthRequired]: false,
+        [chromium_bidi_exports.Network.EventNames.BeforeRequestSent]: false,
+        [chromium_bidi_exports.Network.EventNames.FetchError]: false,
+        [chromium_bidi_exports.Network.EventNames.ResponseCompleted]: false,
+        [chromium_bidi_exports.Network.EventNames.ResponseStarted]: false
+      };
+      waitNextPhase = new Deferred2();
+      constructor(id, eventManager, networkStorage, cdpTarget, redirectCount = 0, logger) {
+        this.#id = id;
+        this.#eventManager = eventManager;
+        this.#networkStorage = networkStorage;
+        this.#cdpTarget = cdpTarget;
+        this.#redirectCount = redirectCount;
+        this.#logger = logger;
+      }
+      get id() {
+        return this.#id;
+      }
+      get fetchId() {
+        return this.#fetchId;
+      }
+      /**
+       * When blocked returns the phase for it
+       */
+      get interceptPhase() {
+        return this.#interceptPhase;
+      }
+      get url() {
+        const fragment = this.#request.info?.request.urlFragment ?? this.#request.paused?.request.urlFragment ?? "";
+        const url2 = this.#response.paused?.request.url ?? this.#requestOverrides?.url ?? this.#response.info?.url ?? this.#request.auth?.request.url ?? this.#request.info?.request.url ?? this.#request.paused?.request.url ?? _a6.unknownParameter;
+        return `${url2}${fragment}`;
+      }
+      get redirectCount() {
+        return this.#redirectCount;
+      }
+      get cdpTarget() {
+        return this.#cdpTarget;
+      }
+      /** CdpTarget can be changed when frame is moving out of process. */
+      updateCdpTarget(cdpTarget) {
+        if (cdpTarget !== this.#cdpTarget) {
+          this.#logger?.(LogType.debugInfo)?.(`Request ${this.id} was moved from ${this.#cdpTarget.id} to ${cdpTarget.id}`);
+          this.#cdpTarget = cdpTarget;
+        }
+      }
+      get cdpClient() {
+        return this.#cdpTarget.cdpClient;
+      }
+      isRedirecting() {
+        return Boolean(this.#request.info);
+      }
+      #isDataUrl() {
+        return this.url.startsWith("data:");
+      }
+      #isNonInterceptable() {
+        return (
+          // We can't intercept data urls from CDP
+          this.#isDataUrl() || // Cached requests never hit the network
+          this.#servedFromCache
+        );
+      }
+      get #method() {
+        return this.#requestOverrides?.method ?? this.#request.info?.request.method ?? this.#request.paused?.request.method ?? this.#request.auth?.request.method ?? this.#response.paused?.request.method;
+      }
+      get #navigationId() {
+        if (!this.#request.info || !this.#request.info.loaderId || // When we navigate all CDP network events have `loaderId`
+        // CDP's `loaderId` and `requestId` match when
+        // that request triggered the loading
+        this.#request.info.loaderId !== this.#request.info.requestId) {
+          return null;
+        }
+        return this.#networkStorage.getNavigationId(this.#context ?? void 0);
+      }
+      get #cookies() {
+        let cookies = [];
+        if (this.#request.extraInfo) {
+          cookies = this.#request.extraInfo.associatedCookies.filter(({ blockedReasons }) => {
+            return !Array.isArray(blockedReasons) || blockedReasons.length === 0;
+          }).map(({ cookie }) => cdpToBiDiCookie(cookie));
+        }
+        return cookies;
+      }
+      #getBodySizeFromHeaders(headers) {
+        if (headers === void 0) {
+          return void 0;
+        }
+        if (headers["Content-Length"] !== void 0) {
+          const bodySize = Number.parseInt(headers["Content-Length"]);
+          if (Number.isInteger(bodySize)) {
+            return bodySize;
+          }
+          this.#logger?.(LogType.debugError)?.("Unexpected non-integer 'Content-Length' header");
+        }
+        return void 0;
+      }
+      #updateBodySize() {
+        if (typeof this.#requestOverrides?.bodySize === "number") {
+          this.#bodySize = this.#requestOverrides.bodySize;
+          return;
+        }
+        if (this.#request.info?.request.postDataEntries !== void 0) {
+          this.#bodySize = bidiBodySizeFromCdpPostDataEntries(this.#request.info?.request.postDataEntries);
+          return;
+        }
+        this.#bodySize = this.#getBodySizeFromHeaders(this.#request.info?.request.headers) ?? this.#getBodySizeFromHeaders(this.#request.extraInfo?.headers) ?? 0;
+      }
+      get bodySize() {
+        return this.#bodySize;
+      }
+      get #context() {
+        const result = this.#response.paused?.frameId ?? this.#request.info?.frameId ?? this.#request.paused?.frameId ?? this.#request.auth?.frameId;
+        if (result !== void 0) {
+          return result;
+        }
+        if (this.#request?.info?.initiator.type === "preflight" && this.#request?.info?.initiator.requestId !== void 0) {
+          const maybeInitiator = this.#networkStorage.getRequestById(this.#request?.info?.initiator.requestId);
+          if (maybeInitiator !== void 0) {
+            return maybeInitiator.#request.info?.frameId ?? null;
+          }
+        }
+        return null;
+      }
+      /** Returns the HTTP status code associated with this request if any. */
+      get #statusCode() {
+        return this.#responseOverrides?.statusCode ?? this.#response.paused?.responseStatusCode ?? this.#response.extraInfo?.statusCode ?? this.#response.info?.status;
+      }
+      get #requestHeaders() {
+        let headers = [];
+        if (this.#requestOverrides?.headers) {
+          const headerMap = new DefaultMap(() => []);
+          for (const header of this.#requestOverrides.headers) {
+            headerMap.get(header.name).push(header.value.value);
+          }
+          for (const [name, value] of headerMap.entries()) {
+            headers.push({
+              name,
+              value: {
+                type: "string",
+                value: value.join("\n").trimEnd()
+              }
+            });
+          }
+        } else {
+          headers = [
+            ...bidiNetworkHeadersFromCdpNetworkHeaders(this.#request.info?.request.headers),
+            ...bidiNetworkHeadersFromCdpNetworkHeaders(this.#request.extraInfo?.headers)
+          ];
+        }
+        return headers;
+      }
+      get #authChallenges() {
+        if (!this.#response.info) {
+          return;
+        }
+        if (!(this.#statusCode === 401 || this.#statusCode === 407)) {
+          return void 0;
+        }
+        const headerName = this.#statusCode === 401 ? "WWW-Authenticate" : "Proxy-Authenticate";
+        const authChallenges = [];
+        for (const [header, value] of Object.entries(this.#response.info.headers)) {
+          if (header.localeCompare(headerName, void 0, { sensitivity: "base" }) === 0) {
+            authChallenges.push({
+              scheme: value.split(" ").at(0) ?? "",
+              realm: value.match(REALM_REGEX)?.at(0) ?? ""
+            });
+          }
+        }
+        return authChallenges;
+      }
+      get #timings() {
+        const responseTimeOffset = getTiming(getTiming(this.#response.info?.timing?.requestTime) - getTiming(this.#request.info?.timestamp));
+        return {
+          // TODO: Verify this is correct
+          timeOrigin: Math.round(getTiming(this.#request.info?.wallTime) * 1e3),
+          // Timing baseline.
+          // TODO: Verify this is correct.
+          requestTime: 0,
+          // TODO: set if redirect detected.
+          redirectStart: 0,
+          // TODO: set if redirect detected.
+          redirectEnd: 0,
+          // TODO: Verify this is correct
+          // https://source.chromium.org/chromium/chromium/src/+/main:net/base/load_timing_info.h;l=145
+          fetchStart: getTiming(this.#response.info?.timing?.workerFetchStart, responseTimeOffset),
+          // fetchStart: 0,
+          dnsStart: getTiming(this.#response.info?.timing?.dnsStart, responseTimeOffset),
+          dnsEnd: getTiming(this.#response.info?.timing?.dnsEnd, responseTimeOffset),
+          connectStart: getTiming(this.#response.info?.timing?.connectStart, responseTimeOffset),
+          connectEnd: getTiming(this.#response.info?.timing?.connectEnd, responseTimeOffset),
+          tlsStart: getTiming(this.#response.info?.timing?.sslStart, responseTimeOffset),
+          requestStart: getTiming(this.#response.info?.timing?.sendStart, responseTimeOffset),
+          // https://source.chromium.org/chromium/chromium/src/+/main:net/base/load_timing_info.h;l=196
+          responseStart: getTiming(this.#response.info?.timing?.receiveHeadersStart, responseTimeOffset),
+          responseEnd: getTiming(this.#response.info?.timing?.receiveHeadersEnd, responseTimeOffset)
+        };
+      }
+      #phaseChanged() {
+        this.waitNextPhase.resolve();
+        this.waitNextPhase = new Deferred2();
+      }
+      #interceptsInPhase(phase) {
+        if (this.#isNonInterceptable() || !this.#cdpTarget.isSubscribedTo(`network.${phase}`)) {
+          return /* @__PURE__ */ new Set();
+        }
+        return this.#networkStorage.getInterceptsForPhase(this, phase);
+      }
+      #isBlockedInPhase(phase) {
+        return this.#interceptsInPhase(phase).size > 0;
+      }
+      handleRedirect(event) {
+        this.#response.hasExtraInfo = false;
+        this.#decodedResponseBodySize = 0;
+        this.#encodedResponseBodySize = 0;
+        this.#response.info = event.redirectResponse;
+        this.#emitEventsIfReady({
+          wasRedirected: true
+        });
+      }
+      #emitEventsIfReady(options = {}) {
+        const requestExtraInfoCompleted = (
+          // Flush redirects
+          options.wasRedirected || Boolean(this.#response.loadingFailed) || this.#isDataUrl() || Boolean(this.#request.extraInfo) || // If the request is intercepted during the `authRequired` phase, there
+          // will be no `Network.requestWillBeSentExtraInfo` CDP events.
+          this.#isBlockedInPhase(
+            "authRequired"
+            /* Network.InterceptPhase.AuthRequired */
+          ) || // Requests from cache don't have extra info
+          this.#servedFromCache || // Sometimes there is no extra info and the response
+          // is the only place we can find out
+          Boolean(this.#response.info && !this.#response.hasExtraInfo)
+        );
+        const noInterceptionExpected = this.#isNonInterceptable();
+        const requestInterceptionExpected = !noInterceptionExpected && this.#isBlockedInPhase(
+          "beforeRequestSent"
+          /* Network.InterceptPhase.BeforeRequestSent */
+        );
+        const requestInterceptionCompleted = !requestInterceptionExpected || requestInterceptionExpected && Boolean(this.#request.paused);
+        if (Boolean(this.#request.info) && (requestInterceptionExpected ? requestInterceptionCompleted : requestExtraInfoCompleted)) {
+          this.#emitEvent(this.#getBeforeRequestEvent.bind(this));
+        }
+        const responseExtraInfoCompleted = Boolean(this.#response.extraInfo) || // Response from cache don't have extra info
+        this.#servedFromCache || // Don't expect extra info if the flag is false
+        Boolean(this.#response.info && !this.#response.hasExtraInfo);
+        const responseInterceptionExpected = !noInterceptionExpected && this.#isBlockedInPhase(
+          "responseStarted"
+          /* Network.InterceptPhase.ResponseStarted */
+        );
+        if (this.#response.info || responseInterceptionExpected && Boolean(this.#response.paused)) {
+          this.#emitEvent(this.#getResponseStartedEvent.bind(this));
+        }
+        const responseInterceptionCompleted = !responseInterceptionExpected || responseInterceptionExpected && Boolean(this.#response.paused);
+        const loadingFinished = Boolean(this.#response.loadingFailed) || Boolean(this.#response.loadingFinished);
+        if (Boolean(this.#response.info) && responseExtraInfoCompleted && responseInterceptionCompleted && (loadingFinished || options.wasRedirected)) {
+          this.#emitEvent(this.#getResponseReceivedEvent.bind(this));
+          this.#networkStorage.disposeRequest(this.id);
+        }
+      }
+      onRequestWillBeSentEvent(event) {
+        this.#request.info = event;
+        this.#updateBodySize();
+        this.#networkStorage.collectIfNeeded(
+          this,
+          "request"
+          /* Network.DataType.Request */
+        );
+        this.#emitEventsIfReady();
+      }
+      onRequestWillBeSentExtraInfoEvent(event) {
+        this.#request.extraInfo = event;
+        this.#updateBodySize();
+        this.#emitEventsIfReady();
+      }
+      onResponseReceivedExtraInfoEvent(event) {
+        if (event.statusCode >= 300 && event.statusCode <= 399 && this.#request.info && event.headers["location"] === this.#request.info.request.url) {
+          return;
+        }
+        this.#response.extraInfo = event;
+        this.#emitEventsIfReady();
+      }
+      onResponseReceivedEvent(event) {
+        this.#response.hasExtraInfo = event.hasExtraInfo;
+        this.#response.info = event.response;
+        this.#encodedResponseBodySize = event.response.encodedDataLength;
+        this.#networkStorage.collectIfNeeded(
+          this,
+          "response"
+          /* Network.DataType.Response */
+        );
+        this.#emitEventsIfReady();
+      }
+      onServedFromCache() {
+        this.#servedFromCache = true;
+        this.#emitEventsIfReady();
+      }
+      onLoadingFinishedEvent(event) {
+        this.#response.loadingFinished = event;
+        this.#encodedResponseBodySize = event.encodedDataLength;
+        this.#emitEventsIfReady();
+      }
+      onDataReceivedEvent(event) {
+        this.#decodedResponseBodySize += event.dataLength;
+        this.#encodedResponseBodySize += event.encodedDataLength;
+      }
+      onLoadingFailedEvent(event) {
+        this.#response.loadingFailed = event;
+        this.#emitEventsIfReady();
+        this.#emitEvent(() => {
+          return {
+            method: chromium_bidi_exports.Network.EventNames.FetchError,
+            params: {
+              ...this.#getBaseEventParams(),
+              errorText: event.errorText
+            }
+          };
+        });
+        this.disposeData();
+      }
+      /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-failRequest */
+      async failRequest(errorReason) {
+        assert3(this.#fetchId, "Network Interception not set-up.");
+        await this.cdpClient.sendCommand("Fetch.failRequest", {
+          requestId: this.#fetchId,
+          errorReason
+        });
+        this.#interceptPhase = void 0;
+      }
+      onRequestPaused(event) {
+        this.#fetchId = event.requestId;
+        if (event.responseStatusCode || event.responseErrorReason) {
+          this.#response.paused = event;
+          if (this.#isBlockedInPhase(
+            "responseStarted"
+            /* Network.InterceptPhase.ResponseStarted */
+          ) && // CDP may emit multiple events for a single request
+          !this.#emittedEvents[chromium_bidi_exports.Network.EventNames.ResponseStarted] && // Continue all response that have not enabled Network domain
+          this.#fetchId !== this.id) {
+            this.#interceptPhase = "responseStarted";
+          } else {
+            void this.#continueResponse();
+          }
+        } else {
+          this.#request.paused = event;
+          if (this.#isBlockedInPhase(
+            "beforeRequestSent"
+            /* Network.InterceptPhase.BeforeRequestSent */
+          ) && // CDP may emit multiple events for a single request
+          !this.#emittedEvents[chromium_bidi_exports.Network.EventNames.BeforeRequestSent] && // Continue all requests that have not enabled Network domain
+          this.#fetchId !== this.id) {
+            this.#interceptPhase = "beforeRequestSent";
+          } else {
+            void this.#continueRequest();
+          }
+        }
+        this.#emitEventsIfReady();
+      }
+      onAuthRequired(event) {
+        this.#fetchId = event.requestId;
+        this.#request.auth = event;
+        if (this.#isBlockedInPhase(
+          "authRequired"
+          /* Network.InterceptPhase.AuthRequired */
+        ) && // Continue all auth requests that have not enabled Network domain
+        this.#fetchId !== this.id) {
+          this.#interceptPhase = "authRequired";
+          this.#emitEventsIfReady();
+        } else {
+          void this.#continueWithAuth({
+            response: "Default"
+          });
+        }
+        this.#emitEvent(() => {
+          return {
+            method: chromium_bidi_exports.Network.EventNames.AuthRequired,
+            params: {
+              ...this.#getBaseEventParams(
+                "authRequired"
+                /* Network.InterceptPhase.AuthRequired */
+              ),
+              response: this.#getResponseEventParams()
+            }
+          };
+        });
+      }
+      /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-continueRequest */
+      async continueRequest(overrides = {}) {
+        const overrideHeaders = this.#getOverrideHeader(overrides.headers, overrides.cookies);
+        const headers = cdpFetchHeadersFromBidiNetworkHeaders(overrideHeaders);
+        const postData = getCdpBodyFromBiDiBytesValue(overrides.body);
+        await this.#continueRequest({
+          url: overrides.url,
+          method: overrides.method,
+          headers,
+          postData
+        });
+        this.#requestOverrides = {
+          url: overrides.url,
+          method: overrides.method,
+          headers: overrides.headers,
+          cookies: overrides.cookies,
+          bodySize: getSizeFromBiDiBytesValue(overrides.body)
+        };
+      }
+      async #continueRequest(overrides = {}) {
+        assert3(this.#fetchId, "Network Interception not set-up.");
+        await this.cdpClient.sendCommand("Fetch.continueRequest", {
+          requestId: this.#fetchId,
+          url: overrides.url,
+          method: overrides.method,
+          headers: overrides.headers,
+          postData: overrides.postData
+        });
+        this.#interceptPhase = void 0;
+      }
+      /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-continueResponse */
+      async continueResponse(overrides = {}) {
+        if (this.interceptPhase === "authRequired") {
+          if (overrides.credentials) {
+            await Promise.all([
+              this.waitNextPhase,
+              await this.#continueWithAuth({
+                response: "ProvideCredentials",
+                username: overrides.credentials.username,
+                password: overrides.credentials.password
+              })
+            ]);
+          } else {
+            return await this.#continueWithAuth({
+              response: "ProvideCredentials"
+            });
+          }
+        }
+        if (this.#interceptPhase === "responseStarted") {
+          const overrideHeaders = this.#getOverrideHeader(overrides.headers, overrides.cookies);
+          const responseHeaders = cdpFetchHeadersFromBidiNetworkHeaders(overrideHeaders);
+          await this.#continueResponse({
+            responseCode: overrides.statusCode ?? this.#response.paused?.responseStatusCode,
+            responsePhrase: overrides.reasonPhrase ?? this.#response.paused?.responseStatusText,
+            responseHeaders: responseHeaders ?? this.#response.paused?.responseHeaders
+          });
+          this.#responseOverrides = {
+            statusCode: overrides.statusCode,
+            headers: overrideHeaders
+          };
+        }
+      }
+      async #continueResponse({ responseCode, responsePhrase, responseHeaders } = {}) {
+        assert3(this.#fetchId, "Network Interception not set-up.");
+        await this.cdpClient.sendCommand("Fetch.continueResponse", {
+          requestId: this.#fetchId,
+          responseCode,
+          responsePhrase,
+          responseHeaders
+        });
+        this.#interceptPhase = void 0;
+      }
+      /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-continueWithAuth */
+      async continueWithAuth(authChallenge) {
+        let username;
+        let password;
+        if (authChallenge.action === "provideCredentials") {
+          const { credentials } = authChallenge;
+          username = credentials.username;
+          password = credentials.password;
+        }
+        const response = cdpAuthChallengeResponseFromBidiAuthContinueWithAuthAction(authChallenge.action);
+        await this.#continueWithAuth({
+          response,
+          username,
+          password
+        });
+      }
+      /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-provideResponse */
+      async provideResponse(overrides) {
+        assert3(this.#fetchId, "Network Interception not set-up.");
+        if (this.interceptPhase === "authRequired") {
+          return await this.#continueWithAuth({
+            response: "ProvideCredentials"
+          });
+        }
+        if (!overrides.body && !overrides.headers) {
+          return await this.#continueRequest();
+        }
+        const overrideHeaders = this.#getOverrideHeader(overrides.headers, overrides.cookies);
+        const responseHeaders = cdpFetchHeadersFromBidiNetworkHeaders(overrideHeaders);
+        const responseCode = overrides.statusCode ?? this.#statusCode ?? 200;
+        await this.cdpClient.sendCommand("Fetch.fulfillRequest", {
+          requestId: this.#fetchId,
+          responseCode,
+          responsePhrase: overrides.reasonPhrase,
+          responseHeaders,
+          body: getCdpBodyFromBiDiBytesValue(overrides.body)
+        });
+        this.#interceptPhase = void 0;
+      }
+      dispose() {
+        this.waitNextPhase.reject(new Error("waitNextPhase disposed"));
+      }
+      disposeData() {
+        this.#request = {};
+        this.#response = {};
+        this.#requestOverrides = void 0;
+        this.#responseOverrides = void 0;
+      }
+      async #continueWithAuth(authChallengeResponse) {
+        assert3(this.#fetchId, "Network Interception not set-up.");
+        await this.cdpClient.sendCommand("Fetch.continueWithAuth", {
+          requestId: this.#fetchId,
+          authChallengeResponse
+        });
+        this.#interceptPhase = void 0;
+      }
+      #emitEvent(getEvent) {
+        let event;
+        try {
+          event = getEvent();
+        } catch (error62) {
+          this.#logger?.(LogType.debugError)?.(error62);
+          return;
+        }
+        if (this.#isIgnoredEvent() || this.#emittedEvents[event.method] && // Special case this event can be emitted multiple times
+        event.method !== chromium_bidi_exports.Network.EventNames.AuthRequired) {
+          return;
+        }
+        this.#phaseChanged();
+        this.#emittedEvents[event.method] = true;
+        if (this.#context) {
+          this.#eventManager.registerEvent(Object.assign(event, {
+            type: "event"
+          }), this.#context);
+        } else {
+          this.#eventManager.registerGlobalEvent(Object.assign(event, {
+            type: "event"
+          }));
+        }
+      }
+      #getBaseEventParams(phase) {
+        const interceptProps = {
+          isBlocked: false
+        };
+        if (phase) {
+          const blockedBy = this.#interceptsInPhase(phase);
+          interceptProps.isBlocked = blockedBy.size > 0;
+          if (interceptProps.isBlocked) {
+            interceptProps.intercepts = [...blockedBy];
+          }
+        }
+        return {
+          context: this.#context,
+          navigation: this.#navigationId,
+          redirectCount: this.#redirectCount,
+          request: this.#getRequestData(),
+          // Timestamp should be in milliseconds, while CDP provides it in seconds.
+          timestamp: Math.round(getTiming(this.#request.info?.wallTime) * 1e3),
+          // Contains isBlocked and intercepts
+          ...interceptProps
+        };
+      }
+      #getResponseEventParams() {
+        if (this.#response.info?.fromDiskCache) {
+          this.#response.extraInfo = void 0;
+        }
+        const cdpHeaders = this.#response.info?.headers ?? {};
+        const cdpRawHeaders = this.#response.extraInfo?.headers ?? {};
+        for (const [key, value] of Object.entries(cdpRawHeaders)) {
+          cdpHeaders[key] = value;
+        }
+        const headers = bidiNetworkHeadersFromCdpNetworkHeaders(cdpHeaders);
+        const authChallenges = this.#authChallenges;
+        const response = {
+          url: this.url,
+          protocol: this.#response.info?.protocol ?? "",
+          status: this.#statusCode ?? -1,
+          // TODO: Throw an exception or use some other status code?
+          statusText: this.#response.info?.statusText || this.#response.paused?.responseStatusText || "",
+          fromCache: this.#response.info?.fromDiskCache || this.#response.info?.fromPrefetchCache || this.#servedFromCache,
+          headers: this.#responseOverrides?.headers ?? headers,
+          mimeType: this.#response.info?.mimeType || "",
+          // TODO: this should be the size for the entire HTTP response.
+          bytesReceived: this.encodedResponseBodySize,
+          headersSize: computeHeadersSize(headers),
+          bodySize: this.encodedResponseBodySize,
+          content: {
+            size: this.#decodedResponseBodySize
+          },
+          ...authChallenges ? { authChallenges } : {}
+        };
+        return {
+          ...response,
+          "goog:securityDetails": this.#response.info?.securityDetails
+        };
+      }
+      get encodedResponseBodySize() {
+        return this.#encodedResponseBodySize;
+      }
+      get decodedResponseBodySize() {
+        return this.#decodedResponseBodySize;
+      }
+      #getRequestData() {
+        const headers = this.#requestHeaders;
+        const request3 = {
+          request: this.#id,
+          url: this.url,
+          method: this.#method ?? _a6.unknownParameter,
+          headers,
+          cookies: this.#cookies,
+          headersSize: computeHeadersSize(headers),
+          bodySize: this.bodySize,
+          // TODO: populate
+          destination: this.#getDestination(),
+          // TODO: populate
+          initiatorType: this.#getInitiatorType(),
+          timings: this.#timings
+        };
+        return {
+          ...request3,
+          "goog:postData": this.#request.info?.request?.postData,
+          "goog:hasPostData": this.#request.info?.request?.hasPostData,
+          "goog:resourceType": this.#request.info?.type,
+          "goog:resourceInitiator": this.#request.info?.initiator
+        };
+      }
+      /**
+       * Heuristic trying to guess the destination.
+       * Specification: https://fetch.spec.whatwg.org/#concept-request-destination.
+       * Specified values: "audio", "audioworklet", "document", "embed", "font", "frame",
+       * "iframe", "image", "json", "manifest", "object", "paintworklet", "report", "script",
+       * "serviceworker", "sharedworker", "style", "track", "video", "webidentity", "worker",
+       * "xslt".
+       */
+      #getDestination() {
+        switch (this.#request.info?.type) {
+          case "Script":
+            return "script";
+          case "Stylesheet":
+            return "style";
+          case "Image":
+            return "image";
+          case "Document":
+            return this.#request.info?.initiator.type === "parser" ? "iframe" : "document";
+          default:
+            return "";
+        }
+      }
+      /**
+       * Heuristic trying to guess the initiator type.
+       * Specification: https://fetch.spec.whatwg.org/#request-initiator-type.
+       * Specified values: "audio", "beacon", "body", "css", "early-hints", "embed", "fetch",
+       * "font", "frame", "iframe", "image", "img", "input", "link", "object", "ping",
+       * "script", "track", "video", "xmlhttprequest", "other".
+       */
+      #getInitiatorType() {
+        if (this.#request.info?.initiator.type === "parser") {
+          switch (this.#request.info?.type) {
+            case "Document":
+              return "iframe";
+            case "Font":
+              return this.#request.info?.initiator?.url === this.#request.info?.documentURL ? "font" : "css";
+            case "Image":
+              return this.#request.info?.initiator?.url === this.#request.info?.documentURL ? "img" : "css";
+            case "Script":
+              return "script";
+            case "Stylesheet":
+              return "link";
+            default:
+              return null;
+          }
+        }
+        if (this.#request?.info?.type === "Fetch") {
+          return "fetch";
+        }
+        return null;
+      }
+      #getBeforeRequestEvent() {
+        assert3(this.#request.info, "RequestWillBeSentEvent is not set");
+        return {
+          method: chromium_bidi_exports.Network.EventNames.BeforeRequestSent,
+          params: {
+            ...this.#getBaseEventParams(
+              "beforeRequestSent"
+              /* Network.InterceptPhase.BeforeRequestSent */
+            ),
+            initiator: {
+              type: _a6.#getInitiator(this.#request.info.initiator.type),
+              columnNumber: this.#request.info.initiator.columnNumber,
+              lineNumber: this.#request.info.initiator.lineNumber,
+              stackTrace: this.#request.info.initiator.stack,
+              request: this.#request.info.initiator.requestId
+            }
+          }
+        };
+      }
+      #getResponseStartedEvent() {
+        return {
+          method: chromium_bidi_exports.Network.EventNames.ResponseStarted,
+          params: {
+            ...this.#getBaseEventParams(
+              "responseStarted"
+              /* Network.InterceptPhase.ResponseStarted */
+            ),
+            response: this.#getResponseEventParams()
+          }
+        };
+      }
+      #getResponseReceivedEvent() {
+        return {
+          method: chromium_bidi_exports.Network.EventNames.ResponseCompleted,
+          params: {
+            ...this.#getBaseEventParams(),
+            response: this.#getResponseEventParams()
+          }
+        };
+      }
+      #isIgnoredEvent() {
+        const faviconUrl = "/favicon.ico";
+        return this.#request.paused?.request.url.endsWith(faviconUrl) ?? this.#request.info?.request.url.endsWith(faviconUrl) ?? false;
+      }
+      #getOverrideHeader(headers, cookies) {
+        if (!headers && !cookies) {
+          return void 0;
+        }
+        let overrideHeaders = headers;
+        const cookieHeader = networkHeaderFromCookieHeaders(cookies);
+        if (cookieHeader && !overrideHeaders) {
+          overrideHeaders = this.#requestHeaders;
+        }
+        if (cookieHeader && overrideHeaders) {
+          overrideHeaders.filter((header) => header.name.localeCompare("cookie", void 0, {
+            sensitivity: "base"
+          }) !== 0);
+          overrideHeaders.push(cookieHeader);
+        }
+        return overrideHeaders;
+      }
+      static #getInitiator(initiatorType) {
+        switch (initiatorType) {
+          case "parser":
+          case "script":
+          case "preflight":
+            return initiatorType;
+          default:
+            return "other";
+        }
+      }
+    };
+    _a6 = NetworkRequest;
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkStorage.js
+var MAX_TOTAL_COLLECTED_SIZE, NetworkStorage;
+var init_NetworkStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkStorage.js"() {
+    init_protocol();
+    init_uuid();
+    init_CollectorsStorage();
+    init_NetworkRequest();
+    init_NetworkUtils();
+    MAX_TOTAL_COLLECTED_SIZE = 2e8;
+    NetworkStorage = class {
+      #browsingContextStorage;
+      #eventManager;
+      #collectorsStorage;
+      #logger;
+      /**
+       * A map from network request ID to Network Request objects.
+       * Needed as long as information about requests comes from different events.
+       */
+      #requests = /* @__PURE__ */ new Map();
+      /** A map from intercept ID to track active network intercepts. */
+      #intercepts = /* @__PURE__ */ new Map();
+      #defaultCacheBehavior = "default";
+      constructor(eventManager, browsingContextStorage, browserClient, logger) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#eventManager = eventManager;
+        this.#collectorsStorage = new CollectorsStorage(MAX_TOTAL_COLLECTED_SIZE, logger);
+        browserClient.on("Target.detachedFromTarget", ({ sessionId }) => {
+          this.disposeRequestMap(sessionId);
+        });
+        this.#logger = logger;
+      }
+      /**
+       * Gets the network request with the given ID, if any.
+       * Otherwise, creates a new network request with the given ID and cdp target.
+       */
+      #getOrCreateNetworkRequest(id, cdpTarget, redirectCount) {
+        let request3 = this.getRequestById(id);
+        if (redirectCount === void 0 && request3) {
+          return request3;
+        }
+        request3 = new NetworkRequest(id, this.#eventManager, this, cdpTarget, redirectCount, this.#logger);
+        this.addRequest(request3);
+        return request3;
+      }
+      onCdpTargetCreated(cdpTarget) {
+        const cdpClient = cdpTarget.cdpClient;
+        const listeners = [
+          [
+            "Network.requestWillBeSent",
+            (params) => {
+              const request3 = this.getRequestById(params.requestId);
+              request3?.updateCdpTarget(cdpTarget);
+              if (request3 && request3.isRedirecting()) {
+                request3.handleRedirect(params);
+                this.disposeRequest(params.requestId);
+                this.#getOrCreateNetworkRequest(params.requestId, cdpTarget, request3.redirectCount + 1).onRequestWillBeSentEvent(params);
+              } else {
+                this.#getOrCreateNetworkRequest(params.requestId, cdpTarget).onRequestWillBeSentEvent(params);
+              }
+            }
+          ],
+          [
+            "Network.requestWillBeSentExtraInfo",
+            (params) => {
+              const request3 = this.#getOrCreateNetworkRequest(params.requestId, cdpTarget);
+              request3.updateCdpTarget(cdpTarget);
+              request3.onRequestWillBeSentExtraInfoEvent(params);
+            }
+          ],
+          [
+            "Network.responseReceived",
+            (params) => {
+              const request3 = this.#getOrCreateNetworkRequest(params.requestId, cdpTarget);
+              request3.updateCdpTarget(cdpTarget);
+              request3.onResponseReceivedEvent(params);
+            }
+          ],
+          [
+            "Network.responseReceivedExtraInfo",
+            (params) => {
+              const request3 = this.#getOrCreateNetworkRequest(params.requestId, cdpTarget);
+              request3.updateCdpTarget(cdpTarget);
+              request3.onResponseReceivedExtraInfoEvent(params);
+            }
+          ],
+          [
+            "Network.requestServedFromCache",
+            (params) => {
+              const request3 = this.#getOrCreateNetworkRequest(params.requestId, cdpTarget);
+              request3.updateCdpTarget(cdpTarget);
+              request3.onServedFromCache();
+            }
+          ],
+          [
+            "Fetch.requestPaused",
+            (event) => {
+              const request3 = this.#getOrCreateNetworkRequest(
+                // CDP quirk if the Network domain is not present this is undefined
+                event.networkId ?? event.requestId,
+                cdpTarget
+              );
+              request3.updateCdpTarget(cdpTarget);
+              request3.onRequestPaused(event);
+            }
+          ],
+          [
+            "Fetch.authRequired",
+            (event) => {
+              let request3 = this.getRequestByFetchId(event.requestId);
+              if (!request3) {
+                request3 = this.#getOrCreateNetworkRequest(event.requestId, cdpTarget);
+              }
+              request3.updateCdpTarget(cdpTarget);
+              request3.onAuthRequired(event);
+            }
+          ],
+          [
+            "Network.dataReceived",
+            (params) => {
+              const request3 = this.getRequestById(params.requestId);
+              request3?.updateCdpTarget(cdpTarget);
+              request3?.onDataReceivedEvent(params);
+            }
+          ],
+          [
+            "Network.loadingFailed",
+            (params) => {
+              const request3 = this.#getOrCreateNetworkRequest(params.requestId, cdpTarget);
+              request3.updateCdpTarget(cdpTarget);
+              request3.onLoadingFailedEvent(params);
+            }
+          ],
+          [
+            "Network.loadingFinished",
+            (params) => {
+              const request3 = this.getRequestById(params.requestId);
+              request3?.updateCdpTarget(cdpTarget);
+              request3?.onLoadingFinishedEvent(params);
+            }
+          ]
+        ];
+        for (const [event, listener] of listeners) {
+          cdpClient.on(event, listener);
+        }
+      }
+      async getCollectedData(params) {
+        if (!this.#collectorsStorage.isCollected(params.request, params.dataType, params.collector)) {
+          throw new NoSuchNetworkDataException(params.collector === void 0 ? `No collected ${params.dataType} data` : `Collector ${params.collector} didn't collect ${params.dataType} data`);
+        }
+        if (params.disown && params.collector === void 0) {
+          throw new InvalidArgumentException("Cannot disown collected data without collector ID");
+        }
+        const request3 = this.getRequestById(params.request);
+        if (request3 === void 0) {
+          throw new NoSuchNetworkDataException(`No data for ${params.request}`);
+        }
+        let result = void 0;
+        switch (params.dataType) {
+          case "response":
+            result = await this.#getCollectedResponseData(request3);
+            break;
+          case "request":
+            result = await this.#getCollectedRequestData(request3);
+            break;
+          default:
+            throw new UnsupportedOperationException(`Unsupported data type ${params.dataType}`);
+        }
+        if (params.disown && params.collector !== void 0) {
+          this.#collectorsStorage.disownData(request3.id, params.dataType, params.collector);
+          this.disposeRequest(request3.id);
+        }
+        return result;
+      }
+      async #getCollectedResponseData(request3) {
+        try {
+          const responseBody = await request3.cdpClient.sendCommand("Network.getResponseBody", { requestId: request3.id });
+          return {
+            bytes: {
+              type: responseBody.base64Encoded ? "base64" : "string",
+              value: responseBody.body
+            }
+          };
+        } catch (error62) {
+          if (error62.code === -32e3 && error62.message === "No resource with given identifier found") {
+            throw new NoSuchNetworkDataException(`Response data was disposed`);
+          }
+          if (error62.code === -32001) {
+            throw new NoSuchNetworkDataException(`Response data is disposed after the related page`);
+          }
+          throw error62;
+        }
+      }
+      async #getCollectedRequestData(request3) {
+        const requestPostData = await request3.cdpClient.sendCommand("Network.getRequestPostData", { requestId: request3.id });
+        return {
+          bytes: {
+            type: "string",
+            value: requestPostData.postData
+          }
+        };
+      }
+      collectIfNeeded(request3, dataType) {
+        this.#collectorsStorage.collectIfNeeded(request3, dataType, request3.cdpTarget.topLevelId, request3.cdpTarget.userContext);
+      }
+      getInterceptionStages(browsingContextId) {
+        const stages = {
+          request: false,
+          response: false,
+          auth: false
+        };
+        for (const intercept of this.#intercepts.values()) {
+          if (intercept.contexts && !intercept.contexts.includes(browsingContextId)) {
+            continue;
+          }
+          stages.request ||= intercept.phases.includes(
+            "beforeRequestSent"
+            /* Network.InterceptPhase.BeforeRequestSent */
+          );
+          stages.response ||= intercept.phases.includes(
+            "responseStarted"
+            /* Network.InterceptPhase.ResponseStarted */
+          );
+          stages.auth ||= intercept.phases.includes(
+            "authRequired"
+            /* Network.InterceptPhase.AuthRequired */
+          );
+        }
+        return stages;
+      }
+      getInterceptsForPhase(request3, phase) {
+        if (request3.url === NetworkRequest.unknownParameter) {
+          return /* @__PURE__ */ new Set();
+        }
+        const intercepts = /* @__PURE__ */ new Set();
+        for (const [interceptId, intercept] of this.#intercepts.entries()) {
+          if (!intercept.phases.includes(phase) || intercept.contexts && !intercept.contexts.includes(request3.cdpTarget.topLevelId)) {
+            continue;
+          }
+          if (intercept.urlPatterns.length === 0) {
+            intercepts.add(interceptId);
+            continue;
+          }
+          for (const pattern of intercept.urlPatterns) {
+            if (matchUrlPattern(pattern, request3.url)) {
+              intercepts.add(interceptId);
+              break;
+            }
+          }
+        }
+        return intercepts;
+      }
+      disposeRequestMap(sessionId) {
+        for (const request3 of this.#requests.values()) {
+          if (request3.cdpClient.sessionId === sessionId) {
+            this.#requests.delete(request3.id);
+            request3.dispose();
+          }
+        }
+      }
+      /**
+       * Adds the given entry to the intercept map.
+       * URL patterns are assumed to be parsed.
+       *
+       * @return The intercept ID.
+       */
+      addIntercept(value) {
+        const interceptId = uuidv42();
+        this.#intercepts.set(interceptId, value);
+        return interceptId;
+      }
+      /**
+       * Removes the given intercept from the intercept map.
+       * Throws NoSuchInterceptException if the intercept does not exist.
+       */
+      removeIntercept(intercept) {
+        if (!this.#intercepts.has(intercept)) {
+          throw new NoSuchInterceptException(`Intercept '${intercept}' does not exist.`);
+        }
+        this.#intercepts.delete(intercept);
+      }
+      getRequestsByTarget(target2) {
+        const requests2 = [];
+        for (const request3 of this.#requests.values()) {
+          if (request3.cdpTarget === target2) {
+            requests2.push(request3);
+          }
+        }
+        return requests2;
+      }
+      getRequestById(id) {
+        return this.#requests.get(id);
+      }
+      getRequestByFetchId(fetchId) {
+        for (const request3 of this.#requests.values()) {
+          if (request3.fetchId === fetchId) {
+            return request3;
+          }
+        }
+        return;
+      }
+      addRequest(request3) {
+        this.#requests.set(request3.id, request3);
+      }
+      /**
+       * Disposes the given request, if no collectors targeting it are left.
+       */
+      disposeRequest(id) {
+        if (this.#collectorsStorage.isCollected(id)) {
+          this.#requests.get(id)?.disposeData();
+          return;
+        }
+        this.#requests.delete(id);
+      }
+      /**
+       * Gets the virtual navigation ID for the given navigable ID.
+       */
+      getNavigationId(contextId) {
+        if (contextId === void 0) {
+          return null;
+        }
+        return this.#browsingContextStorage.findContext(contextId)?.navigationId ?? null;
+      }
+      set defaultCacheBehavior(behavior) {
+        this.#defaultCacheBehavior = behavior;
+      }
+      get defaultCacheBehavior() {
+        return this.#defaultCacheBehavior;
+      }
+      addDataCollector(params) {
+        return this.#collectorsStorage.addDataCollector(params);
+      }
+      removeDataCollector(params) {
+        const releasedRequests = this.#collectorsStorage.removeDataCollector(params.collector);
+        releasedRequests.map((request3) => this.disposeRequest(request3));
+      }
+      disownData(params) {
+        if (!this.#collectorsStorage.isCollected(params.request, params.dataType, params.collector)) {
+          throw new NoSuchNetworkDataException(`Collector ${params.collector} didn't collect ${params.dataType} data`);
+        }
+        this.#collectorsStorage.disownData(params.request, params.dataType, params.collector);
+        this.disposeRequest(params.request);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpTarget.js
+var CdpTarget2;
+var init_CdpTarget = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpTarget.js"() {
+    init_chromium_bidi();
+    init_protocol();
+    init_Deferred2();
+    init_log();
+    init_BrowsingContextImpl();
+    init_LogManager();
+    init_NetworkStorage();
+    CdpTarget2 = class _CdpTarget {
+      #id;
+      userContext;
+      #cdpClient;
+      #browserCdpClient;
+      #parentCdpClient;
+      #realmStorage;
+      #eventManager;
+      #preloadScriptStorage;
+      #browsingContextStorage;
+      #networkStorage;
+      contextConfigStorage;
+      #unblocked = new Deferred2();
+      // Default user agent for the target. Required, as emulating client hints without user
+      // agent is not possible. Cache it to avoid round trips to the browser for every target override.
+      #defaultUserAgent;
+      #logger;
+      /**
+       * Target's window id. Is filled when the CDP target is created and do not reflect
+       * moving targets from one window to another. The actual values
+       * will be set during `#unblock`.
+       * */
+      #windowId;
+      #deviceAccessEnabled = false;
+      #cacheDisableState = false;
+      #preloadEnabled = false;
+      #fetchDomainStages = {
+        request: false,
+        response: false,
+        auth: false
+      };
+      static create(targetId, cdpClient, browserCdpClient, parentCdpClient, realmStorage, eventManager, preloadScriptStorage, browsingContextStorage, networkStorage, configStorage, userContext, defaultUserAgent, logger) {
+        const cdpTarget = new _CdpTarget(targetId, cdpClient, browserCdpClient, parentCdpClient, eventManager, realmStorage, preloadScriptStorage, browsingContextStorage, configStorage, networkStorage, userContext, defaultUserAgent, logger);
+        LogManager.create(cdpTarget, realmStorage, eventManager, logger);
+        cdpTarget.#setEventListeners();
+        void cdpTarget.#unblock();
+        return cdpTarget;
+      }
+      constructor(targetId, cdpClient, browserCdpClient, parentCdpClient, eventManager, realmStorage, preloadScriptStorage, browsingContextStorage, configStorage, networkStorage, userContext, defaultUserAgent, logger) {
+        this.#defaultUserAgent = defaultUserAgent;
+        this.userContext = userContext;
+        this.#id = targetId;
+        this.#cdpClient = cdpClient;
+        this.#browserCdpClient = browserCdpClient;
+        this.#parentCdpClient = parentCdpClient;
+        this.#eventManager = eventManager;
+        this.#realmStorage = realmStorage;
+        this.#preloadScriptStorage = preloadScriptStorage;
+        this.#networkStorage = networkStorage;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.contextConfigStorage = configStorage;
+        this.#logger = logger;
+      }
+      /** Returns a deferred that resolves when the target is unblocked. */
+      get unblocked() {
+        return this.#unblocked;
+      }
+      get id() {
+        return this.#id;
+      }
+      get cdpClient() {
+        return this.#cdpClient;
+      }
+      get parentCdpClient() {
+        return this.#parentCdpClient;
+      }
+      get browserCdpClient() {
+        return this.#browserCdpClient;
+      }
+      /** Needed for CDP escape path. */
+      get cdpSessionId() {
+        return this.#cdpClient.sessionId;
+      }
+      /**
+       * Window id the target belongs to. If not known, returns 0.
+       */
+      get windowId() {
+        if (this.#windowId === void 0) {
+          this.#logger?.(LogType.debugError)?.("Getting windowId before it was set, returning 0");
+        }
+        return this.#windowId ?? 0;
+      }
+      /**
+       * Enables all the required CDP domains and unblocks the target.
+       */
+      async #unblock() {
+        const config3 = this.contextConfigStorage.getActiveConfig(this.topLevelId, this.userContext);
+        const results = await Promise.allSettled([
+          this.#cdpClient.sendCommand("Page.enable", {
+            enableFileChooserOpenedEvent: true
+          }),
+          ...this.#ignoreFileDialog() ? [] : [
+            this.#cdpClient.sendCommand("Page.setInterceptFileChooserDialog", {
+              enabled: true,
+              // The intercepted dialog should be canceled.
+              cancel: true
+            })
+          ],
+          // There can be some existing frames in the target, if reconnecting to an
+          // existing browser instance, e.g. via Puppeteer. Need to restore the browsing
+          // contexts for the frames to correctly handle further events, like
+          // `Runtime.executionContextCreated`.
+          // It's important to schedule this task together with enabling domains commands to
+          // prepare the tree before the events (e.g. Runtime.executionContextCreated) start
+          // coming.
+          // https://github.com/GoogleChromeLabs/chromium-bidi/issues/2282
+          this.#cdpClient.sendCommand("Page.getFrameTree").then((frameTree) => this.#restoreFrameTreeState(frameTree.frameTree)),
+          this.#cdpClient.sendCommand("Runtime.enable"),
+          this.#cdpClient.sendCommand("Page.setLifecycleEventsEnabled", {
+            enabled: true
+          }),
+          // Enabling CDP Network domain is required for navigation detection:
+          // https://github.com/GoogleChromeLabs/chromium-bidi/issues/2856.
+          this.#cdpClient.sendCommand("Network.enable", {
+            // If `googDisableNetworkDurableMessages` flag is set, do not enable durable
+            // messages.
+            enableDurableMessages: config3.disableNetworkDurableMessages !== true,
+            maxTotalBufferSize: MAX_TOTAL_COLLECTED_SIZE
+          }).then(() => this.toggleNetworkIfNeeded()),
+          this.#cdpClient.sendCommand("Target.setAutoAttach", {
+            autoAttach: true,
+            waitForDebuggerOnStart: true,
+            flatten: true
+          }),
+          this.#updateWindowId(),
+          this.#setUserContextConfig(config3),
+          this.#initAndEvaluatePreloadScripts(),
+          this.#cdpClient.sendCommand("Runtime.runIfWaitingForDebugger"),
+          // Resume tab execution as well if it was paused by the debugger.
+          this.#parentCdpClient.sendCommand("Runtime.runIfWaitingForDebugger"),
+          this.toggleDeviceAccessIfNeeded(),
+          this.togglePreloadIfNeeded()
+        ]);
+        for (const result of results) {
+          if (result instanceof Error) {
+            this.#logger?.(LogType.debugError)?.("Error happened when configuring a new target", result);
+          }
+        }
+        this.#unblocked.resolve({
+          kind: "success",
+          value: void 0
+        });
+      }
+      #restoreFrameTreeState(frameTree) {
+        const frame = frameTree.frame;
+        const maybeContext = this.#browsingContextStorage.findContext(frame.id);
+        if (maybeContext !== void 0) {
+          if (maybeContext.parentId === null && frame.parentId !== null && frame.parentId !== void 0) {
+            maybeContext.parentId = frame.parentId;
+          }
+        }
+        if (maybeContext === void 0 && frame.parentId !== void 0) {
+          const parentBrowsingContext = this.#browsingContextStorage.getContext(frame.parentId);
+          BrowsingContextImpl.create(frame.id, frame.parentId, this.userContext, parentBrowsingContext.cdpTarget, this.#eventManager, this.#browsingContextStorage, this.#realmStorage, this.contextConfigStorage, frame.url, void 0, this.#logger);
+        }
+        frameTree.childFrames?.map((frameTree2) => this.#restoreFrameTreeState(frameTree2));
+      }
+      async toggleFetchIfNeeded() {
+        const stages = this.#networkStorage.getInterceptionStages(this.topLevelId);
+        if (this.#fetchDomainStages.request === stages.request && this.#fetchDomainStages.response === stages.response && this.#fetchDomainStages.auth === stages.auth) {
+          return;
+        }
+        const patterns = [];
+        this.#fetchDomainStages = stages;
+        if (stages.request || stages.auth) {
+          patterns.push({
+            urlPattern: "*",
+            requestStage: "Request"
+          });
+        }
+        if (stages.response) {
+          patterns.push({
+            urlPattern: "*",
+            requestStage: "Response"
+          });
+        }
+        if (patterns.length) {
+          await this.#cdpClient.sendCommand("Fetch.enable", {
+            patterns,
+            handleAuthRequests: stages.auth
+          });
+        } else {
+          const blockedRequest = this.#networkStorage.getRequestsByTarget(this).filter((request3) => request3.interceptPhase);
+          void Promise.allSettled(blockedRequest.map((request3) => request3.waitNextPhase)).then(async () => {
+            const blockedRequest2 = this.#networkStorage.getRequestsByTarget(this).filter((request3) => request3.interceptPhase);
+            if (blockedRequest2.length) {
+              return await this.toggleFetchIfNeeded();
+            }
+            return await this.#cdpClient.sendCommand("Fetch.disable");
+          }).catch((error62) => {
+            this.#logger?.(LogType.bidi)?.("Disable failed", error62);
+          });
+        }
+      }
+      /**
+       * Toggles CDP "Fetch" domain and enable/disable network cache.
+       */
+      async toggleNetworkIfNeeded() {
+        try {
+          await Promise.all([
+            this.toggleSetCacheDisabled(),
+            this.toggleFetchIfNeeded()
+          ]);
+        } catch (err) {
+          this.#logger?.(LogType.debugError)?.(err);
+          if (!this.#isExpectedError(err)) {
+            throw err;
+          }
+        }
+      }
+      async toggleSetCacheDisabled(disable) {
+        const defaultCacheDisabled = this.#networkStorage.defaultCacheBehavior === "bypass";
+        const cacheDisabled = disable ?? defaultCacheDisabled;
+        if (this.#cacheDisableState === cacheDisabled) {
+          return;
+        }
+        this.#cacheDisableState = cacheDisabled;
+        try {
+          await this.#cdpClient.sendCommand("Network.setCacheDisabled", {
+            cacheDisabled
+          });
+        } catch (err) {
+          this.#logger?.(LogType.debugError)?.(err);
+          this.#cacheDisableState = !cacheDisabled;
+          if (!this.#isExpectedError(err)) {
+            throw err;
+          }
+        }
+      }
+      async toggleDeviceAccessIfNeeded() {
+        const enabled = this.isSubscribedTo(Bluetooth.EventNames.RequestDevicePromptUpdated);
+        if (this.#deviceAccessEnabled === enabled) {
+          return;
+        }
+        this.#deviceAccessEnabled = enabled;
+        try {
+          await this.#cdpClient.sendCommand(enabled ? "DeviceAccess.enable" : "DeviceAccess.disable");
+        } catch (err) {
+          this.#logger?.(LogType.debugError)?.(err);
+          this.#deviceAccessEnabled = !enabled;
+          if (!this.#isExpectedError(err)) {
+            throw err;
+          }
+        }
+      }
+      async togglePreloadIfNeeded() {
+        const enabled = this.isSubscribedTo(Speculation.EventNames.PrefetchStatusUpdated);
+        if (this.#preloadEnabled === enabled) {
+          return;
+        }
+        this.#preloadEnabled = enabled;
+        try {
+          await this.#cdpClient.sendCommand(enabled ? "Preload.enable" : "Preload.disable");
+        } catch (err) {
+          this.#logger?.(LogType.debugError)?.(err);
+          this.#preloadEnabled = !enabled;
+          if (!this.#isExpectedError(err)) {
+            throw err;
+          }
+        }
+      }
+      /**
+       * Heuristic checking if the error is due to the session being closed. If so, ignore the
+       * error.
+       */
+      #isExpectedError(err) {
+        const error62 = err;
+        return error62.code === -32001 && error62.message === "Session with given id not found." || this.#cdpClient.isCloseError(err);
+      }
+      #setEventListeners() {
+        this.#cdpClient.on("*", (event, params) => {
+          if (typeof event !== "string") {
+            return;
+          }
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: `goog:cdp.${event}`,
+            params: {
+              event,
+              params,
+              session: this.cdpSessionId
+            }
+          }, this.id);
+        });
+      }
+      async #enableFetch(stages) {
+        const patterns = [];
+        if (stages.request || stages.auth) {
+          patterns.push({
+            urlPattern: "*",
+            requestStage: "Request"
+          });
+        }
+        if (stages.response) {
+          patterns.push({
+            urlPattern: "*",
+            requestStage: "Response"
+          });
+        }
+        if (patterns.length) {
+          const oldStages = this.#fetchDomainStages;
+          this.#fetchDomainStages = stages;
+          try {
+            await this.#cdpClient.sendCommand("Fetch.enable", {
+              patterns,
+              handleAuthRequests: stages.auth
+            });
+          } catch {
+            this.#fetchDomainStages = oldStages;
+          }
+        }
+      }
+      async #disableFetch() {
+        const blockedRequest = this.#networkStorage.getRequestsByTarget(this).filter((request3) => request3.interceptPhase);
+        if (blockedRequest.length === 0) {
+          this.#fetchDomainStages = {
+            request: false,
+            response: false,
+            auth: false
+          };
+          await this.#cdpClient.sendCommand("Fetch.disable");
+        }
+      }
+      async toggleNetwork() {
+        const stages = this.#networkStorage.getInterceptionStages(this.topLevelId);
+        const fetchEnable = Object.values(stages).some((value) => value);
+        const fetchChanged = this.#fetchDomainStages.request !== stages.request || this.#fetchDomainStages.response !== stages.response || this.#fetchDomainStages.auth !== stages.auth;
+        this.#logger?.(LogType.debugInfo)?.("Toggle Network", `Fetch (${fetchEnable}) ${fetchChanged}`);
+        if (fetchEnable && fetchChanged) {
+          await this.#enableFetch(stages);
+        }
+        if (!fetchEnable && fetchChanged) {
+          await this.#disableFetch();
+        }
+      }
+      /**
+       * All the ProxyChannels from all the preload scripts of the given
+       * BrowsingContext.
+       */
+      getChannels() {
+        return this.#preloadScriptStorage.find().flatMap((script) => script.channels);
+      }
+      async #updateWindowId() {
+        const { windowId } = await this.#browserCdpClient.sendCommand("Browser.getWindowForTarget", { targetId: this.id });
+        this.#windowId = windowId;
+      }
+      /** Loads all top-level preload scripts. */
+      async #initAndEvaluatePreloadScripts() {
+        await Promise.all(this.#preloadScriptStorage.find({
+          // Needed for OOPIF
+          targetId: this.topLevelId
+        }).map((script) => {
+          return script.initInTarget(this, true);
+        }));
+      }
+      async setDeviceMetricsOverride(viewport, devicePixelRatio, screenOrientation, screenArea, scrollbarType = null) {
+        if (viewport === null && devicePixelRatio === null && screenOrientation === null && screenArea === null && scrollbarType === null) {
+          await this.cdpClient.sendCommand("Emulation.clearDeviceMetricsOverride");
+          return;
+        }
+        const metricsOverride = {
+          width: viewport?.width ?? 0,
+          height: viewport?.height ?? 0,
+          deviceScaleFactor: devicePixelRatio ?? 0,
+          screenOrientation: this.#toCdpScreenOrientationAngle(screenOrientation) ?? void 0,
+          mobile: false,
+          screenWidth: screenArea?.width,
+          screenHeight: screenArea?.height,
+          scrollbarType: scrollbarType === "overlay" ? "overlay" : "default"
+        };
+        await this.cdpClient.sendCommand("Emulation.setDeviceMetricsOverride", metricsOverride);
+      }
+      /**
+       * Immediately schedules all the required commands to configure user context
+       * configuration and waits for them to finish. It's important to schedule them
+       * in parallel, so that they are enqueued before any page's scripts.
+       */
+      async #setUserContextConfig(config3) {
+        const promises = [];
+        promises.push(this.#cdpClient.sendCommand("Page.setPrerenderingAllowed", {
+          isAllowed: !config3.prerenderingDisabled
+        }).catch(() => {
+        }));
+        if (config3.viewport !== void 0 || config3.devicePixelRatio !== void 0 || config3.screenOrientation !== void 0 || config3.screenArea !== void 0) {
+          promises.push(this.setDeviceMetricsOverride(config3.viewport ?? null, config3.devicePixelRatio ?? null, config3.screenOrientation ?? null, config3.screenArea ?? null, config3.scrollbarType ?? null).catch(() => {
+          }));
+        }
+        if (config3.geolocation !== void 0 && config3.geolocation !== null) {
+          promises.push(this.setGeolocationOverride(config3.geolocation));
+        }
+        if (config3.locale !== void 0) {
+          promises.push(this.setLocaleOverride(config3.locale));
+        }
+        if (config3.timezone !== void 0) {
+          promises.push(this.setTimezoneOverride(config3.timezone));
+        }
+        if (config3.extraHeaders !== void 0) {
+          promises.push(this.setExtraHeaders(config3.extraHeaders));
+        }
+        if (config3.userAgent !== void 0 || config3.locale !== void 0 || config3.clientHints !== void 0) {
+          promises.push(this.setUserAgentAndAcceptLanguage(config3.userAgent, config3.locale, config3.clientHints));
+        }
+        if (config3.scriptingEnabled !== void 0) {
+          promises.push(this.setScriptingEnabled(config3.scriptingEnabled));
+        }
+        if (config3.acceptInsecureCerts !== void 0) {
+          promises.push(this.cdpClient.sendCommand("Security.setIgnoreCertificateErrors", {
+            ignore: config3.acceptInsecureCerts
+          }));
+        }
+        if (config3.emulatedNetworkConditions !== void 0) {
+          promises.push(this.setEmulatedNetworkConditions(config3.emulatedNetworkConditions));
+        }
+        if (config3.maxTouchPoints !== void 0) {
+          promises.push(this.setTouchOverride(config3.maxTouchPoints));
+        }
+        if (config3.digitalCredentialsBehavior && this.id === this.topLevelId) {
+          promises.push(this.cdpClient.sendCommand("DigitalCredentials.setVirtualWalletBehavior", {
+            // @ts-expect-error action is kept for backward compatibility with older Chromium CDP versions
+            action: config3.digitalCredentialsBehavior.action,
+            behavior: config3.digitalCredentialsBehavior.action,
+            protocol: config3.digitalCredentialsBehavior.protocol,
+            response: config3.digitalCredentialsBehavior.response
+          }).catch(() => {
+          }));
+        }
+        await Promise.all(promises);
+      }
+      get topLevelId() {
+        return this.#browsingContextStorage.findTopLevelContextId(this.id) ?? this.id;
+      }
+      isSubscribedTo(moduleOrEvent) {
+        return this.#eventManager.subscriptionManager.isSubscribedTo(moduleOrEvent, this.topLevelId);
+      }
+      #ignoreFileDialog() {
+        const config3 = this.contextConfigStorage.getActiveConfig(this.topLevelId, this.userContext);
+        return (config3.userPromptHandler?.file ?? config3.userPromptHandler?.default ?? "ignore") === "ignore";
+      }
+      async setGeolocationOverride(geolocation) {
+        if (geolocation === null) {
+          await this.cdpClient.sendCommand("Emulation.clearGeolocationOverride");
+        } else if ("type" in geolocation) {
+          if (geolocation.type !== "positionUnavailable") {
+            throw new UnknownErrorException(`Unknown geolocation error ${geolocation.type}`);
+          }
+          await this.cdpClient.sendCommand("Emulation.setGeolocationOverride", {});
+        } else if ("latitude" in geolocation) {
+          await this.cdpClient.sendCommand("Emulation.setGeolocationOverride", {
+            latitude: geolocation.latitude,
+            longitude: geolocation.longitude,
+            accuracy: geolocation.accuracy ?? 1,
+            // `null` value is treated as "missing".
+            altitude: geolocation.altitude ?? void 0,
+            altitudeAccuracy: geolocation.altitudeAccuracy ?? void 0,
+            heading: geolocation.heading ?? void 0,
+            speed: geolocation.speed ?? void 0
+          });
+        } else {
+          throw new UnknownErrorException("Unexpected geolocation coordinates value");
+        }
+      }
+      async setTouchOverride(maxTouchPoints) {
+        const touchEmulationParams = {
+          enabled: maxTouchPoints !== null
+        };
+        if (maxTouchPoints !== null) {
+          touchEmulationParams.maxTouchPoints = maxTouchPoints;
+        }
+        await this.cdpClient.sendCommand("Emulation.setTouchEmulationEnabled", touchEmulationParams);
+      }
+      #toCdpScreenOrientationAngle(orientation) {
+        if (orientation === null) {
+          return null;
+        }
+        if (orientation.natural === "portrait") {
+          switch (orientation.type) {
+            case "portrait-primary":
+              return {
+                angle: 0,
+                type: "portraitPrimary"
+              };
+            case "landscape-primary":
+              return {
+                angle: 90,
+                type: "landscapePrimary"
+              };
+            case "portrait-secondary":
+              return {
+                angle: 180,
+                type: "portraitSecondary"
+              };
+            case "landscape-secondary":
+              return {
+                angle: 270,
+                type: "landscapeSecondary"
+              };
+            default:
+              throw new UnknownErrorException(`Unexpected screen orientation type ${orientation.type}`);
+          }
+        }
+        if (orientation.natural === "landscape") {
+          switch (orientation.type) {
+            case "landscape-primary":
+              return {
+                angle: 0,
+                type: "landscapePrimary"
+              };
+            case "portrait-primary":
+              return {
+                angle: 90,
+                type: "portraitPrimary"
+              };
+            case "landscape-secondary":
+              return {
+                angle: 180,
+                type: "landscapeSecondary"
+              };
+            case "portrait-secondary":
+              return {
+                angle: 270,
+                type: "portraitSecondary"
+              };
+            default:
+              throw new UnknownErrorException(`Unexpected screen orientation type ${orientation.type}`);
+          }
+        }
+        throw new UnknownErrorException(`Unexpected orientation natural ${orientation.natural}`);
+      }
+      async setLocaleOverride(locale) {
+        if (locale === null) {
+          await this.cdpClient.sendCommand("Emulation.setLocaleOverride", {});
+        } else {
+          await this.cdpClient.sendCommand("Emulation.setLocaleOverride", {
+            locale
+          });
+        }
+      }
+      async setScriptingEnabled(scriptingEnabled) {
+        await this.cdpClient.sendCommand("Emulation.setScriptExecutionDisabled", {
+          value: scriptingEnabled === false
+        });
+      }
+      async setTimezoneOverride(timezone) {
+        if (timezone === null) {
+          await this.cdpClient.sendCommand("Emulation.setTimezoneOverride", {
+            // If empty, disables the override and restores default host system timezone.
+            timezoneId: ""
+          });
+        } else {
+          await this.cdpClient.sendCommand("Emulation.setTimezoneOverride", {
+            timezoneId: timezone
+          });
+        }
+      }
+      async setExtraHeaders(headers) {
+        await this.cdpClient.sendCommand("Network.setExtraHTTPHeaders", {
+          headers
+        });
+      }
+      async setUserAgentAndAcceptLanguage(userAgent, acceptLanguage, clientHints) {
+        const userAgentMetadata = clientHints ? {
+          brands: clientHints.brands?.map((b2) => ({
+            brand: b2.brand,
+            version: b2.version
+          })),
+          fullVersionList: clientHints.fullVersionList,
+          platform: clientHints.platform ?? "",
+          platformVersion: clientHints.platformVersion ?? "",
+          architecture: clientHints.architecture ?? "",
+          model: clientHints.model ?? "",
+          mobile: clientHints.mobile ?? false,
+          bitness: clientHints.bitness ?? void 0,
+          wow64: clientHints.wow64 ?? void 0,
+          formFactors: clientHints.formFactors ?? void 0
+        } : void 0;
+        await this.cdpClient.sendCommand("Emulation.setUserAgentOverride", {
+          // `userAgent` is required if `userAgentMetadata` is provided.
+          userAgent: userAgent || (userAgentMetadata ? this.#defaultUserAgent : ""),
+          acceptLanguage: acceptLanguage ?? void 0,
+          // We need to provide the platform to enable platform emulation.
+          // Note that the value might be different from the one expected by the
+          // legacy `navigator.platform` (e.g. `Win32` vs `Windows`).
+          // https://github.com/w3c/webdriver-bidi/issues/1065
+          platform: clientHints?.platform ?? void 0,
+          userAgentMetadata
+        });
+      }
+      async setEmulatedNetworkConditions(networkConditions) {
+        if (networkConditions !== null && networkConditions.type !== "offline") {
+          throw new UnsupportedOperationException(`Unsupported network conditions ${networkConditions.type}`);
+        }
+        await Promise.all([
+          this.cdpClient.sendCommand("Network.emulateNetworkConditionsByRule", {
+            offline: networkConditions?.type === "offline",
+            matchedNetworkConditions: [
+              {
+                urlPattern: "",
+                latency: 0,
+                downloadThroughput: -1,
+                uploadThroughput: -1
+              }
+            ]
+          }),
+          this.cdpClient.sendCommand("Network.overrideNetworkState", {
+            offline: networkConditions?.type === "offline",
+            // TODO: restore the original `latency` value when emulation is removed.
+            latency: 0,
+            downloadThroughput: -1,
+            uploadThroughput: -1
+          })
+        ]);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpTargetManager.js
+var cdpToBidiTargetTypes, CdpTargetManager;
+var init_CdpTargetManager = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/cdp/CdpTargetManager.js"() {
+    init_log();
+    init_BrowsingContextImpl();
+    init_WorkerRealm();
+    init_CdpTarget();
+    cdpToBidiTargetTypes = {
+      service_worker: "service-worker",
+      shared_worker: "shared-worker",
+      worker: "dedicated-worker"
+    };
+    CdpTargetManager = class {
+      #browserCdpClient;
+      #cdpConnection;
+      #targetKeysToBeIgnoredByAutoAttach = /* @__PURE__ */ new Set();
+      #selfTargetId;
+      #eventManager;
+      #browsingContextStorage;
+      #networkStorage;
+      #bluetoothProcessor;
+      #preloadScriptStorage;
+      #realmStorage;
+      #configStorage;
+      #speculationProcessor;
+      #defaultUserContextId;
+      #defaultUserAgent;
+      #logger;
+      constructor(cdpConnection, browserCdpClient, selfTargetId, eventManager, browsingContextStorage, realmStorage, networkStorage, configStorage, bluetoothProcessor, speculationProcessor, preloadScriptStorage, defaultUserContextId, defaultUserAgent, logger) {
+        this.#cdpConnection = cdpConnection;
+        this.#browserCdpClient = browserCdpClient;
+        this.#targetKeysToBeIgnoredByAutoAttach.add(selfTargetId);
+        this.#selfTargetId = selfTargetId;
+        this.#eventManager = eventManager;
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#preloadScriptStorage = preloadScriptStorage;
+        this.#networkStorage = networkStorage;
+        this.#configStorage = configStorage;
+        this.#bluetoothProcessor = bluetoothProcessor;
+        this.#speculationProcessor = speculationProcessor;
+        this.#realmStorage = realmStorage;
+        this.#defaultUserContextId = defaultUserContextId;
+        this.#defaultUserAgent = defaultUserAgent;
+        this.#logger = logger;
+        this.#setEventListeners(browserCdpClient);
+      }
+      /**
+       * This method is called for each CDP session, since this class is responsible
+       * for creating and destroying all targets and browsing contexts.
+       */
+      #setEventListeners(cdpClient) {
+        cdpClient.on("Target.attachedToTarget", (params) => {
+          this.#handleAttachedToTargetEvent(params, cdpClient);
+        });
+        cdpClient.on("Target.detachedFromTarget", this.#handleDetachedFromTargetEvent.bind(this));
+        cdpClient.on("Target.targetInfoChanged", this.#handleTargetInfoChangedEvent.bind(this));
+        cdpClient.on("Inspector.targetCrashed", () => {
+          this.#handleTargetCrashedEvent(cdpClient);
+        });
+        cdpClient.on("Page.frameAttached", this.#handleFrameAttachedEvent.bind(this));
+        cdpClient.on("Page.frameSubtreeWillBeDetached", this.#handleFrameSubtreeWillBeDetached.bind(this));
+      }
+      #handleFrameAttachedEvent(params) {
+        const parentBrowsingContext = this.#browsingContextStorage.findContext(params.parentFrameId);
+        if (parentBrowsingContext !== void 0) {
+          BrowsingContextImpl.create(
+            params.frameId,
+            params.parentFrameId,
+            parentBrowsingContext.userContext,
+            parentBrowsingContext.cdpTarget,
+            this.#eventManager,
+            this.#browsingContextStorage,
+            this.#realmStorage,
+            this.#configStorage,
+            // At this point, we don't know the URL of the frame yet, so it will be updated
+            // later.
+            "about:blank",
+            void 0,
+            this.#logger
+          );
+        }
+      }
+      #handleFrameSubtreeWillBeDetached(params) {
+        this.#browsingContextStorage.findContext(params.frameId)?.dispose(true);
+      }
+      #handleAttachedToTargetEvent(params, parentSessionCdpClient) {
+        const { sessionId, targetInfo } = params;
+        const targetCdpClient = this.#cdpConnection.getCdpClient(sessionId);
+        const detach = async () => {
+          await targetCdpClient.sendCommand("Runtime.runIfWaitingForDebugger").then(() => parentSessionCdpClient.sendCommand("Target.detachFromTarget", params)).catch((error62) => this.#logger?.(LogType.debugError)?.(error62));
+        };
+        if (this.#selfTargetId === targetInfo.targetId) {
+          void detach();
+          return;
+        }
+        const targetKey = targetInfo.type === "service_worker" ? `${parentSessionCdpClient.sessionId}_${targetInfo.targetId}` : targetInfo.targetId;
+        if (this.#targetKeysToBeIgnoredByAutoAttach.has(targetKey)) {
+          return;
+        }
+        this.#targetKeysToBeIgnoredByAutoAttach.add(targetKey);
+        const userContext = targetInfo.browserContextId && targetInfo.browserContextId !== this.#defaultUserContextId ? targetInfo.browserContextId : "default";
+        switch (targetInfo.type) {
+          case "tab": {
+            this.#setEventListeners(targetCdpClient);
+            void (async () => {
+              await targetCdpClient.sendCommand("Target.setAutoAttach", {
+                autoAttach: true,
+                waitForDebuggerOnStart: true,
+                flatten: true
+              });
+            })();
+            return;
+          }
+          case "page":
+          case "iframe": {
+            const cdpTarget = this.#createCdpTarget(targetCdpClient, parentSessionCdpClient, targetInfo, userContext);
+            const maybeContext = this.#browsingContextStorage.findContext(targetInfo.targetId);
+            if (maybeContext && targetInfo.type === "iframe") {
+              maybeContext.updateCdpTarget(cdpTarget);
+            } else {
+              const parentId = this.#findFrameParentId(targetInfo, parentSessionCdpClient.sessionId);
+              BrowsingContextImpl.create(
+                targetInfo.targetId,
+                parentId,
+                userContext,
+                cdpTarget,
+                this.#eventManager,
+                this.#browsingContextStorage,
+                this.#realmStorage,
+                this.#configStorage,
+                // Hack: when a new target created, CDP emits targetInfoChanged with an empty
+                // url, and navigates it to about:blank later. When the event is emitted for
+                // an existing target (reconnect), the url is already known, and navigation
+                // events will not be emitted anymore. Replacing empty url with `about:blank`
+                // allows to handle both cases in the same way.
+                // "7.3.2.1 Creating browsing contexts".
+                // https://html.spec.whatwg.org/multipage/document-sequences.html#creating-browsing-contexts
+                // TODO: check who to deal with non-null creator and its `creatorOrigin`.
+                targetInfo.url === "" ? "about:blank" : targetInfo.url,
+                targetInfo.openerFrameId ?? targetInfo.openerId,
+                this.#logger
+              );
+            }
+            return;
+          }
+          case "service_worker":
+          case "worker": {
+            const realm = this.#realmStorage.findRealm({
+              cdpSessionId: parentSessionCdpClient.sessionId,
+              sandbox: null
+              // Non-sandboxed realms.
+            });
+            if (!realm) {
+              void detach();
+              return;
+            }
+            const cdpTarget = this.#createCdpTarget(targetCdpClient, parentSessionCdpClient, targetInfo, userContext);
+            this.#handleWorkerTarget(cdpToBidiTargetTypes[targetInfo.type], cdpTarget, realm);
+            return;
+          }
+          // In CDP, we only emit shared workers on the browser and not the set of
+          // frames that use the shared worker. If we change this in the future to
+          // behave like service workers (emits on both browser and frame targets),
+          // we can remove this block and merge service workers with the above one.
+          case "shared_worker": {
+            const cdpTarget = this.#createCdpTarget(targetCdpClient, parentSessionCdpClient, targetInfo, userContext);
+            this.#handleWorkerTarget(cdpToBidiTargetTypes[targetInfo.type], cdpTarget);
+            return;
+          }
+        }
+        void detach();
+      }
+      /** Try to find the parent browsing context ID for the given attached target. */
+      #findFrameParentId(targetInfo, parentSessionId) {
+        if (targetInfo.type !== "iframe") {
+          return null;
+        }
+        const parentId = targetInfo.openerFrameId ?? targetInfo.openerId;
+        if (parentId !== void 0) {
+          return parentId;
+        }
+        if (parentSessionId !== void 0) {
+          return this.#browsingContextStorage.findContextBySession(parentSessionId)?.id ?? null;
+        }
+        return null;
+      }
+      #createCdpTarget(targetCdpClient, parentCdpClient, targetInfo, userContext) {
+        this.#setEventListeners(targetCdpClient);
+        this.#preloadScriptStorage.onCdpTargetCreated(targetInfo.targetId, userContext);
+        const target2 = CdpTarget2.create(
+          targetInfo.targetId,
+          targetCdpClient,
+          this.#browserCdpClient,
+          parentCdpClient,
+          this.#realmStorage,
+          this.#eventManager,
+          this.#preloadScriptStorage,
+          this.#browsingContextStorage,
+          this.#networkStorage,
+          this.#configStorage,
+          userContext,
+          // Pass the cached default User Agent to the new target.
+          this.#defaultUserAgent,
+          this.#logger
+        );
+        this.#networkStorage.onCdpTargetCreated(target2);
+        this.#bluetoothProcessor.onCdpTargetCreated(target2);
+        this.#speculationProcessor.onCdpTargetCreated(target2);
+        return target2;
+      }
+      #workers = /* @__PURE__ */ new Map();
+      #handleWorkerTarget(realmType, cdpTarget, ownerRealm) {
+        cdpTarget.cdpClient.on("Runtime.executionContextCreated", (params) => {
+          const { uniqueId, id, origin } = params.context;
+          const workerRealm = new WorkerRealm(cdpTarget.cdpClient, this.#eventManager, id, this.#logger, serializeOrigin(origin), ownerRealm ? [ownerRealm] : [], uniqueId, this.#realmStorage, realmType);
+          this.#workers.set(cdpTarget.cdpSessionId, workerRealm);
+        });
+      }
+      #handleDetachedFromTargetEvent({ sessionId, targetId }) {
+        if (targetId) {
+          this.#preloadScriptStorage.find({ targetId }).map((preloadScript) => {
+            preloadScript.dispose(targetId);
+          });
+        }
+        const context2 = this.#browsingContextStorage.findContextBySession(sessionId);
+        if (context2) {
+          context2.dispose(true);
+          return;
+        }
+        const worker = this.#workers.get(sessionId);
+        if (worker) {
+          this.#realmStorage.deleteRealms({
+            cdpSessionId: worker.cdpClient.sessionId
+          });
+        }
+      }
+      #handleTargetInfoChangedEvent(params) {
+        const context2 = this.#browsingContextStorage.findContext(params.targetInfo.targetId);
+        if (context2) {
+          context2.onTargetInfoChanged(params);
+        }
+      }
+      #handleTargetCrashedEvent(cdpClient) {
+        const realms = this.#realmStorage.findRealms({
+          cdpSessionId: cdpClient.sessionId
+        });
+        for (const realm of realms) {
+          realm.dispose();
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextStorage.js
+var BrowsingContextStorage;
+var init_BrowsingContextStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/context/BrowsingContextStorage.js"() {
+    init_protocol();
+    init_EventEmitter2();
+    BrowsingContextStorage = class {
+      /** Map from context ID to context implementation. */
+      #contexts = /* @__PURE__ */ new Map();
+      /** Event emitter for browsing context storage eventsis not expected to be exposed to
+       * the outside world. */
+      #eventEmitter = new EventEmitter2();
+      /** Gets all top-level contexts, i.e. those with no parent. */
+      getTopLevelContexts() {
+        return this.getAllContexts().filter((context2) => context2.isTopLevelContext());
+      }
+      /** Gets all contexts. */
+      getAllContexts() {
+        return Array.from(this.#contexts.values());
+      }
+      /** Deletes the context with the given ID. */
+      deleteContextById(id) {
+        this.#contexts.delete(id);
+      }
+      /** Deletes the given context. */
+      deleteContext(context2) {
+        this.#contexts.delete(context2.id);
+      }
+      /** Tracks the given context. */
+      addContext(context2) {
+        this.#contexts.set(context2.id, context2);
+        this.#eventEmitter.emit("added", {
+          browsingContext: context2
+        });
+      }
+      /**
+       * Waits for a context with the given ID to be added and returns it.
+       */
+      waitForContext(browsingContextId) {
+        if (this.#contexts.has(browsingContextId)) {
+          return Promise.resolve(this.getContext(browsingContextId));
+        }
+        return new Promise((resolve10) => {
+          const listener = (event) => {
+            if (event.browsingContext.id === browsingContextId) {
+              this.#eventEmitter.off("added", listener);
+              resolve10(event.browsingContext);
+            }
+          };
+          this.#eventEmitter.on("added", listener);
+        });
+      }
+      /** Returns true whether there is an existing context with the given ID. */
+      hasContext(id) {
+        return this.#contexts.has(id);
+      }
+      /** Gets the context with the given ID, if any. */
+      findContext(id) {
+        return this.#contexts.get(id);
+      }
+      /** Returns the top-level context ID of the given context, if any. */
+      findTopLevelContextId(id) {
+        if (id === null) {
+          return null;
+        }
+        const maybeContext = this.findContext(id);
+        if (!maybeContext) {
+          return null;
+        }
+        const parentId = maybeContext.parentId ?? null;
+        if (parentId === null) {
+          return id;
+        }
+        return this.findTopLevelContextId(parentId);
+      }
+      findContextBySession(sessionId) {
+        for (const context2 of this.#contexts.values()) {
+          if (context2.cdpTarget.cdpSessionId === sessionId) {
+            return context2;
+          }
+        }
+        return;
+      }
+      /** Gets the context with the given ID, if any, otherwise throws. */
+      getContext(id) {
+        const result = this.findContext(id);
+        if (result === void 0) {
+          throw new NoSuchFrameException(`Context ${id} not found`);
+        }
+        return result;
+      }
+      verifyTopLevelContextsList(contexts) {
+        const foundContexts = /* @__PURE__ */ new Set();
+        if (!contexts) {
+          return foundContexts;
+        }
+        for (const contextId of contexts) {
+          const context2 = this.getContext(contextId);
+          if (context2.isTopLevelContext()) {
+            foundContexts.add(context2);
+          } else {
+            throw new InvalidArgumentException(`Non top-level context '${contextId}' given.`);
+          }
+        }
+        return foundContexts;
+      }
+      verifyContextsList(contexts) {
+        if (!contexts.length) {
+          return;
+        }
+        for (const contextId of contexts) {
+          this.getContext(contextId);
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/PreloadScriptStorage.js
+var PreloadScriptStorage;
+var init_PreloadScriptStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/PreloadScriptStorage.js"() {
+    init_ErrorResponse();
+    PreloadScriptStorage = class {
+      /** Tracks all BiDi preload scripts.  */
+      #scripts = /* @__PURE__ */ new Set();
+      /**
+       * Finds all entries that match the given filter (OR logic).
+       */
+      find(filter2) {
+        if (!filter2) {
+          return [...this.#scripts];
+        }
+        return [...this.#scripts].filter((script) => {
+          if (script.contexts === void 0 && script.userContexts === void 0) {
+            return true;
+          }
+          if (filter2.targetId !== void 0 && script.targetIds.has(filter2.targetId)) {
+            return true;
+          }
+          return false;
+        });
+      }
+      add(preloadScript) {
+        this.#scripts.add(preloadScript);
+      }
+      /** Deletes all BiDi preload script entries that match the given filter. */
+      remove(id) {
+        const script = [...this.#scripts].find((script2) => script2.id === id);
+        if (script === void 0) {
+          throw new NoSuchScriptException(`No preload script with id '${id}'`);
+        }
+        this.#scripts.delete(script);
+      }
+      /** Gets the preload script with the given ID, if any, otherwise throws. */
+      getPreloadScript(id) {
+        const script = [...this.#scripts].find((script2) => script2.id === id);
+        if (script === void 0) {
+          throw new NoSuchScriptException(`No preload script with id '${id}'`);
+        }
+        return script;
+      }
+      onCdpTargetCreated(targetId, userContext) {
+        const scriptInUserContext = [...this.#scripts].filter((script) => {
+          if (!script.userContexts && !script.contexts) {
+            return true;
+          }
+          return script.userContexts?.includes(userContext);
+        });
+        for (const script of scriptInUserContext) {
+          script.targetIds.add(targetId);
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/RealmStorage.js
+var RealmStorage;
+var init_RealmStorage = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/script/RealmStorage.js"() {
+    init_protocol();
+    init_WindowRealm();
+    RealmStorage = class {
+      /** Tracks handles and their realms sent to the client. */
+      #knownHandlesToRealmMap = /* @__PURE__ */ new Map();
+      /** Map from realm ID to Realm. */
+      #realmMap = /* @__PURE__ */ new Map();
+      /** List of the internal sandboxed realms which should not be reported to the user. */
+      hiddenSandboxes = /* @__PURE__ */ new Set();
+      get knownHandlesToRealmMap() {
+        return this.#knownHandlesToRealmMap;
+      }
+      addRealm(realm) {
+        this.#realmMap.set(realm.realmId, realm);
+      }
+      /** Finds all realms that match the given filter. */
+      findRealms(filter2) {
+        const sandboxFilterValue = filter2.sandbox === null ? void 0 : filter2.sandbox;
+        return Array.from(this.#realmMap.values()).filter((realm) => {
+          if (filter2.realmId !== void 0 && filter2.realmId !== realm.realmId) {
+            return false;
+          }
+          if (filter2.browsingContextId !== void 0 && !realm.associatedBrowsingContexts.map((browsingContext) => browsingContext.id).includes(filter2.browsingContextId)) {
+            return false;
+          }
+          if (filter2.sandbox !== void 0 && (!(realm instanceof WindowRealm) || sandboxFilterValue !== realm.sandbox)) {
+            return false;
+          }
+          if (filter2.executionContextId !== void 0 && filter2.executionContextId !== realm.executionContextId) {
+            return false;
+          }
+          if (filter2.origin !== void 0 && filter2.origin !== realm.origin) {
+            return false;
+          }
+          if (filter2.type !== void 0 && filter2.type !== realm.realmType) {
+            return false;
+          }
+          if (filter2.cdpSessionId !== void 0 && filter2.cdpSessionId !== realm.cdpClient.sessionId) {
+            return false;
+          }
+          if (filter2.isHidden !== void 0 && filter2.isHidden !== realm.isHidden()) {
+            return false;
+          }
+          return true;
+        });
+      }
+      findRealm(filter2) {
+        return this.findRealms(filter2)[0];
+      }
+      /** Gets the only realm that matches the given filter, if any, otherwise throws. */
+      getRealm(filter2) {
+        const maybeRealm = this.findRealm(filter2);
+        if (maybeRealm === void 0) {
+          throw new NoSuchFrameException(`Realm ${JSON.stringify(filter2)} not found`);
+        }
+        return maybeRealm;
+      }
+      /** Deletes all realms that match the given filter. */
+      deleteRealms(filter2) {
+        this.findRealms(filter2).map((realm) => {
+          realm.dispose();
+          this.#realmMap.delete(realm.realmId);
+          Array.from(this.knownHandlesToRealmMap.entries()).filter(([, r]) => r === realm.realmId).map(([handle]) => this.knownHandlesToRealmMap.delete(handle));
+        });
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/Buffer.js
+var Buffer2;
+var init_Buffer = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/Buffer.js"() {
+    Buffer2 = class {
+      #capacity;
+      #entries = [];
+      #onItemRemoved;
+      /**
+       * @param capacity The buffer capacity.
+       * @param onItemRemoved Delegate called for each removed element.
+       */
+      constructor(capacity, onItemRemoved) {
+        this.#capacity = capacity;
+        this.#onItemRemoved = onItemRemoved;
+      }
+      get() {
+        return this.#entries;
+      }
+      add(value) {
+        this.#entries.push(value);
+        while (this.#entries.length > this.#capacity) {
+          const item = this.#entries.shift();
+          if (item !== void 0) {
+            this.#onItemRemoved?.(item);
+          }
+        }
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/utils/IdWrapper.js
+var IdWrapper;
+var init_IdWrapper = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/utils/IdWrapper.js"() {
+    IdWrapper = class _IdWrapper {
+      static #counter = 0;
+      #id;
+      constructor() {
+        this.#id = ++_IdWrapper.#counter;
+      }
+      get id() {
+        return this.#id;
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/events.js
+function isCdpEvent(name) {
+  return name.split(".").at(0)?.startsWith(chromium_bidi_exports.BiDiModule.Cdp) ?? false;
+}
+function assertSupportedEvent(name) {
+  if (!chromium_bidi_exports.EVENT_NAMES.has(name) && !isCdpEvent(name)) {
+    throw new InvalidArgumentException(`Unknown event: ${name}`);
+  }
+}
+var init_events = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/events.js"() {
+    init_protocol();
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/SubscriptionManager.js
+function unrollEvents(events) {
+  const allEvents = /* @__PURE__ */ new Set();
+  function addEvents(events2) {
+    for (const event of events2) {
+      allEvents.add(event);
+    }
+  }
+  for (const event of events) {
+    switch (event) {
+      case chromium_bidi_exports.BiDiModule.Bluetooth:
+        addEvents(Object.values(chromium_bidi_exports.Bluetooth.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.BrowsingContext:
+        addEvents(Object.values(chromium_bidi_exports.BrowsingContext.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.Input:
+        addEvents(Object.values(chromium_bidi_exports.Input.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.Log:
+        addEvents(Object.values(chromium_bidi_exports.Log.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.Network:
+        addEvents(Object.values(chromium_bidi_exports.Network.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.Script:
+        addEvents(Object.values(chromium_bidi_exports.Script.EventNames));
+        break;
+      case chromium_bidi_exports.BiDiModule.Speculation:
+        addEvents(Object.values(chromium_bidi_exports.Speculation.EventNames));
+        break;
+      default:
+        allEvents.add(event);
+    }
+  }
+  return allEvents.values();
+}
+function intersection2(setA, setB) {
+  const result = /* @__PURE__ */ new Set();
+  for (const a2 of setA) {
+    if (setB.has(a2)) {
+      result.add(a2);
+    }
+  }
+  return result;
+}
+function difference(setA, setB) {
+  const result = /* @__PURE__ */ new Set();
+  for (const a2 of setA) {
+    if (!setB.has(a2)) {
+      result.add(a2);
+    }
+  }
+  return result;
+}
+function equal(setA, setB) {
+  if (setA.size !== setB.size) {
+    return false;
+  }
+  for (const a2 of setA) {
+    if (!setB.has(a2)) {
+      return false;
+    }
+  }
+  return true;
+}
+var SubscriptionManager;
+var init_SubscriptionManager = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/SubscriptionManager.js"() {
+    init_protocol();
+    init_uuid();
+    SubscriptionManager = class {
+      #subscriptions = [];
+      #knownSubscriptionIds = /* @__PURE__ */ new Set();
+      #browsingContextStorage;
+      constructor(browsingContextStorage) {
+        this.#browsingContextStorage = browsingContextStorage;
+      }
+      getGoogChannelsSubscribedToEvent(eventName, contextId) {
+        const googChannels = /* @__PURE__ */ new Set();
+        for (const subscription of this.#subscriptions) {
+          if (this.#isSubscribedTo(subscription, eventName, contextId)) {
+            googChannels.add(subscription.googChannel);
+          }
+        }
+        return Array.from(googChannels);
+      }
+      getGoogChannelsSubscribedToEventGlobally(eventName) {
+        const googChannels = /* @__PURE__ */ new Set();
+        for (const subscription of this.#subscriptions) {
+          if (this.#isSubscribedTo(subscription, eventName)) {
+            googChannels.add(subscription.googChannel);
+          }
+        }
+        return Array.from(googChannels);
+      }
+      #isSubscribedTo(subscription, moduleOrEvent, browsingContextId) {
+        let includesEvent = false;
+        for (const eventName of subscription.eventNames) {
+          if (
+            // Event explicitly subscribed
+            eventName === moduleOrEvent || // Event subscribed via module
+            eventName === moduleOrEvent.split(".").at(0) || // Event explicitly subscribed compared to module
+            eventName.split(".").at(0) === moduleOrEvent
+          ) {
+            includesEvent = true;
+            break;
+          }
+        }
+        if (!includesEvent) {
+          return false;
+        }
+        if (subscription.userContextIds.size !== 0) {
+          if (!browsingContextId) {
+            return false;
+          }
+          const context2 = this.#browsingContextStorage.findContext(browsingContextId);
+          if (!context2) {
+            return false;
+          }
+          return subscription.userContextIds.has(context2.userContext);
+        }
+        if (subscription.topLevelTraversableIds.size !== 0) {
+          if (!browsingContextId) {
+            return false;
+          }
+          const topLevelContext = this.#browsingContextStorage.findTopLevelContextId(browsingContextId);
+          return topLevelContext !== null && subscription.topLevelTraversableIds.has(topLevelContext);
+        }
+        return true;
+      }
+      isSubscribedTo(moduleOrEvent, contextId) {
+        for (const subscription of this.#subscriptions) {
+          if (this.#isSubscribedTo(subscription, moduleOrEvent, contextId)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      /**
+       * Subscribes to event in the given context and goog:channel.
+       * @return {SubscriptionItem[]} List of
+       * subscriptions. If the event is a whole module, it will return all the specific
+       * events. If the contextId is null, it will return all the top-level contexts which were
+       * not subscribed before the command.
+       */
+      subscribe(eventNames, contextIds, userContextIds, googChannel) {
+        const subscription = {
+          id: uuidv42(),
+          eventNames: new Set(unrollEvents(eventNames)),
+          topLevelTraversableIds: new Set(contextIds.map((contextId) => {
+            const topLevelContext = this.#browsingContextStorage.findTopLevelContextId(contextId);
+            if (!topLevelContext) {
+              throw new NoSuchFrameException(`Top-level navigable not found for context id ${contextId}`);
+            }
+            return topLevelContext;
+          })),
+          userContextIds: new Set(userContextIds),
+          googChannel
+        };
+        this.#subscriptions.push(subscription);
+        this.#knownSubscriptionIds.add(subscription.id);
+        return subscription;
+      }
+      /**
+       * Unsubscribes atomically from all events in the given contexts and channel.
+       *
+       * This is a legacy spec branch to unsubscribe by attributes.
+       */
+      unsubscribe(inputEventNames, googChannel) {
+        const eventNames = new Set(unrollEvents(inputEventNames));
+        const newSubscriptions = [];
+        const eventsMatched = /* @__PURE__ */ new Set();
+        for (const subscription of this.#subscriptions) {
+          if (subscription.googChannel !== googChannel) {
+            newSubscriptions.push(subscription);
+            continue;
+          }
+          if (subscription.userContextIds.size !== 0) {
+            newSubscriptions.push(subscription);
+            continue;
+          }
+          if (intersection2(subscription.eventNames, eventNames).size === 0) {
+            newSubscriptions.push(subscription);
+            continue;
+          }
+          if (subscription.topLevelTraversableIds.size !== 0) {
+            newSubscriptions.push(subscription);
+            continue;
+          }
+          const subscriptionEventNames = new Set(subscription.eventNames);
+          for (const eventName of eventNames) {
+            if (subscriptionEventNames.has(eventName)) {
+              eventsMatched.add(eventName);
+              subscriptionEventNames.delete(eventName);
+            }
+          }
+          if (subscriptionEventNames.size !== 0) {
+            newSubscriptions.push({
+              ...subscription,
+              eventNames: subscriptionEventNames
+            });
+          }
+        }
+        if (!equal(eventsMatched, eventNames)) {
+          throw new InvalidArgumentException("No subscription found");
+        }
+        this.#subscriptions = newSubscriptions;
+      }
+      /**
+       * Unsubscribes by subscriptionId.
+       */
+      unsubscribeById(subscriptionIds) {
+        const subscriptionIdsSet = new Set(subscriptionIds);
+        const unknownIds = difference(subscriptionIdsSet, this.#knownSubscriptionIds);
+        if (unknownIds.size !== 0) {
+          throw new InvalidArgumentException("No subscription found");
+        }
+        this.#subscriptions = this.#subscriptions.filter((subscription) => {
+          return !subscriptionIdsSet.has(subscription.id);
+        });
+        this.#knownSubscriptionIds = difference(this.#knownSubscriptionIds, subscriptionIdsSet);
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/EventManager.js
+var _a7, EventWrapper, eventBufferLength, EventManager;
+var init_EventManager = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/session/EventManager.js"() {
+    init_protocol();
+    init_Buffer();
+    init_DefaultMap();
+    init_EventEmitter2();
+    init_IdWrapper();
+    init_OutgoingMessage();
+    init_events();
+    init_SubscriptionManager();
+    EventWrapper = class {
+      #idWrapper = new IdWrapper();
+      #contextId;
+      #event;
+      constructor(event, contextId) {
+        this.#event = event;
+        this.#contextId = contextId;
+      }
+      get id() {
+        return this.#idWrapper.id;
+      }
+      get contextId() {
+        return this.#contextId;
+      }
+      get event() {
+        return this.#event;
+      }
+    };
+    eventBufferLength = /* @__PURE__ */ new Map([[chromium_bidi_exports.Log.EventNames.LogEntryAdded, 100]]);
+    EventManager = class extends EventEmitter2 {
+      /**
+       * Maps event name to a set of contexts where this event already happened.
+       * Needed for getting buffered events from all the contexts in case of
+       * subscripting to all contexts.
+       */
+      #eventToContextsMap = new DefaultMap(() => /* @__PURE__ */ new Set());
+      /**
+       * Maps `eventName` + `browsingContext` to buffer. Used to get buffered events
+       * during subscription. Channel-agnostic.
+       */
+      #eventBuffers = /* @__PURE__ */ new Map();
+      /**
+       * Maps `eventName` + `browsingContext` to  Map of goog:channel to last id.
+       * Used to avoid sending duplicated events when user
+       * subscribes -> unsubscribes -> subscribes.
+       */
+      #lastMessageSent = /* @__PURE__ */ new Map();
+      #subscriptionManager;
+      #browsingContextStorage;
+      /**
+       * Map of event name to hooks to be called when client is subscribed to the event.
+       */
+      #subscribeHooks;
+      #userContextStorage;
+      constructor(browsingContextStorage, userContextStorage) {
+        super();
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#userContextStorage = userContextStorage;
+        this.#subscriptionManager = new SubscriptionManager(browsingContextStorage);
+        this.#subscribeHooks = new DefaultMap(() => []);
+      }
+      get subscriptionManager() {
+        return this.#subscriptionManager;
+      }
+      /**
+       * Returns consistent key to be used to access value maps.
+       */
+      static #getMapKey(eventName, browsingContext) {
+        return JSON.stringify({ eventName, browsingContext });
+      }
+      addSubscribeHook(event, hook) {
+        this.#subscribeHooks.get(event).push(hook);
+      }
+      registerEvent(event, contextId) {
+        this.registerPromiseEvent(Promise.resolve({
+          kind: "success",
+          value: event
+        }), contextId, event.method);
+      }
+      registerGlobalEvent(event) {
+        this.registerGlobalPromiseEvent(Promise.resolve({
+          kind: "success",
+          value: event
+        }), event.method);
+      }
+      registerPromiseEvent(event, contextId, eventName) {
+        const eventWrapper = new EventWrapper(event, contextId);
+        const sortedGoogChannels = this.#subscriptionManager.getGoogChannelsSubscribedToEvent(eventName, contextId);
+        this.#bufferEvent(eventWrapper, eventName);
+        for (const googChannel of sortedGoogChannels) {
+          this.emit("event", {
+            message: OutgoingMessage.createFromPromise(event, googChannel),
+            event: eventName
+          });
+          this.#markEventSent(eventWrapper, googChannel, eventName);
+        }
+      }
+      registerGlobalPromiseEvent(event, eventName) {
+        const eventWrapper = new EventWrapper(event, null);
+        const sortedGoogChannels = this.#subscriptionManager.getGoogChannelsSubscribedToEventGlobally(eventName);
+        this.#bufferEvent(eventWrapper, eventName);
+        for (const googChannel of sortedGoogChannels) {
+          this.emit("event", {
+            message: OutgoingMessage.createFromPromise(event, googChannel),
+            event: eventName
+          });
+          this.#markEventSent(eventWrapper, googChannel, eventName);
+        }
+      }
+      async subscribe(eventNames, contextIds, userContextIds, googChannel) {
+        for (const name of eventNames) {
+          assertSupportedEvent(name);
+        }
+        if (userContextIds.length && contextIds.length) {
+          throw new InvalidArgumentException("Both userContexts and contexts cannot be specified.");
+        }
+        this.#browsingContextStorage.verifyContextsList(contextIds);
+        await this.#userContextStorage.verifyUserContextIdList(userContextIds);
+        const unrolledEventNames = new Set(unrollEvents(eventNames));
+        const subscribeStepEvents = /* @__PURE__ */ new Map();
+        const subscriptionNavigableIds = new Set(contextIds.length ? contextIds.map((contextId) => {
+          const id = this.#browsingContextStorage.findTopLevelContextId(contextId);
+          if (!id) {
+            throw new InvalidArgumentException("Invalid context id");
+          }
+          return id;
+        }) : this.#browsingContextStorage.getTopLevelContexts().map((c) => c.id));
+        for (const eventName of unrolledEventNames) {
+          const subscribedNavigableIds = new Set(this.#browsingContextStorage.getTopLevelContexts().map((c) => c.id).filter((id) => {
+            return this.#subscriptionManager.isSubscribedTo(eventName, id);
+          }));
+          subscribeStepEvents.set(eventName, difference(subscriptionNavigableIds, subscribedNavigableIds));
+        }
+        const subscription = this.#subscriptionManager.subscribe(eventNames, contextIds, userContextIds, googChannel);
+        for (const eventName of subscription.eventNames) {
+          for (const contextId of subscriptionNavigableIds) {
+            for (const eventWrapper of this.#getBufferedEvents(eventName, contextId, googChannel)) {
+              this.emit("event", {
+                message: OutgoingMessage.createFromPromise(eventWrapper.event, googChannel),
+                event: eventName
+              });
+              this.#markEventSent(eventWrapper, googChannel, eventName);
+            }
+          }
+        }
+        for (const [eventName, contextIds2] of subscribeStepEvents) {
+          for (const contextId of contextIds2) {
+            this.#subscribeHooks.get(eventName).forEach((hook) => hook(contextId));
+          }
+        }
+        await this.toggleModulesIfNeeded();
+        return subscription.id;
+      }
+      async unsubscribe(eventNames, googChannel) {
+        for (const name of eventNames) {
+          assertSupportedEvent(name);
+        }
+        this.#subscriptionManager.unsubscribe(eventNames, googChannel);
+        await this.toggleModulesIfNeeded();
+      }
+      async unsubscribeByIds(subscriptionIds) {
+        this.#subscriptionManager.unsubscribeById(subscriptionIds);
+        await this.toggleModulesIfNeeded();
+      }
+      async toggleModulesIfNeeded() {
+        await Promise.all(this.#browsingContextStorage.getAllContexts().map(async (context2) => {
+          return await context2.toggleModulesIfNeeded();
+        }));
+      }
+      clearBufferedEvents(contextId) {
+        for (const eventName of eventBufferLength.keys()) {
+          const bufferMapKey = _a7.#getMapKey(eventName, contextId);
+          this.#eventBuffers.delete(bufferMapKey);
+        }
+      }
+      /**
+       * If the event is buffer-able, put it in the buffer.
+       */
+      #bufferEvent(eventWrapper, eventName) {
+        if (!eventBufferLength.has(eventName)) {
+          return;
+        }
+        const bufferMapKey = _a7.#getMapKey(eventName, eventWrapper.contextId);
+        if (!this.#eventBuffers.has(bufferMapKey)) {
+          this.#eventBuffers.set(bufferMapKey, new Buffer2(eventBufferLength.get(eventName)));
+        }
+        this.#eventBuffers.get(bufferMapKey).add(eventWrapper);
+        this.#eventToContextsMap.get(eventName).add(eventWrapper.contextId);
+      }
+      /**
+       * If the event is buffer-able, mark it as sent to the given contextId and goog:channel.
+       */
+      #markEventSent(eventWrapper, googChannel, eventName) {
+        if (!eventBufferLength.has(eventName)) {
+          return;
+        }
+        const lastSentMapKey = _a7.#getMapKey(eventName, eventWrapper.contextId);
+        const lastId = Math.max(this.#lastMessageSent.get(lastSentMapKey)?.get(googChannel) ?? 0, eventWrapper.id);
+        const googChannelMap = this.#lastMessageSent.get(lastSentMapKey);
+        if (googChannelMap) {
+          googChannelMap.set(googChannel, lastId);
+        } else {
+          this.#lastMessageSent.set(lastSentMapKey, /* @__PURE__ */ new Map([[googChannel, lastId]]));
+        }
+      }
+      /**
+       * Returns events which are buffered and not yet sent to the given goog:channel events.
+       */
+      #getBufferedEvents(eventName, contextId, googChannel) {
+        const bufferMapKey = _a7.#getMapKey(eventName, contextId);
+        const lastSentMessageId = this.#lastMessageSent.get(bufferMapKey)?.get(googChannel) ?? -Infinity;
+        const result = this.#eventBuffers.get(bufferMapKey)?.get().filter((wrapper) => wrapper.id > lastSentMessageId) ?? [];
+        if (contextId === null) {
+          Array.from(this.#eventToContextsMap.get(eventName).keys()).filter((_contextId) => (
+            // Events without context are already in the result.
+            _contextId !== null && // Events from deleted contexts should not be sent.
+            this.#browsingContextStorage.hasContext(_contextId)
+          )).map((_contextId) => this.#getBufferedEvents(eventName, _contextId, googChannel)).forEach((events) => result.push(...events));
+        }
+        return result.sort((e1, e2) => e1.id - e2.id);
+      }
+    };
+    _a7 = EventManager;
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/speculation/SpeculationProcessor.js
+var SpeculationProcessor;
+var init_SpeculationProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/speculation/SpeculationProcessor.js"() {
+    init_log();
+    SpeculationProcessor = class {
+      #eventManager;
+      #logger;
+      constructor(eventManager, logger) {
+        this.#eventManager = eventManager;
+        this.#logger = logger;
+      }
+      onCdpTargetCreated(cdpTarget) {
+        cdpTarget.cdpClient.on("Preload.prefetchStatusUpdated", (event) => {
+          let prefetchStatus;
+          switch (event.status) {
+            case "Running":
+              prefetchStatus = "pending";
+              break;
+            case "Ready":
+              prefetchStatus = "ready";
+              break;
+            case "Success":
+              prefetchStatus = "success";
+              break;
+            case "Failure":
+              prefetchStatus = "failure";
+              break;
+            default:
+              this.#logger?.(LogType.debugWarn)?.(`Unknown prefetch status: ${event.status}`);
+              return;
+          }
+          this.#eventManager.registerEvent({
+            type: "event",
+            method: "speculation.prefetchStatusUpdated",
+            params: {
+              context: event.initiatingFrameId,
+              url: event.prefetchUrl,
+              status: prefetchStatus
+            }
+          }, cdpTarget.id);
+        });
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/digitalCredentials/DigitalCredentialsProcessor.js
+var DigitalCredentialsProcessor;
+var init_DigitalCredentialsProcessor = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/digitalCredentials/DigitalCredentialsProcessor.js"() {
+    init_protocol();
+    DigitalCredentialsProcessor = class {
+      #browsingContextStorage;
+      #contextConfigStorage;
+      constructor(browsingContextStorage, contextConfigStorage) {
+        this.#browsingContextStorage = browsingContextStorage;
+        this.#contextConfigStorage = contextConfigStorage;
+      }
+      async setVirtualWalletBehavior(params) {
+        const { context: context2, action: action2, protocol, response } = params;
+        if (action2 === "respond") {
+          if (protocol === void 0 || response === void 0) {
+            throw new InvalidArgumentException("Protocol and response are required when action is 'respond'");
+          }
+        } else {
+          if (protocol !== void 0 || response !== void 0) {
+            throw new InvalidArgumentException("Protocol and response are only allowed when action is 'respond'");
+          }
+        }
+        if (context2 === void 0) {
+          if (action2 === "clear") {
+            this.#contextConfigStorage.updateGlobalConfig({
+              digitalCredentialsBehavior: null
+            });
+          } else {
+            this.#contextConfigStorage.updateGlobalConfig({
+              digitalCredentialsBehavior: { action: action2, protocol, response }
+            });
+          }
+        } else {
+          const browsingContext = this.#browsingContextStorage.getContext(context2);
+          if (browsingContext.parentId !== null) {
+            throw new UnsupportedOperationException("Only top-level contexts are supported");
+          }
+          if (action2 === "clear") {
+            this.#contextConfigStorage.updateBrowsingContextConfig(context2, {
+              digitalCredentialsBehavior: null
+            });
+          } else {
+            this.#contextConfigStorage.updateBrowsingContextConfig(context2, {
+              digitalCredentialsBehavior: { action: action2, protocol, response }
+            });
+          }
+        }
+        await this.#applyToAllTargets();
+        return {};
+      }
+      async #applyToAllTargets() {
+        const contexts = this.#browsingContextStorage.getAllContexts();
+        const targets = /* @__PURE__ */ new Set();
+        for (const c of contexts) {
+          targets.add(c.cdpTarget);
+        }
+        await Promise.all(Array.from(targets).map((target2) => this.#applyBehaviorToTarget(target2)));
+      }
+      async #applyBehaviorToTarget(target2) {
+        if (target2.id !== target2.topLevelId) {
+          return;
+        }
+        const config3 = this.#contextConfigStorage.getActiveConfig(target2.topLevelId, target2.userContext);
+        const behavior = config3.digitalCredentialsBehavior;
+        if (behavior === null || behavior === void 0) {
+          await this.#sendCdpCommand(target2, {
+            action: "clear"
+          });
+          return;
+        }
+        await this.#sendCdpCommand(target2, behavior);
+      }
+      async #sendCdpCommand(cdpTarget, behavior) {
+        await cdpTarget.cdpClient.sendCommand("DigitalCredentials.setVirtualWalletBehavior", {
+          // @ts-expect-error action is kept for backward compatibility with older Chromium CDP versions
+          action: behavior.action,
+          behavior: behavior.action,
+          protocol: behavior.protocol,
+          response: behavior.response
+        });
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiServer.js
+var BidiServer;
+var init_BidiServer = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiServer.js"() {
+    init_EventEmitter2();
+    init_log();
+    init_ProcessingQueue();
+    init_CommandProcessor();
+    init_BluetoothProcessor();
+    init_ContextConfigStorage();
+    init_UserContextStorage();
+    init_CdpTargetManager();
+    init_BrowsingContextStorage();
+    init_NetworkStorage();
+    init_PreloadScriptStorage();
+    init_RealmStorage();
+    init_EventManager();
+    init_SpeculationProcessor();
+    init_DigitalCredentialsProcessor();
+    BidiServer = class _BidiServer extends EventEmitter2 {
+      #messageQueue;
+      #transport;
+      #commandProcessor;
+      #eventManager;
+      #browsingContextStorage = new BrowsingContextStorage();
+      #realmStorage = new RealmStorage();
+      #preloadScriptStorage = new PreloadScriptStorage();
+      #bluetoothProcessor;
+      #speculationProcessor;
+      #digitalCredentialsProcessor;
+      #logger;
+      #handleIncomingMessage = (message) => {
+        void this.#commandProcessor.processCommand(message).catch((error62) => {
+          this.#logger?.(LogType.debugError)?.(error62);
+        });
+      };
+      #processOutgoingMessage = async (messageEntry) => {
+        const message = messageEntry.message;
+        if (messageEntry.googChannel !== null) {
+          message["goog:channel"] = messageEntry.googChannel;
+        }
+        await this.#transport.sendMessage(message);
+      };
+      constructor(bidiTransport, cdpConnection, browserCdpClient, selfTargetId, defaultUserContextId, defaultUserAgent, parser2, logger) {
+        super();
+        this.#logger = logger;
+        this.#messageQueue = new ProcessingQueue(this.#processOutgoingMessage, this.#logger);
+        this.#transport = bidiTransport;
+        this.#transport.setOnMessage(this.#handleIncomingMessage);
+        const contextConfigStorage = new ContextConfigStorage();
+        const userContextStorage = new UserContextStorage(browserCdpClient);
+        this.#eventManager = new EventManager(this.#browsingContextStorage, userContextStorage);
+        const networkStorage = new NetworkStorage(this.#eventManager, this.#browsingContextStorage, browserCdpClient, logger);
+        this.#bluetoothProcessor = new BluetoothProcessor(this.#eventManager, this.#browsingContextStorage);
+        this.#speculationProcessor = new SpeculationProcessor(this.#eventManager, this.#logger);
+        this.#digitalCredentialsProcessor = new DigitalCredentialsProcessor(this.#browsingContextStorage, contextConfigStorage);
+        this.#commandProcessor = new CommandProcessor(cdpConnection, browserCdpClient, this.#eventManager, this.#browsingContextStorage, this.#realmStorage, this.#preloadScriptStorage, networkStorage, contextConfigStorage, this.#bluetoothProcessor, this.#digitalCredentialsProcessor, userContextStorage, parser2, async (options) => {
+          await browserCdpClient.sendCommand("Security.setIgnoreCertificateErrors", {
+            ignore: options.acceptInsecureCerts ?? false
+          });
+          contextConfigStorage.updateGlobalConfig({
+            acceptInsecureCerts: options.acceptInsecureCerts ?? false,
+            userPromptHandler: options.unhandledPromptBehavior,
+            prerenderingDisabled: options?.["goog:prerenderingDisabled"] ?? false,
+            disableNetworkDurableMessages: options?.["goog:disableNetworkDurableMessages"]
+          });
+          new CdpTargetManager(cdpConnection, browserCdpClient, selfTargetId, this.#eventManager, this.#browsingContextStorage, this.#realmStorage, networkStorage, contextConfigStorage, this.#bluetoothProcessor, this.#speculationProcessor, this.#preloadScriptStorage, defaultUserContextId, defaultUserAgent, logger);
+          await browserCdpClient.sendCommand("Target.setDiscoverTargets", {
+            discover: true
+          });
+          await browserCdpClient.sendCommand("Target.setAutoAttach", {
+            autoAttach: true,
+            waitForDebuggerOnStart: true,
+            flatten: true,
+            // Browser session should attach to tab instead of the page, so that
+            // prerendering is not blocked.
+            filter: [
+              {
+                type: "page",
+                exclude: true
+              },
+              {}
+            ]
+          });
+          await this.#topLevelContextsLoaded();
+        }, this.#logger);
+        this.#eventManager.on("event", ({ message, event }) => {
+          this.emitOutgoingMessage(message, event);
+        });
+        this.#commandProcessor.on("response", ({ message, event }) => {
+          this.emitOutgoingMessage(message, event);
+        });
+      }
+      /**
+       * Creates and starts BiDi Mapper instance.
+       */
+      static async createAndStart(bidiTransport, cdpConnection, browserCdpClient, selfTargetId, parser2, logger) {
+        const [defaultUserContextId, version2] = await Promise.all([
+          this.#getDefaultUserContextId(browserCdpClient),
+          // Fetch the default User Agent to be used in `CdpTarget`. This allows to avoid
+          // round trips to the browser for every target override.
+          browserCdpClient.sendCommand("Browser.getVersion"),
+          // Required for `Browser.downloadWillBegin` events.
+          browserCdpClient.sendCommand("Browser.setDownloadBehavior", {
+            behavior: "default",
+            eventsEnabled: true
+          })
+        ]);
+        const server = new _BidiServer(bidiTransport, cdpConnection, browserCdpClient, selfTargetId, defaultUserContextId, version2.userAgent, parser2, logger);
+        return server;
+      }
+      static async #getDefaultUserContextId(browserCdpClient) {
+        const [{ defaultBrowserContextId, browserContextIds }, { targetInfos }] = await Promise.all([
+          browserCdpClient.sendCommand("Target.getBrowserContexts"),
+          browserCdpClient.sendCommand("Target.getTargets")
+        ]);
+        if (defaultBrowserContextId) {
+          return defaultBrowserContextId;
+        }
+        for (const info of targetInfos) {
+          if (info.browserContextId && !browserContextIds.includes(info.browserContextId)) {
+            return info.browserContextId;
+          }
+        }
+        return "default";
+      }
+      /**
+       * Sends BiDi message.
+       */
+      emitOutgoingMessage(messageEntry, event) {
+        this.#messageQueue.add(messageEntry, event);
+      }
+      close() {
+        this.#transport.close();
+      }
+      async #topLevelContextsLoaded() {
+        await Promise.all(this.#browsingContextStorage.getTopLevelContexts().map((c) => c.lifecycleLoaded()));
+      }
+    };
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiMapper.js
+var BidiMapper_exports = {};
+__export(BidiMapper_exports, {
+  BidiServer: () => BidiServer,
+  EventEmitter: () => EventEmitter2,
+  OutgoingMessage: () => OutgoingMessage
+});
+var init_BidiMapper = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/BidiMapper.js"() {
+    init_BidiServer();
+    init_EventEmitter2();
+    init_OutgoingMessage();
+  }
+});
+
+// node_modules/chromium-bidi/out/Default/gen/src/index.js
+var init_src = __esm({
+  "node_modules/chromium-bidi/out/Default/gen/src/index.js"() {
+    init_BidiMapper();
+    init_protocol();
+  }
+});
+
 // node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js
 var BidiCdpSession;
 var init_CDPSession2 = __esm({
@@ -23620,7 +35309,7 @@ function createProtocolError(object3) {
   }
   return message;
 }
-function isCdpEvent(event) {
+function isCdpEvent2(event) {
   return event.method.startsWith("goog:cdp.");
 }
 var BidiConnection;
@@ -23720,7 +35409,7 @@ var init_Connection2 = __esm({
               this.#callbacks.reject(object3.id, createProtocolError(object3), `${object3.error}: ${object3.message}`);
               return;
             case "event":
-              if (isCdpEvent(object3)) {
+              if (isCdpEvent2(object3)) {
                 BidiCdpSession.sessions.get(object3.params.session)?.emit(object3.params.event, object3.params.params);
                 return;
               }
@@ -23764,7 +35453,6 @@ var init_Connection2 = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js
-import { BidiMapper } from "chromium-bidi";
 async function connectBidiOverCdp(cdp, logger) {
   const bidiServerLogger = logger ? (prefix) => {
     return logger(`bidi:${prefix}`);
@@ -23787,7 +35475,7 @@ async function connectBidiOverCdp(cdp, logger) {
     pptrTransport.onmessage(JSON.stringify(message));
   });
   const pptrBiDiConnection = new BidiConnection(cdp.url(), pptrTransport, cdp._idGenerator, cdp.delay, cdp.timeout, logger);
-  const bidiServer = await BidiMapper.BidiServer.createAndStart(
+  const bidiServer = await BidiMapper_exports.BidiServer.createAndStart(
     transportBiDi,
     cdpConnectionAdapter,
     cdpConnectionAdapter.browserClient(),
@@ -23801,6 +35489,7 @@ async function connectBidiOverCdp(cdp, logger) {
 var CdpConnectionAdapter, CDPClientAdapter, NoOpTransport;
 var init_BidiOverCdp = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js"() {
+    init_src();
     init_Errors();
     init_Connection2();
     CdpConnectionAdapter = class {
@@ -23833,7 +35522,7 @@ var init_BidiOverCdp = __esm({
         }
       }
     };
-    CDPClientAdapter = class extends BidiMapper.EventEmitter {
+    CDPClientAdapter = class extends BidiMapper_exports.EventEmitter {
       #closed = false;
       #client;
       sessionId = void 0;
@@ -23872,7 +35561,7 @@ var init_BidiOverCdp = __esm({
         return error62 instanceof TargetCloseError;
       }
     };
-    NoOpTransport = class extends BidiMapper.EventEmitter {
+    NoOpTransport = class extends BidiMapper_exports.EventEmitter {
       #onMessage = async (_m) => {
         return;
       };
@@ -24057,7 +35746,7 @@ var init_Navigation = __esm({
       done = true;
     };
     Navigation = (() => {
-      var _a6;
+      var _a11;
       let _classSuper = EventEmitter;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
@@ -24176,8 +35865,8 @@ var init_Navigation = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js
-var __runInitializers10, __esDecorate10, _a3, Realm2, WindowRealm, DedicatedWorkerRealm, SharedWorkerRealm;
-var init_Realm2 = __esm({
+var __runInitializers10, __esDecorate10, _a8, Realm3, WindowRealm2, DedicatedWorkerRealm, SharedWorkerRealm;
+var init_Realm3 = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js"() {
     init_EventEmitter();
     init_decorators();
@@ -24221,7 +35910,7 @@ var init_Realm2 = __esm({
       if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
-    Realm2 = (() => {
+    Realm3 = (() => {
       let _classSuper = EventEmitter;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
@@ -24306,7 +35995,7 @@ var init_Realm2 = __esm({
         }
       };
     })();
-    WindowRealm = class _WindowRealm extends Realm2 {
+    WindowRealm2 = class _WindowRealm extends Realm3 {
       static from(context2, sandbox) {
         const realm = new _WindowRealm(context2, sandbox);
         realm.#initialize();
@@ -24365,9 +36054,9 @@ var init_Realm2 = __esm({
         return { context: this.browsingContext.id, sandbox: this.sandbox };
       }
     };
-    DedicatedWorkerRealm = class extends Realm2 {
+    DedicatedWorkerRealm = class extends Realm3 {
       static from(owner, id, origin) {
-        const realm = new _a3(owner, id, origin);
+        const realm = new _a8(owner, id, origin);
         realm.#initialize();
         return realm;
       }
@@ -24392,7 +36081,7 @@ var init_Realm2 = __esm({
           if (!info.owners.includes(this.id)) {
             return;
           }
-          const realm = _a3.from(this, info.realm, info.origin);
+          const realm = _a8.from(this, info.realm, info.origin);
           this.#workers.set(realm.id, realm);
           const realmEmitter = this.disposables.use(new EventEmitter(realm));
           realmEmitter.once("destroyed", () => {
@@ -24411,8 +36100,8 @@ var init_Realm2 = __esm({
         return this.owners.values().next().value.session;
       }
     };
-    _a3 = DedicatedWorkerRealm;
-    SharedWorkerRealm = class _SharedWorkerRealm extends Realm2 {
+    _a8 = DedicatedWorkerRealm;
+    SharedWorkerRealm = class _SharedWorkerRealm extends Realm3 {
       static from(browser, id, origin) {
         const realm = new _SharedWorkerRealm(browser, id, origin);
         realm.#initialize();
@@ -24510,7 +36199,7 @@ var init_Request = __esm({
       done = true;
     };
     Request = (() => {
-      var _a6;
+      var _a11;
       let _classSuper = EventEmitter;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
@@ -24883,7 +36572,7 @@ var init_UserPrompt = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js
-var __runInitializers13, __esDecorate13, BrowsingContext;
+var __runInitializers13, __esDecorate13, BrowsingContext2;
 var init_BrowsingContext = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js"() {
     init_EventEmitter();
@@ -24894,7 +36583,7 @@ var init_BrowsingContext = __esm({
     init_BluetoothEmulation2();
     init_DeviceRequestPrompt3();
     init_Navigation();
-    init_Realm2();
+    init_Realm3();
     init_Request();
     init_UserPrompt();
     __runInitializers13 = function(thisArg, initializers, value) {
@@ -24936,8 +36625,8 @@ var init_BrowsingContext = __esm({
       if (target2) Object.defineProperty(target2, contextIn.name, descriptor);
       done = true;
     };
-    BrowsingContext = (() => {
-      var _a6;
+    BrowsingContext2 = (() => {
+      var _a11;
       let _classSuper = EventEmitter;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
@@ -24971,7 +36660,7 @@ var init_BrowsingContext = __esm({
       let _addInterception_decorators;
       let _deleteCookie_decorators;
       let _locateNodes_decorators;
-      return class BrowsingContext2 extends _classSuper {
+      return class BrowsingContext3 extends _classSuper {
         static {
           const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
           _deleteCookie_decorators = [throwIfDisposed((context2) => {
@@ -25014,7 +36703,7 @@ var init_BrowsingContext = __esm({
           if (_metadata) Object.defineProperty(this, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         }
         static from(userContext, parent, id, url2, originalOpener, clientWindow) {
-          const browsingContext = new BrowsingContext2(userContext, parent, id, url2, originalOpener, clientWindow);
+          const browsingContext = new BrowsingContext3(userContext, parent, id, url2, originalOpener, clientWindow);
           browsingContext.#initialize();
           return browsingContext;
         }
@@ -25063,7 +36752,7 @@ var init_BrowsingContext = __esm({
             if (info.parent !== this.id) {
               return;
             }
-            const browsingContext = BrowsingContext2.from(this.userContext, this, info.context, info.url, info.originalOpener, info.clientWindow);
+            const browsingContext = BrowsingContext3.from(this.userContext, this, info.context, info.url, info.originalOpener, info.clientWindow);
             this.#children.set(info.context, browsingContext);
             const browsingContextEmitter = this.#disposables.use(new EventEmitter(browsingContext));
             browsingContextEmitter.once("closed", () => {
@@ -25170,7 +36859,7 @@ var init_BrowsingContext = __esm({
           return this.#url;
         }
         #createWindowRealm(sandbox) {
-          const realm = WindowRealm.from(this, sandbox);
+          const realm = WindowRealm2.from(this, sandbox);
           realm.on("worker", (realm2) => {
             this.emit("worker", realm2);
           });
@@ -25596,7 +37285,7 @@ var init_UserContext = __esm({
             if (info.userContext !== this.#id) {
               return;
             }
-            const browsingContext = BrowsingContext.from(this, void 0, info.context, info.url, info.originalOpener, info.clientWindow);
+            const browsingContext = BrowsingContext2.from(this, void 0, info.context, info.url, info.originalOpener, info.clientWindow);
             this.#browsingContexts.set(browsingContext.id, browsingContext);
             const browsingContextEmitter = this.#disposables.use(new EventEmitter(browsingContext));
             browsingContextEmitter.on("closed", () => {
@@ -26530,7 +38219,7 @@ function getBidiHeaders(rawHeaders) {
   }
   return headers;
 }
-var _a4, requests, BidiHTTPRequest;
+var _a9, requests, BidiHTTPRequest;
 var init_HTTPRequest3 = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js"() {
     init_HTTPRequest();
@@ -26540,7 +38229,7 @@ var init_HTTPRequest3 = __esm({
     requests = /* @__PURE__ */ new WeakMap();
     BidiHTTPRequest = class extends HTTPRequest {
       static from(bidiRequest, frame, isNetworkInterceptionEnabled, redirect, logger) {
-        const request3 = new _a4(bidiRequest, frame, isNetworkInterceptionEnabled, redirect, logger);
+        const request3 = new _a9(bidiRequest, frame, isNetworkInterceptionEnabled, redirect, logger);
         request3.#initialize();
         return request3;
       }
@@ -26565,7 +38254,7 @@ var init_HTTPRequest3 = __esm({
       }
       #initialize() {
         this.#request.on("redirect", (request3) => {
-          const httpRequest2 = _a4.from(request3, this.#frame, this.interception.enabled, this, this.#logger);
+          const httpRequest2 = _a9.from(request3, this.#frame, this.interception.enabled, this, this.#logger);
           this.#redirectChain.push(this);
           request3.once("success", () => {
             this.#frame.page().trustedEmitter.emit("requestfinished", httpRequest2);
@@ -26744,7 +38433,7 @@ var init_HTTPRequest3 = __esm({
         return this.#request.getResponseContent();
       }
     };
-    _a4 = BidiHTTPRequest;
+    _a9 = BidiHTTPRequest;
   }
 });
 
@@ -26951,7 +38640,7 @@ var init_util2 = __esm({
 
 // node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js
 var __addDisposableResource17, __disposeResources17, BidiRealm, BidiFrameRealm, BidiWorkerRealm;
-var init_Realm3 = __esm({
+var init_Realm4 = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js"() {
     init_Realm();
     init_WebWorker();
@@ -27292,7 +38981,7 @@ var init_WebWorker3 = __esm({
   "node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js"() {
     init_WebWorker();
     init_Errors();
-    init_Realm3();
+    init_Realm4();
     BidiWebWorker = class _BidiWebWorker extends WebWorker {
       static from(frame, realm, logger) {
         const worker = new _BidiWebWorker(frame, realm, logger);
@@ -27334,7 +39023,7 @@ var init_Frame3 = __esm({
     init_ElementHandle3();
     init_ExposedFunction();
     init_HTTPRequest3();
-    init_Realm3();
+    init_Realm4();
     init_util2();
     init_WebWorker3();
     __runInitializers17 = function(thisArg, initializers, value) {
@@ -27381,7 +39070,7 @@ var init_Frame3 = __esm({
       return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
     };
     BidiFrame = (() => {
-      var _a6;
+      var _a11;
       let _classSuper = Frame;
       let _instanceExtraInitializers = [];
       let _goto_decorators;
@@ -29977,7 +41666,7 @@ var init_Browser3 = __esm({
     init_EventEmitter();
     init_decorators();
     init_disposable();
-    init_Realm2();
+    init_Realm3();
     init_UserContext();
     __runInitializers21 = function(thisArg, initializers, value) {
       var useValue = arguments.length > 2;
@@ -30885,7 +42574,7 @@ var init_bidi = __esm({
     init_Input3();
     init_JSHandle3();
     init_Page3();
-    init_Realm3();
+    init_Realm4();
     init_ScreenRecording3();
   }
 });
@@ -33200,7 +44889,7 @@ var require_extension = __commonJS({
 var require_websocket = __commonJS({
   "node_modules/ws/lib/websocket.js"(exports, module) {
     "use strict";
-    var EventEmitter4 = __require("events");
+    var EventEmitter5 = __require("events");
     var https2 = __require("https");
     var http2 = __require("http");
     var net = __require("net");
@@ -33232,7 +44921,7 @@ var require_websocket = __commonJS({
     var protocolVersions = [8, 13];
     var readyStates = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
     var subprotocolRegex = /^[!#$%&'*+\-.0-9A-Z^_`|a-z~]+$/;
-    var WebSocket3 = class _WebSocket extends EventEmitter4 {
+    var WebSocket3 = class _WebSocket extends EventEmitter5 {
       /**
        * Create a new `WebSocket`.
        *
@@ -34239,7 +45928,7 @@ var require_subprotocol = __commonJS({
 var require_websocket_server = __commonJS({
   "node_modules/ws/lib/websocket-server.js"(exports, module) {
     "use strict";
-    var EventEmitter4 = __require("events");
+    var EventEmitter5 = __require("events");
     var http2 = __require("http");
     var { Duplex } = __require("stream");
     var { createHash: createHash2 } = __require("crypto");
@@ -34252,7 +45941,7 @@ var require_websocket_server = __commonJS({
     var RUNNING = 0;
     var CLOSING = 1;
     var CLOSED = 2;
-    var WebSocketServer2 = class extends EventEmitter4 {
+    var WebSocketServer2 = class extends EventEmitter5 {
       /**
        * Create a `WebSocketServer` instance.
        *
@@ -36184,7 +47873,7 @@ var init_Cache = __esm({
 
 // node_modules/@puppeteer/browsers/lib/launch.js
 import childProcess from "node:child_process";
-import { EventEmitter as EventEmitter2 } from "node:events";
+import { EventEmitter as EventEmitter3 } from "node:events";
 import { accessSync } from "node:fs";
 import os4 from "node:os";
 import readline from "node:readline";
@@ -36310,7 +47999,7 @@ var init_launch = __esm({
       #browserProcessExiting;
       #logs = [];
       #maxLogLinesSize = 1e3;
-      #lineEmitter = new EventEmitter2();
+      #lineEmitter = new EventEmitter3();
       #onAbort = () => {
         this.kill();
       };
@@ -38652,7 +50341,7 @@ var init_ProgressBar = __esm({
 });
 
 // node_modules/@puppeteer/browsers/lib/install.js
-import assert3 from "node:assert";
+import assert4 from "node:assert";
 import { spawnSync as spawnSync2 } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir as mkdir3, unlink } from "node:fs/promises";
@@ -38784,7 +50473,7 @@ async function installUrl(url2, options, provider, logger) {
     downloadProgressCallback = await makeProgressCallback(options.browser, options.buildIdAlias ?? options.buildId);
   }
   const fileName = decodeURIComponent(url2.toString()).split("/").pop();
-  assert3(fileName, `A malformed download URL was found: ${url2}.`);
+  assert4(fileName, `A malformed download URL was found: ${url2}.`);
   const cache = new Cache(options.cacheDir, options.logger);
   const browserRoot = cache.browserRoot(options.browser);
   const archivePath = path10.join(browserRoot, `${options.buildId}-${fileName}`);
@@ -39012,9 +50701,9 @@ var init_lib = __esm({
     left = 3;
     UI = class {
       constructor(opts) {
-        var _a6;
+        var _a11;
         this.width = opts.width;
-        this.wrap = (_a6 = opts.wrap) !== null && _a6 !== void 0 ? _a6 : true;
+        this.wrap = (_a11 = opts.wrap) !== null && _a11 !== void 0 ? _a11 : true;
         this.rows = [];
       }
       span(...args) {
@@ -40818,13 +52507,13 @@ import { format } from "util";
 import { normalize, resolve as resolve4 } from "path";
 import { readFileSync as readFileSync2 } from "fs";
 import { createRequire } from "node:module";
-var _a5, _b, _c, minNodeVersion, nodeVersion, env, require2, parser, yargsParser, lib_default;
+var _a10, _b, _c, minNodeVersion, nodeVersion, env, require2, parser, yargsParser, lib_default;
 var init_lib2 = __esm({
   "node_modules/yargs-parser/build/lib/index.js"() {
     init_string_utils();
     init_yargs_parser();
     minNodeVersion = process && process.env && process.env.YARGS_MIN_NODE_VERSION ? Number(process.env.YARGS_MIN_NODE_VERSION) : 20;
-    nodeVersion = (_b = (_a5 = process === null || process === void 0 ? void 0 : process.versions) === null || _a5 === void 0 ? void 0 : _a5.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
+    nodeVersion = (_b = (_a10 = process === null || process === void 0 ? void 0 : process.versions) === null || _a10 === void 0 ? void 0 : _a10.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
     if (nodeVersion) {
       const major = Number(nodeVersion.match(/^([^.]+)/)[1]);
       if (major < minNodeVersion) {
@@ -42657,7 +54346,7 @@ var init_completion = __esm({
     init_parse_command();
     Completion = class {
       constructor(yargs, usage2, command2, shim3) {
-        var _a6, _b2, _c2, _d, _e;
+        var _a11, _b2, _c2, _d, _e;
         this.yargs = yargs;
         this.usage = usage2;
         this.command = command2;
@@ -42666,7 +54355,7 @@ var init_completion = __esm({
         this.aliases = null;
         this.customCompletionFunction = null;
         this.indexAfterLastReset = 0;
-        this.zshShell = (_c2 = ((_a6 = this.shim.getEnv("SHELL")) === null || _a6 === void 0 ? void 0 : _a6.includes("zsh")) || ((_b2 = this.shim.getEnv("ZSH_NAME")) === null || _b2 === void 0 ? void 0 : _b2.includes("zsh"))) !== null && _c2 !== void 0 ? _c2 : false;
+        this.zshShell = (_c2 = ((_a11 = this.shim.getEnv("SHELL")) === null || _a11 === void 0 ? void 0 : _a11.includes("zsh")) || ((_b2 = this.shim.getEnv("ZSH_NAME")) === null || _b2 === void 0 ? void 0 : _b2.includes("zsh"))) !== null && _c2 !== void 0 ? _c2 : false;
         this.fishShell = (_e = (_d = this.shim.getEnv("SHELL")) === null || _d === void 0 ? void 0 : _d.includes("fish")) !== null && _e !== void 0 ? _e : false;
       }
       defaultCompletion(args, argv, current, done) {
@@ -42800,11 +54489,11 @@ var init_completion = __esm({
         return false;
       }
       completeOptionKey(key, completions, current, negable) {
-        var _a6, _b2, _c2, _d;
+        var _a11, _b2, _c2, _d;
         let keyWithDesc = key;
         if (this.zshShell || this.fishShell) {
           const descs = this.usage.getDescriptions();
-          const aliasKey = (_b2 = (_a6 = this === null || this === void 0 ? void 0 : this.aliases) === null || _a6 === void 0 ? void 0 : _a6[key]) === null || _b2 === void 0 ? void 0 : _b2.find((alias) => {
+          const aliasKey = (_b2 = (_a11 = this === null || this === void 0 ? void 0 : this.aliases) === null || _a11 === void 0 ? void 0 : _a11[key]) === null || _b2 === void 0 ? void 0 : _b2.find((alias) => {
             const desc2 = descs[alias];
             return typeof desc2 === "string" && desc2.length > 0;
           });
@@ -42970,7 +54659,7 @@ ${customMsgs.join("\n")}` : "";
     }
   };
   self2.unknownArguments = function unknownArguments(argv, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
-    var _a6;
+    var _a11;
     const commandKeys = yargs.getInternalMethods().getCommandInstance().getCommands();
     const unknown2 = [];
     const currentContext = yargs.getInternalMethods().getContext();
@@ -42988,7 +54677,7 @@ ${customMsgs.join("\n")}` : "";
     }
     if (checkPositionals) {
       const demandedCommands = yargs.getDemandedCommands();
-      const maxNonOptDemanded = ((_a6 = demandedCommands._) === null || _a6 === void 0 ? void 0 : _a6.max) || 0;
+      const maxNonOptDemanded = ((_a11 = demandedCommands._) === null || _a11 === void 0 ? void 0 : _a11.max) || 0;
       const expected = currentContext.commands.length + maxNonOptDemanded;
       if (expected < argv._.length) {
         argv._.slice(expected).forEach((key) => {
@@ -43485,8 +55174,8 @@ var init_yargs_factory = __esm({
         const coerceKey = keys;
         __classPrivateFieldGet(this, _YargsInstance_options, "f").key[coerceKey] = true;
         __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv, yargs) => {
-          var _a6;
-          const coerceKeyAliases = (_a6 = yargs.getAliases()[coerceKey]) !== null && _a6 !== void 0 ? _a6 : [];
+          var _a11;
+          const coerceKeyAliases = (_a11 = yargs.getAliases()[coerceKey]) !== null && _a11 !== void 0 ? _a11 : [];
           const argvKeys = [coerceKey, ...coerceKeyAliases].filter((key) => Object.prototype.hasOwnProperty.call(argv, key));
           if (argvKeys.length === 0) {
             return argv;
@@ -44379,13 +56068,13 @@ var init_yargs_factory = __esm({
         return this;
       }
       [kUnfreeze]() {
-        var _a6, _b2, _c2, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a11, _b2, _c2, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         const frozen = __classPrivateFieldGet(this, _YargsInstance_frozens, "f").pop();
         assertNotStrictEqual(frozen, void 0, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
         let configObjects;
-        _a6 = this, _b2 = this, _c2 = this, _d = this, _e = this, _f = this, _g = this, _h = this, _j = this, _k = this, _l = this, _m = this, {
+        _a11 = this, _b2 = this, _c2 = this, _d = this, _e = this, _f = this, _g = this, _h = this, _j = this, _k = this, _l = this, _m = this, {
           options: { set value(_o) {
-            __classPrivateFieldSet(_a6, _YargsInstance_options, _o, "f");
+            __classPrivateFieldSet(_a11, _YargsInstance_options, _o, "f");
           } }.value,
           configObjects,
           exitProcess: { set value(_o) {
@@ -44566,7 +56255,7 @@ var init_yargs_factory = __esm({
         return __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.relative(base, dir);
       }
       [kRunYargsParserAndExecuteCommands](args, shortCircuit, calledFromCommand, commandIndex = 0, helpOnly = false) {
-        var _a6, _b2, _c2, _d;
+        var _a11, _b2, _c2, _d;
         let skipValidation = !!calledFromCommand || helpOnly;
         args = args || __classPrivateFieldGet(this, _YargsInstance_processArgs, "f");
         __classPrivateFieldGet(this, _YargsInstance_options, "f").__ = __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__;
@@ -44609,7 +56298,7 @@ var init_yargs_factory = __esm({
           }
           __classPrivateFieldSet(this, _YargsInstance_isGlobalContext, false, "f");
           const handlerKeys = __classPrivateFieldGet(this, _YargsInstance_command, "f").getCommands();
-          const requestCompletions = ((_a6 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _a6 === void 0 ? void 0 : _a6.completionKey) ? [
+          const requestCompletions = ((_a11 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _a11 === void 0 ? void 0 : _a11.completionKey) ? [
             (_b2 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _b2 === void 0 ? void 0 : _b2.completionKey,
             ...(_d = this.getAliases()[(_c2 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _c2 === void 0 ? void 0 : _c2.completionKey]) !== null && _d !== void 0 ? _d : []
           ].some((key) => Object.prototype.hasOwnProperty.call(argv, key)) : false;
@@ -48869,7 +60558,7 @@ var require_Document = __commonJS({
     var applyReviver = require_applyReviver();
     var createNode = require_createNode();
     var directives = require_directives();
-    var Document2 = class _Document {
+    var Document3 = class _Document {
       constructor(value, replacer, options) {
         this.commentBefore = null;
         this.comment = null;
@@ -49159,7 +60848,7 @@ var require_Document = __commonJS({
         return true;
       throw new Error("Expected a YAML collection as document contents");
     }
-    exports.Document = Document2;
+    exports.Document = Document3;
   }
 });
 
@@ -50524,13 +62213,13 @@ var require_compose_node = __commonJS({
 var require_compose_doc = __commonJS({
   "node_modules/yaml/dist/compose/compose-doc.js"(exports) {
     "use strict";
-    var Document2 = require_Document();
+    var Document3 = require_Document();
     var composeNode = require_compose_node();
     var resolveEnd = require_resolve_end();
     var resolveProps = require_resolve_props();
     function composeDoc(options, directives, { offset, start, value, end }, onError) {
       const opts = Object.assign({ _directives: directives }, options);
-      const doc = new Document2.Document(void 0, opts);
+      const doc = new Document3.Document(void 0, opts);
       const ctx = {
         atKey: false,
         atRoot: true,
@@ -50569,7 +62258,7 @@ var require_composer = __commonJS({
     "use strict";
     var node_process = __require("process");
     var directives = require_directives();
-    var Document2 = require_Document();
+    var Document3 = require_Document();
     var errors = require_errors();
     var identity2 = require_identity();
     var composeDoc = require_compose_doc();
@@ -50758,7 +62447,7 @@ ${end.comment}` : end.comment;
           this.doc = null;
         } else if (forceDoc) {
           const opts = Object.assign({ _directives: this.directives }, this.options);
-          const doc = new Document2.Document(void 0, opts);
+          const doc = new Document3.Document(void 0, opts);
           if (this.atDirectives)
             this.onError(endOffset, "MISSING_CHAR", "Missing directives-end indicator line");
           doc.range = [0, endOffset, endOffset];
@@ -52680,7 +64369,7 @@ var require_public_api = __commonJS({
   "node_modules/yaml/dist/public-api.js"(exports) {
     "use strict";
     var composer = require_composer();
-    var Document2 = require_Document();
+    var Document3 = require_Document();
     var errors = require_errors();
     var log2 = require_log();
     var identity2 = require_identity();
@@ -52763,7 +64452,7 @@ var require_public_api = __commonJS({
       }
       if (identity2.isDocument(value) && !_replacer)
         return value.toString(options);
-      return new Document2.Document(value, _replacer, options).toString(options);
+      return new Document3.Document(value, _replacer, options).toString(options);
     }
     exports.parse = parse6;
     exports.parseAllDocuments = parseAllDocuments;
@@ -52777,7 +64466,7 @@ var require_dist = __commonJS({
   "node_modules/yaml/dist/index.js"(exports) {
     "use strict";
     var composer = require_composer();
-    var Document2 = require_Document();
+    var Document3 = require_Document();
     var Schema = require_Schema();
     var errors = require_errors();
     var Alias = require_Alias();
@@ -52793,7 +64482,7 @@ var require_dist = __commonJS({
     var publicApi = require_public_api();
     var visit3 = require_visit();
     exports.Composer = composer.Composer;
-    exports.Document = Document2.Document;
+    exports.Document = Document3.Document;
     exports.Schema = Schema.Schema;
     exports.YAMLError = errors.YAMLError;
     exports.YAMLParseError = errors.YAMLParseError;
@@ -53256,12 +64945,12 @@ var require_code = __commonJS({
         return item === "" || item === '""';
       }
       get str() {
-        var _a6;
-        return (_a6 = this._str) !== null && _a6 !== void 0 ? _a6 : this._str = this._items.reduce((s, c) => `${s}${c}`, "");
+        var _a11;
+        return (_a11 = this._str) !== null && _a11 !== void 0 ? _a11 : this._str = this._items.reduce((s, c) => `${s}${c}`, "");
       }
       get names() {
-        var _a6;
-        return (_a6 = this._names) !== null && _a6 !== void 0 ? _a6 : this._names = this._items.reduce((names, c) => {
+        var _a11;
+        return (_a11 = this._names) !== null && _a11 !== void 0 ? _a11 : this._names = this._items.reduce((names, c) => {
           if (c instanceof Name)
             names[c.str] = (names[c.str] || 0) + 1;
           return names;
@@ -53407,8 +65096,8 @@ var require_scope = __commonJS({
         return `${prefix}${ng.index++}`;
       }
       _nameGroup(prefix) {
-        var _a6, _b2;
-        if (((_b2 = (_a6 = this._parent) === null || _a6 === void 0 ? void 0 : _a6._prefixes) === null || _b2 === void 0 ? void 0 : _b2.has(prefix)) || this._prefixes && !this._prefixes.has(prefix)) {
+        var _a11, _b2;
+        if (((_b2 = (_a11 = this._parent) === null || _a11 === void 0 ? void 0 : _a11._prefixes) === null || _b2 === void 0 ? void 0 : _b2.has(prefix)) || this._prefixes && !this._prefixes.has(prefix)) {
           throw new Error(`CodeGen: prefix "${prefix}" is not allowed in this scope`);
         }
         return this._names[prefix] = { prefix, index: 0 };
@@ -53441,12 +65130,12 @@ var require_scope = __commonJS({
         return new ValueScopeName(prefix, this._newName(prefix));
       }
       value(nameOrPrefix, value) {
-        var _a6;
+        var _a11;
         if (value.ref === void 0)
           throw new Error("CodeGen: ref must be passed in value");
         const name = this.toName(nameOrPrefix);
         const { prefix } = name;
-        const valueKey = (_a6 = value.key) !== null && _a6 !== void 0 ? _a6 : value.ref;
+        const valueKey = (_a11 = value.key) !== null && _a11 !== void 0 ? _a11 : value.ref;
         let vs = this._values[prefix];
         if (vs) {
           const _name = vs.get(valueKey);
@@ -53764,8 +65453,8 @@ var require_codegen = __commonJS({
         return this;
       }
       optimizeNames(names, constants4) {
-        var _a6;
-        this.else = (_a6 = this.else) === null || _a6 === void 0 ? void 0 : _a6.optimizeNames(names, constants4);
+        var _a11;
+        this.else = (_a11 = this.else) === null || _a11 === void 0 ? void 0 : _a11.optimizeNames(names, constants4);
         if (!(super.optimizeNames(names, constants4) || this.else))
           return;
         this.condition = optimizeExpr(this.condition, names, constants4);
@@ -53869,16 +65558,16 @@ var require_codegen = __commonJS({
         return code;
       }
       optimizeNodes() {
-        var _a6, _b2;
+        var _a11, _b2;
         super.optimizeNodes();
-        (_a6 = this.catch) === null || _a6 === void 0 ? void 0 : _a6.optimizeNodes();
+        (_a11 = this.catch) === null || _a11 === void 0 ? void 0 : _a11.optimizeNodes();
         (_b2 = this.finally) === null || _b2 === void 0 ? void 0 : _b2.optimizeNodes();
         return this;
       }
       optimizeNames(names, constants4) {
-        var _a6, _b2;
+        var _a11, _b2;
         super.optimizeNames(names, constants4);
-        (_a6 = this.catch) === null || _a6 === void 0 ? void 0 : _a6.optimizeNames(names, constants4);
+        (_a11 = this.catch) === null || _a11 === void 0 ? void 0 : _a11.optimizeNames(names, constants4);
         (_b2 = this.finally) === null || _b2 === void 0 ? void 0 : _b2.optimizeNames(names, constants4);
         return this;
       }
@@ -54658,8 +66347,8 @@ var require_applicability = __commonJS({
     }
     exports.shouldUseGroup = shouldUseGroup;
     function shouldUseRule(schema, rule) {
-      var _a6;
-      return schema[rule.keyword] !== void 0 || ((_a6 = rule.definition.implements) === null || _a6 === void 0 ? void 0 : _a6.some((kwd) => schema[kwd] !== void 0));
+      var _a11;
+      return schema[rule.keyword] !== void 0 || ((_a11 = rule.definition.implements) === null || _a11 === void 0 ? void 0 : _a11.some((kwd) => schema[kwd] !== void 0));
     }
     exports.shouldUseRule = shouldUseRule;
   }
@@ -55047,14 +66736,14 @@ var require_keyword = __commonJS({
     }
     exports.macroKeywordCode = macroKeywordCode;
     function funcKeywordCode(cxt, def) {
-      var _a6;
+      var _a11;
       const { gen, keyword, schema, parentSchema, $data, it } = cxt;
       checkAsyncKeyword(it, def);
       const validate4 = !$data && def.compile ? def.compile.call(it.self, schema, parentSchema, it) : def.validate;
       const validateRef = useKeyword(gen, keyword, validate4);
       const valid = gen.let("valid");
       cxt.block$data(valid, validateKeyword);
-      cxt.ok((_a6 = def.valid) !== null && _a6 !== void 0 ? _a6 : valid);
+      cxt.ok((_a11 = def.valid) !== null && _a11 !== void 0 ? _a11 : valid);
       function validateKeyword() {
         if (def.errors === false) {
           assignValid();
@@ -55085,8 +66774,8 @@ var require_keyword = __commonJS({
         gen.assign(valid, (0, codegen_1._)`${_await}${(0, code_1.callValidateCode)(cxt, validateRef, passCxt, passSchema)}`, def.modifying);
       }
       function reportErrs(errors) {
-        var _a7;
-        gen.if((0, codegen_1.not)((_a7 = def.valid) !== null && _a7 !== void 0 ? _a7 : valid), errors);
+        var _a12;
+        gen.if((0, codegen_1.not)((_a12 = def.valid) !== null && _a12 !== void 0 ? _a12 : valid), errors);
       }
     }
     exports.funcKeywordCode = funcKeywordCode;
@@ -55224,7 +66913,7 @@ var require_subschema = __commonJS({
 var require_fast_deep_equal = __commonJS({
   "node_modules/fast-deep-equal/index.js"(exports, module) {
     "use strict";
-    module.exports = function equal(a2, b2) {
+    module.exports = function equal2(a2, b2) {
       if (a2 === b2) return true;
       if (a2 && b2 && typeof a2 == "object" && typeof b2 == "object") {
         if (a2.constructor !== b2.constructor) return false;
@@ -55233,7 +66922,7 @@ var require_fast_deep_equal = __commonJS({
           length = a2.length;
           if (length != b2.length) return false;
           for (i = length; i-- !== 0; )
-            if (!equal(a2[i], b2[i])) return false;
+            if (!equal2(a2[i], b2[i])) return false;
           return true;
         }
         if (a2.constructor === RegExp) return a2.source === b2.source && a2.flags === b2.flags;
@@ -55246,7 +66935,7 @@ var require_fast_deep_equal = __commonJS({
           if (!Object.prototype.hasOwnProperty.call(b2, keys[i])) return false;
         for (i = length; i-- !== 0; ) {
           var key = keys[i];
-          if (!equal(a2[key], b2[key])) return false;
+          if (!equal2(a2[key], b2[key])) return false;
         }
         return true;
       }
@@ -55350,7 +67039,7 @@ var require_resolve = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
     var util_1 = require_util();
-    var equal = require_fast_deep_equal();
+    var equal2 = require_fast_deep_equal();
     var traverse = require_json_schema_traverse();
     var SIMPLE_INLINED = /* @__PURE__ */ new Set([
       "type",
@@ -55488,7 +67177,7 @@ var require_resolve = __commonJS({
       });
       return localRefs;
       function checkAmbiguosRef(sch1, sch2, ref) {
-        if (sch2 !== void 0 && !equal(sch1, sch2))
+        if (sch2 !== void 0 && !equal2(sch1, sch2))
           throw ambiguos(ref);
       }
       function ambiguos(ref) {
@@ -56054,7 +67743,7 @@ var require_compile = __commonJS({
     var validate_1 = require_validate();
     var SchemaEnv = class {
       constructor(env2) {
-        var _a6;
+        var _a11;
         this.refs = {};
         this.dynamicAnchors = {};
         let schema;
@@ -56063,7 +67752,7 @@ var require_compile = __commonJS({
         this.schema = env2.schema;
         this.schemaId = env2.schemaId;
         this.root = env2.root || this;
-        this.baseId = (_a6 = env2.baseId) !== null && _a6 !== void 0 ? _a6 : (0, resolve_1.normalizeId)(schema === null || schema === void 0 ? void 0 : schema[env2.schemaId || "$id"]);
+        this.baseId = (_a11 = env2.baseId) !== null && _a11 !== void 0 ? _a11 : (0, resolve_1.normalizeId)(schema === null || schema === void 0 ? void 0 : schema[env2.schemaId || "$id"]);
         this.schemaPath = env2.schemaPath;
         this.localRefs = env2.localRefs;
         this.meta = env2.meta;
@@ -56159,14 +67848,14 @@ var require_compile = __commonJS({
     }
     exports.compileSchema = compileSchema;
     function resolveRef2(root, baseId, ref) {
-      var _a6;
+      var _a11;
       ref = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId, ref);
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
       let _sch = resolve10.call(this, root, ref);
       if (_sch === void 0) {
-        const schema = (_a6 = root.localRefs) === null || _a6 === void 0 ? void 0 : _a6[ref];
+        const schema = (_a11 = root.localRefs) === null || _a11 === void 0 ? void 0 : _a11[ref];
         const { schemaId } = this.opts;
         if (schema)
           _sch = new SchemaEnv({ schema, schemaId, root, baseId });
@@ -56235,8 +67924,8 @@ var require_compile = __commonJS({
       "definitions"
     ]);
     function getJsonPointer(parsedRef, { baseId, schema, root }) {
-      var _a6;
-      if (((_a6 = parsedRef.fragment) === null || _a6 === void 0 ? void 0 : _a6[0]) !== "/")
+      var _a11;
+      if (((_a11 = parsedRef.fragment) === null || _a11 === void 0 ? void 0 : _a11[0]) !== "/")
         return;
       for (const part of parsedRef.fragment.slice(1).split("/")) {
         if (typeof schema === "boolean")
@@ -57107,7 +68796,7 @@ var require_fast_uri = __commonJS({
       target2.fragment = relative11.fragment;
       return target2;
     }
-    function equal(uriA, uriB, options) {
+    function equal2(uriA, uriB, options) {
       const normalizedA = normalizeComparableURI(uriA, options);
       const normalizedB = normalizeComparableURI(uriB, options);
       return normalizedA !== void 0 && normalizedB !== void 0 && normalizedA === normalizedB;
@@ -57392,7 +69081,7 @@ var require_fast_uri = __commonJS({
       normalize: normalize2,
       resolve: resolve10,
       resolveComponent,
-      equal,
+      equal: equal2,
       serialize,
       parse: parse6
     };
@@ -57494,9 +69183,9 @@ var require_core = __commonJS({
     };
     var MAX_EXPRESSION = 200;
     function requiredOptions(o) {
-      var _a6, _b2, _c2, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0;
+      var _a11, _b2, _c2, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0;
       const s = o.strict;
-      const _optz = (_a6 = o.code) === null || _a6 === void 0 ? void 0 : _a6.optimize;
+      const _optz = (_a11 = o.code) === null || _a11 === void 0 ? void 0 : _a11.optimize;
       const optimize = _optz === true || _optz === void 0 ? 1 : _optz || 0;
       const regExp = (_c2 = (_b2 = o.code) === null || _b2 === void 0 ? void 0 : _b2.regExp) !== null && _c2 !== void 0 ? _c2 : defaultRegExp;
       const uriResolver = (_d = o.uriResolver) !== null && _d !== void 0 ? _d : uri_1.default;
@@ -57970,7 +69659,7 @@ var require_core = __commonJS({
       }
     }
     function addRule(keyword, definition, dataType) {
-      var _a6;
+      var _a11;
       const post = definition === null || definition === void 0 ? void 0 : definition.post;
       if (dataType && post)
         throw new Error('keyword with "post" flag cannot have "type"');
@@ -57996,7 +69685,7 @@ var require_core = __commonJS({
       else
         ruleGroup.rules.push(rule);
       RULES.all[keyword] = rule;
-      (_a6 = definition.implements) === null || _a6 === void 0 ? void 0 : _a6.forEach((kwd) => this.addKeyword(kwd));
+      (_a11 = definition.implements) === null || _a11 === void 0 ? void 0 : _a11.forEach((kwd) => this.addKeyword(kwd));
     }
     function addBeforeRule(ruleGroup, rule, before) {
       const i = ruleGroup.rules.findIndex((_rule) => _rule.keyword === before);
@@ -58130,10 +69819,10 @@ var require_ref = __commonJS({
         gen.assign(names_1.default.errors, (0, codegen_1._)`${names_1.default.vErrors}.length`);
       }
       function addEvaluatedFrom(source2) {
-        var _a6;
+        var _a11;
         if (!it.opts.unevaluated)
           return;
-        const schEvaluated = (_a6 = sch === null || sch === void 0 ? void 0 : sch.validate) === null || _a6 === void 0 ? void 0 : _a6.evaluated;
+        const schEvaluated = (_a11 = sch === null || sch === void 0 ? void 0 : sch.validate) === null || _a11 === void 0 ? void 0 : _a11.evaluated;
         if (it.props !== true) {
           if (schEvaluated && !schEvaluated.dynamicProps) {
             if (schEvaluated.props !== void 0) {
@@ -58482,9 +70171,9 @@ var require_equal = __commonJS({
   "node_modules/ajv/dist/runtime/equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var equal = require_fast_deep_equal();
-    equal.code = 'require("ajv/dist/runtime/equal").default';
-    exports.default = equal;
+    var equal2 = require_fast_deep_equal();
+    equal2.code = 'require("ajv/dist/runtime/equal").default';
+    exports.default = equal2;
   }
 });
 
@@ -59784,7 +71473,7 @@ var require_discriminator = __commonJS({
           return _valid;
         }
         function getMapping() {
-          var _a6;
+          var _a11;
           const oneOfMapping = {};
           const topRequired = hasRequired(parentSchema);
           let tagRequired = true;
@@ -59798,7 +71487,7 @@ var require_discriminator = __commonJS({
               if (sch === void 0)
                 throw new ref_error_1.default(it.opts.uriResolver, it.baseId, ref);
             }
-            const propSch = (_a6 = sch === null || sch === void 0 ? void 0 : sch.properties) === null || _a6 === void 0 ? void 0 : _a6[tagName];
+            const propSch = (_a11 = sch === null || sch === void 0 ? void 0 : sch.properties) === null || _a11 === void 0 ? void 0 : _a11[tagName];
             if (typeof propSch != "object") {
               throw new Error(`discriminator: oneOf subschemas (or referenced schemas) must have "properties/${tagName}"`);
             }
@@ -60367,9 +72056,9 @@ var require_dist3 = __commonJS({
       return f;
     };
     function addFormats(ajv, list, fs8, exportName) {
-      var _a6;
+      var _a11;
       var _b2;
-      (_a6 = (_b2 = ajv.opts.code).formats) !== null && _a6 !== void 0 ? _a6 : _b2.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
+      (_a11 = (_b2 = ajv.opts.code).formats) !== null && _a11 !== void 0 ? _a11 : _b2.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
         ajv.addFormat(f, fs8[f]);
     }
@@ -61980,7 +73669,7 @@ var require_packer_async = __commonJS({
 var require_sync_inflate = __commonJS({
   "node_modules/pngjs/lib/sync-inflate.js"(exports, module) {
     "use strict";
-    var assert4 = __require("assert").ok;
+    var assert5 = __require("assert").ok;
     var zlib = __require("zlib");
     var util2 = __require("util");
     var kMaxLength = __require("buffer").kMaxLength;
@@ -62031,7 +73720,7 @@ var require_sync_inflate = __commonJS({
           return;
         }
         let have = availOutBefore - availOutAfter;
-        assert4(have >= 0, "have should not go down");
+        assert5(have >= 0, "have should not go down");
         if (have > 0) {
           let out = self2._buffer.slice(self2._offset, self2._offset + have);
           self2._offset += have;
@@ -62057,7 +73746,7 @@ var require_sync_inflate = __commonJS({
         }
         return false;
       }
-      assert4(this._handle, "zlib binding closed");
+      assert5(this._handle, "zlib binding closed");
       let res;
       do {
         res = this._handle.writeSync(
@@ -63631,8 +75320,8 @@ function explicitlyAborted(x2, startIndex = 0) {
 }
 function prefixIssues(path14, issues) {
   return issues.map((iss) => {
-    var _a6;
-    (_a6 = iss).path ?? (_a6.path = []);
+    var _a11;
+    (_a11 = iss).path ?? (_a11.path = []);
     iss.path.unshift(path14);
     return iss;
   });
@@ -63641,17 +75330,17 @@ function unwrapMessage(message) {
   return typeof message === "string" ? message : message?.message;
 }
 function attachSchema(issues, start, inst) {
-  var _a6;
+  var _a11;
   for (let i = start; i < issues.length; i++) {
-    (_a6 = issues[i]).schema ?? (_a6.schema = inst);
+    (_a11 = issues[i]).schema ?? (_a11.schema = inst);
   }
 }
 function finalizeIssue(iss, ctx, config3) {
-  var _a6;
+  var _a11;
   const traits = iss.inst?._zod?.traits;
   if (traits?.has("$ZodType")) {
     if (traits.has("$ZodCheck"))
-      (_a6 = iss).schema ?? (_a6.schema = iss.inst);
+      (_a11 = iss).schema ?? (_a11.schema = iss.inst);
     else
       iss.schema = iss.inst;
   }
@@ -64132,7 +75821,7 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
 function treeifyError(error62, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
   const processError = (error63, path14 = []) => {
-    var _a6;
+    var _a11;
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
         issue2.errors.map((issues) => processError({ issues }, [...path14, ...issue2.path]));
@@ -64164,7 +75853,7 @@ function treeifyError(error62, mapper = (issue2) => issue2.message) {
             curr = curr.properties[el];
           } else {
             curr.items ?? (curr.items = []);
-            (_a6 = curr.items)[el] ?? (_a6[el] = { errors: [] });
+            (_a11 = curr.items)[el] ?? (_a11[el] = { errors: [] });
             curr = curr.items[el];
           }
           if (terminal) {
@@ -64541,10 +76230,10 @@ var sha512_base64url = /* @__PURE__ */ fixedBase64url(86);
 
 // node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
-  var _a6;
+  var _a11;
   inst._zod ?? (inst._zod = {});
   inst._zod.def = def;
-  (_a6 = inst._zod).onattach ?? (_a6.onattach = []);
+  (_a11 = inst._zod).onattach ?? (_a11.onattach = []);
 });
 var _whenHasSize = (payload) => {
   const val = payload.value;
@@ -64717,9 +76406,9 @@ var $ZodCheckBigIntFormat = /* @__PURE__ */ $constructor("$ZodCheckBigIntFormat"
   };
 });
 var $ZodCheckMaxSize = /* @__PURE__ */ $constructor("$ZodCheckMaxSize", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasSize);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const size = input3.size;
@@ -64737,9 +76426,9 @@ var $ZodCheckMaxSize = /* @__PURE__ */ $constructor("$ZodCheckMaxSize", (inst, d
   };
 });
 var $ZodCheckMinSize = /* @__PURE__ */ $constructor("$ZodCheckMinSize", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasSize);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const size = input3.size;
@@ -64757,9 +76446,9 @@ var $ZodCheckMinSize = /* @__PURE__ */ $constructor("$ZodCheckMinSize", (inst, d
   };
 });
 var $ZodCheckSizeEquals = /* @__PURE__ */ $constructor("$ZodCheckSizeEquals", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasSize);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const size = input3.size;
@@ -64778,9 +76467,9 @@ var $ZodCheckSizeEquals = /* @__PURE__ */ $constructor("$ZodCheckSizeEquals", (i
   };
 });
 var $ZodCheckMaxLength = /* @__PURE__ */ $constructor("$ZodCheckMaxLength", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasLength);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasLength);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const units = input3.length;
@@ -64800,9 +76489,9 @@ var $ZodCheckMaxLength = /* @__PURE__ */ $constructor("$ZodCheckMaxLength", (ins
   };
 });
 var $ZodCheckMinLength = /* @__PURE__ */ $constructor("$ZodCheckMinLength", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasLength);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasLength);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const units = input3.length;
@@ -64822,9 +76511,9 @@ var $ZodCheckMinLength = /* @__PURE__ */ $constructor("$ZodCheckMinLength", (ins
   };
 });
 var $ZodCheckLengthEquals = /* @__PURE__ */ $constructor("$ZodCheckLengthEquals", (inst, def) => {
-  var _a6;
+  var _a11;
   $ZodCheck.init(inst, def);
-  (_a6 = inst._zod.def).when ?? (_a6.when = _whenHasLength);
+  (_a11 = inst._zod.def).when ?? (_a11.when = _whenHasLength);
   inst._zod.check = (payload) => {
     const input3 = payload.value;
     const units = input3.length;
@@ -64845,10 +76534,10 @@ var $ZodCheckLengthEquals = /* @__PURE__ */ $constructor("$ZodCheckLengthEquals"
   };
 });
 var $ZodCheckStringFormat = /* @__PURE__ */ $constructor("$ZodCheckStringFormat", (inst, def) => {
-  var _a6, _b2;
+  var _a11, _b2;
   $ZodCheck.init(inst, def);
   if (def.pattern)
-    (_a6 = inst._zod).check ?? (_a6.check = (payload) => {
+    (_a11 = inst._zod).check ?? (_a11.check = (payload) => {
       def.pattern.lastIndex = 0;
       if (def.pattern.test(payload.value))
         return;
@@ -65065,7 +76754,7 @@ var version = {
 
 // node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
-  var _a6;
+  var _a11;
   inst ?? (inst = {});
   inst._zod.def = def;
   inst._zod.bag = inst._zod.bag || {};
@@ -65078,7 +76767,7 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
     }
   }
   if (checks.length === 0) {
-    (_a6 = inst._zod).deferred ?? (_a6.deferred = []);
+    (_a11 = inst._zod).deferred ?? (_a11.deferred = []);
     inst._zod.deferred?.push(() => {
       inst._zod.run = inst._zod.parse;
     });
@@ -67658,8 +79347,8 @@ var memo = {
     return empty;
   },
   guard(inst) {
-    var _a6;
-    (_a6 = inst._zod).deferred ?? (_a6.deferred = []);
+    var _a11;
+    (_a11 = inst._zod).deferred ?? (_a11.deferred = []);
     inst._zod.deferred.push(() => {
       const base = inst._zod.parse;
       const wrapped = (payload, ctx) => {
@@ -67673,12 +79362,12 @@ var memo = {
     });
   },
   attach(inst) {
-    var _a6;
+    var _a11;
     let isRecursiveInst;
     let rechecked = false;
     let lastCtx;
     let lastBucket;
-    (_a6 = inst._zod).deferred ?? (_a6.deferred = []);
+    (_a11 = inst._zod).deferred ?? (_a11.deferred = []);
     inst._zod.deferred.push(() => {
       const base = inst._zod.parse;
       const wrapped = (payload, ctx) => {
@@ -78078,7 +89767,7 @@ function handleUnrepresentable(schema, ctx, json2, params, message) {
   return true;
 }
 function processSchema(schema, ctx, _params = { path: [], schemaPath: [] }) {
-  var _a6;
+  var _a11;
   const def = schema._zod.def;
   const seen = ctx.seen.get(schema);
   if (seen) {
@@ -78128,7 +89817,7 @@ function processSchema(schema, ctx, _params = { path: [], schemaPath: [] }) {
     delete result.schema.default;
   }
   if (ctx.io === "input" && "_prefault" in result.schema)
-    (_a6 = result.schema).default ?? (_a6.default = result.schema._prefault);
+    (_a11 = result.schema).default ?? (_a11.default = result.schema._prefault);
   delete result.schema._prefault;
   const _result = ctx.seen.get(schema);
   return _result.schema;
@@ -85481,7 +97170,7 @@ import { existsSync as existsSync5 } from "node:fs";
 import { join as join7 } from "node:path";
 
 // packages/server/src/version.ts
-var VERSION = true ? "0.0.0" : "0.0.0-dev";
+var VERSION = true ? "0.1.0" : "0.0.0-dev";
 var MIN_NODE = [22, 12];
 function nodeVersionOk(version2 = process.versions.node) {
   const [major = 0, minor = 0] = version2.split(".").map(Number);
@@ -93794,7 +105483,7 @@ var EMPTY_COMPLETION_RESULT = {
 };
 
 // packages/server/src/browser/driver.ts
-import { EventEmitter as EventEmitter3 } from "node:events";
+import { EventEmitter as EventEmitter4 } from "node:events";
 
 // packages/server/src/evidence/scrub.ts
 var SENSITIVE_KEYS = /^(token|access_token|id_token|refresh_token|auth|authorization|key|api_key|apikey|secret|client_secret|password|pass|pwd|session|sessionid|sid|code|signature|sig|jwt)$/i;
@@ -94980,7 +106669,7 @@ var Driver = class _Driver {
   options;
   profileDir;
   refs = new RefTable();
-  emitter = new EventEmitter3();
+  emitter = new EventEmitter4();
   tabs = /* @__PURE__ */ new Map();
   secretFields = [];
   logs = new LogBook();
@@ -95291,7 +106980,7 @@ function dialogOpenMessage(d) {
 }
 
 // packages/server/src/mutex.ts
-var Mutex2 = class {
+var Mutex3 = class {
   tail = Promise.resolve();
   run(task) {
     const result = this.tail.then(task, task);
@@ -95341,7 +107030,7 @@ var Context = class {
   }
   roots;
   clientName;
-  lock = new Mutex2();
+  lock = new Mutex3();
   actionLog = [];
   stepAnswers = [];
   driver;

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: 22
+          - os: ubuntu-latest
+            node: 24
+          - os: macos-latest
+            node: 24
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # Some npm versions remove a native part of the test tools. Use a good npm 11.
+      - name: Update npm
+        run: npm install -g npm@11
+
+      # Ubuntu 24.04 blocks the sandbox that Chrome uses, unless this setting is off.
+      - name: Let Chrome use its sandbox
+        if: runner.os == 'Linux'
+        run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # The committed bundle, schema, and guide copy must match the source.
+      - name: Check the bundle
+        run: git diff --exit-code -- plugins/walkthrough schemas examples/demo-app/.walkthrough/plan.schema.json
+
+      - name: Check the npm package
+        run: npm pack -w packages/server --dry-run

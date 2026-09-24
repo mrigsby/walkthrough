@@ -1,6 +1,9 @@
 {
   "name": "walkthrough",
-  "owner": { "name": "TODO: author name" },
+  "owner": {
+    "name": "Michael Rigsby",
+    "email": "mrigsby@oistech.com"
+  },
   "metadata": {
     "description": "Walkthrough: step-by-step visual UI testing with an AI agent and a developer."
   },
@@ -9,7 +12,7 @@
       "name": "walkthrough",
       "source": "./plugins/walkthrough",
       "description": "Test a web app step by step in a visible browser. The agent explains each step, and you confirm it or report a bug.",
-      "version": "0.0.0"
+      "version": "0.1.0"
     }
   ]
 }

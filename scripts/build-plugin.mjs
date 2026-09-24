@@ -1,6 +1,6 @@
 // Bundles the server into one file inside the plugin.
 // Usage: node scripts/build-plugin.mjs [--watch]
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
@@ -19,6 +19,8 @@ const banner = [
 
 /** @type {esbuild.BuildOptions} */
 const options = {
+  // Paths in the build report are from the repo root, wherever the build starts.
+  absWorkingDir: root,
   entryPoints: [join(root, 'packages/server/src/index.ts')],
   outfile: outFile,
   bundle: true,
@@ -33,8 +35,9 @@ const options = {
       await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8'),
     ),
   },
-  // Optional speed-ups for ws, and the BiDi protocol we do not use.
-  external: ['bufferutil', 'utf-8-validate', 'chromium-bidi', 'chromium-bidi/*'],
+  // Optional speed-ups for ws. The ws package loads them only if they exist.
+  // Everything else must be inside the bundle: an installed plugin has no node_modules.
+  external: ['bufferutil', 'utf-8-validate'],
   legalComments: 'none',
   metafile: true,
   logLevel: 'warning',
@@ -101,5 +104,12 @@ if (watch) {
 } else {
   const result = await esbuild.build(options);
   await writeLicenses(result.metafile);
-  console.log(`[build-plugin] wrote ${outFile}`);
+  // The npm package ships the same files.
+  const dist = join(root, 'packages/server/dist');
+  await mkdir(dist, { recursive: true });
+  for (const name of ['uiwalk.mjs', 'THIRD_PARTY_LICENSES.txt']) {
+    await copyFile(join(dirname(outFile), name), join(dist, name));
+  }
+  await copyFile(join(root, 'LICENSE'), join(dist, 'LICENSE'));
+  console.log(`[build-plugin] wrote ${outFile} and packages/server/dist`);
 }
