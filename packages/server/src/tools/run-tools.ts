@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
@@ -59,6 +60,7 @@ function stepList(plan: Plan, mode: Mode): string {
       const flags = [
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
         step.screenshot ? 'screenshot' : '',
+        step.visual ? 'visual check' : '',
       ]
         .filter(Boolean)
         .join(', ');
@@ -185,7 +187,16 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
         const baseUrl = plan?.baseUrl ?? config.baseUrl;
 
-        const opened = await openBrowser(ctx, { url: baseUrl, alwaysGo: true });
+        const emulation: Emulation = {};
+        if (plan?.device) emulation.device = plan.device;
+        if (plan?.colorScheme) emulation.colorScheme = plan.colorScheme;
+        if (plan?.network) emulation.network = plan.network;
+        const opened = await openBrowser(ctx, {
+          url: baseUrl,
+          alwaysGo: true,
+          session: plan?.session,
+          emulation,
+        });
         const driver = ctx.requireDriver();
         // Start clean: earlier actions and page errors are not part of this run.
         ctx.actionCursor = ctx.actionLog.length;
@@ -198,6 +209,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           planFile: loaded?.file,
           baseUrl,
           chrome: driver.chromeVersion,
+          setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
         });
 
         const lines = [
@@ -209,7 +221,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '1. Do what the step says. If it has an Action, use it.',
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
-          '4. For a "screenshot" step, call screenshot after the step.',
+          '4. For a "screenshot" step, call screenshot after the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
           '5. When every step has a result, or the developer says stop, call run_finish.',
           '',
         ];

@@ -1,4 +1,5 @@
 // Logs go to stderr. Stdout is only for MCP messages.
+import { appendFileSync } from 'node:fs';
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
@@ -14,6 +15,18 @@ function write(level: Level, message: string, extra?: unknown): void {
   const line = `[uiwalk] ${level}: ${message}`;
   if (extra === undefined) console.error(line);
   else console.error(line, extra);
+}
+
+// For debugging: with UIWALK_TRACE_FILE set, each event is written as one JSON line.
+export function trace(event: string, data: Record<string, unknown>): void {
+  const file = process.env.UIWALK_TRACE_FILE;
+  if (!file) return;
+  try {
+    appendFileSync(
+      file,
+      `${JSON.stringify({ at: new Date().toISOString(), pid: process.pid, event, ...data })}\n`,
+    );
+  } catch {}
 }
 
 export const log = {

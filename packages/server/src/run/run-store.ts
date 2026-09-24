@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import type { A11yViolation } from '../audit/axe.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -38,7 +39,16 @@ export interface Run {
   baseUrl?: string;
   chrome?: string;
   summary?: string;
+  // Screen, color scheme, network, and saved login used for the run.
+  setup?: string;
   steps: RunStep[];
+  accessibility?: Array<{
+    at: string;
+    stepId?: string;
+    url: string;
+    scope?: string;
+    violations: A11yViolation[];
+  }>;
 }
 
 function slug(text: string): string {
@@ -80,6 +90,7 @@ export class RunStore {
       planFile?: string;
       baseUrl?: string;
       chrome?: string;
+      setup?: string;
     },
   ): RunStore {
     const id = `${stamp()}-${slug(input.name)}-${randomBytes(2).toString('hex')}`;
@@ -105,6 +116,7 @@ export class RunStore {
       startedAt: new Date().toISOString(),
       baseUrl: input.baseUrl,
       chrome: input.chrome,
+      setup: input.setup,
       steps,
     };
     const store = new RunStore(dir, run, projectDir);

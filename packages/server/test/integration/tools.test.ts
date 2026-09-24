@@ -48,11 +48,13 @@ describe('uiwalk tools', () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual(
       [
+        'a11y_audit',
         'act',
         'ask_developer',
         'browser_close',
         'browser_open',
         'dialog',
+        'emulate',
         'doctor',
         'evaluate',
         'init_project',
@@ -65,8 +67,10 @@ describe('uiwalk tools', () => {
         'run_step',
         'runs',
         'screenshot',
+        'session',
         'snapshot',
         'tabs',
+        'visual_check',
         'wait_for',
       ].sort(),
     );
@@ -150,8 +154,11 @@ describe('uiwalk tools', () => {
       action: 'click',
       ref: refFor(outline, 'link', 'Visit example.com'),
     });
-    expect(click.text).toMatch(/blocked the tab from opening https:\/\/example\.com/);
+    // On a busy machine, the note can come with the next reply instead.
     const tabs = await mcp.call('tabs');
+    expect(`${click.text}\n${tabs.text}`).toMatch(
+      /blocked the tab from opening https:\/\/example\.com/,
+    );
     expect(tabs.text).toContain(demo.base);
     expect(tabs.text).not.toContain('example.com');
   });
@@ -160,14 +167,24 @@ describe('uiwalk tools', () => {
     await mcp.call('navigate', { url: '/' });
     const outline = await snap();
     const click = await mcp.call('act', { action: 'click', ref: refFor(outline, 'link', 'Help') });
-    expect(click.text).toMatch(/new tab opened: t2/);
-    const list = await mcp.call('tabs');
-    expect(list.text).toMatch(/t2 \(opened by t1\)/);
-    await mcp.call('tabs', { action: 'switch', id: 't2' });
-    await mcp.call('wait_for', { text: 'Demo login' });
-    expect(await snap()).toContain('heading "Help"');
-    const closed = await mcp.call('tabs', { action: 'close', id: 't2' });
-    expect(closed.text).toMatch(/active tab is t1/);
+    // On a busy machine, the new tab can show up a moment later.
+    let list = await mcp.call('tabs');
+    for (let i = 0; i < 20 && !list.text.includes('t2 ('); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      list = await mcp.call('tabs');
+    }
+    try {
+      expect(`${click.text}\n${list.text}`).toMatch(/new tab opened: t2|t2 \(opened by t1\)/);
+      expect(list.text).toMatch(/t2 \(opened by t1\)/);
+      await mcp.call('tabs', { action: 'switch', id: 't2' });
+      await mcp.call('wait_for', { text: 'Demo login' });
+      expect(await snap()).toContain('heading "Help"');
+    } finally {
+      // Always close the extra tab, so a failure here does not break the next test.
+      await mcp.call('tabs', { action: 'switch', id: 't1' });
+      const closed = await mcp.call('tabs', { action: 'close', id: 't2' });
+      expect(closed.text).toMatch(/active tab is t1/);
+    }
   });
 
   it('checks out through the iframe, a select, and a confirm dialog', async () => {

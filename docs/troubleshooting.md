@@ -12,6 +12,15 @@ We tested this on 2026-09-24. Claude Code let one `ask_developer` call wait for 
 
 To change the wait, set `askTimeoutSec` in `.walkthrough/config.yaml` (10 to 3600 seconds).
 
+## A saved login does not work
+
+- Walkthrough saves cookies, localStorage, and sessionStorage. It does not save IndexedDB. Some apps, such as apps that use Firebase, keep the login there. Log in at the start of the plan instead.
+- Cookies can expire. Save the login again.
+
+## A visual check fails on another computer
+
+Fonts and smoothing differ between operating systems, so each baseline is for one system. The file name shows it, such as `cart@default-darwin.png`. The first check on a new system saves a new baseline.
+
 ## The panel does not show
 
 - The panel does not show when the browser is hidden (`headless: true` or `UIWALK_HEADLESS=1`). The agent asks you in chat instead.

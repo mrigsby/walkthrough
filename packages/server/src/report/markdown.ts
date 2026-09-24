@@ -1,5 +1,6 @@
 import type { Run, RunStep } from '../run/run-store.js';
 import {
+  accessibilityRows,
   duration,
   isProblem,
   RUN_STATUS_LABELS,
@@ -40,6 +41,7 @@ export function markdownReport(run: Run): string {
     ...(run.planFile ? [`- **Plan:** \`${run.planFile}\``] : []),
     ...(run.baseUrl ? [`- **Start page:** ${run.baseUrl}`] : []),
     ...(run.chrome ? [`- **Browser:** ${run.chrome}`] : []),
+    ...(run.setup ? [`- **Setup:** ${run.setup}`] : []),
     `- **Started:** ${run.startedAt}`,
     `- **Time:** ${duration(run)}`,
     '',
@@ -66,6 +68,21 @@ export function markdownReport(run: Run): string {
     );
   }
   lines.push('');
+
+  if (run.accessibility?.length) {
+    const rows = accessibilityRows(run);
+    lines.push('## Accessibility', '');
+    if (rows.length === 0) lines.push('No accessibility problems found.', '');
+    else {
+      lines.push('| Where | Impact | Problem | Elements |', '|---|---|---|---|');
+      for (const r of rows) {
+        lines.push(
+          `| ${r.where} | ${r.impact} | [${r.rule}](${r.helpUrl}): ${r.help} | ${r.count} |`,
+        );
+      }
+      lines.push('');
+    }
+  }
 
   const others = run.steps.filter((s) => !isProblem(s) && s.status !== 'pending');
   if (others.length > 0) {

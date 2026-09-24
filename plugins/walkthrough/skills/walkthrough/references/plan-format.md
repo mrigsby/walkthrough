@@ -33,7 +33,10 @@ steps:
 | `baseUrl` | No | The start page. It replaces `baseUrl` from `config.yaml` for this plan. |
 | `mode` | No | `interactive`, `checkpoints` (default), or `autonomous`. See [Run modes](#run-modes). |
 | `steps` | Yes | The list of steps. |
-| `device`, `colorScheme`, `network`, `session` | No | Not ready yet. A later version adds them. |
+| `device` | No | Screen preset: `desktop`, `laptop`, `tablet`, `mobile`, or a Puppeteer device name, such as `Pixel 5`. |
+| `colorScheme` | No | `light` or `dark`. |
+| `network` | No | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
+| `session` | No | A saved login, from the `session` tool. The run starts logged in. |
 
 ## Step keys
 
@@ -45,7 +48,7 @@ steps:
 | `checkpoint` | No | In `checkpoints` mode, the developer confirms this step in the panel. |
 | `action` | No | An exact action, so the agent does not have to guess. See below. |
 | `screenshot` | No | Save a screenshot after the step. |
-| `visual` | No | Not ready yet. A later version adds it. |
+| `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
 
 ## Exact actions
 
@@ -69,6 +72,25 @@ For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthro
 | `autonomous` | The agent checks every step. It saves a screenshot when a step fails. |
 
 You can change the mode when you ask for a run, for example: "Run the checkout plan in autonomous mode."
+
+## Visual checks
+
+A step with `visual: true` compares the page with a baseline screenshot.
+
+- The first check saves the baseline in `.walkthrough/baselines/<plan>/`. If your team wants to share them, commit these files.
+- Each baseline is for one screen preset and one operating system, because fonts look different on each system.
+- A later check saves a diff image, with the changed pixels in red. Any real change fails the check. Edge noise from font smoothing does not.
+- The agent asks you whether the change is expected. If you say yes, it saves the new baseline.
+
+## Saved logins
+
+To start runs logged in:
+
+1. Log in once in the test browser.
+2. Ask the agent to save the session, for example "save this login as admin".
+3. Add `session: admin` to a plan.
+
+Saved logins go in `.walkthrough/sessions/`. Git does not track that folder, and only your user account can read the files. Anyone with the file can log in as that user, so do not share it. Apps that keep their login in IndexedDB need a new login each time.
 
 ## Results and reports
 

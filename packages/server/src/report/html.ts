@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Run, RunStep } from '../run/run-store.js';
 import {
+  accessibilityRows,
   duration,
   isProblem,
   RUN_STATUS_LABELS,
@@ -69,7 +70,8 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
 .badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
-.badge.stop { background: var(--stop); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
+.badge.stop { background: var(--stop); }
+.badge.impact-critical, .badge.impact-serious { background: var(--bug); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
 h2 { margin-top: 28px; font-size: 18px; }
 .step { margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .step.bug, .step.fail, .step.blocked { border-left: 4px solid var(--bug); }
@@ -81,6 +83,25 @@ pre { overflow-x: auto; padding: 8px; background: var(--bg); border: 1px solid v
 table { width: 100%; border-collapse: collapse; background: var(--card); }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 `;
+
+function accessibilitySection(run: Run): string {
+  if (!run.accessibility?.length) return '';
+  const rows = accessibilityRows(run);
+  if (rows.length === 0) return '<h2>Accessibility</h2><p>No accessibility problems found.</p>';
+  const body = rows
+    .map(
+      (r) =>
+        `<tr><td>${esc(r.where)}</td><td><span class="badge impact-${esc(r.impact)}">${esc(r.impact)}</span></td><td><a href="${esc(r.helpUrl)}">${esc(r.rule)}</a>: ${esc(r.help)}</td><td>${r.count}</td></tr>`,
+    )
+    .join('\n');
+  return `<h2>Accessibility</h2>
+<table>
+<thead><tr><th>Where</th><th>Impact</th><th>Problem</th><th>Elements</th></tr></thead>
+<tbody>
+${body}
+</tbody>
+</table>`;
+}
 
 // A single HTML file with the screenshots inside. It opens without a server.
 export function htmlReport(run: Run, runDir: string): string {
@@ -96,6 +117,7 @@ export function htmlReport(run: Run, runDir: string): string {
   if (run.planFile) meta.push(['Plan', run.planFile]);
   if (run.baseUrl) meta.push(['Start page', run.baseUrl]);
   if (run.chrome) meta.push(['Browser', run.chrome]);
+  if (run.setup) meta.push(['Setup', run.setup]);
 
   return `<!doctype html>
 <html lang="en">
@@ -125,6 +147,7 @@ ${run.steps
   .join('\n')}
 </tbody>
 </table>
+${accessibilitySection(run)}
 <h2>Step details</h2>
 ${
   run.steps

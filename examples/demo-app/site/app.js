@@ -140,7 +140,8 @@ function cartPage() {
     <p class="total">Total: <strong id="cart-total">${money(cartTotal(lines))}</strong></p>
 
     <div class="coupon">
-      <input id="coupon-code" placeholder="Coupon code" />
+      <span>Have a coupon?</span>
+      <input id="coupon-code" />
       <button type="button" id="apply-coupon" class="secondary">Apply coupon</button>
       <p id="coupon-status" role="status"></p>
     </div>

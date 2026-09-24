@@ -59,21 +59,18 @@ describe('validatePlanText', () => {
     expect(problem?.line).toBeGreaterThan(0);
   });
 
-  it('lists keys that come in a later phase', () => {
+  it('accepts the device, session, and visual keys', () => {
     const result = validatePlanText(
-      `name: Demo\ndevice: mobile\nsteps:\n  - do: One\n    visual: true\n`,
+      'name: Demo\ndevice: mobile\nsession: admin\nsteps:\n  - do: One\n    visual: true\n',
     );
     if (!result.ok) throw new Error('should be valid');
-    expect(laterFeatures(result.plan)).toEqual([
-      '"device" (comes in Phase 5)',
-      '"visual" in step 1 (comes in Phase 5)',
-    ]);
+    expect(laterFeatures(result.plan)).toEqual([]);
   });
 });
 
 describe('sample plans and schema', () => {
   it('has valid sample plans in the demo project', () => {
-    for (const name of ['checkout', 'login']) {
+    for (const name of ['checkout', 'login', 'mobile']) {
       const text = readFileSync(
         join(repoRoot, `examples/demo-app/.walkthrough/plans/${name}.yaml`),
         'utf8',

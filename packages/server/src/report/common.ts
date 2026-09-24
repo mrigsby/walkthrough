@@ -1,3 +1,4 @@
+import { IMPACT_ORDER } from '../audit/axe.js';
 import type { Run, RunStep, StepStatus } from '../run/run-store.js';
 
 export const STATUS_LABELS: Record<StepStatus, string> = {
@@ -61,6 +62,37 @@ export function resultLine(run: Run): string {
     .filter((s) => counts[s])
     .map((s) => `${counts[s]} ${STATUS_LABELS[s].toLowerCase()}`)
     .join(', ');
+}
+
+export interface A11ySummaryRow {
+  where: string;
+  impact: string;
+  rule: string;
+  help: string;
+  count: number;
+  helpUrl: string;
+}
+
+// One row per problem type, for each check in the run.
+export function accessibilityRows(run: Run): A11ySummaryRow[] {
+  const rows: A11ySummaryRow[] = [];
+  for (const check of run.accessibility ?? []) {
+    const where = `${check.stepId ? `Step ${check.stepId}, ` : ''}${check.url}${check.scope ? ` (${check.scope})` : ''}`;
+    const sorted = [...check.violations].sort(
+      (a, b) => IMPACT_ORDER.indexOf(a.impact) - IMPACT_ORDER.indexOf(b.impact),
+    );
+    for (const v of sorted) {
+      rows.push({
+        where,
+        impact: v.impact,
+        rule: v.id,
+        help: v.help,
+        count: v.nodes.length,
+        helpUrl: v.helpUrl,
+      });
+    }
+  }
+  return rows;
 }
 
 export const RUN_STATUS_LABELS: Record<Run['status'], string> = {

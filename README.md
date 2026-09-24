@@ -2,7 +2,7 @@
 
 Walkthrough lets an AI agent test your web app in a visible browser, one step at a time. After each step, the agent tells you what it did and what you should see. You confirm the step or report a bug. When you report a bug, Walkthrough saves screenshots, console errors, and failed requests.
 
-> Status: early development. The browser tools, the confirm panel, test plans, reports, and slash commands work. See the [plan format](docs/plan-format.md). See the [changelog](CHANGELOG.md).
+> Status: early development. The browser tools, the confirm panel, test plans, reports, slash commands, saved logins, device emulation, visual checks, and accessibility audits work. See the [plan format](docs/plan-format.md). See the [changelog](CHANGELOG.md).
 
 ## Parts
 

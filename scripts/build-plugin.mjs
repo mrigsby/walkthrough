@@ -26,7 +26,13 @@ const options = {
   format: 'esm',
   target: 'node22',
   banner: { js: banner },
-  define: { __UIWALK_VERSION__: JSON.stringify(pkg.version) },
+  define: {
+    __UIWALK_VERSION__: JSON.stringify(pkg.version),
+    // The accessibility checker runs inside pages, so it goes in as text.
+    __UIWALK_AXE_SOURCE__: JSON.stringify(
+      await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8'),
+    ),
+  },
   // Optional speed-ups for ws, and the BiDi protocol we do not use.
   external: ['bufferutil', 'utf-8-validate', 'chromium-bidi', 'chromium-bidi/*'],
   legalComments: 'none',
@@ -36,7 +42,8 @@ const options = {
 
 // Writes license notices for the code packed into the bundle.
 async function writeLicenses(metafile) {
-  const packages = new Map();
+  // axe-core goes in as text, so esbuild does not list it. Add it here.
+  const packages = new Map([['axe-core', 'node_modules/axe-core']]);
   for (const input of Object.keys(metafile.inputs)) {
     const match = input.match(/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
     if (match?.[1])

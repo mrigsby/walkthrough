@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Mobile account check
+description: Checks the shop and the account page on a phone in dark mode. Before you run it, log in and save the login as demo-user.
+device: mobile
+colorScheme: dark
+session: demo-user
+mode: checkpoints
+steps:
+  - id: shop
+    do: Open the shop page
+    action: { navigate: / }
+    expect: The products show in one column, and all text is easy to read in dark mode.
+    visual: true
+    checkpoint: true
+
+  - id: account
+    do: Open the account page
+    action: { navigate: /account }
+    expect: The page says "Logged in as Demo User".
+    checkpoint: true

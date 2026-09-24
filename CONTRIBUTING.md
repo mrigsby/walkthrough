@@ -35,6 +35,16 @@ Then remove `node_modules` and `package-lock.json`, and run `npm install` again.
 2. Run `npm run build:plugin` to update the bundle in `plugins/walkthrough/server`. Use `npm run build:plugin -- --watch` while you work.
 3. Commit the updated bundle with your change.
 
+## Debug a test
+
+Set `UIWALK_TRACE_FILE` to a file path. The server then writes one JSON line for each action, with the element under each click and the page address after it.
+
+```sh
+UIWALK_TRACE_FILE=/tmp/uiwalk-trace.jsonl npx vitest run packages/server/test/integration/tools.test.ts
+```
+
+Tests start the demo shop with `--port 0`, so the system picks a free port. Do not use fixed or random ports in tests. Two test files that share a port share one server, and the first file to finish stops it.
+
 ## Test with Claude Code
 
 ```sh

@@ -1,6 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { Emulation } from '../browser/devices.js';
 import type { Tab } from '../browser/driver.js';
+import { loadSession, restoreSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { doctorReport } from '../doctor.js';
 import { ToolError } from '../errors.js';
@@ -53,7 +55,13 @@ async function goTo(tab: Tab, url: string): Promise<string | undefined> {
 // Opens the browser if needed, then goes to the url (or the baseUrl for a new browser).
 export async function openBrowser(
   ctx: Context,
-  options: { url?: string; attach?: string; alwaysGo?: boolean },
+  options: {
+    url?: string;
+    attach?: string;
+    alwaysGo?: boolean;
+    session?: string;
+    emulation?: Emulation;
+  },
 ): Promise<{ text: string; tab: Tab }> {
   const config = await ctx.config();
   const guard = await ctx.guard();
@@ -74,8 +82,20 @@ export async function openBrowser(
   for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
 
   const tab = driver.activeTab();
+  if (options.emulation && Object.keys(options.emulation).length > 0) {
+    // No reload here. The page loads next anyway.
+    await driver.setEmulation(options.emulation, { reload: false });
+  }
+  if (options.session) {
+    await restoreSession(driver, tab, loadSession(config.projectDir, options.session));
+    lines.push(`Loaded the saved login "${options.session}".`);
+  }
   // A new browser starts at the baseUrl. An open one stays where it is.
-  const target = options.url ?? (alreadyOpen && !options.alwaysGo ? undefined : config.baseUrl);
+  // After a saved login, go to the page again, so the login takes effect.
+  const goAgain = Boolean(options.session) || !alreadyOpen || options.alwaysGo;
+  const target =
+    options.url ??
+    (goAgain ? (config.baseUrl ?? (options.session ? tab.page.url() : undefined)) : undefined);
   if (target) {
     const full = fullUrl(target, tab.page.url(), config.baseUrl);
     guard.check(full);
@@ -125,16 +145,17 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
           .describe(
             'Connect to a running Chrome instead of starting one. Example: "http://127.0.0.1:9222".',
           ),
+        session: z.string().optional().describe('A saved login to use, from the session tool.'),
         projectDir: z
           .string()
           .optional()
           .describe('Project folder. Leave empty to find it automatically.'),
       },
     },
-    ({ url, attach, projectDir }) =>
+    ({ url, attach, session, projectDir }) =>
       runTool(ctx, 'browser_open', async () => {
         await ctx.refresh(projectDir);
-        return (await openBrowser(ctx, { url, attach })).text;
+        return (await openBrowser(ctx, { url, attach, session })).text;
       }),
   );
 

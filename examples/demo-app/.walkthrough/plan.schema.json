@@ -25,11 +25,11 @@
       ]
     },
     "device": {
-      "description": "Screen preset, like \"mobile\" (Phase 5).",
+      "description": "Screen preset: desktop, laptop, tablet, mobile, or a Puppeteer device name.",
       "type": "string"
     },
     "colorScheme": {
-      "description": "Light or dark mode (Phase 5).",
+      "description": "Light or dark mode.",
       "type": "string",
       "enum": [
         "light",
@@ -37,7 +37,7 @@
       ]
     },
     "network": {
-      "description": "Network speed (Phase 5).",
+      "description": "Network speed.",
       "type": "string",
       "enum": [
         "normal",
@@ -49,7 +49,7 @@
       ]
     },
     "session": {
-      "description": "A saved login to use (Phase 5).",
+      "description": "A saved login to use. Save one with the session tool.",
       "type": "string"
     },
     "steps": {
@@ -386,7 +386,7 @@
             "type": "boolean"
           },
           "visual": {
-            "description": "Compare a screenshot with the saved baseline (Phase 5).",
+            "description": "Compare a screenshot with the saved baseline after this step.",
             "type": "boolean"
           }
         },

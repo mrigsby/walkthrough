@@ -8,6 +8,7 @@ import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
 import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
+import { applyEmulation, type Emulation } from './devices.js';
 import { killChrome, launchChrome, removeProfile } from './launch.js';
 import { guardNavigation } from './navigation-guard.js';
 
@@ -18,6 +19,8 @@ export interface Tab {
   nav: number;
   crashed: boolean;
   closed: boolean;
+  // True when the tab emulates a phone or tablet.
+  mobile: boolean;
   cdp?: CDPSession;
 }
 
@@ -50,6 +53,9 @@ export class Driver {
   readonly panel?: DeveloperPanel;
   // The element of the last action, for the red box in bug screenshots.
   lastTarget?: { tabId: string; handle: ElementHandle<Element>; label: string };
+  // Screen, color scheme, and network settings. New tabs get them too.
+  emulation: Emulation = {};
+  private userAgent = '';
   activeId?: string;
   dialogPolicy: DialogPolicy;
   closedReason?: 'browser_closed' | 'closed_by_agent';
@@ -144,7 +150,7 @@ export class Driver {
 
   // After a click, Chrome reports new tabs and blocked pages a moment later.
   // Wait for those reports, so the agent hears about them in the same reply.
-  async settleEvents(graceMs = 250): Promise<void> {
+  async settleEvents(graceMs = 400): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, graceMs));
     const pending = Promise.allSettled([...this.inflight]);
     await Promise.race([pending, new Promise((resolve) => setTimeout(resolve, 3000))]);
@@ -164,6 +170,7 @@ export class Driver {
       nav: 0,
       crashed: false,
       closed: false,
+      mobile: false,
     };
     this.tabs.set(tab.id, tab);
     this.activeId ??= tab.id;
@@ -182,6 +189,8 @@ export class Driver {
     page.on('dialog', (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
+    if (Object.keys(this.emulation).length > 0)
+      await this.emulateTab(tab, this.emulation).catch(() => undefined);
 
     tab.cdp = await guardNavigation(
       page,
@@ -260,6 +269,32 @@ export class Driver {
     };
     this.pendingDialogs.set(tab.id, pending);
     this.emitter.emit('dialog', pending);
+  }
+
+  private async emulateTab(tab: Tab, emulation: Emulation): Promise<boolean> {
+    this.userAgent ||= await this.browser.userAgent();
+    const result = await applyEmulation(tab.page, emulation, {
+      headless: this.options.config.browser.headless,
+      userAgent: this.userAgent,
+      wasMobile: tab.mobile,
+    });
+    tab.mobile = result.isMobile;
+    return result.needsReload;
+  }
+
+  // Changes the screen, color scheme, or network for every tab.
+  // A tab reloads when it switches between desktop and phone mode.
+  async setEmulation(emulation: Emulation, options: { reload: boolean }): Promise<string[]> {
+    this.emulation = { ...this.emulation, ...emulation };
+    const reloaded: string[] = [];
+    for (const tab of this.tabs.values()) {
+      const needsReload = await this.emulateTab(tab, emulation);
+      if (needsReload && options.reload && /^https?:/.test(tab.page.url())) {
+        await tab.page.reload({ waitUntil: 'load' }).catch(() => undefined);
+        reloaded.push(tab.id);
+      }
+    }
+    return reloaded;
   }
 
   pendingDialog(tabId = this.activeId): PendingDialog | undefined {

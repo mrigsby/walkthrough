@@ -32,7 +32,7 @@ Then open http://localhost:4321. Log in with username `demo` and password `demo1
 ## Planted accessibility issues
 
 - The Baseball Cap image has no alt text.
-- The coupon field has no label.
+- The coupon field has no label. The text "Have a coupon?" is next to it, but it is not tied to the field.
 
 ## Walkthrough files
 

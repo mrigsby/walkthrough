@@ -7,6 +7,7 @@ import { elementRect } from '../evidence/annotate.js';
 import type { OriginGuard } from '../guards/origins.js';
 import { checkUploadPath } from '../guards/paths.js';
 import { MASK, type SecretStore } from '../guards/secrets.js';
+import { trace } from '../log.js';
 import { stableSelector } from './selectors.js';
 
 export const ACTIONS = [
@@ -128,6 +129,27 @@ async function selectOption(handle: ElementHandle<Element>, wanted: string): Pro
   return value;
 }
 
+// For debugging: which element is under the middle of the target right now.
+async function traceClickPoint(tab: Tab, t: Target): Promise<void> {
+  const box = await t.handle.boundingBox().catch(() => null);
+  const hit = box
+    ? await tab.page
+        .evaluate(
+          (x, y) => {
+            const el = document.elementFromPoint(x, y);
+            return el ? `${el.tagName} ${(el.textContent ?? '').trim().slice(0, 40)}` : null;
+          },
+          box.x + box.width / 2,
+          box.y + box.height / 2,
+        )
+        .catch(() => 'error')
+    : null;
+  const viewport = await tab.page
+    .evaluate(() => `${innerWidth}x${innerHeight} scroll ${scrollY}`)
+    .catch(() => '');
+  trace('click', { label: t.label, box, hit, viewport, url: tab.page.url() });
+}
+
 // Runs one action. Throws ToolError with a clear message when it cannot.
 async function perform(
   ctx: ActContext,
@@ -147,6 +169,7 @@ async function perform(
     case 'click':
     case 'dblclick': {
       const t = need();
+      if (process.env.UIWALK_TRACE_FILE) await traceClickPoint(tab, t);
       await t.handle
         .asLocator()
         .setTimeout(timeout)
@@ -323,6 +346,7 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
     if (dialog) lines.push(`dialog_pending: ${dialogOpenMessage(dialog)}`);
   } else {
     await settle(tab);
+    trace('act-done', { action: input.action, label: target?.label, url: tab.page.url() });
     // Clicks and keys can open tabs or leave the page. Wait for those reports.
     if (['click', 'dblclick', 'press'].includes(input.action)) await ctx.driver.settleEvents();
     lines.push(outcome.text);

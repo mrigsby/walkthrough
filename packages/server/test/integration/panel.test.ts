@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startDemoServer } from '../helpers/demo-server.js';
+import { freePort, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import {
   clickPanel,
@@ -28,7 +28,7 @@ beforeAll(async () => {
     join(project, '.walkthrough', 'config.yaml'),
     `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\naskTimeoutSec: 10\nhighlightMs: 50\n`,
   );
-  const debugPort = 9300 + Math.floor(Math.random() * 500);
+  const debugPort = await freePort();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('panel-tmp'),
@@ -38,7 +38,10 @@ beforeAll(async () => {
   const open = await mcp.call('browser_open');
   expect(open.isError, open.text).toBe(false);
   // The test connects to the same Chrome, to click the panel like a person.
-  chrome = await puppeteer.connect({ browserURL: `http://127.0.0.1:${debugPort}` });
+  chrome = await puppeteer.connect({
+    browserURL: `http://127.0.0.1:${debugPort}`,
+    defaultViewport: null,
+  });
   const pages = await chrome.pages();
   page = pages.find((p) => p.url().startsWith(demo.base)) as Page;
   expect(page).toBeDefined();

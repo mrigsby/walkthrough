@@ -61,7 +61,7 @@ export const stepSchema = z
     visual: z
       .boolean()
       .optional()
-      .describe('Compare a screenshot with the saved baseline (Phase 5).'),
+      .describe('Compare a screenshot with the saved baseline after this step.'),
   })
   .strict();
 
@@ -76,13 +76,19 @@ export const planSchema = z
       .describe(
         'interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step.',
       ),
-    device: z.string().optional().describe('Screen preset, like "mobile" (Phase 5).'),
-    colorScheme: z.enum(['light', 'dark']).optional().describe('Light or dark mode (Phase 5).'),
+    device: z
+      .string()
+      .optional()
+      .describe('Screen preset: desktop, laptop, tablet, mobile, or a Puppeteer device name.'),
+    colorScheme: z.enum(['light', 'dark']).optional().describe('Light or dark mode.'),
     network: z
       .enum(['normal', 'slow-3g', 'fast-3g', 'slow-4g', 'fast-4g', 'offline'])
       .optional()
-      .describe('Network speed (Phase 5).'),
-    session: z.string().optional().describe('A saved login to use (Phase 5).'),
+      .describe('Network speed.'),
+    session: z
+      .string()
+      .optional()
+      .describe('A saved login to use. Save one with the session tool.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict();
@@ -91,13 +97,9 @@ export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
 
 // Keys that a later phase makes work. Until then, a run stops with a clear message.
-export const LATER_KEYS: Record<string, string> = {
-  device: 'Phase 5',
-  colorScheme: 'Phase 5',
-  network: 'Phase 5',
-  session: 'Phase 5',
-};
-export const LATER_STEP_KEYS: Record<string, string> = { visual: 'Phase 5' };
+// Empty now. A future version can list new keys here before they work.
+export const LATER_KEYS: Record<string, string> = {};
+export const LATER_STEP_KEYS: Record<string, string> = {};
 
 // JSON Schema for editors, from the same rules.
 export function planJsonSchema(): Record<string, unknown> {

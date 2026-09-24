@@ -24,6 +24,15 @@ All tools come from the `uiwalk` MCP server.
 | `logs` | See console errors, page errors, and failed requests. |
 | `evaluate` | Run page JavaScript. It is off unless the developer turns it on in `config.local.yaml`. |
 
+## More checks
+
+| Tool | Use it to |
+|---|---|
+| `emulate` | Set the screen (`device`), `colorScheme`, and `network` for all tabs. |
+| `session` | `save`, `list`, or `delete` saved logins. |
+| `visual_check` | Compare the page or one element with a baseline screenshot. |
+| `a11y_audit` | Check accessibility with axe-core. |
+
 ## Developer and runs
 
 | Tool | Use it to |

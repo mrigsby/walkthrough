@@ -1,5 +1,6 @@
 // Small web server for the demo shop. No dependencies.
 // Usage: node scripts/demo-server.mjs [--port 4321]
+// Use --port 0 to let the system pick a free port. The first line of output shows it.
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const siteDir = join(dirname(fileURLToPath(import.meta.url)), '../examples/demo-app/site');
 const portArg = process.argv.indexOf('--port');
-const port = Number(portArg > -1 ? process.argv[portArg + 1] : process.env.PORT || 4321);
+let port = Number(portArg > -1 ? process.argv[portArg + 1] : process.env.PORT || 4321);
 
 // Demo login. Not a real account.
 const DEMO_USER = { username: 'demo', password: 'demo123', name: 'Demo User' };
@@ -142,6 +143,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
+  port = server.address().port;
   console.log(`The demo shop is at http://localhost:${port}`);
   console.log('Log in with username "demo" and password "demo123". Press Ctrl+C to stop.');
 });

@@ -6,6 +6,11 @@ This file lists all notable changes to the project.
 
 ### Added
 
+- The `session` tool saves a login (cookies and storage) for the sites under test. `browser_open` and plans can start with it. Saved logins stay on this computer, and only your user account can read them.
+- The `emulate` tool tests like a phone, a tablet, or another screen, in light or dark mode, and on slow or no network. Plans can set `device`, `colorScheme`, and `network`.
+- The `visual_check` tool compares the page, or one element, with a baseline screenshot and saves a diff image. Masks hide parts that change on every load.
+- The `a11y_audit` tool checks accessibility with axe-core, in a place that the page cannot see. Run reports get an "Accessibility" section.
+- `UIWALK_TRACE_FILE` writes a trace of each action for debugging.
 - Slash commands: `/walkthrough:init`, `/walkthrough:run`, `/walkthrough:plan`, `/walkthrough:report`, and `/walkthrough:doctor`.
 - The `init_project` tool and the `uiwalk init` command make the `.walkthrough` folder with settings, a sample plan, and the plan schema.
 - The `runs` tool lists recent test runs.
@@ -35,6 +40,8 @@ This file lists all notable changes to the project.
 
 ### Changed
 
+- The planted coupon field problem in the demo shop is now a real missing label. A placeholder counts as a label for the accessibility checker.
+- Tests start each demo shop and Chrome on a free port. Before, two test files could share a demo shop, and one could stop it in the middle of the other.
 - The demo shop no longer logs a 401 error for a visitor who is not logged in.
 - The message about missing Chrome shows the exact setup command for the installed plugin.
 
