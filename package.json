@@ -1,0 +1,32 @@
+{
+  "name": "walkthrough-repo",
+  "private": true,
+  "type": "module",
+  "description": "Walkthrough: step-by-step visual UI testing with an AI agent and a developer.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.0.0 <11.5.0 || >=11.6.2"
+  },
+  "scripts": {
+    "build": "npm run typecheck && npm run build:plugin",
+    "build:plugin": "node scripts/build-plugin.mjs",
+    "typecheck": "tsc -p packages/server --noEmit",
+    "pretest": "npm run build:plugin",
+    "test": "vitest run && npm run check:text",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check:text": "node scripts/check-text.mjs",
+    "demo": "node scripts/demo-server.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/node": "^22.20.4",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

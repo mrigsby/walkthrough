@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo Shop</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" data-link>Demo Shop</a>
+      <nav aria-label="Main">
+        <a href="/" data-link>Shop</a>
+        <a href="/cart" data-link>Cart (<span id="cart-count">0</span>)</a>
+        <a href="/account" data-link>Account</a>
+        <a href="/help.html" target="_blank" rel="noopener">Help</a>
+      </nav>
+      <div class="user-box">
+        <span id="user-name"></span>
+        <a href="/login" data-link id="login-link">Log in</a>
+        <button type="button" id="logout-button" class="link-button" hidden>Log out</button>
+      </div>
+    </header>
+
+    <main id="app" tabindex="-1"></main>
+
+    <footer class="site-footer">
+      <p>This is a demo shop for testing Walkthrough. It has bugs on purpose.</p>
+      <a href="https://example.com" id="external-link">Visit example.com</a>
+    </footer>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

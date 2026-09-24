@@ -1,0 +1,5 @@
+# Walkthrough settings for the demo shop.
+# Later phases add more settings.
+baseUrl: http://localhost:4321
+allowedOrigins:
+  - http://localhost:4321
