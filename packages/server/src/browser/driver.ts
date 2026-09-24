@@ -179,7 +179,9 @@ export class Driver {
     page.setDefaultNavigationTimeout(30_000);
 
     page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) tab.nav += 1;
+      if (frame !== page.mainFrame()) return;
+      tab.nav += 1;
+      this.emitter.emit('navigated', { tabId: tab.id, url: frame.url() });
     });
     page.on('error', () => {
       tab.crashed = true;

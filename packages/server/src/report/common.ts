@@ -26,6 +26,7 @@ const ACTION_WORDS: Record<string, string> = {
   press: 'Press a key in',
   scroll: 'Scroll to',
   upload: 'Upload to',
+  navigate: 'Go to',
 };
 
 // Steps to reproduce a problem: the steps before it, then its own actions.
@@ -41,6 +42,7 @@ export function reproSteps(run: Run, step: RunStep): string[] {
             : a.action === 'press'
               ? ` (${a.value})`
               : '';
+        if (a.action === 'navigate') return `Go to ${a.value ?? a.label}`;
         return `${ACTION_WORDS[a.action] ?? a.action} ${a.label}${a.action === 'fill' ? ` the text${value}` : value}`;
       })
     : [step.title];

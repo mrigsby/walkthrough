@@ -56,10 +56,14 @@ export interface Target {
 export interface ActionRecord {
   at: string;
   tabId: string;
-  action: Action;
+  action: Action | 'navigate';
   selector?: string;
   label: string;
   value?: string;
+  // Files for an upload, from the project folder.
+  files?: string[];
+  // Set when the element is inside an iframe.
+  frameUrl?: string;
   url: string;
 }
 
@@ -334,7 +338,15 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
     selector,
     label: target?.label ?? '(page)',
     // Secrets stay as {{secret:NAME}} here. The real value is never stored.
-    value: ['fill', 'select', 'press'].includes(input.action) ? input.value : undefined,
+    value: ['fill', 'select', 'press', 'scroll'].includes(input.action) ? input.value : undefined,
+    files:
+      input.action === 'upload'
+        ? (input.files ?? (input.value ? input.value.split(',').map((f) => f.trim()) : undefined))
+        : undefined,
+    frameUrl:
+      target && target.handle.frame !== tab.page.mainFrame()
+        ? target.handle.frame.url()
+        : undefined,
     url: startUrl,
   });
 

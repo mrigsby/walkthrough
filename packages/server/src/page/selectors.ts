@@ -6,7 +6,7 @@ export interface SelectorHint {
 }
 
 // Candidate selectors, found inside the page. Best first.
-function pageCandidates(el: Element): string[] {
+export function pageCandidates(el: Element): string[] {
   const out: string[] = [];
   const q = (value: string) => JSON.stringify(value);
 

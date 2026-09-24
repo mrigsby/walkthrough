@@ -42,11 +42,13 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
   }
   const actions = ctx.actionLog
     .slice(ctx.actionCursor)
-    .map(({ action, label, selector, value, url }) => ({
+    .map(({ action, label, selector, value, files, frameUrl, url }) => ({
       action,
       label,
       selector,
       value,
+      files,
+      frameUrl,
       url,
     }));
   step.actions.push(...actions);

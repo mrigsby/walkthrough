@@ -44,6 +44,14 @@ All tools come from the `uiwalk` MCP server.
 | `run_finish` | Finish the run and write the reports. With `runId`, write an older run's reports again. |
 | `runs` | List recent runs. |
 
+## Record and share
+
+| Tool | Use it to |
+|---|---|
+| `record` | `start` recording the developer, `wait` for Stop, `stop`, or get the `status`. Returns a YAML plan draft. |
+| `export_script` | Write a Puppeteer script from a finished run. |
+| `issue_draft` | Write a GitHub issue title and body file from a bug step. |
+
 ## Setup
 
 | Tool | Use it to |

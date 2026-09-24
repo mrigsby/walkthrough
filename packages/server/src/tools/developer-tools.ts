@@ -102,6 +102,12 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         const config = await ctx.config();
         const panel = driver.panel;
 
+        if (panel?.recording) {
+          throw new ToolError(
+            'Recording is on. Call record with action "wait" or "stop" first.',
+            'recording',
+          );
+        }
         if (!input.resume && (!input.title || !input.didWhat || !input.expected)) {
           throw new ToolError('Give a title, didWhat, and expected for the step.', 'bad_input');
         }

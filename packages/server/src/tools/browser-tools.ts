@@ -200,7 +200,17 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
         if (url) {
           const full = fullUrl(url, tab.page.url(), config.baseUrl);
           guard.check(full);
+          const from = tab.page.url();
           problem = await goTo(tab, full);
+          // Keep it with the actions, for reports and script export.
+          ctx.actionLog.push({
+            at: new Date().toISOString(),
+            tabId: tab.id,
+            action: 'navigate',
+            label: full,
+            value: full,
+            url: from,
+          });
         } else if (action === 'back') {
           await tab.page.goBack({ waitUntil: 'load' });
         } else if (action === 'forward') {

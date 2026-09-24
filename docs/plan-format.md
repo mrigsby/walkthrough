@@ -71,6 +71,16 @@ For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthro
 
 You can change the mode when you ask for a run, for example: "Run the checkout plan in autonomous mode."
 
+## Record a plan
+
+Instead of writing a plan by hand, run `/walkthrough:record`. Use the app as usual, and the panel records each click and each field that you type in. When you click **Stop recording**, the agent shows you a draft plan to review and save.
+
+- Password fields become `{{secret:NAME}}`. Walkthrough never records their values.
+- After you type a private value that is not a password, click **Mark last field as secret**.
+- Click **Add expectation** to say what the page should show at that point.
+- Record mode does not record clicks inside frames, such as a payment form, or answers to dialogs. Add those steps by hand.
+- An upload step points to `fixtures/<file name>`. Put the file there, or fix the path.
+
 ## Visual checks
 
 A step with `visual: true` compares the page with a baseline screenshot.

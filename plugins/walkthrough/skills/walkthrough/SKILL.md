@@ -82,6 +82,12 @@ When the developer asks for a new plan:
 - If the browser was closed, call `browser_open` again.
 - If something does not work, call `doctor`. Show the result to the developer.
 
+## Record, export, and report bugs
+
+- **Record:** when the developer wants to show a flow instead of describing it, use `record` (`start`, then `wait`). They use the app, and you get a YAML draft. Review it with them, then save it with `plan`.
+- **Export:** `export_script` turns a finished run into a plain Puppeteer script in `.walkthrough/exports/`. Tell the developer which lines to fix by hand.
+- **Bugs to GitHub:** `issue_draft` writes the issue title and body. Show the draft, and ask before you run `gh issue create --web`. The developer adds the screenshots and submits the issue.
+
 ## References
 
 - `references/plan-format.md`: every plan key, exact actions, run modes, and reports.

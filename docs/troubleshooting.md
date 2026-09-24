@@ -21,6 +21,13 @@ To change the wait, set `askTimeoutSec` in `.walkthrough/config.yaml` (10 to 360
 
 Fonts and smoothing differ between operating systems, so each baseline is for one system. The file name shows it, such as `cart@default-darwin.png`. The first check on a new system saves a new baseline.
 
+## An exported script fails
+
+- Install the browser package that the first lines of the script name: `npm install --save-dev puppeteer`, or `puppeteer-core` for a script that uses the installed Chrome.
+- Set `BASE_URL` when the app runs at another address, and set the secrets that the script lists.
+- A line that starts with `// Fix by hand` had no stable selector. Add a selector for that element.
+- If a step failed in the run, the script fails at that step until the bug is fixed.
+
 ## The panel does not show
 
 - The panel does not show when the browser is hidden (`headless: true` or `UIWALK_HEADLESS=1`). The agent asks you in chat instead.

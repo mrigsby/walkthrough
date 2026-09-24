@@ -1,5 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, relative } from 'node:path';
 import type { A11yViolation } from '../audit/axe.js';
 import { ToolError } from '../errors.js';
@@ -23,7 +30,9 @@ export interface RunStep {
   screenshots: string[];
   logs?: string;
   errorCount?: number;
-  actions: Array<Pick<ActionRecord, 'action' | 'label' | 'selector' | 'value' | 'url'>>;
+  actions: Array<
+    Pick<ActionRecord, 'action' | 'label' | 'selector' | 'value' | 'files' | 'frameUrl' | 'url'>
+  >;
   at?: string;
 }
 
@@ -190,6 +199,22 @@ export class RunStore {
     this.run.endedAt = new Date().toISOString();
     this.save();
   }
+}
+
+// The newest run folder that has a run.json, or undefined.
+export function latestRunId(
+  projectDir: string,
+  options: { finishedOnly?: boolean } = {},
+): string | undefined {
+  const dir = join(projectDir, '.walkthrough', 'runs');
+  if (!existsSync(dir)) return undefined;
+  for (const id of readdirSync(dir).sort().reverse()) {
+    try {
+      const run = JSON.parse(readFileSync(join(dir, id, 'run.json'), 'utf8')) as Run;
+      if (!options.finishedOnly || run.status !== 'running') return id;
+    } catch {}
+  }
+  return undefined;
 }
 
 export function countSteps(run: Run): Record<StepStatus, number> {

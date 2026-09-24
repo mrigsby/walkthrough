@@ -30,8 +30,17 @@ afterAll(async () => {
 describe('plugin files', () => {
   const commands = readdirSync(join(pluginDir, 'commands')).filter((f) => f.endsWith('.md'));
 
-  it('has the Phase 4 commands', () => {
-    expect(commands.sort()).toEqual(['doctor.md', 'init.md', 'plan.md', 'report.md', 'run.md']);
+  it('has the commands', () => {
+    expect(commands.sort()).toEqual([
+      'bug.md',
+      'doctor.md',
+      'export.md',
+      'init.md',
+      'plan.md',
+      'record.md',
+      'report.md',
+      'run.md',
+    ]);
   });
 
   it.each(commands)('%s names only tools that exist', (file) => {

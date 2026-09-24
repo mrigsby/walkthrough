@@ -37248,11 +37248,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative10 = path14;
-  if (/^[a-zA-Z]:/.test(relative10)) relative10 = relative10.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative10.startsWith("/")) relative10 = relative10.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative10.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative10;
+  let relative11 = path14;
+  if (/^[a-zA-Z]:/.test(relative11)) relative11 = relative11.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative11.startsWith("/")) relative11 = relative11.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative11.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative11;
 }
 function packTar(sources, options = {}) {
   const results = /* @__PURE__ */ new Map();
@@ -41615,7 +41615,7 @@ var init_command = __esm({
         });
         if (!Array.isArray(opts.extensions))
           opts.extensions = ["js"];
-        const visit2 = typeof opts.visit === "function" ? opts.visit : (o) => o;
+        const visit3 = typeof opts.visit === "function" ? opts.visit : (o) => o;
         for (const fileb of files) {
           const file2 = fileb.toString();
           if (opts.exclude) {
@@ -41647,7 +41647,7 @@ var init_command = __esm({
             const joined = this.shim.path.join(fullDirPath, file2);
             const module = req(joined);
             const extendableModule = Object.create(null, Object.getOwnPropertyDescriptors({ ...module }));
-            const visited = visit2(extendableModule, joined, file2);
+            const visited = visit3(extendableModule, joined, file2);
             if (visited) {
               if (this.requireCache.has(joined))
                 continue;
@@ -41963,8 +41963,8 @@ var init_command = __esm({
         }
         return void 0;
       }
-      extractDesc({ describe: describe3, description, desc }) {
-        for (const test of [describe3, description, desc]) {
+      extractDesc({ describe: describe4, description, desc }) {
+        for (const test of [describe4, description, desc]) {
           if (typeof test === "string" || test === false)
             return test;
           assertNotStrictEqual(test, true, this.shim);
@@ -42133,7 +42133,7 @@ function usage(yargs, shim3) {
   };
   self2.getCommands = () => commands;
   let descriptions = {};
-  self2.describe = function describe3(keyOrKeys, desc) {
+  self2.describe = function describe4(keyOrKeys, desc) {
     if (Array.isArray(keyOrKeys)) {
       keyOrKeys.forEach((k) => {
         self2.describe(k, desc);
@@ -45256,9 +45256,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join22 } = await import("node:path");
+    const { join: join23 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join22(userDataDir, "DevToolsActivePort");
+    const portPath = join23(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line) => {
@@ -45507,9 +45507,9 @@ var require_identity = __commonJS({
     var NODE_TYPE = /* @__PURE__ */ Symbol.for("yaml.node.type");
     var isAlias = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === ALIAS;
     var isDocument = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === DOC;
-    var isMap = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === MAP;
-    var isPair = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === PAIR;
-    var isScalar = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === SCALAR;
+    var isMap2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === MAP;
+    var isPair2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === PAIR;
+    var isScalar2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === SCALAR;
     var isSeq = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === SEQ;
     function isCollection(node2) {
       if (node2 && typeof node2 === "object")
@@ -45531,7 +45531,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node2) => (isScalar(node2) || isCollection(node2)) && !!node2.anchor;
+    var hasAnchor = (node2) => (isScalar2(node2) || isCollection(node2)) && !!node2.anchor;
     exports.ALIAS = ALIAS;
     exports.DOC = DOC;
     exports.MAP = MAP;
@@ -45543,10 +45543,10 @@ var require_identity = __commonJS({
     exports.isAlias = isAlias;
     exports.isCollection = isCollection;
     exports.isDocument = isDocument;
-    exports.isMap = isMap;
+    exports.isMap = isMap2;
     exports.isNode = isNode2;
-    exports.isPair = isPair;
-    exports.isScalar = isScalar;
+    exports.isPair = isPair2;
+    exports.isScalar = isScalar2;
     exports.isSeq = isSeq;
   }
 });
@@ -45559,7 +45559,7 @@ var require_visit = __commonJS({
     var BREAK = /* @__PURE__ */ Symbol("break visit");
     var SKIP = /* @__PURE__ */ Symbol("skip children");
     var REMOVE = /* @__PURE__ */ Symbol("remove node");
-    function visit2(node2, visitor) {
+    function visit3(node2, visitor) {
       const visitor_ = initVisitor(visitor);
       if (identity2.isDocument(node2)) {
         const cd = visit_(null, node2.contents, visitor_, Object.freeze([node2]));
@@ -45568,9 +45568,9 @@ var require_visit = __commonJS({
       } else
         visit_(null, node2, visitor_, Object.freeze([]));
     }
-    visit2.BREAK = BREAK;
-    visit2.SKIP = SKIP;
-    visit2.REMOVE = REMOVE;
+    visit3.BREAK = BREAK;
+    visit3.SKIP = SKIP;
+    visit3.REMOVE = REMOVE;
     function visit_(key, node2, visitor, path14) {
       const ctrl = callVisitor(key, node2, visitor, path14);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
@@ -45704,7 +45704,7 @@ var require_visit = __commonJS({
         throw new Error(`Cannot replace node with ${pt} parent`);
       }
     }
-    exports.visit = visit2;
+    exports.visit = visit3;
     exports.visitAsync = visitAsync;
   }
 });
@@ -45714,7 +45714,7 @@ var require_directives = __commonJS({
   "node_modules/yaml/dist/doc/directives.js"(exports) {
     "use strict";
     var identity2 = require_identity();
-    var visit2 = require_visit();
+    var visit3 = require_visit();
     var escapeChars = {
       "!": "%21",
       ",": "%2C",
@@ -45858,7 +45858,7 @@ var require_directives = __commonJS({
         let tagNames;
         if (doc && tagEntries.length > 0 && identity2.isNode(doc.contents)) {
           const tags = {};
-          visit2.visit(doc.contents, (_key, node2) => {
+          visit3.visit(doc.contents, (_key, node2) => {
             if (identity2.isNode(node2) && node2.tag)
               tags[node2.tag] = true;
           });
@@ -45885,7 +45885,7 @@ var require_anchors = __commonJS({
   "node_modules/yaml/dist/doc/anchors.js"(exports) {
     "use strict";
     var identity2 = require_identity();
-    var visit2 = require_visit();
+    var visit3 = require_visit();
     function anchorIsValid(anchor2) {
       if (/[\x00-\x19\s,[\]{}]/.test(anchor2)) {
         const sa = JSON.stringify(anchor2);
@@ -45896,7 +45896,7 @@ var require_anchors = __commonJS({
     }
     function anchorNames(root) {
       const anchors = /* @__PURE__ */ new Set();
-      visit2.visit(root, {
+      visit3.visit(root, {
         Value(_key, node2) {
           if (node2.anchor)
             anchors.add(node2.anchor);
@@ -46076,7 +46076,7 @@ var require_Alias = __commonJS({
   "node_modules/yaml/dist/nodes/Alias.js"(exports) {
     "use strict";
     var anchors = require_anchors();
-    var visit2 = require_visit();
+    var visit3 = require_visit();
     var identity2 = require_identity();
     var Node2 = require_Node();
     var toJS = require_toJS();
@@ -46102,7 +46102,7 @@ var require_Alias = __commonJS({
           nodes = ctx.aliasResolveCache;
         } else {
           nodes = [];
-          visit2.visit(doc, {
+          visit3.visit(doc, {
             Node: (_key, node2) => {
               if (identity2.isAlias(node2) || identity2.hasAnchor(node2))
                 nodes.push(node2);
@@ -48869,7 +48869,7 @@ var require_Document = __commonJS({
     var applyReviver = require_applyReviver();
     var createNode = require_createNode();
     var directives = require_directives();
-    var Document = class _Document {
+    var Document2 = class _Document {
       constructor(value, replacer, options) {
         this.commentBefore = null;
         this.comment = null;
@@ -49159,7 +49159,7 @@ var require_Document = __commonJS({
         return true;
       throw new Error("Expected a YAML collection as document contents");
     }
-    exports.Document = Document;
+    exports.Document = Document2;
   }
 });
 
@@ -49655,9 +49655,9 @@ var require_resolve_flow_collection = __commonJS({
     var blockMsg = "Block collections are not allowed within flow collections";
     var isBlock = (token) => token && (token.type === "block-map" || token.type === "block-seq");
     function resolveFlowCollection({ composeNode, composeEmptyNode }, ctx, fc, onError, tag) {
-      const isMap = fc.start.source === "{";
-      const fcName = isMap ? "flow map" : "flow sequence";
-      const NodeClass = tag?.nodeClass ?? (isMap ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
+      const isMap2 = fc.start.source === "{";
+      const fcName = isMap2 ? "flow map" : "flow sequence";
+      const NodeClass = tag?.nodeClass ?? (isMap2 ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
       const coll = new NodeClass(ctx.schema);
       coll.flow = true;
       const atRoot = ctx.atRoot;
@@ -49693,7 +49693,7 @@ var require_resolve_flow_collection = __commonJS({
             offset = props.end;
             continue;
           }
-          if (!isMap && ctx.options.strict && utilContainsNewline.containsNewline(key))
+          if (!isMap2 && ctx.options.strict && utilContainsNewline.containsNewline(key))
             onError(
               key,
               // checked by containsNewline()
@@ -49733,7 +49733,7 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep4 && !props.found) {
+        if (!isMap2 && !sep4 && !props.found) {
           const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep4, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
@@ -49756,7 +49756,7 @@ var require_resolve_flow_collection = __commonJS({
             startOnNewline: false
           });
           if (valueProps.found) {
-            if (!isMap && !props.found && ctx.options.strict) {
+            if (!isMap2 && !props.found && ctx.options.strict) {
               if (sep4)
                 for (const st of sep4) {
                   if (st === valueProps.found)
@@ -49788,7 +49788,7 @@ var require_resolve_flow_collection = __commonJS({
           const pair = new Pair.Pair(keyNode, valueNode);
           if (ctx.options.keepSourceTokens)
             pair.srcToken = collItem;
-          if (isMap) {
+          if (isMap2) {
             const map3 = coll;
             if (utilMapIncludes.mapIncludes(ctx, map3.items, keyNode))
               onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
@@ -49804,7 +49804,7 @@ var require_resolve_flow_collection = __commonJS({
           offset = valueNode ? valueNode.range[2] : valueProps.end;
         }
       }
-      const expectedEnd = isMap ? "}" : "]";
+      const expectedEnd = isMap2 ? "}" : "]";
       const [ce2, ...ee2] = fc.end;
       let cePos = offset;
       if (ce2?.source === expectedEnd)
@@ -50524,13 +50524,13 @@ var require_compose_node = __commonJS({
 var require_compose_doc = __commonJS({
   "node_modules/yaml/dist/compose/compose-doc.js"(exports) {
     "use strict";
-    var Document = require_Document();
+    var Document2 = require_Document();
     var composeNode = require_compose_node();
     var resolveEnd = require_resolve_end();
     var resolveProps = require_resolve_props();
     function composeDoc(options, directives, { offset, start, value, end }, onError) {
       const opts = Object.assign({ _directives: directives }, options);
-      const doc = new Document.Document(void 0, opts);
+      const doc = new Document2.Document(void 0, opts);
       const ctx = {
         atKey: false,
         atRoot: true,
@@ -50569,7 +50569,7 @@ var require_composer = __commonJS({
     "use strict";
     var node_process = __require("process");
     var directives = require_directives();
-    var Document = require_Document();
+    var Document2 = require_Document();
     var errors = require_errors();
     var identity2 = require_identity();
     var composeDoc = require_compose_doc();
@@ -50758,7 +50758,7 @@ ${end.comment}` : end.comment;
           this.doc = null;
         } else if (forceDoc) {
           const opts = Object.assign({ _directives: this.directives }, this.options);
-          const doc = new Document.Document(void 0, opts);
+          const doc = new Document2.Document(void 0, opts);
           if (this.atDirectives)
             this.onError(endOffset, "MISSING_CHAR", "Missing directives-end indicator line");
           doc.range = [0, endOffset, endOffset];
@@ -51024,15 +51024,15 @@ var require_cst_visit = __commonJS({
     var BREAK = /* @__PURE__ */ Symbol("break visit");
     var SKIP = /* @__PURE__ */ Symbol("skip children");
     var REMOVE = /* @__PURE__ */ Symbol("remove item");
-    function visit2(cst, visitor) {
+    function visit3(cst, visitor) {
       if ("type" in cst && cst.type === "document")
         cst = { start: cst.start, value: cst.value };
       _visit(Object.freeze([]), cst, visitor);
     }
-    visit2.BREAK = BREAK;
-    visit2.SKIP = SKIP;
-    visit2.REMOVE = REMOVE;
-    visit2.itemAtPath = (cst, path14) => {
+    visit3.BREAK = BREAK;
+    visit3.SKIP = SKIP;
+    visit3.REMOVE = REMOVE;
+    visit3.itemAtPath = (cst, path14) => {
       let item = cst;
       for (const [field, index] of path14) {
         const tok = item?.[field];
@@ -51043,8 +51043,8 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit2.parentCollection = (cst, path14) => {
-      const parent = visit2.itemAtPath(cst, path14.slice(0, -1));
+    visit3.parentCollection = (cst, path14) => {
+      const parent = visit3.itemAtPath(cst, path14.slice(0, -1));
       const field = path14[path14.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
@@ -51075,7 +51075,7 @@ var require_cst_visit = __commonJS({
       }
       return typeof ctrl === "function" ? ctrl(item, path14) : ctrl;
     }
-    exports.visit = visit2;
+    exports.visit = visit3;
   }
 });
 
@@ -51091,7 +51091,7 @@ var require_cst = __commonJS({
     var FLOW_END = "";
     var SCALAR = "";
     var isCollection = (token) => !!token && "items" in token;
-    var isScalar = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
+    var isScalar2 = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
     function prettyToken(token) {
       switch (token) {
         case BOM:
@@ -51175,7 +51175,7 @@ var require_cst = __commonJS({
     exports.FLOW_END = FLOW_END;
     exports.SCALAR = SCALAR;
     exports.isCollection = isCollection;
-    exports.isScalar = isScalar;
+    exports.isScalar = isScalar2;
     exports.prettyToken = prettyToken;
     exports.tokenType = tokenType;
   }
@@ -52680,7 +52680,7 @@ var require_public_api = __commonJS({
   "node_modules/yaml/dist/public-api.js"(exports) {
     "use strict";
     var composer = require_composer();
-    var Document = require_Document();
+    var Document2 = require_Document();
     var errors = require_errors();
     var log2 = require_log();
     var identity2 = require_identity();
@@ -52763,7 +52763,7 @@ var require_public_api = __commonJS({
       }
       if (identity2.isDocument(value) && !_replacer)
         return value.toString(options);
-      return new Document.Document(value, _replacer, options).toString(options);
+      return new Document2.Document(value, _replacer, options).toString(options);
     }
     exports.parse = parse6;
     exports.parseAllDocuments = parseAllDocuments;
@@ -52777,7 +52777,7 @@ var require_dist = __commonJS({
   "node_modules/yaml/dist/index.js"(exports) {
     "use strict";
     var composer = require_composer();
-    var Document = require_Document();
+    var Document2 = require_Document();
     var Schema = require_Schema();
     var errors = require_errors();
     var Alias = require_Alias();
@@ -52791,9 +52791,9 @@ var require_dist = __commonJS({
     var lineCounter = require_line_counter();
     var parser2 = require_parser();
     var publicApi = require_public_api();
-    var visit2 = require_visit();
+    var visit3 = require_visit();
     exports.Composer = composer.Composer;
-    exports.Document = Document.Document;
+    exports.Document = Document2.Document;
     exports.Schema = Schema.Schema;
     exports.YAMLError = errors.YAMLError;
     exports.YAMLParseError = errors.YAMLParseError;
@@ -52819,8 +52819,8 @@ var require_dist = __commonJS({
     exports.parseAllDocuments = publicApi.parseAllDocuments;
     exports.parseDocument = publicApi.parseDocument;
     exports.stringify = publicApi.stringify;
-    exports.visit = visit2.visit;
-    exports.visitAsync = visit2.visitAsync;
+    exports.visit = visit3.visit;
+    exports.visitAsync = visit3.visitAsync;
   }
 });
 
@@ -57054,49 +57054,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative10, options, skipNormalization) {
+    function resolveComponent(base, relative11, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
         base = parse6(serialize(base, options), options);
-        relative10 = parse6(serialize(relative10, options), options);
+        relative11 = parse6(serialize(relative11, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative10.scheme) {
-        target2.scheme = relative10.scheme;
-        target2.userinfo = relative10.userinfo;
-        target2.host = relative10.host;
-        target2.port = relative10.port;
-        target2.path = removeDotSegments(relative10.path || "");
-        target2.query = relative10.query;
+      if (!options.tolerant && relative11.scheme) {
+        target2.scheme = relative11.scheme;
+        target2.userinfo = relative11.userinfo;
+        target2.host = relative11.host;
+        target2.port = relative11.port;
+        target2.path = removeDotSegments(relative11.path || "");
+        target2.query = relative11.query;
       } else {
-        if (relative10.userinfo !== void 0 || relative10.host !== void 0 || relative10.port !== void 0) {
-          target2.userinfo = relative10.userinfo;
-          target2.host = relative10.host;
-          target2.port = relative10.port;
-          target2.path = removeDotSegments(relative10.path || "");
-          target2.query = relative10.query;
+        if (relative11.userinfo !== void 0 || relative11.host !== void 0 || relative11.port !== void 0) {
+          target2.userinfo = relative11.userinfo;
+          target2.host = relative11.host;
+          target2.port = relative11.port;
+          target2.path = removeDotSegments(relative11.path || "");
+          target2.query = relative11.query;
         } else {
-          if (!relative10.path) {
+          if (!relative11.path) {
             target2.path = base.path;
-            if (relative10.query !== void 0) {
-              target2.query = relative10.query;
+            if (relative11.query !== void 0) {
+              target2.query = relative11.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative10.path[0] === "/") {
-              target2.path = removeDotSegments(relative10.path);
+            if (relative11.path[0] === "/") {
+              target2.path = removeDotSegments(relative11.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative10.path;
+                target2.path = "/" + relative11.path;
               } else if (!base.path) {
-                target2.path = relative10.path;
+                target2.path = relative11.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative10.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative11.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative10.query;
+            target2.query = relative11.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -57104,7 +57104,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative10.fragment;
+      target2.fragment = relative11.fragment;
       return target2;
     }
     function equal(uriA, uriB, options) {
@@ -93955,6 +93955,77 @@ import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 // packages/server/src/panel/bridge.ts
 import { randomBytes } from "node:crypto";
 
+// packages/server/src/page/selectors.ts
+function pageCandidates(el) {
+  const out = [];
+  const q2 = (value) => JSON.stringify(value);
+  for (const attr of ["data-testid", "data-test-id", "data-test", "data-qa", "data-cy"]) {
+    const value = el.getAttribute(attr);
+    if (value) out.push(`[${attr}=${q2(value)}]`);
+  }
+  const id = el.id;
+  if (id && !/\d{3,}|^:|:$/.test(id)) out.push(`#${CSS.escape(id)}`);
+  const tag = el.tagName.toLowerCase();
+  const nameAttr = el.getAttribute("name");
+  if (nameAttr && ["input", "select", "textarea", "button"].includes(tag)) {
+    out.push(`${tag}[name=${q2(nameAttr)}]`);
+  }
+  const text = el.innerText?.replace(/\s+/g, " ").trim() ?? "";
+  if (text && text.length <= 40 && ["a", "button", "label", "summary", "option"].includes(tag)) {
+    out.push(`${tag}::-p-text(${text.replace(/[()]/g, "")})`);
+  }
+  const segments = [];
+  let node2 = el;
+  for (let depth = 0; node2 && depth < 5; depth++) {
+    const nodeTag = node2.tagName.toLowerCase();
+    if (node2.id && !/\d{3,}|^:|:$/.test(node2.id) && node2 !== el) {
+      segments.unshift(`#${CSS.escape(node2.id)}`);
+      break;
+    }
+    const parent = node2.parentElement;
+    if (!parent || nodeTag === "body") {
+      segments.unshift(nodeTag);
+      break;
+    }
+    const same = [...parent.children].filter((c) => c.tagName === node2?.tagName);
+    segments.unshift(
+      same.length > 1 ? `${nodeTag}:nth-of-type(${same.indexOf(node2) + 1})` : nodeTag
+    );
+    node2 = parent;
+  }
+  out.push(segments.join(" > "));
+  return out;
+}
+function ariaCandidate(hint) {
+  if (!hint?.role || !hint.name) return void 0;
+  if (/[()[\]"]/.test(hint.name) || hint.name.length > 60) return void 0;
+  if (["RootWebArea", "StaticText", "generic", "none"].includes(hint.role)) return void 0;
+  return `::-p-aria(${hint.name}[role="${hint.role}"])`;
+}
+async function stableSelector(handle, hint) {
+  const frame = handle.frame;
+  let candidates;
+  try {
+    candidates = await handle.evaluate(pageCandidates);
+  } catch {
+    return void 0;
+  }
+  const aria = ariaCandidate(hint);
+  const testIds = candidates.filter((c) => c.startsWith("[data-"));
+  const rest = candidates.filter((c) => !c.startsWith("[data-"));
+  const ordered = [...testIds, ...aria ? [aria] : [], ...rest];
+  for (const selector of ordered) {
+    try {
+      const matches = await frame.$$(selector);
+      const unique = matches.length === 1 && matches[0] !== void 0 && await frame.evaluate((a2, b2) => a2 === b2, matches[0], handle);
+      await Promise.all(matches.map((m) => m.dispose()));
+      if (unique) return selector;
+    } catch {
+    }
+  }
+  return void 0;
+}
+
 // packages/server/src/panel/panel-css.ts
 var PANEL_CSS = `
 :host { all: initial; }
@@ -94009,12 +94080,20 @@ var PANEL_CSS = `
 .pulse-label { background: #f59e0b; color: #111827; }
 @keyframes uiwalk-pulse { from { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); } to { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } }
 
+.card.recording-on { border: 2px solid #dc2626; }
+.card.recording-on .step { color: #dc2626; font-weight: 700; }
+.recording .text { margin: 0 0 8px; }
+.record-buttons { grid-template-columns: 1fr; }
+.recording .rec-save { width: 100%; margin: 6px 0; padding: 6px 0; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--btn); color: var(--fg); font-weight: 600; cursor: pointer; }
+.buttons .rec-stop { background: #dc2626; border-color: #dc2626; color: #ffffff; }
+
 .annotation { position: absolute; z-index: 2147483646; display: none; pointer-events: none;
   border: 3px solid #dc2626; border-radius: 4px; }
 `;
 
 // packages/server/src/panel/panel-script.ts
-function panelMain(opts) {
+function panelMain(opts, candidates) {
   if (window !== window.top) return;
   const w2 = window;
   if (w2.__uiwalkPanel) return;
@@ -94072,10 +94151,24 @@ function panelMain(opts) {
   buttons.append(passButton, bugButton, skipButton, stopButton);
   const questionBox = el("div", "question");
   questionBox.append(title, didLabel, didText, expectLabel, expectText, notes, error62, buttons);
-  body.append(status, questionBox);
+  const recordBox = el("div", "recording");
+  const recordText = el("p", "text");
+  const expectInput = el("textarea", "notes rec-notes");
+  expectInput.placeholder = "What should the page show now?";
+  expectInput.rows = 2;
+  const recordButtons = el("div", "buttons record-buttons");
+  const expectButton = el("button", "rec-expect", "Add expectation");
+  const saveExpectButton = el("button", "rec-save", "Save expectation");
+  const secretButton = el("button", "rec-secret", "Mark last field as secret");
+  const stopRecordButton = el("button", "rec-stop", "Stop recording");
+  recordButtons.append(expectButton, secretButton, stopRecordButton);
+  recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
+  body.append(status, questionBox, recordBox);
   card.append(header, body);
   root.append(pulse, pulseLabel, annotation, card);
   let question = null;
+  let recording = null;
+  let addingExpect = false;
   let corner = "bottom-right";
   let collapsed = false;
   let pulseTimer;
@@ -94087,6 +94180,17 @@ function panelMain(opts) {
   const render = () => {
     card.classList.toggle("collapsed", collapsed);
     card.classList.toggle("asking", Boolean(question));
+    card.classList.toggle("recording-on", Boolean(recording));
+    recordBox.hidden = !recording;
+    expectInput.hidden = !addingExpect;
+    saveExpectButton.hidden = !addingExpect;
+    if (recording) {
+      stepBadge.textContent = "\u25CF Recording";
+      recordText.textContent = recording.count ? `${recording.count} step${recording.count === 1 ? "" : "s"} so far. Last: ${recording.last}` : "Use the app as usual. Walkthrough records each click and each field that you type in.";
+      questionBox.hidden = true;
+      status.hidden = true;
+      return;
+    }
     collapseButton.textContent = collapsed ? "+" : "\u2212";
     collapseButton.title = collapsed ? "Expand" : "Collapse";
     if (question) {
@@ -94129,6 +94233,20 @@ function panelMain(opts) {
     );
     render();
   };
+  onTrusted(expectButton, () => {
+    addingExpect = true;
+    render();
+    expectInput.focus();
+  });
+  onTrusted(saveExpectButton, () => {
+    const text = expectInput.value.trim();
+    if (text) send({ type: "rec-expect", text });
+    expectInput.value = "";
+    addingExpect = false;
+    render();
+  });
+  onTrusted(secretButton, () => send({ type: "rec-secret" }));
+  onTrusted(stopRecordButton, () => send({ type: "rec-stop" }));
   onTrusted(passButton, () => answer("pass"));
   onTrusted(bugButton, () => answer("bug"));
   onTrusted(skipButton, () => answer("skip"));
@@ -94177,7 +94295,7 @@ function panelMain(opts) {
     corner = flip[card.dataset.corner ?? corner] ?? "bottom-left";
     placeCard();
   };
-  const showPulse = (rect, label, ms) => {
+  const showPulse = (rect, label2, ms) => {
     Object.assign(pulse.style, {
       left: `${rect.x - 4}px`,
       top: `${rect.y - 4}px`,
@@ -94185,11 +94303,11 @@ function panelMain(opts) {
       height: `${rect.height + 8}px`,
       display: "block"
     });
-    pulseLabel.textContent = label;
+    pulseLabel.textContent = label2;
     Object.assign(pulseLabel.style, {
       left: `${rect.x - 4}px`,
       top: `${Math.max(0, rect.y - 30)}px`,
-      display: label ? "block" : "none"
+      display: label2 ? "block" : "none"
     });
     avoid(rect);
     window.clearTimeout(pulseTimer);
@@ -94207,6 +94325,8 @@ function panelMain(opts) {
           error62.textContent = "";
         }
         question = next;
+        recording = msg.recording ?? null;
+        if (!recording) addingExpect = false;
         setStatus(msg.status ?? "The agent is working.");
         if (msg.corner) corner = msg.corner;
         placeCard();
@@ -94238,6 +94358,136 @@ function panelMain(opts) {
       }
     }
   };
+  const inPanel = (target2) => target2 === host || host.contains(target2);
+  const roleOf = (node2) => {
+    const explicit = node2.getAttribute("role");
+    if (explicit) return explicit;
+    const tag = node2.tagName.toLowerCase();
+    const type = (node2.getAttribute("type") ?? "text").toLowerCase();
+    if (tag === "a" && node2.hasAttribute("href")) return "link";
+    if (tag === "button") return "button";
+    if (tag === "select") return "combobox";
+    if (tag === "textarea") return "textbox";
+    if (tag === "input") {
+      if (["submit", "button", "reset", "image"].includes(type)) return "button";
+      if (type === "checkbox") return "checkbox";
+      if (type === "radio") return "radio";
+      if (["text", "email", "password", "search", "tel", "url", "number"].includes(type))
+        return "textbox";
+    }
+    return void 0;
+  };
+  const nameOf = (node2) => {
+    const html = node2;
+    const aria = node2.getAttribute("aria-label");
+    if (aria) return aria.trim();
+    const labelledBy = node2.getAttribute("aria-labelledby");
+    if (labelledBy) {
+      const text2 = labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? "").join(" ").trim();
+      if (text2) return text2;
+    }
+    if (html.labels && html.labels.length > 0) {
+      const label2 = html.labels[0];
+      const copy = label2.cloneNode(true);
+      for (const inner of Array.from(copy.querySelectorAll("input, select, textarea")))
+        inner.remove();
+      const text2 = copy.textContent?.replace(/\s+/g, " ").trim();
+      if (text2) return text2;
+    }
+    const text = node2.innerText?.replace(/\s+/g, " ").trim();
+    if (text && ["a", "button"].includes(node2.tagName.toLowerCase())) return text;
+    return (html.placeholder || node2.getAttribute("title") || node2.getAttribute("alt") || html.value || text || "").trim();
+  };
+  const targetOf = (node2) => {
+    const role = roleOf(node2);
+    const name = nameOf(node2).slice(0, 80);
+    const all = candidates(node2);
+    const testId = all.find((c) => c.startsWith("[data-"));
+    if (testId && document.querySelectorAll(testId).length === 1) return { selector: testId };
+    if (role && name && !/[()[\]"]/.test(name)) {
+      const same = Array.from(
+        document.querySelectorAll("a, button, input, select, textarea, [role]")
+      ).filter((other) => roleOf(other) === role && nameOf(other).slice(0, 80) === name);
+      if (same.length === 1) return { role, name };
+    }
+    for (const selector of all) {
+      if (selector.includes("::-p-")) continue;
+      try {
+        if (document.querySelectorAll(selector).length === 1) return { selector };
+      } catch {
+      }
+    }
+    return { selector: all[all.length - 1] ?? node2.tagName.toLowerCase() };
+  };
+  const label = (node2) => {
+    const name = nameOf(node2);
+    return name ? `"${name.slice(0, 60)}"` : node2.tagName.toLowerCase();
+  };
+  const record2 = (kind, node2, extra = {}) => {
+    if (!recording) return;
+    const target2 = targetOf(node2);
+    send({ type: "rec", kind, target: target2, label: label(node2), key: JSON.stringify(target2), ...extra });
+  };
+  const isTextField = (node2) => {
+    const tag = node2.tagName.toLowerCase();
+    return tag === "textarea" || tag === "input" && roleOf(node2) === "textbox" || node2.isContentEditable;
+  };
+  const fieldValue = (node2) => {
+    const input3 = node2;
+    if (input3.type === "password")
+      return { secret: true, fieldName: input3.name || input3.id || "password" };
+    return {
+      value: node2.isContentEditable ? node2.innerText : input3.value
+    };
+  };
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target)) return;
+      const start2 = event.target;
+      const node2 = start2?.closest?.(
+        'a[href], button, input, select, textarea, summary, label, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [onclick]'
+      );
+      if (!node2) return;
+      const tag = node2.tagName.toLowerCase();
+      if (tag === "select" || tag === "textarea" || tag === "label") return;
+      if (tag === "input" && roleOf(node2) !== "button") return;
+      record2("click", node2);
+    },
+    true
+  );
+  document.addEventListener(
+    "change",
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target)) return;
+      const node2 = event.target;
+      const tag = node2.tagName.toLowerCase();
+      if (tag === "select") {
+        const option = node2.selectedOptions[0];
+        record2("select", node2, { value: option?.label.trim() || node2.value });
+      } else if (node2.type === "checkbox") {
+        record2(node2.checked ? "check" : "uncheck", node2);
+      } else if (node2.type === "radio") {
+        record2("check", node2);
+      } else if (node2.type === "file") {
+        record2("upload", node2, { files: Array.from(node2.files ?? []).map((f) => f.name) });
+      } else if (isTextField(node2)) {
+        record2("fill", node2, fieldValue(node2));
+      }
+    },
+    true
+  );
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target) || event.key !== "Enter") return;
+      const node2 = event.target;
+      if (!isTextField(node2) || node2.tagName.toLowerCase() === "textarea") return;
+      record2("fill", node2, fieldValue(node2));
+      record2("press", node2, { value: "Enter" });
+    },
+    true
+  );
   w2.__uiwalkPanel = { receive };
   const mount = () => {
     const parent = document.documentElement;
@@ -94268,7 +94518,7 @@ function panelMain(opts) {
 var TOKEN2 = randomBytes(6).toString("hex");
 var WORLD_NAME = `uiwalk-${TOKEN2}`;
 var BINDING = `__uiwalk_${TOKEN2}`;
-var SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })});`;
+var SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })}, ${pageCandidates.toString()});`;
 var PanelBridge = class _PanelBridge {
   constructor(cdp, onMessage) {
     this.cdp = cdp;
@@ -94343,6 +94593,9 @@ var DeveloperPanel = class {
   waiter;
   status = WORKING;
   corner = "bottom-right";
+  recorder;
+  recordStopped = false;
+  recordWaiter;
   async attach(page, tabId) {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
     if (bridge) this.bridges.set(tabId, bridge);
@@ -94357,6 +94610,7 @@ var DeveloperPanel = class {
   onBrowserClosed() {
     this.question = void 0;
     this.finish({ kind: "browser_closed" });
+    this.finishRecording("browser_closed");
   }
   get pending() {
     return this.question;
@@ -94376,6 +94630,7 @@ var DeveloperPanel = class {
       type: "state",
       status: this.status,
       corner: this.corner,
+      recording: this.recorder ? { count: this.recorder.steps.length, last: this.recorder.lastLabel } : null,
       question: q2 ? {
         id: q2.id,
         nonce: q2.nonce,
@@ -94397,6 +94652,11 @@ var DeveloperPanel = class {
     }
     if (msg.type === "moved" && typeof msg.corner === "string") {
       this.corner = msg.corner;
+      return;
+    }
+    if (msg.type.startsWith("rec") && this.recorder) {
+      this.onRecordMessage(msg);
+      await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
       return;
     }
     if (msg.type === "answer") {
@@ -94470,6 +94730,57 @@ var DeveloperPanel = class {
   }
   async annotate(tabId, rect) {
     await this.bridges.get(tabId)?.send({ type: "annotate", rect });
+  }
+  onRecordMessage(msg) {
+    const recorder = this.recorder;
+    if (!recorder) return;
+    if (msg.type === "rec") {
+      recorder.add(msg);
+    } else if (msg.type === "rec-expect" && typeof msg.text === "string") {
+      recorder.addExpectation(msg.text.slice(0, 500));
+    } else if (msg.type === "rec-secret") {
+      recorder.markLastSecret();
+    } else if (msg.type === "rec-stop") {
+      this.recordStopped = true;
+      this.finishRecording("stopped");
+    }
+  }
+  finishRecording(outcome) {
+    const resolve10 = this.recordWaiter;
+    this.recordWaiter = void 0;
+    resolve10?.(outcome);
+  }
+  get recording() {
+    return this.recorder;
+  }
+  // Turns recording on in every tab.
+  async startRecording(recorder) {
+    this.recorder = recorder;
+    this.recordStopped = false;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
+  }
+  // Waits until the developer clicks Stop recording, or a timeout, or a cancel.
+  waitForRecordStop(timeoutMs, signal) {
+    if (this.recordStopped) return Promise.resolve("stopped");
+    return new Promise((resolve10) => {
+      const timer2 = setTimeout(() => this.finishRecording("timeout"), timeoutMs);
+      const onAbort = () => this.finishRecording("canceled");
+      signal?.addEventListener("abort", onAbort, { once: true });
+      this.recordWaiter = (outcome) => {
+        clearTimeout(timer2);
+        signal?.removeEventListener("abort", onAbort);
+        resolve10(outcome);
+      };
+    });
+  }
+  // Turns recording off and returns what was recorded.
+  async stopRecording() {
+    const recorder = this.recorder;
+    this.recorder = void 0;
+    this.recordStopped = false;
+    this.finishRecording("stopped");
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
+    return recorder;
   }
   // Shows the same state again, for example after the active tab changes.
   async refresh(tabId) {
@@ -94771,7 +95082,9 @@ var Driver = class _Driver {
     page.setDefaultTimeout(this.options.config.actionTimeoutMs);
     page.setDefaultNavigationTimeout(3e4);
     page.on("framenavigated", (frame) => {
-      if (frame === page.mainFrame()) tab.nav += 1;
+      if (frame !== page.mainFrame()) return;
+      tab.nav += 1;
+      this.emitter.emit("navigated", { tabId: tab.id, url: frame.url() });
     });
     page.on("error", () => {
       tab.crashed = true;
@@ -95401,7 +95714,16 @@ function registerBrowserTools(server, ctx) {
       if (url2) {
         const full = fullUrl(url2, tab.page.url(), config3.baseUrl);
         guard.check(full);
+        const from2 = tab.page.url();
         problem = await goTo(tab, full);
+        ctx.actionLog.push({
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          tabId: tab.id,
+          action: "navigate",
+          label: full,
+          value: full,
+          url: from2
+        });
       } else if (action2 === "back") {
         await tab.page.goBack({ waitUntil: "load" });
       } else if (action2 === "forward") {
@@ -95571,11 +95893,13 @@ function recordResult(ctx, ref, result) {
     step.logs = formatLogs(result.logs);
     step.errorCount = result.logs.filter((e) => e.level === "error").length;
   }
-  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ action: action2, label, selector, value, url: url2 }) => ({
+  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ action: action2, label, selector, value, files, frameUrl, url: url2 }) => ({
     action: action2,
     label,
     selector,
     value,
+    files,
+    frameUrl,
     url: url2
   }));
   step.actions.push(...actions);
@@ -95657,6 +95981,12 @@ function registerDeveloperTools(server, ctx) {
       const tab = driver.activeTab();
       const config3 = await ctx.config();
       const panel = driver.panel;
+      if (panel?.recording) {
+        throw new ToolError(
+          'Recording is on. Call record with action "wait" or "stop" first.',
+          "recording"
+        );
+      }
       if (!input3.resume && (!input3.title || !input3.didWhat || !input3.expected)) {
         throw new ToolError("Give a title, didWhat, and expected for the step.", "bad_input");
       }
@@ -95834,77 +96164,6 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
     );
   }
   return real;
-}
-
-// packages/server/src/page/selectors.ts
-function pageCandidates(el) {
-  const out = [];
-  const q2 = (value) => JSON.stringify(value);
-  for (const attr of ["data-testid", "data-test-id", "data-test", "data-qa", "data-cy"]) {
-    const value = el.getAttribute(attr);
-    if (value) out.push(`[${attr}=${q2(value)}]`);
-  }
-  const id = el.id;
-  if (id && !/\d{3,}|^:|:$/.test(id)) out.push(`#${CSS.escape(id)}`);
-  const tag = el.tagName.toLowerCase();
-  const nameAttr = el.getAttribute("name");
-  if (nameAttr && ["input", "select", "textarea", "button"].includes(tag)) {
-    out.push(`${tag}[name=${q2(nameAttr)}]`);
-  }
-  const text = el.innerText?.replace(/\s+/g, " ").trim() ?? "";
-  if (text && text.length <= 40 && ["a", "button", "label", "summary", "option"].includes(tag)) {
-    out.push(`${tag}::-p-text(${text.replace(/[()]/g, "")})`);
-  }
-  const segments = [];
-  let node2 = el;
-  for (let depth = 0; node2 && depth < 5; depth++) {
-    const nodeTag = node2.tagName.toLowerCase();
-    if (node2.id && !/\d{3,}|^:|:$/.test(node2.id) && node2 !== el) {
-      segments.unshift(`#${CSS.escape(node2.id)}`);
-      break;
-    }
-    const parent = node2.parentElement;
-    if (!parent || nodeTag === "body") {
-      segments.unshift(nodeTag);
-      break;
-    }
-    const same = [...parent.children].filter((c) => c.tagName === node2?.tagName);
-    segments.unshift(
-      same.length > 1 ? `${nodeTag}:nth-of-type(${same.indexOf(node2) + 1})` : nodeTag
-    );
-    node2 = parent;
-  }
-  out.push(segments.join(" > "));
-  return out;
-}
-function ariaCandidate(hint) {
-  if (!hint?.role || !hint.name) return void 0;
-  if (/[()[\]"]/.test(hint.name) || hint.name.length > 60) return void 0;
-  if (["RootWebArea", "StaticText", "generic", "none"].includes(hint.role)) return void 0;
-  return `::-p-aria(${hint.name}[role="${hint.role}"])`;
-}
-async function stableSelector(handle, hint) {
-  const frame = handle.frame;
-  let candidates;
-  try {
-    candidates = await handle.evaluate(pageCandidates);
-  } catch {
-    return void 0;
-  }
-  const aria = ariaCandidate(hint);
-  const testIds = candidates.filter((c) => c.startsWith("[data-"));
-  const rest = candidates.filter((c) => !c.startsWith("[data-"));
-  const ordered = [...testIds, ...aria ? [aria] : [], ...rest];
-  for (const selector of ordered) {
-    try {
-      const matches = await frame.$$(selector);
-      const unique = matches.length === 1 && matches[0] !== void 0 && await frame.evaluate((a2, b2) => a2 === b2, matches[0], handle);
-      await Promise.all(matches.map((m) => m.dispose()));
-      if (unique) return selector;
-    } catch {
-    }
-  }
-  return void 0;
 }
 
 // packages/server/src/page/actions.ts
@@ -96148,7 +96407,9 @@ Navigate back to an allowed page first.`,
     selector,
     label: target2?.label ?? "(page)",
     // Secrets stay as {{secret:NAME}} here. The real value is never stored.
-    value: ["fill", "select", "press"].includes(input3.action) ? input3.value : void 0,
+    value: ["fill", "select", "press", "scroll"].includes(input3.action) ? input3.value : void 0,
+    files: input3.action === "upload" ? input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : void 0) : void 0,
+    frameUrl: target2 && target2.handle.frame !== tab.page.mainFrame() ? target2.handle.frame.url() : void 0,
     url: startUrl
   });
   const lines = [];
@@ -96603,12 +96864,14 @@ var ACTION_WORDS = {
   uncheck: "Uncheck",
   press: "Press a key in",
   scroll: "Scroll to",
-  upload: "Upload to"
+  upload: "Upload to",
+  navigate: "Go to"
 };
 function reproSteps(run, step) {
   const before = run.steps.filter((s) => s.index < step.index && s.status !== "pending").map((s) => s.title);
   const own2 = step.actions.length ? step.actions.map((a2) => {
     const value = a2.value && a2.action !== "press" ? ` "${a2.value}"` : a2.action === "press" ? ` (${a2.value})` : "";
+    if (a2.action === "navigate") return `Go to ${a2.value ?? a2.label}`;
     return `${ACTION_WORDS[a2.action] ?? a2.action} ${a2.label}${a2.action === "fill" ? ` the text${value}` : value}`;
   }) : [step.title];
   return [...run.baseUrl ? [`Open ${run.baseUrl}`] : [], ...before, ...own2];
@@ -97552,7 +97815,14 @@ function savePlan(projectDir, name, text, overwrite = false) {
 
 // packages/server/src/run/run-store.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdirSync as mkdirSync6, readFileSync as readFileSync14, renameSync, writeFileSync as writeFileSync6 } from "node:fs";
+import {
+  existsSync as existsSync13,
+  mkdirSync as mkdirSync6,
+  readdirSync as readdirSync6,
+  readFileSync as readFileSync14,
+  renameSync,
+  writeFileSync as writeFileSync6
+} from "node:fs";
 import { join as join20, relative as relative8 } from "node:path";
 function slug2(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "run";
@@ -97664,6 +97934,18 @@ var RunStore = class _RunStore {
     this.save();
   }
 };
+function latestRunId(projectDir, options = {}) {
+  const dir = join20(projectDir, ".walkthrough", "runs");
+  if (!existsSync13(dir)) return void 0;
+  for (const id of readdirSync6(dir).sort().reverse()) {
+    try {
+      const run = JSON.parse(readFileSync14(join20(dir, id, "run.json"), "utf8"));
+      if (!options.finishedOnly || run.status !== "running") return id;
+    } catch {
+    }
+  }
+  return void 0;
+}
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store) {
@@ -97927,6 +98209,649 @@ function registerRunTools(server, ctx) {
   );
 }
 
+// packages/server/src/tools/share-tools.ts
+import { existsSync as existsSync14, mkdirSync as mkdirSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join22, relative as relative10 } from "node:path";
+
+// packages/server/src/export/puppeteer-script.ts
+var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
+function checkableText(expect) {
+  const found = /* @__PURE__ */ new Set();
+  for (const m of expect.matchAll(/"([^"]{1,80})"/g)) if (m[1]) found.add(m[1]);
+  for (const m of expect.matchAll(/(?:\$|€|£)\d[\d,]*(?:\.\d+)?/g)) found.add(m[0]);
+  return [...found];
+}
+var js = (value) => JSON.stringify(value);
+function urlCode(url2, baseUrl) {
+  try {
+    const parsed = new URL(url2);
+    if (baseUrl && parsed.origin === new URL(baseUrl).origin) {
+      return `new URL(${js(parsed.pathname + parsed.search + parsed.hash)}, BASE_URL).href`;
+    }
+  } catch {
+  }
+  return js(url2);
+}
+function frameCode(frameUrl) {
+  if (!frameUrl) return "page";
+  let part = frameUrl;
+  try {
+    part = new URL(frameUrl).pathname;
+  } catch {
+  }
+  return `frame(${js(part)})`;
+}
+function actionCode(action2, secrets, baseUrl) {
+  const where = frameCode(action2.frameUrl);
+  const sel = action2.selector ? js(action2.selector) : "";
+  const value = (() => {
+    const v2 = action2.value ?? "";
+    const secret = SECRET.exec(v2);
+    if (secret?.[1]) {
+      secrets.add(secret[1]);
+      return `process.env.${secret[1]}`;
+    }
+    return js(v2);
+  })();
+  switch (action2.action) {
+    case "navigate":
+      return [
+        `await page.goto(${urlCode(action2.value ?? action2.label, baseUrl)}, { waitUntil: 'load' });`
+      ];
+    case "click":
+      return [`await ${where}.locator(${sel}).click();`];
+    case "dblclick":
+      return [`await ${where}.locator(${sel}).click({ count: 2 });`];
+    case "hover":
+      return [`await ${where}.locator(${sel}).hover();`];
+    case "fill":
+      return [`await ${where}.locator(${sel}).fill(${value});`];
+    case "select":
+      return [`await selectOption(${where}, ${sel}, ${value});`];
+    case "check":
+    case "uncheck":
+      return [`await setChecked(${where}, ${sel}, ${action2.action === "check"});`];
+    case "press":
+      return [...sel ? [`await ${where}.focus(${sel});`] : [], `await pressKeys(${value});`];
+    case "scroll":
+      return sel ? [`await (await ${where}.$(${sel}))?.scrollIntoView();`] : [
+        `await page.mouse.wheel({ deltaY: ${action2.value === "up" ? -600 : Number(action2.value) || 600} });`
+      ];
+    case "upload":
+      return [
+        `await (await ${where}.$(${sel}))?.uploadFile(${(action2.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(", ")});`
+      ];
+  }
+}
+function exportScript(run, options = {}) {
+  const secrets = /* @__PURE__ */ new Set();
+  const missingSelectors = [];
+  const failedSteps = run.steps.filter((s) => ["bug", "fail", "blocked"].includes(s.status)).map((s) => `${s.index}. ${s.title}`);
+  let actions = 0;
+  let checks = 0;
+  let handChecks = 0;
+  let lastUrl = run.baseUrl ?? "";
+  const body = [];
+  for (const step of run.steps) {
+    if (step.status === "pending" || step.status === "skip") continue;
+    const lines = [];
+    for (const action2 of step.actions) {
+      if (action2.url && action2.url !== lastUrl) {
+        lines.push(`await reach(${urlCode(action2.url, run.baseUrl)});`);
+        lastUrl = action2.url;
+      }
+      const needsSelector = !["scroll", "navigate", "press"].includes(action2.action);
+      if (!action2.selector && needsSelector) {
+        missingSelectors.push(`Step ${step.index}: ${action2.label}`);
+        lines.push(
+          `// Fix by hand: Walkthrough found no stable selector for ${action2.label.replace(/\n/g, " ")}.`
+        );
+        continue;
+      }
+      lines.push(...actionCode(action2, secrets, run.baseUrl));
+      actions += 1;
+      if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
+    }
+    if (step.expect) {
+      const texts = checkableText(step.expect);
+      for (const text of texts) lines.push(`await expectText(${js(text)});`);
+      checks += texts.length;
+      if (texts.length === 0) {
+        lines.push(`// Check by hand: ${step.expect.replace(/\n/g, " ")}`);
+        handChecks += 1;
+      }
+    }
+    if (lines.length === 0) continue;
+    const title = `${step.index}. ${step.title}`;
+    body.push(
+      `  await step(${js(title)}, async () => {`,
+      ...lines.map((l) => `    ${l}`),
+      "  });",
+      ""
+    );
+  }
+  const pkg = options.installedChrome ? "puppeteer-core" : "puppeteer";
+  const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL }" : "{ headless: !process.env.HEADFUL }";
+  const secretList = [...secrets];
+  const code = `#!/usr/bin/env node
+// Walkthrough export of the run "${run.name.replace(/\n/g, " ")}" (${run.id}).
+// It repeats the actions from the run and checks the text that the expectations quote.
+// Needs: npm install --save-dev ${pkg}${options.installedChrome ? " (and Google Chrome)" : ""}
+// Run:   node ${"<this file>"}
+// Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
+${secretList.length ? `// Secrets come from environment variables: ${secretList.join(", ")}.
+` : ""}import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from '${pkg}';
+
+const BASE_URL = process.env.BASE_URL ?? ${js(run.baseUrl ?? "http://localhost:3000")};
+// The project folder: this file is in .walkthrough/exports.
+const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+for (const name of ${JSON.stringify(secretList)}) {
+  if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
+}
+
+const browser = await puppeteer.launch(${launch3});
+const page = await browser.newPage();
+page.setDefaultTimeout(10_000);
+// Accept confirm dialogs, like the run did.
+page.on('dialog', (dialog) => void dialog.accept());
+
+// Runs one step, and names the step if it fails.
+async function step(name, fn) {
+  try {
+    await fn();
+    console.log(\`ok    \${name}\`);
+  } catch (error) {
+    throw new Error(\`Step \${name}: \${error.message}\`);
+  }
+}
+
+// Goes to an address, unless the last click already went there.
+async function reach(url) {
+  const want = new URL(url);
+  const here = () => new URL(page.url());
+  if (here().pathname === want.pathname && here().search === want.search) return;
+  try {
+    await page.waitForFunction((path) => location.pathname + location.search === path, { timeout: 3000 }, want.pathname + want.search);
+  } catch {
+    await page.goto(want.href, { waitUntil: 'load' });
+  }
+}
+
+// Waits for text on the page.
+async function expectText(text) {
+  try {
+    await page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 5000 }, text);
+  } catch {
+    throw new Error(\`The page does not show "\${text}".\`);
+  }
+}
+
+function frame(part) {
+  const found = page.frames().find((f) => f.url().includes(part));
+  if (!found) throw new Error(\`No frame with the address \${part}.\`);
+  return found;
+}
+
+async function selectOption(where, selector, wanted) {
+  const handle = await where.waitForSelector(selector);
+  const value = await handle.evaluate(
+    (el, text) => [...el.options].find((o) => o.value === text || o.label.trim() === text)?.value,
+    wanted,
+  );
+  if (value === undefined) throw new Error(\`The list has no option "\${wanted}".\`);
+  await handle.select(value);
+}
+
+async function setChecked(where, selector, on) {
+  const handle = await where.waitForSelector(selector);
+  if ((await handle.evaluate((el) => el.checked)) !== on) await handle.click();
+}
+
+async function pressKeys(combo) {
+  const keys = combo.split('+');
+  const main = keys.pop();
+  for (const key of keys) await page.keyboard.down(key);
+  await page.keyboard.press(main);
+  for (const key of keys.reverse()) await page.keyboard.up(key);
+}
+
+try {
+  await page.goto(BASE_URL, { waitUntil: 'load' });
+
+${body.join("\n")}  console.log('Passed: every step and check.');
+} catch (error) {
+  console.error(\`Failed: \${error.message}\`);
+  await page.screenshot({ path: resolve(PROJECT_DIR, 'walkthrough-export-failure.png') }).catch(() => {});
+  process.exitCode = 1;
+} finally {
+  await browser.close();
+}
+`;
+  return { code, actions, checks, handChecks, missingSelectors, secrets: secretList, failedSteps };
+}
+
+// packages/server/src/issue/draft.ts
+var MAX_ENCODED_BODY = 6e3;
+function oneLine(text, max) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max - 3).trimEnd()}...` : flat;
+}
+function section(title, lines) {
+  return [`## ${title}`, "", ...lines, ""].join("\n");
+}
+function encodedLength(text) {
+  return encodeURIComponent(text).length;
+}
+function draftIssue(run, step, options) {
+  const what = step.actual ?? step.notes ?? "";
+  const title = oneLine(`${step.title}: ${what || "does not work as expected"}`, 90);
+  const repro = reproSteps(run, step).map((line, i) => `${i + 1}. ${line}`);
+  const environment2 = [
+    `- Page: ${step.actions.at(-1)?.url ?? run.baseUrl ?? "unknown"}`,
+    ...run.chrome ? [`- Browser: ${run.chrome}`] : [],
+    ...run.setup ? [`- Setup: ${run.setup}`] : [],
+    `- Found by: Walkthrough ${VERSION}, run \`${run.id}\`, step ${step.index}`
+  ];
+  const evidence = options.screenshots.length ? options.screenshots.map((s) => `- \`${s}\` (drag the file into this issue)`) : ["- No screenshot."];
+  const parts = {
+    summary: section("What happened", [what || "See the steps below."]),
+    repro: section("Steps to reproduce", repro),
+    expected: section("Expected", [step.expect ?? "See the steps above."]),
+    actual: section("Actual", [
+      what || "The step did not pass.",
+      ...step.notes && step.actual ? ["", `Developer notes: ${step.notes}`] : []
+    ]),
+    logs: step.logs && step.logs !== "(none)" ? section("Errors and failed requests", ["```text", step.logs, "```"]) : "",
+    evidence: section("Screenshots", evidence),
+    environment: section("Environment", environment2),
+    report: `The full report is in \`${options.reportPath}\`.
+`
+  };
+  const build = (logs) => [
+    parts.summary,
+    parts.repro,
+    parts.expected,
+    parts.actual,
+    logs,
+    parts.evidence,
+    parts.environment,
+    parts.report
+  ].filter(Boolean).join("\n");
+  let body = build(parts.logs);
+  let shortened = false;
+  if (encodedLength(body) > MAX_ENCODED_BODY && parts.logs) {
+    shortened = true;
+    const lines = (step.logs ?? "").split("\n");
+    while (lines.length > 1 && encodedLength(build(section("Errors and failed requests", ["```text", ...lines, "```"]))) > MAX_ENCODED_BODY) {
+      lines.pop();
+    }
+    const cut = section("Errors and failed requests", [
+      "```text",
+      ...lines,
+      "```",
+      "",
+      "This list leaves out some errors. See the full report."
+    ]);
+    body = encodedLength(build(cut)) <= MAX_ENCODED_BODY ? build(cut) : build("");
+  }
+  if (encodedLength(body) > MAX_ENCODED_BODY) {
+    shortened = true;
+    let text = body;
+    while (encodedLength(`${text}
+
+(Shortened. See the full report.)`) > MAX_ENCODED_BODY) {
+      text = text.slice(0, Math.floor(text.length * 0.9));
+    }
+    body = `${text}
+
+(Shortened. See the full report.)
+`;
+  }
+  return { title, body, shortened, screenshots: options.screenshots };
+}
+
+// packages/server/src/record/recorder.ts
+var import_yaml3 = __toESM(require_dist(), 1);
+function secretName(field) {
+  const name = field.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").toUpperCase();
+  return name.includes("PASSWORD") || name.includes("SECRET") || name.includes("TOKEN") ? name : `${name || "FIELD"}_SECRET`;
+}
+function slug3(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "step";
+}
+var Recorder = class {
+  constructor(name, baseUrl) {
+    this.name = name;
+    this.baseUrl = baseUrl;
+  }
+  name;
+  baseUrl;
+  steps = [];
+  lastEventAt = 0;
+  secretNames = /* @__PURE__ */ new Set();
+  // Adds one event from the page. Typing in the same field again replaces the value.
+  add(event) {
+    this.lastEventAt = Date.now();
+    const last2 = this.steps.at(-1);
+    if (event.kind === "fill" && last2?.kind === "fill" && last2.key === event.key) this.steps.pop();
+    const step = {
+      kind: event.kind,
+      target: event.target,
+      label: event.label,
+      key: event.key
+    };
+    if (event.secret) {
+      step.secret = secretName(event.fieldName ?? "password");
+      this.secretNames.add(step.secret);
+    } else if (event.value !== void 0) {
+      step.value = event.value;
+    }
+    if (event.files) step.files = event.files;
+    this.steps.push(step);
+  }
+  // A page load that no click caused, like an address the developer typed.
+  addNavigation(url2) {
+    if (Date.now() - this.lastEventAt < 1500) return;
+    let path14 = url2;
+    try {
+      const parsed = new URL(url2);
+      if (this.baseUrl && parsed.origin === new URL(this.baseUrl).origin)
+        path14 = parsed.pathname + parsed.search;
+    } catch {
+    }
+    const last2 = this.steps.at(-1);
+    if (last2?.kind === "navigate" && last2.value === path14) return;
+    this.lastEventAt = Date.now();
+    this.steps.push({ kind: "navigate", label: path14, value: path14 });
+  }
+  addExpectation(text) {
+    const last2 = this.steps.at(-1);
+    if (!last2) return false;
+    last2.expect = last2.expect ? `${last2.expect} ${text}` : text;
+    return true;
+  }
+  // Turns the last typed value into a secret. The value is thrown away.
+  markLastSecret() {
+    const last2 = [...this.steps].reverse().find((s) => s.kind === "fill");
+    if (!last2) return void 0;
+    if (!last2.secret) {
+      last2.secret = secretName(last2.label.replace(/"/g, ""));
+      delete last2.value;
+      this.secretNames.add(last2.secret);
+    }
+    return last2.secret;
+  }
+  get lastLabel() {
+    const last2 = this.steps.at(-1);
+    return last2 ? describe3(last2) : "";
+  }
+  get secrets() {
+    return [...this.secretNames];
+  }
+  // The plan draft in YAML.
+  toYaml() {
+    const ids = /* @__PURE__ */ new Set();
+    const steps = this.steps.map((step) => {
+      let id = slug3(describe3(step));
+      for (let n = 2; ids.has(id); n++) id = `${slug3(describe3(step))}-${n}`;
+      ids.add(id);
+      const out = { id, do: describe3(step) };
+      out.action = actionOf(step);
+      if (step.expect) out.expect = step.expect;
+      return out;
+    });
+    const plan = { name: this.name };
+    if (this.baseUrl) plan.baseUrl = this.baseUrl;
+    plan.mode = "checkpoints";
+    plan.steps = steps.length ? steps : [{ do: "Nothing was recorded" }];
+    const doc = new import_yaml3.Document(plan);
+    (0, import_yaml3.visit)(doc, {
+      Pair(_key, pair) {
+        if ((0, import_yaml3.isPair)(pair) && (0, import_yaml3.isScalar)(pair.key) && pair.key.value === "action" && (0, import_yaml3.isMap)(pair.value)) {
+          (0, import_yaml3.visit)(pair.value, {
+            Map(_k, map3) {
+              map3.flow = true;
+            }
+          });
+          pair.value.flow = true;
+        }
+      }
+    });
+    const body = doc.toString({ lineWidth: 0, flowCollectionPadding: true });
+    return `# yaml-language-server: $schema=../plan.schema.json
+${body}`;
+  }
+};
+function describe3(step) {
+  switch (step.kind) {
+    case "click":
+      return `Click ${step.label}`;
+    case "fill":
+      return step.secret ? `Type the ${step.secret} secret in ${step.label}` : `Type "${step.value ?? ""}" in ${step.label}`;
+    case "select":
+      return `Choose "${step.value ?? ""}" in ${step.label}`;
+    case "check":
+      return `Check ${step.label}`;
+    case "uncheck":
+      return `Uncheck ${step.label}`;
+    case "press":
+      return `Press ${step.value ?? "Enter"} in ${step.label}`;
+    case "upload":
+      return `Upload ${(step.files ?? []).join(", ") || "a file"} to ${step.label}`;
+    case "navigate":
+      return `Go to ${step.value}`;
+  }
+}
+function actionOf(step) {
+  if (step.kind === "navigate") return { navigate: step.value };
+  const target2 = { ...step.target };
+  if (step.kind === "fill")
+    target2.value = step.secret ? `{{secret:${step.secret}}}` : step.value ?? "";
+  if (step.kind === "select" || step.kind === "press") target2.value = step.value ?? "";
+  if (step.kind === "upload") target2.files = (step.files ?? []).map((f) => `fixtures/${f}`);
+  return { [step.kind]: target2 };
+}
+
+// packages/server/src/tools/share-tools.ts
+function slug4(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "run";
+}
+function openRun(ctx, projectDir, runId) {
+  if (!runId && ctx.run?.run.status === "running") {
+    throw new ToolError(
+      "A run is still going. Call run_finish first, or give a runId.",
+      "run_active"
+    );
+  }
+  const id = runId ?? latestRunId(projectDir, { finishedOnly: true });
+  if (!id) throw new ToolError("There are no finished runs yet. Run a plan first.", "no_run");
+  return RunStore.open(projectDir, id);
+}
+var stopNavigationWatch;
+function draftReply(recorder, how) {
+  const lines = [
+    `status: stopped`,
+    `${how} Walkthrough recorded ${recorder.steps.length} step(s).`
+  ];
+  if (recorder.secrets.length) {
+    lines.push(
+      `Secrets in the draft: ${recorder.secrets.join(", ")}. The developer adds them to .walkthrough/.env. Walkthrough did not record their values.`
+    );
+  }
+  if (recorder.steps.some((s) => s.kind === "upload")) {
+    lines.push(
+      "Upload steps point to fixtures/<file name>. Put the files there, or fix the paths."
+    );
+  }
+  lines.push(
+    'Show the draft to the developer. Ask for a plan name and any changes, such as an "expect" for more steps. Then save it with the plan tool (action "save").',
+    "The draft has text from the web page, such as button names:",
+    untrusted(recorder.toYaml())
+  );
+  return lines.join("\n");
+}
+function registerShareTools(server, ctx) {
+  server.registerTool(
+    "record",
+    {
+      title: "Record a flow",
+      description: [
+        "Record the developer while they use the app, and turn it into a draft test plan.",
+        'Call it with action "start", then "wait". "wait" returns when the developer clicks Stop recording in the panel.',
+        "Password fields become {{secret:NAME}}. Walkthrough never records their values."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["start", "wait", "stop", "status"]),
+        name: external_exports.string().optional().describe('For start: a name for the plan, like "Log in and check out".')
+      }
+    },
+    ({ action: action2, name }, extra) => runTool(ctx, "record", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const panel = driver.panel;
+      const config3 = await ctx.config();
+      if (!panel || !await panel.waitReady(tab.id)) {
+        throw new ToolError(
+          "Recording needs the panel in a visible browser. Set headless: false and panel: true in .walkthrough/config.yaml.",
+          "no_panel"
+        );
+      }
+      if (action2 === "start") {
+        if (panel.recording)
+          throw new ToolError(
+            'Recording is already on. Call record with action "wait".',
+            "recording"
+          );
+        if (panel.pending)
+          throw new ToolError(
+            "A question is waiting in the panel. Get the answer first.",
+            "busy"
+          );
+        const recorder2 = new Recorder(name ?? "Recorded flow", config3.baseUrl);
+        const onNavigated = ({ url: url2 }) => recorder2.addNavigation(url2);
+        driver.emitter.on("navigated", onNavigated);
+        stopNavigationWatch = () => driver.emitter.off("navigated", onNavigated);
+        await panel.startRecording(recorder2);
+        return [
+          'Recording is on. The panel in the browser shows "Recording".',
+          "Tell the developer:",
+          "- Use the app as usual. Walkthrough records each click and each field that you type in.",
+          '- Click "Add expectation" to say what the page should show at that point.',
+          '- Click "Mark last field as secret" after you type a private value that is not a password.',
+          '- Click "Stop recording" when you are done.',
+          'Then call record with action "wait". Do not use other browser tools while recording is on.'
+        ].join("\n");
+      }
+      const recorder = panel.recording;
+      if (!recorder)
+        throw new ToolError(
+          'Recording is off. Call record with action "start".',
+          "not_recording"
+        );
+      if (action2 === "status") {
+        return `Recording is on. ${recorder.steps.length} step(s) so far.${recorder.lastLabel ? ` Last: ${recorder.lastLabel}` : ""}`;
+      }
+      if (action2 === "wait") {
+        const timeoutSec = config3.askTimeoutSec ?? (ctx.clientName() === "claude-code" ? 300 : 50);
+        const outcome = await panel.waitForRecordStop(timeoutSec * 1e3, extra.signal);
+        if (outcome === "timeout") {
+          return `status: waiting
+Recording is still on, with ${recorder.steps.length} step(s) so far. Call record with action "wait" again.`;
+        }
+        if (outcome === "canceled") {
+          return 'status: canceled\nRecording is still on. Call record with action "wait" or "stop".';
+        }
+      }
+      stopNavigationWatch?.();
+      stopNavigationWatch = void 0;
+      await panel.stopRecording();
+      return draftReply(
+        recorder,
+        action2 === "stop" ? "You stopped the recording." : "The developer stopped the recording."
+      );
+    })
+  );
+  server.registerTool(
+    "export_script",
+    {
+      title: "Export a script",
+      description: 'Turn a finished run into a plain Puppeteer script in .walkthrough/exports. It repeats the actions and checks the quoted text in each "expect". It can run in CI without an agent.',
+      inputSchema: {
+        runId: external_exports.string().optional().describe("The run folder name. The default is the newest finished run."),
+        installedChrome: external_exports.boolean().optional().describe(
+          "Use puppeteer-core and the installed Chrome, not the Chrome that puppeteer downloads."
+        )
+      }
+    },
+    ({ runId, installedChrome }) => runTool(ctx, "export_script", async () => {
+      const { projectDir } = await ctx.config();
+      const store = openRun(ctx, projectDir, runId);
+      const name = slug4(
+        store.run.planFile ? (store.run.planFile.split("/").pop() ?? "").replace(/\.ya?ml$/, "") : store.run.name
+      );
+      const dir = join22(projectDir, ".walkthrough", "exports");
+      mkdirSync7(dir, { recursive: true });
+      const file2 = join22(dir, `${name}.mjs`);
+      const existed = existsSync14(file2);
+      const result = exportScript(store.run, { installedChrome });
+      const rel = relative10(projectDir, file2);
+      writeFileSync8(file2, result.code.replace("<this file>", rel));
+      const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
+      return [
+        `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
+        `It has ${result.actions} action(s) and ${result.checks} text check(s).${result.handChecks ? ` ${result.handChecks} expectation(s) have no quoted text, so they are comments to check by hand.` : ""}`,
+        ...result.missingSelectors.length ? [
+          `These actions need a fix by hand, because they have no stable selector: ${result.missingSelectors.join("; ")}.`
+        ] : [],
+        ...result.failedSteps.length ? [
+          `These steps failed in the run, so the script fails there until the bug is fixed: ${result.failedSteps.join("; ")}.`
+        ] : [],
+        ...result.secrets.length ? [`Set these environment variables before a run: ${result.secrets.join(", ")}.`] : [],
+        `To run it: npm install --save-dev ${pkg}, then node ${rel}`
+      ].join("\n");
+    })
+  );
+  server.registerTool(
+    "issue_draft",
+    {
+      title: "Draft a GitHub issue",
+      description: "Write a GitHub issue title and body from a bug or a failed step of a run. It saves the body to a file for gh issue create --web, and lists the screenshots to add by hand. It does not create the issue.",
+      inputSchema: {
+        runId: external_exports.string().optional().describe("The run folder name. The default is the newest finished run."),
+        stepId: external_exports.string().optional().describe("The step id. The default is the first bug or failed step.")
+      }
+    },
+    ({ runId, stepId }) => runTool(ctx, "issue_draft", async () => {
+      const { projectDir } = await ctx.config();
+      const store = openRun(ctx, projectDir, runId);
+      const problems = store.run.steps.filter(isProblem);
+      const step = stepId ? store.run.steps.find((s) => s.id === stepId) : problems[0];
+      if (!step) {
+        throw new ToolError(
+          stepId ? `The run has no step "${stepId}".` : "The run has no bug or failed step.",
+          "no_step"
+        );
+      }
+      const reports = existsSync14(join22(store.dir, "report.md")) ? { markdown: relative10(projectDir, join22(store.dir, "report.md")) } : writeReports(store);
+      const screenshots = step.screenshots.map((s) => relative10(projectDir, join22(store.dir, s)));
+      const draft = draftIssue(store.run, step, { reportPath: reports.markdown, screenshots });
+      const bodyFile = join22(store.dir, `issue-${step.id}.md`);
+      writeFileSync8(bodyFile, draft.body);
+      return [
+        `Title: ${draft.title}`,
+        `Body file: ${relative10(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
+        `Screenshots to drag into the issue:${screenshots.length ? `
+${screenshots.map((s) => `- ${join22(projectDir, s)}`).join("\n")}` : " none"}`,
+        "Show the title and the body to the developer. Ask before you open the issue page.",
+        "Body:",
+        untrusted(draft.body)
+      ].join("\n");
+    })
+  );
+}
+
 // packages/server/src/server.ts
 function createServer() {
   const server = new McpServer({ name: "uiwalk", version: VERSION });
@@ -97942,6 +98867,7 @@ function createServer() {
   registerRunTools(server, ctx);
   registerProjectTools(server, ctx);
   registerQualityTools(server, ctx);
+  registerShareTools(server, ctx);
   onShutdown(() => {
     if (ctx.run?.run.status !== "running") return;
     try {

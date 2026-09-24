@@ -7,7 +7,7 @@ export interface PanelOptions {
   css: string;
 }
 
-export function panelMain(opts: PanelOptions): void {
+export function panelMain(opts: PanelOptions, candidates: (el: Element) => string[]): void {
   if (window !== window.top) return;
   const w = window as unknown as Record<string, unknown>;
   if (w.__uiwalkPanel) return;
@@ -93,12 +93,28 @@ export function panelMain(opts: PanelOptions): void {
   buttons.append(passButton, bugButton, skipButton, stopButton);
   const questionBox = el('div', 'question');
   questionBox.append(title, didLabel, didText, expectLabel, expectText, notes, error, buttons);
-  body.append(status, questionBox);
+
+  // The recording view.
+  const recordBox = el('div', 'recording');
+  const recordText = el('p', 'text');
+  const expectInput = el('textarea', 'notes rec-notes');
+  expectInput.placeholder = 'What should the page show now?';
+  expectInput.rows = 2;
+  const recordButtons = el('div', 'buttons record-buttons');
+  const expectButton = el('button', 'rec-expect', 'Add expectation');
+  const saveExpectButton = el('button', 'rec-save', 'Save expectation');
+  const secretButton = el('button', 'rec-secret', 'Mark last field as secret');
+  const stopRecordButton = el('button', 'rec-stop', 'Stop recording');
+  recordButtons.append(expectButton, secretButton, stopRecordButton);
+  recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
+  body.append(status, questionBox, recordBox);
   card.append(header, body);
   root.append(pulse, pulseLabel, annotation, card);
 
   // ---------- State ----------
   let question: Question | null = null;
+  let recording: { count: number; last: string } | null = null;
+  let addingExpect = false;
   let corner: Corner = 'bottom-right';
   let collapsed = false;
   let pulseTimer: number | undefined;
@@ -112,6 +128,19 @@ export function panelMain(opts: PanelOptions): void {
   const render = (): void => {
     card.classList.toggle('collapsed', collapsed);
     card.classList.toggle('asking', Boolean(question));
+    card.classList.toggle('recording-on', Boolean(recording));
+    recordBox.hidden = !recording;
+    expectInput.hidden = !addingExpect;
+    saveExpectButton.hidden = !addingExpect;
+    if (recording) {
+      stepBadge.textContent = '\u25CF Recording';
+      recordText.textContent = recording.count
+        ? `${recording.count} step${recording.count === 1 ? '' : 's'} so far. Last: ${recording.last}`
+        : 'Use the app as usual. Walkthrough records each click and each field that you type in.';
+      questionBox.hidden = true;
+      status.hidden = true;
+      return;
+    }
     collapseButton.textContent = collapsed ? '+' : '\u2212';
     collapseButton.title = collapsed ? 'Expand' : 'Collapse';
     if (question) {
@@ -160,6 +189,21 @@ export function panelMain(opts: PanelOptions): void {
     );
     render();
   };
+
+  onTrusted(expectButton, () => {
+    addingExpect = true;
+    render();
+    expectInput.focus();
+  });
+  onTrusted(saveExpectButton, () => {
+    const text = expectInput.value.trim();
+    if (text) send({ type: 'rec-expect', text });
+    expectInput.value = '';
+    addingExpect = false;
+    render();
+  });
+  onTrusted(secretButton, () => send({ type: 'rec-secret' }));
+  onTrusted(stopRecordButton, () => send({ type: 'rec-stop' }));
 
   onTrusted(passButton, () => answer('pass'));
   onTrusted(bugButton, () => answer('bug'));
@@ -253,6 +297,8 @@ export function panelMain(opts: PanelOptions): void {
           error.textContent = '';
         }
         question = next;
+        recording = (msg.recording as { count: number; last: string } | null) ?? null;
+        if (!recording) addingExpect = false;
         setStatus((msg.status as string) ?? 'The agent is working.');
         if (msg.corner) corner = msg.corner as Corner;
         placeCard();
@@ -285,6 +331,172 @@ export function panelMain(opts: PanelOptions): void {
       }
     }
   };
+
+  // ---------- Recorder ----------
+  // Records the developer's own clicks and typing while recording is on.
+  const inPanel = (target: EventTarget | null): boolean =>
+    target === host || host.contains(target as Node);
+
+  const roleOf = (node: Element): string | undefined => {
+    const explicit = node.getAttribute('role');
+    if (explicit) return explicit;
+    const tag = node.tagName.toLowerCase();
+    const type = (node.getAttribute('type') ?? 'text').toLowerCase();
+    if (tag === 'a' && node.hasAttribute('href')) return 'link';
+    if (tag === 'button') return 'button';
+    if (tag === 'select') return 'combobox';
+    if (tag === 'textarea') return 'textbox';
+    if (tag === 'input') {
+      if (['submit', 'button', 'reset', 'image'].includes(type)) return 'button';
+      if (type === 'checkbox') return 'checkbox';
+      if (type === 'radio') return 'radio';
+      if (['text', 'email', 'password', 'search', 'tel', 'url', 'number'].includes(type))
+        return 'textbox';
+    }
+    return undefined;
+  };
+
+  // The name a person sees for the element, like its label or its text.
+  const nameOf = (node: Element): string => {
+    const html = node as HTMLInputElement;
+    const aria = node.getAttribute('aria-label');
+    if (aria) return aria.trim();
+    const labelledBy = node.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      const text = labelledBy
+        .split(/\s+/)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .trim();
+      if (text) return text;
+    }
+    if (html.labels && html.labels.length > 0) {
+      const label = html.labels[0] as HTMLLabelElement;
+      // The label text, without the text of the field inside it.
+      const copy = label.cloneNode(true) as HTMLElement;
+      for (const inner of Array.from(copy.querySelectorAll('input, select, textarea')))
+        inner.remove();
+      const text = copy.textContent?.replace(/\s+/g, ' ').trim();
+      if (text) return text;
+    }
+    const text = (node as HTMLElement).innerText?.replace(/\s+/g, ' ').trim();
+    if (text && ['a', 'button'].includes(node.tagName.toLowerCase())) return text;
+    return (
+      html.placeholder ||
+      node.getAttribute('title') ||
+      node.getAttribute('alt') ||
+      html.value ||
+      text ||
+      ''
+    ).trim();
+  };
+
+  // A target for the plan: role and name when they are unique, or a CSS selector.
+  const targetOf = (node: Element): Record<string, string> => {
+    const role = roleOf(node);
+    const name = nameOf(node).slice(0, 80);
+    const all = candidates(node);
+    const testId = all.find((c) => c.startsWith('[data-'));
+    if (testId && document.querySelectorAll(testId).length === 1) return { selector: testId };
+    if (role && name && !/[()[\]"]/.test(name)) {
+      const same = Array.from(
+        document.querySelectorAll('a, button, input, select, textarea, [role]'),
+      ).filter((other) => roleOf(other) === role && nameOf(other).slice(0, 80) === name);
+      if (same.length === 1) return { role, name };
+    }
+    for (const selector of all) {
+      if (selector.includes('::-p-')) continue;
+      try {
+        if (document.querySelectorAll(selector).length === 1) return { selector };
+      } catch {}
+    }
+    return { selector: all[all.length - 1] ?? node.tagName.toLowerCase() };
+  };
+
+  const label = (node: Element): string => {
+    const name = nameOf(node);
+    return name ? `"${name.slice(0, 60)}"` : node.tagName.toLowerCase();
+  };
+
+  const record = (kind: string, node: Element, extra: Record<string, unknown> = {}): void => {
+    if (!recording) return;
+    const target = targetOf(node);
+    send({ type: 'rec', kind, target, label: label(node), key: JSON.stringify(target), ...extra });
+  };
+
+  const isTextField = (node: Element): boolean => {
+    const tag = node.tagName.toLowerCase();
+    return (
+      tag === 'textarea' ||
+      (tag === 'input' && roleOf(node) === 'textbox') ||
+      (node as HTMLElement).isContentEditable
+    );
+  };
+
+  const fieldValue = (node: Element): Record<string, unknown> => {
+    const input = node as HTMLInputElement;
+    // A password never leaves the page. The plan gets a secret instead.
+    if (input.type === 'password')
+      return { secret: true, fieldName: input.name || input.id || 'password' };
+    return {
+      value: (node as HTMLElement).isContentEditable
+        ? (node as HTMLElement).innerText
+        : input.value,
+    };
+  };
+
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target)) return;
+      const start = event.target as Element | null;
+      const node = start?.closest?.(
+        'a[href], button, input, select, textarea, summary, label, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [onclick]',
+      );
+      if (!node) return;
+      const tag = node.tagName.toLowerCase();
+      // Fields, lists, and check boxes are recorded when their value changes.
+      if (tag === 'select' || tag === 'textarea' || tag === 'label') return;
+      if (tag === 'input' && roleOf(node) !== 'button') return;
+      record('click', node);
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'change',
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target)) return;
+      const node = event.target as HTMLInputElement;
+      const tag = node.tagName.toLowerCase();
+      if (tag === 'select') {
+        const option = (node as unknown as HTMLSelectElement).selectedOptions[0];
+        record('select', node, { value: option?.label.trim() || node.value });
+      } else if (node.type === 'checkbox') {
+        record(node.checked ? 'check' : 'uncheck', node);
+      } else if (node.type === 'radio') {
+        record('check', node);
+      } else if (node.type === 'file') {
+        record('upload', node, { files: Array.from(node.files ?? []).map((f) => f.name) });
+      } else if (isTextField(node)) {
+        record('fill', node, fieldValue(node));
+      }
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      if (!recording || !event.isTrusted || inPanel(event.target) || event.key !== 'Enter') return;
+      const node = event.target as Element;
+      if (!isTextField(node) || node.tagName.toLowerCase() === 'textarea') return;
+      // Save the text first. The change event may come after the Enter key.
+      record('fill', node, fieldValue(node));
+      record('press', node, { value: 'Enter' });
+    },
+    true,
+  );
 
   w.__uiwalkPanel = { receive };
 

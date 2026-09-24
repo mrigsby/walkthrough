@@ -6,6 +6,10 @@ This file lists all notable changes to the project.
 
 ### Added
 
+- Record mode: the `record` tool and `/walkthrough:record` write down your own clicks and typing in the browser, and turn them into a draft plan. Password fields become `{{secret:NAME}}`, and their values never leave the page. The panel can add an expectation or mark the last field as secret.
+- The `export_script` tool and `/walkthrough:export` turn a finished run into a plain Puppeteer script. It checks the quoted text and amounts in each `expect`, and it can run in CI.
+- The `issue_draft` tool and `/walkthrough:bug` turn a bug into a GitHub issue draft. You see the draft first, and `gh issue create --web` opens the issue page for you to finish.
+- Page loads from the `navigate` tool are now part of the run. Steps to reproduce show them, and exported scripts repeat them.
 - The `session` tool saves a login (cookies and storage) for the sites under test. `browser_open` and plans can start with it. Saved logins stay on this computer, and only your user account can read them.
 - The `emulate` tool tests like a phone, a tablet, or another screen, in light or dark mode, and on slow or no network. Plans can set `device`, `colorScheme`, and `network`.
 - The `visual_check` tool compares the page, or one element, with a baseline screenshot and saves a diff image. Masks hide parts that change on every load.

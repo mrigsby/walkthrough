@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { log } from '../log.js';
+import type { Recorder } from '../record/recorder.js';
 import { PanelBridge, type PanelMessage } from './bridge.js';
 
 export type AnswerResult = 'pass' | 'bug' | 'skip' | 'stop';
@@ -36,6 +37,8 @@ export interface Rect {
   height: number;
 }
 
+export type RecordOutcome = 'stopped' | 'timeout' | 'canceled' | 'browser_closed';
+
 const WORKING = 'The agent is working.';
 const RESULTS: AnswerResult[] = ['pass', 'bug', 'skip', 'stop'];
 
@@ -47,6 +50,9 @@ export class DeveloperPanel {
   private waiter?: (outcome: WaitOutcome) => void;
   private status = WORKING;
   private corner = 'bottom-right';
+  private recorder?: Recorder;
+  private recordStopped = false;
+  private recordWaiter?: (outcome: RecordOutcome) => void;
 
   async attach(page: Page, tabId: string): Promise<void> {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
@@ -64,6 +70,7 @@ export class DeveloperPanel {
   onBrowserClosed(): void {
     this.question = undefined;
     this.finish({ kind: 'browser_closed' });
+    this.finishRecording('browser_closed');
   }
 
   get pending(): Question | undefined {
@@ -86,6 +93,9 @@ export class DeveloperPanel {
       type: 'state',
       status: this.status,
       corner: this.corner,
+      recording: this.recorder
+        ? { count: this.recorder.steps.length, last: this.recorder.lastLabel }
+        : null,
       question: q
         ? {
             id: q.id,
@@ -112,6 +122,11 @@ export class DeveloperPanel {
     }
     if (msg.type === 'moved' && typeof msg.corner === 'string') {
       this.corner = msg.corner;
+      return;
+    }
+    if (msg.type.startsWith('rec') && this.recorder) {
+      this.onRecordMessage(msg);
+      await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
       return;
     }
     if (msg.type === 'answer') {
@@ -194,6 +209,63 @@ export class DeveloperPanel {
 
   async annotate(tabId: string, rect: Rect | null): Promise<void> {
     await this.bridges.get(tabId)?.send({ type: 'annotate', rect });
+  }
+
+  private onRecordMessage(msg: PanelMessage): void {
+    const recorder = this.recorder;
+    if (!recorder) return;
+    if (msg.type === 'rec') {
+      recorder.add(msg as unknown as Parameters<Recorder['add']>[0]);
+    } else if (msg.type === 'rec-expect' && typeof msg.text === 'string') {
+      recorder.addExpectation(msg.text.slice(0, 500));
+    } else if (msg.type === 'rec-secret') {
+      recorder.markLastSecret();
+    } else if (msg.type === 'rec-stop') {
+      this.recordStopped = true;
+      this.finishRecording('stopped');
+    }
+  }
+
+  private finishRecording(outcome: RecordOutcome): void {
+    const resolve = this.recordWaiter;
+    this.recordWaiter = undefined;
+    resolve?.(outcome);
+  }
+
+  get recording(): Recorder | undefined {
+    return this.recorder;
+  }
+
+  // Turns recording on in every tab.
+  async startRecording(recorder: Recorder): Promise<void> {
+    this.recorder = recorder;
+    this.recordStopped = false;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
+  }
+
+  // Waits until the developer clicks Stop recording, or a timeout, or a cancel.
+  waitForRecordStop(timeoutMs: number, signal?: AbortSignal): Promise<RecordOutcome> {
+    if (this.recordStopped) return Promise.resolve('stopped');
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => this.finishRecording('timeout'), timeoutMs);
+      const onAbort = () => this.finishRecording('canceled');
+      signal?.addEventListener('abort', onAbort, { once: true });
+      this.recordWaiter = (outcome) => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', onAbort);
+        resolve(outcome);
+      };
+    });
+  }
+
+  // Turns recording off and returns what was recorded.
+  async stopRecording(): Promise<Recorder | undefined> {
+    const recorder = this.recorder;
+    this.recorder = undefined;
+    this.recordStopped = false;
+    this.finishRecording('stopped');
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
+    return recorder;
   }
 
   // Shows the same state again, for example after the active tab changes.

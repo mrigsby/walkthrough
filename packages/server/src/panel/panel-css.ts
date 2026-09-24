@@ -53,6 +53,14 @@ export const PANEL_CSS = `
 .pulse-label { background: #f59e0b; color: #111827; }
 @keyframes uiwalk-pulse { from { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); } to { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } }
 
+.card.recording-on { border: 2px solid #dc2626; }
+.card.recording-on .step { color: #dc2626; font-weight: 700; }
+.recording .text { margin: 0 0 8px; }
+.record-buttons { grid-template-columns: 1fr; }
+.recording .rec-save { width: 100%; margin: 6px 0; padding: 6px 0; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--btn); color: var(--fg); font-weight: 600; cursor: pointer; }
+.buttons .rec-stop { background: #dc2626; border-color: #dc2626; color: #ffffff; }
+
 .annotation { position: absolute; z-index: 2147483646; display: none; pointer-events: none;
   border: 3px solid #dc2626; border-radius: 4px; }
 `;

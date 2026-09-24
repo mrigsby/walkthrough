@@ -2,7 +2,7 @@
 
 Walkthrough lets an AI agent test your web app in a visible browser, one step at a time. After each step, the agent tells you what it did and what you should see. You confirm the step or report a bug. When you report a bug, Walkthrough saves screenshots, console errors, and failed requests.
 
-> Status: early development. The browser tools, the confirm panel, test plans, reports, slash commands, saved logins, device emulation, visual checks, and accessibility audits work. See the [plan format](docs/plan-format.md). See the [changelog](CHANGELOG.md).
+> Status: early development. All the planned features work: the browser tools, the confirm panel, test plans and reports, slash commands, saved logins, devices, visual checks, accessibility audits, record mode, script export, and GitHub issue drafts. See the [plan format](docs/plan-format.md). See the [changelog](CHANGELOG.md).
 
 ## Parts
 
@@ -38,6 +38,9 @@ Walkthrough is not published yet. To try it from a copy of this repo:
 | `/walkthrough:run [plan] [mode]` | Runs a test plan in the browser. |
 | `/walkthrough:plan <what to test>` | Writes a new test plan. |
 | `/walkthrough:report [run]` | Shows the result of a run and writes its reports again. |
+| `/walkthrough:record [name]` | Records you as you use the app, and drafts a plan from it. |
+| `/walkthrough:export [run]` | Turns a finished run into a Puppeteer script for CI. |
+| `/walkthrough:bug [run] [step]` | Drafts a GitHub issue for a bug and opens the issue page for you. |
 | `/walkthrough:doctor` | Checks the setup and explains how to fix problems. |
 
 ## Work on Walkthrough

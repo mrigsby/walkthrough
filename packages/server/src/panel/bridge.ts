@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { CDPSession, Page, Protocol } from 'puppeteer-core';
 import { log } from '../log.js';
+import { pageCandidates } from '../page/selectors.js';
 import { PANEL_CSS } from './panel-css.js';
 import { panelMain } from './panel-script.js';
 
@@ -9,7 +10,8 @@ const TOKEN = randomBytes(6).toString('hex');
 export const WORLD_NAME = `uiwalk-${TOKEN}`;
 const BINDING = `__uiwalk_${TOKEN}`;
 
-const SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })});`;
+// The selector helper goes in too, so the recorder picks targets like the rest of Walkthrough.
+const SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })}, ${pageCandidates.toString()});`;
 
 export type PanelMessage = Record<string, unknown> & { type: string };
 
