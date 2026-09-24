@@ -5,7 +5,7 @@ All tools come from the `uiwalk` MCP server.
 ## Browser
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `browser_open` | Open Chrome at the start page or a `url`. With `attach`, connect to a Chrome that is already running. |
 | `browser_close` | Close the test browser, or disconnect from the developer's Chrome. |
 | `navigate` | Go to a `url` or a path, or go `back`, `forward`, or `reload`. |
@@ -15,7 +15,7 @@ All tools come from the `uiwalk` MCP server.
 ## Page
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `snapshot` | Get an outline of the page with refs, such as `e12`. With `ref`, outline one part. |
 | `act` | Do one action on a ref or selector: click, dblclick, hover, fill, select, check, uncheck, press, scroll, upload. |
 | `wait_for` | Wait for `text`, `textGone`, a `selector`, a `url`, `networkIdle`, or `ms`. |
@@ -27,7 +27,7 @@ All tools come from the `uiwalk` MCP server.
 ## More checks
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `emulate` | Set the screen (`device`), `colorScheme`, and `network` for all tabs. |
 | `session` | `save`, `list`, or `delete` saved logins. |
 | `visual_check` | Compare the page or one element with a baseline screenshot. |
@@ -36,7 +36,7 @@ All tools come from the `uiwalk` MCP server.
 ## Developer and runs
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `ask_developer` | Show a step in the browser panel and wait for Pass, Bug, Skip, or Stop. |
 | `plan` | `list`, `show`, `validate`, or `save` test plans. |
 | `run_start` | Start a run from a plan, or an ad hoc run with a `name`. |
@@ -47,7 +47,7 @@ All tools come from the `uiwalk` MCP server.
 ## Record and share
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `record` | `start` recording the developer, `wait` for Stop, `stop`, or get the `status`. Returns a YAML plan draft. |
 | `export_script` | Write a Puppeteer script from a finished run. |
 | `issue_draft` | Write a GitHub issue title and body file from a bug step. |
@@ -55,6 +55,6 @@ All tools come from the `uiwalk` MCP server.
 ## Setup
 
 | Tool | Use it to |
-|---|---|
+| --- | --- |
 | `init_project` | Make the `.walkthrough` folder with settings and a sample plan. |
 | `doctor` | Check Node, Chrome, the project folder, settings, and secrets. |

@@ -24,7 +24,7 @@ Then open http://localhost:4321. Log in with username `demo` and password `demo1
 ## Planted bugs
 
 | Bug | Where | What you see |
-|---|---|---|
+| --- | --- | --- |
 | Wrong total | Cart | With two different items, the total counts the first item twice. Mug ($10) + T-shirt ($20) shows $40.00, not $30.00. |
 | Console error | Cart, "Apply coupon" | Nothing happens. The DevTools console shows a TypeError. |
 | Server error | Shop, "Check stock" | The request returns HTTP 500 and the page says it could not check stock. |

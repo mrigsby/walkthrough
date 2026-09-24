@@ -25,7 +25,7 @@ steps:
 ## Plan keys
 
 | Key | Required | What it does |
-|---|---|---|
+| --- | --- | --- |
 | `name` | Yes | The name of the test. Reports use it. |
 | `description` | No | A short note about the test. |
 | `baseUrl` | No | The start page. It replaces `baseUrl` from `config.yaml` for this plan. |
@@ -39,7 +39,7 @@ steps:
 ## Step keys
 
 | Key | Required | What it does |
-|---|---|---|
+| --- | --- | --- |
 | `do` | Yes | What to do, in plain words. |
 | `id` | No | A short id, like `open-cart`. Use lowercase letters, numbers, and dashes. Reports use it. |
 | `expect` | No | What you should see after the step. Make it specific, such as "The total is $10.00". |
@@ -47,6 +47,11 @@ steps:
 | `action` | No | An exact action, so the agent does not have to guess. See below. |
 | `screenshot` | No | Save a screenshot after the step. |
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
+
+### Write a good `expect`
+
+- Say what a person can check in a few seconds: exact text, numbers, or what is visible.
+- Put exact text in quotes, such as `The page says "Order placed"`. An [exported script](sharing.md#run-tests-in-ci) checks quoted text and amounts such as `$30.00`. Other words become a comment to check by hand.
 
 ## Exact actions
 
@@ -64,7 +69,7 @@ For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthro
 ## Run modes
 
 | Mode | Who checks each step |
-|---|---|
+| --- | --- |
 | `interactive` | You confirm every step in the panel. |
 | `checkpoints` | You confirm the steps with `checkpoint: true`. The agent checks the rest. |
 | `autonomous` | The agent checks every step. It saves a screenshot when a step fails. |

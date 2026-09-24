@@ -2,10 +2,15 @@
 
 This file lists all notable changes to the project.
 
-## Unreleased
+## 0.1.0 (2026-09-24)
+
+The first version.
 
 ### Added
 
+- CI on GitHub Actions: lint, type check, tests on Linux and macOS, and checks that the bundle and the npm package are up to date.
+- The `uiwalk` npm package, with the same bundle as the plugin and no other dependencies. It is not published yet.
+- Documentation: a new README, and guides for getting started, settings, tools, safety, sharing with a team and other MCP clients, and troubleshooting.
 - Record mode: the `record` tool and `/walkthrough:record` write down your own clicks and typing in the browser, and turn them into a draft plan. Password fields become `{{secret:NAME}}`, and their values never leave the page. The panel can add an expectation or mark the last field as secret.
 - The `export_script` tool and `/walkthrough:export` turn a finished run into a plain Puppeteer script. It checks the quoted text and amounts in each `expect`, and it can run in CI.
 - The `issue_draft` tool and `/walkthrough:bug` turn a bug into a GitHub issue draft. You see the draft first, and `gh issue create --web` opens the issue page for you to finish.
@@ -44,6 +49,7 @@ This file lists all notable changes to the project.
 
 ### Changed
 
+- The bundle now includes every package it needs. Before, an installed plugin could not start, because Puppeteer loads `chromium-bidi` and the bundle did not include it. A test now runs the plugin from a folder outside the repo.
 - The planted coupon field problem in the demo shop is now a real missing label. A placeholder counts as a label for the accessibility checker.
 - Tests start each demo shop and Chrome on a free port. Before, two test files could share a demo shop, and one could stop it in the middle of the other.
 - The demo shop no longer logs a 401 error for a visitor who is not logged in.
