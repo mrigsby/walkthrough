@@ -31012,7 +31012,7 @@ var init_BrowsingContextImpl = __esm({
           this.#lifecycle.load.reject(new UnknownErrorException("navigation canceled"));
         }
       }
-      async navigate(url2, wait) {
+      async navigate(url2, wait2) {
         try {
           new URL(url2);
         } catch {
@@ -31033,7 +31033,7 @@ var init_BrowsingContextImpl = __esm({
         })();
         const result = await Promise.race([
           // No `loaderId` means same-document navigation.
-          this.#waitNavigation(wait, cdpNavigatePromise, navigationState),
+          this.#waitNavigation(wait2, cdpNavigatePromise, navigationState),
           // Throw an error if the navigation is canceled.
           navigationState.finished
         ]);
@@ -31052,27 +31052,27 @@ var init_BrowsingContextImpl = __esm({
           url: navigationState.url
         };
       }
-      async #waitNavigation(wait, cdpCommandPromise, navigationState) {
+      async #waitNavigation(wait2, cdpCommandPromise, navigationState) {
         await Promise.all([navigationState.committed, cdpCommandPromise]);
-        if (wait === "none") {
+        if (wait2 === "none") {
           return;
         }
         if (navigationState.isFragmentNavigation === true) {
           await navigationState.finished;
           return;
         }
-        if (wait === "interactive") {
+        if (wait2 === "interactive") {
           await this.#lifecycle.DOMContentLoaded;
           return;
         }
-        if (wait === "complete") {
+        if (wait2 === "complete") {
           await this.#lifecycle.load;
           return;
         }
-        throw new InvalidArgumentException(`Wait condition ${wait} is not supported`);
+        throw new InvalidArgumentException(`Wait condition ${wait2} is not supported`);
       }
       // TODO: support concurrent navigations analogous to `navigate`.
-      async reload(ignoreCache, wait) {
+      async reload(ignoreCache, wait2) {
         await this.targetUnblockedOrThrow();
         this.#resetLifecycleIfFinished();
         const navigationState = this.#navigationTracker.createPendingNavigation(this.#navigationTracker.url);
@@ -31081,7 +31081,7 @@ var init_BrowsingContextImpl = __esm({
         });
         const result = await Promise.race([
           // No `loaderId` means same-document navigation.
-          this.#waitNavigation(wait, cdpReloadPromise, navigationState),
+          this.#waitNavigation(wait2, cdpReloadPromise, navigationState),
           // Throw an error if the navigation is canceled.
           navigationState.finished
         ]);
@@ -36909,11 +36909,11 @@ var init_BrowsingContext = __esm({
             delta
           });
         }
-        async navigate(url2, wait) {
+        async navigate(url2, wait2) {
           await this.#session.send("browsingContext.navigate", {
             context: this.id,
             url: url2,
-            wait
+            wait: wait2
           });
         }
         async reload(options = {}) {
@@ -106193,13 +106193,13 @@ function panelMain(opts, candidates) {
   };
   if (document.documentElement) start();
   else {
-    const wait = new MutationObserver(() => {
+    const wait2 = new MutationObserver(() => {
       if (document.documentElement) {
-        wait.disconnect();
+        wait2.disconnect();
         start();
       }
     });
-    wait.observe(document, { childList: true });
+    wait2.observe(document, { childList: true });
   }
 }
 
@@ -106621,12 +106621,14 @@ function removeProfile(dir) {
   } catch {
   }
 }
+var wait = (ms) => new Promise((resolve10) => setTimeout(resolve10, ms));
 async function killChrome(browser) {
   const proc = browser.process();
   if (!proc || proc.exitCode !== null) return;
   const exited = new Promise((resolve10) => proc.once("exit", resolve10));
-  proc.kill("SIGKILL");
-  await Promise.race([exited, new Promise((resolve10) => setTimeout(resolve10, 2e3))]);
+  await Promise.race([browser.close().catch(() => void 0), wait(1500)]);
+  if (proc.exitCode === null) proc.kill("SIGKILL");
+  await Promise.race([exited, wait(2e3)]);
 }
 
 // packages/server/src/browser/navigation-guard.ts

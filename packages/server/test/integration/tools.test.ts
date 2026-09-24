@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -278,8 +278,22 @@ describe('uiwalk tools', () => {
   });
 
   it('explains when the developer closes the browser', async () => {
-    // Stop only the Chrome that uses this test's temp folder.
-    execSync(`pkill -KILL -f "${serverTmp}" || true`);
+    // Stop only the Chrome that uses this test's temp folder. No shell here:
+    // on Linux, pkill in a shell also matches the shell's own command line.
+    const pids = (() => {
+      try {
+        return execFileSync('pgrep', ['-f', serverTmp], { encoding: 'utf8' })
+          .split('\n')
+          .filter(Boolean);
+      } catch {
+        return [];
+      }
+    })();
+    for (const pid of pids) {
+      try {
+        process.kill(Number(pid), 'SIGKILL');
+      } catch {}
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const reply = await mcp.call('snapshot');
     expect(reply.isError).toBe(true);

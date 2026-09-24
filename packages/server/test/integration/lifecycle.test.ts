@@ -13,9 +13,11 @@ describe('server shutdown', () => {
     expect(readdirSync(tmp).some((name) => name.startsWith('uiwalk-profile-'))).toBe(true);
 
     await mcp.close();
-    for (let i = 0; i < 50 && readdirSync(tmp).length > 0; i++) {
+    // Our profile folder must be gone. Chrome's own temp files are Chrome's to manage.
+    const ours = () => readdirSync(tmp).filter((name) => name.startsWith('uiwalk-'));
+    for (let i = 0; i < 50 && ours().length > 0; i++) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    expect(readdirSync(tmp)).toEqual([]);
+    expect(ours()).toEqual([]);
   });
 });

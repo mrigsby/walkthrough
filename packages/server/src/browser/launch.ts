@@ -56,11 +56,15 @@ export function removeProfile(dir: string): void {
   } catch {}
 }
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Stops a Chrome we started and waits until it is really gone.
+// First it asks Chrome to close, so Chrome can remove its own temp files.
 export async function killChrome(browser: Browser): Promise<void> {
   const proc = browser.process();
   if (!proc || proc.exitCode !== null) return;
   const exited = new Promise((resolve) => proc.once('exit', resolve));
-  proc.kill('SIGKILL');
-  await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 2000))]);
+  await Promise.race([browser.close().catch(() => undefined), wait(1500)]);
+  if (proc.exitCode === null) proc.kill('SIGKILL');
+  await Promise.race([exited, wait(2000)]);
 }
