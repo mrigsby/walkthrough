@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
+import { customPasses, customViolations } from '../../src/audit/custom-rules.js';
 import { standardTags } from '../../src/audit/standards.js';
 import { areaForTags, CRITERIA, criteriaForTags, criteriaLabel } from '../../src/audit/wcag.js';
 
@@ -58,5 +59,45 @@ describe('axe-core rule data', () => {
     expect(source).toContain('{id:"button-name",impact:"critical"');
     expect(source).toContain('_audit');
     expect(source).toContain('pageLevel');
+  });
+});
+
+describe('custom checks', () => {
+  it('turns keyboard, reflow, and dark mode results into rules', () => {
+    const node = { target: '#x', html: '<input id="x">' };
+    const check = {
+      at: '',
+      url: 'http://localhost/',
+      violations: [],
+      checks: {
+        keyboard: {
+          stops: [],
+          endedBy: 'trap' as const,
+          trap: [node],
+          noVisibleFocus: [],
+          unreachable: [],
+        },
+        reflow: { width: 320, pageWidth: 320, overflow: false, elements: [] },
+        darkMode: { darkOnly: [node], lightOnly: [] },
+      },
+    };
+    expect(customViolations(check).map((v) => [v.id, v.impact, v.helpUrl])).toEqual([
+      [
+        'keyboard-trap',
+        'critical',
+        'https://www.w3.org/WAI/WCAG22/Understanding/no-keyboard-trap.html',
+      ],
+      [
+        'color-contrast-dark',
+        'serious',
+        'https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html',
+      ],
+    ]);
+    expect(customPasses(check).map((p) => p.id)).toEqual([
+      'keyboard-unreachable',
+      'focus-visible',
+      'reflow',
+    ]);
+    expect(customViolations({ at: '', url: '', violations: [] })).toEqual([]);
   });
 });

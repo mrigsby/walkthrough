@@ -10,6 +10,7 @@ import {
 } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
+import type { KeyboardResult } from '../audit/keyboard.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -84,6 +85,7 @@ export interface A11yCheck {
   checks?: {
     darkMode?: { darkOnly: A11yNode[]; lightOnly: A11yNode[]; dark?: A11yViolation };
     reflow?: { width: number; pageWidth: number; overflow: boolean; elements: A11yNode[] };
+    keyboard?: KeyboardResult;
     framesChecked?: string[];
     framesNotChecked?: Array<{ url: string; reason: string }>;
   };

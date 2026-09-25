@@ -127,6 +127,7 @@ const AREA_BY_CATEGORY: Record<string, Area> = {
   'cat.text-alternatives': 'Images and media',
   'cat.time-and-media': 'Images and media',
   'cat.color': 'Color and layout',
+  'cat.layout': 'Color and layout',
   'cat.sensory-and-visual-cues': 'Color and layout',
   'cat.forms': 'Forms and labels',
   'cat.keyboard': 'Keyboard and focus',

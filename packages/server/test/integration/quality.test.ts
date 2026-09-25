@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -242,6 +242,59 @@ describe('accessibility', () => {
     expect(checkout.text).not.toContain('landmark-one-main');
     await withPage((p) => p.evaluate(() => localStorage.removeItem('cart')));
   }, 60_000);
+
+  it('walks the page with Tab and finds keyboard problems', async () => {
+    await mcp.call('navigate', { url: '/' });
+    const shop = await mcp.call('a11y_audit', { checks: ['keyboard'] });
+    expect(shop.isError, shop.text).toBe(false);
+    expect(shop.text).toContain('The walk ended because focus got stuck.');
+    expect(shop.text).toMatch(/Keyboard trap \(WCAG 2\.1\.2 \(A\)\): .*\n {2}- #deals-email/);
+    expect(shop.text).toMatch(/Cannot reach with Tab \(WCAG 2\.1\.1 \(A\)\), 3 element\(s\):/);
+    expect(shop.text).toContain('data-quick');
+    // After the walk, nothing on the page keeps focus.
+    expect(await withPage((p) => p.evaluate(() => document.activeElement?.tagName))).not.toBe(
+      'INPUT',
+    );
+
+    await mcp.call('navigate', { url: '/login' });
+    const login = await mcp.call('a11y_audit', { checks: ['keyboard'] });
+    expect(login.text).toMatch(
+      /No visible focus \(WCAG 2\.4\.7 \(AA\)\), 1 element\(s\):\n {2}- [^\n]*button/,
+    );
+    expect(login.text).not.toContain('Keyboard trap');
+  }, 90_000);
+
+  it('does not call a frame a keyboard trap', async () => {
+    await withPage((p) =>
+      p.evaluate(() => localStorage.setItem('cart', JSON.stringify([{ id: 'mug', qty: 1 }]))),
+    );
+    await mcp.call('navigate', { url: '/checkout' });
+    await mcp.call('wait_for', { text: 'Card details' }).catch(() => undefined);
+    const checkout = await mcp.call('a11y_audit', { checks: ['keyboard'] });
+    expect(checkout.isError, checkout.text).toBe(false);
+    expect(checkout.text).not.toContain('Keyboard trap');
+    expect(checkout.text).not.toContain('focus got stuck');
+    await withPage((p) => p.evaluate(() => localStorage.removeItem('cart')));
+  }, 90_000);
+
+  it('saves a picture of each problem in the run folder', async () => {
+    const start = await mcp.call('run_start', { name: 'Keyboard test', mode: 'autonomous' });
+    const runDir = /Run folder: (\S+)/.exec(start.text)?.[1] as string;
+    await mcp.call('navigate', { url: '/' });
+    const shop = await mcp.call('a11y_audit', {
+      checks: ['keyboard', 'screenshots'],
+      stepId: 'shop',
+    });
+    expect(shop.text).toContain(`Screenshots of the problems (5) are in ${runDir}/a11y.`);
+    const files = readdirSync(join(project, runDir, 'a11y')).sort();
+    expect(files[0]).toBe('001-button-name.jpg');
+    expect(files).toContain('004-keyboard-trap.jpg');
+    await mcp.call('run_step', { stepId: 'shop', status: 'fail' });
+    const finish = await mcp.call('run_finish');
+    const report = /Reports: (\S+) and/.exec(finish.text)?.[1] as string;
+    const md = readFileSync(join(project, report), 'utf8');
+    expect(md).toMatch(/- \*\*Accessibility:\*\* 5 accessibility problem type\(s\)/);
+  }, 90_000);
 
   it('refuses a stepId when no run is going', async () => {
     const result = await mcp.call('a11y_audit', { stepId: 'nope' });

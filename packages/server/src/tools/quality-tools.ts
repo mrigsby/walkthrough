@@ -5,7 +5,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ElementHandle } from 'puppeteer-core';
 import { z } from 'zod';
 import { auditPage, formatAudit, type PageAudit, standardLabel } from '../audit/audit-page.js';
-import { STANDARDS, standardTags } from '../audit/standards.js';
+import { customViolations } from '../audit/custom-rules.js';
+import { CHECKS, STANDARDS, standardTags } from '../audit/standards.js';
 import { describeEmulation, NETWORKS } from '../browser/devices.js';
 import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
@@ -260,10 +261,10 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             'Only these axe-core rule groups, like ["wcag2a", "wcag2aa"]. Wins over standard.',
           ),
         checks: z
-          .array(z.enum(['darkMode', 'reflow', 'frames']))
+          .array(z.enum(CHECKS))
           .optional()
           .describe(
-            'Extra checks: darkMode (contrast in light and dark mode), reflow (sideways scrolling at 320px), frames (frames on allowed sites).',
+            'Extra checks: keyboard (press Tab through the page), darkMode (contrast in light and dark mode), reflow (sideways scrolling at 320px), frames (frames on allowed sites), screenshots (a picture of each problem).',
           ),
         stepId: z
           .string()
@@ -319,6 +320,12 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             tags: tags ?? standardTags(std, config.accessibility.bestPractices),
             checks: checks ?? [],
             stepId,
+            shots: {
+              // In a run, next to the run's screenshots. Otherwise in today's folder.
+              root: dirname(ctx.evidenceDir(config.projectDir)),
+              sub: 'a11y',
+              max: config.accessibility.maxScreenshots,
+            },
           });
         } finally {
           await marked
@@ -331,12 +338,15 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
           store.run.accessibility.push(audit.check);
           store.save();
         }
-        const { violations } = audit.check;
+        const violations = [...audit.check.violations, ...customViolations(audit.check)];
         const count = violations.reduce((n, v) => n + (v.nodeCount ?? v.nodes.length), 0);
         return [
           `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
           ...audit.notes,
           untrusted(formatAudit(audit)),
+          audit.check.shots?.length
+            ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative(config.projectDir, join(dirname(ctx.evidenceDir(config.projectDir)), 'a11y'))}.`
+            : '',
           store ? 'Walkthrough added these results to the run report.' : '',
         ]
           .filter(Boolean)

@@ -4046,15 +4046,15 @@ async function* fastTransposeIteratorHandle(iterator2, size) {
   const env_1 = { stack: [], error: void 0, hasError: false };
   try {
     const array2 = __addDisposableResource(env_1, await iterator2.evaluateHandle(async (iterator3, size2) => {
-      const results = [];
-      while (results.length < size2) {
+      const results2 = [];
+      while (results2.length < size2) {
         const result = await iterator3.next();
         if (result.done) {
           break;
         }
-        results.push(result.value);
+        results2.push(result.value);
       }
-      return results;
+      return results2;
     }, size), false);
     const properties = await array2.getProperties();
     const handles = properties.values();
@@ -4268,10 +4268,10 @@ var init_QueryHandler = __esm({
         if (!this.querySelectorAll) {
           throw new Error("Cannot create default `querySelector`.");
         }
-        return this.querySelector = interpolateFunction(async (node2, selector, PuppeteerUtil) => {
+        return this.querySelector = interpolateFunction(async (node3, selector, PuppeteerUtil) => {
           const querySelectorAll = PLACEHOLDER("querySelectorAll");
-          const results = querySelectorAll(node2, selector, PuppeteerUtil);
-          for await (const result of results) {
+          const results2 = querySelectorAll(node3, selector, PuppeteerUtil);
+          for await (const result of results2) {
             return result;
           }
           return null;
@@ -4286,9 +4286,9 @@ var init_QueryHandler = __esm({
         if (!this.querySelector) {
           throw new Error("Cannot create default `querySelectorAll`.");
         }
-        return this.querySelectorAll = interpolateFunction(async function* (node2, selector, PuppeteerUtil) {
+        return this.querySelectorAll = interpolateFunction(async function* (node3, selector, PuppeteerUtil) {
           const querySelector = PLACEHOLDER("querySelector");
-          const result = await querySelector(node2, selector, PuppeteerUtil);
+          const result = await querySelector(node3, selector, PuppeteerUtil);
           if (result) {
             yield result;
           }
@@ -4364,8 +4364,8 @@ var init_QueryHandler = __esm({
               signal?.throwIfAborted();
               const handle = __addDisposableResource2(env_4, await frame.isolatedRealm().waitForFunction(async (PuppeteerUtil, query, selector2, root, visible2) => {
                 const querySelector = PuppeteerUtil.createFunction(query);
-                const node2 = await querySelector(root ?? document, selector2, PuppeteerUtil);
-                return PuppeteerUtil.checkVisibility(node2, visible2);
+                const node3 = await querySelector(root ?? document, selector2, PuppeteerUtil);
+                return PuppeteerUtil.checkVisibility(node3, visible2);
               }, {
                 polling,
                 root: element,
@@ -4436,8 +4436,8 @@ var init_AriaQueryHandler = __esm({
       return queryOptions;
     };
     ARIAQueryHandler = class extends QueryHandler {
-      static querySelector = async (node2, selector, { ariaQuerySelector }) => {
-        return await ariaQuerySelector(node2, selector);
+      static querySelector = async (node3, selector, { ariaQuerySelector }) => {
+        return await ariaQuerySelector(node3, selector);
       };
       static async *queryAll(element, selector) {
         const { name, role } = parseARIASelector(selector);
@@ -4556,11 +4556,11 @@ var init_CustomQueryHandler = __esm({
         assert2(/^[a-zA-Z]+$/.test(name), `Custom query handler names may only contain [a-zA-Z]`);
         assert2(handler.queryAll || handler.queryOne, `At least one query method must be implemented.`);
         const Handler = class extends QueryHandler {
-          static querySelectorAll = interpolateFunction((node2, selector, PuppeteerUtil) => {
-            return PuppeteerUtil.customQuerySelectors.get(PLACEHOLDER("name")).querySelectorAll(node2, selector);
+          static querySelectorAll = interpolateFunction((node3, selector, PuppeteerUtil) => {
+            return PuppeteerUtil.customQuerySelectors.get(PLACEHOLDER("name")).querySelectorAll(node3, selector);
           }, { name: JSON.stringify(name) });
-          static querySelector = interpolateFunction((node2, selector, PuppeteerUtil) => {
-            return PuppeteerUtil.customQuerySelectors.get(PLACEHOLDER("name")).querySelector(node2, selector);
+          static querySelector = interpolateFunction((node3, selector, PuppeteerUtil) => {
+            return PuppeteerUtil.customQuerySelectors.get(PLACEHOLDER("name")).querySelector(node3, selector);
           }, { name: JSON.stringify(name) });
         };
         const registerScript = interpolateFunction((PuppeteerUtil) => {
@@ -5421,13 +5421,13 @@ var init_JSHandle = __esm({
             return Object.keys(object3 ?? {});
           });
           const map3 = /* @__PURE__ */ new Map();
-          const results = await Promise.all(propertyNames.map((key2) => {
+          const results2 = await Promise.all(propertyNames.map((key2) => {
             return this.getProperty(key2);
           }));
           for (const [key2, value] of Object.entries(propertyNames)) {
             const env_1 = { stack: [], error: void 0, hasError: false };
             try {
-              const handle = __addDisposableResource4(env_1, results[key2], false);
+              const handle = __addDisposableResource4(env_1, results2[key2], false);
               if (handle) {
                 map3.set(value, handle.move());
               }
@@ -6740,14 +6740,14 @@ var init_ElementHandle = __esm({
           const env_2 = { stack: [], error: void 0, hasError: false };
           try {
             pageFunction = withSourcePuppeteerURLIfNone(this.$$eval.name, pageFunction);
-            const results = await this.$$(selector);
+            const results2 = await this.$$(selector);
             const elements = __addDisposableResource6(env_2, await this.evaluateHandle((_2, ...elements2) => {
               return elements2;
-            }, ...results), false);
+            }, ...results2), false);
             const [result] = await Promise.all([
               elements.evaluate(pageFunction, ...args),
-              ...results.map((results2) => {
-                return results2.dispose();
+              ...results2.map((results3) => {
+                return results3.dispose();
               })
             ]);
             return result;
@@ -6857,8 +6857,8 @@ var init_ElementHandle = __esm({
          * automatically disposed.**
          */
         async toElement(tagName) {
-          const isMatchingTagName = await this.evaluate((node2, tagName2) => {
-            return node2.nodeName === tagName2.toUpperCase();
+          const isMatchingTagName = await this.evaluate((node3, tagName2) => {
+            return node3.nodeName === tagName2.toUpperCase();
           }, tagName);
           if (!isMatchingTagName) {
             throw new Error(`Element is not a(n) \`${tagName}\` element`);
@@ -8130,13 +8130,13 @@ var init_Frame = __esm({
         async content() {
           return await this.evaluate(() => {
             let content = "";
-            for (const node2 of document.childNodes) {
-              switch (node2) {
+            for (const node3 of document.childNodes) {
+              switch (node3) {
                 case document.documentElement:
                   content += document.documentElement.outerHTML;
                   break;
                 default:
-                  content += new XMLSerializer().serializeToString(node2);
+                  content += new XMLSerializer().serializeToString(node3);
                   break;
               }
             }
@@ -9948,7 +9948,7 @@ var init_Page = __esm({
         async screencast(options = {}) {
           const ScreenRecorder2 = environment.value.ScreenRecorder;
           const [width, height, devicePixelRatio] = await this.#getNativePixelDimensions();
-          let crop;
+          let crop2;
           if (options.crop) {
             const { x: x2, y, width: cropWidth, height: cropHeight } = roundRectangle(normalizeRectangle(options.crop));
             if (x2 < 0 || y < 0) {
@@ -9965,7 +9965,7 @@ var init_Page = __esm({
             if (y + cropHeight > viewportHeight) {
               throw new Error(`\`crop.height\` cannot be larger than the viewport height (${viewportHeight}).`);
             }
-            crop = {
+            crop2 = {
               x: x2 * devicePixelRatio,
               y: y * devicePixelRatio,
               width: cropWidth * devicePixelRatio,
@@ -9987,7 +9987,7 @@ var init_Page = __esm({
           }) : void 0;
           const recorder = new ScreenRecorder2(this, width, height, {
             ...options,
-            crop
+            crop: crop2
           }, this.logger);
           try {
             await this._startScreencast();
@@ -11218,10 +11218,10 @@ var init_Accessibility = __esm({
         });
         let backendNodeId;
         if (root) {
-          const { node: node2 } = await this.#realm.environment.client.send("DOM.describeNode", {
+          const { node: node3 } = await this.#realm.environment.client.send("DOM.describeNode", {
             objectId: root.id
           });
-          backendNodeId = node2.backendNodeId;
+          backendNodeId = node3.backendNodeId;
         }
         const defaultRoot = AXNode.createTree(this.#realm, nodes);
         const populateIframes = async (root2) => {
@@ -11264,8 +11264,8 @@ var init_Accessibility = __esm({
           await populateIframes(defaultRoot);
         }
         if (backendNodeId) {
-          needle = defaultRoot.find((node2) => {
-            return node2.payload.backendDOMNodeId === backendNodeId;
+          needle = defaultRoot.find((node3) => {
+            return node3.payload.backendDOMNodeId === backendNodeId;
           });
         }
         if (!needle) {
@@ -11278,35 +11278,35 @@ var init_Accessibility = __esm({
         this.collectInterestingNodes(interestingNodes, defaultRoot, false);
         return this.serializeTree(needle, interestingNodes)[0] ?? null;
       }
-      serializeTree(node2, interestingNodes) {
+      serializeTree(node3, interestingNodes) {
         const children = [];
-        for (const child of node2.children) {
+        for (const child of node3.children) {
           children.push(...this.serializeTree(child, interestingNodes));
         }
-        if (interestingNodes && !interestingNodes.has(node2)) {
+        if (interestingNodes && !interestingNodes.has(node3)) {
           return children;
         }
-        const serializedNode = node2.serialize();
+        const serializedNode = node3.serialize();
         if (children.length) {
           serializedNode.children = children;
         }
-        if (node2.iframeSnapshot) {
+        if (node3.iframeSnapshot) {
           if (!serializedNode.children) {
             serializedNode.children = [];
           }
-          serializedNode.children.push(node2.iframeSnapshot);
+          serializedNode.children.push(node3.iframeSnapshot);
         }
         return [serializedNode];
       }
-      collectInterestingNodes(collection, node2, insideControl) {
-        if (node2.isInteresting(insideControl) || node2.iframeSnapshot) {
-          collection.add(node2);
+      collectInterestingNodes(collection, node3, insideControl) {
+        if (node3.isInteresting(insideControl) || node3.iframeSnapshot) {
+          collection.add(node3);
         }
-        if (node2.isLeafNode()) {
+        if (node3.isLeafNode()) {
           return;
         }
-        insideControl = insideControl || node2.isControl();
-        for (const child of node2.children) {
+        insideControl = insideControl || node3.isControl();
+        for (const child of node3.children) {
           this.collectInterestingNodes(collection, child, insideControl);
         }
       }
@@ -11511,7 +11511,7 @@ var init_Accessibility = __esm({
         if (this.payload.description) {
           properties.set("description", this.payload.description.value);
         }
-        const node2 = {
+        const node3 = {
           role: this.#role,
           elementHandle: async () => {
             const env_2 = { stack: [], error: void 0, hasError: false };
@@ -11520,11 +11520,11 @@ var init_Accessibility = __esm({
                 return null;
               }
               const handle = __addDisposableResource9(env_2, await this.#realm.adoptBackendNode(this.payload.backendDOMNodeId), false);
-              return await handle.evaluateHandle((node3) => {
-                if (node3.nodeType !== Node.TEXT_NODE) {
-                  return node3;
+              return await handle.evaluateHandle((node4) => {
+                if (node4.nodeType !== Node.TEXT_NODE) {
+                  return node4;
                 }
-                return node3.parentElement ?? node3.parentNode?.host ?? null;
+                return node4.parentElement ?? node4.parentNode?.host ?? null;
               });
             } catch (e_2) {
               env_2.error = e_2;
@@ -11554,7 +11554,7 @@ var init_Accessibility = __esm({
           if (!properties.has(userStringProperty)) {
             continue;
           }
-          node2[userStringProperty] = getUserStringPropertyValue(userStringProperty);
+          node3[userStringProperty] = getUserStringPropertyValue(userStringProperty);
         }
         const booleanProperties = [
           "disabled",
@@ -11579,7 +11579,7 @@ var init_Accessibility = __esm({
           if (!properties.has(booleanProperty)) {
             continue;
           }
-          node2[booleanProperty] = getBooleanPropertyValue(booleanProperty);
+          node3[booleanProperty] = getBooleanPropertyValue(booleanProperty);
         }
         const tristateProperties = ["checked", "pressed"];
         for (const tristateProperty of tristateProperties) {
@@ -11587,7 +11587,7 @@ var init_Accessibility = __esm({
             continue;
           }
           const value = properties.get(tristateProperty);
-          node2[tristateProperty] = value === "mixed" ? "mixed" : value === "true" ? true : false;
+          node3[tristateProperty] = value === "mixed" ? "mixed" : value === "true" ? true : false;
         }
         const numericalProperties = [
           "level",
@@ -11601,7 +11601,7 @@ var init_Accessibility = __esm({
           if (!properties.has(numericalProperty)) {
             continue;
           }
-          node2[numericalProperty] = getNumericalPropertyValue(numericalProperty);
+          node3[numericalProperty] = getNumericalPropertyValue(numericalProperty);
         }
         const tokenProperties = [
           "autocomplete",
@@ -11621,20 +11621,20 @@ var init_Accessibility = __esm({
           if (!value || value === "false") {
             continue;
           }
-          node2[tokenProperty] = getTokenPropertyValue(tokenProperty);
+          node3[tokenProperty] = getTokenPropertyValue(tokenProperty);
         }
-        return node2;
+        return node3;
       }
       static createTree(realm, payloads) {
         const nodeById = /* @__PURE__ */ new Map();
         for (const payload of payloads) {
           nodeById.set(payload.nodeId, new _AXNode(realm, payload));
         }
-        for (const node2 of nodeById.values()) {
-          for (const childId of node2.payload.childIds || []) {
+        for (const node3 of nodeById.values()) {
+          for (const childId of node3.payload.childIds || []) {
             const child = nodeById.get(childId);
             if (child) {
-              node2.children.push(child);
+              node3.children.push(child);
             }
           }
         }
@@ -12506,15 +12506,15 @@ function convertToDisjointRanges(nestedRanges) {
     return aLength - bLength;
   });
   const hitCountStack = [];
-  const results = [];
+  const results2 = [];
   let lastOffset = 0;
   for (const point of points) {
     if (hitCountStack.length && lastOffset < point.offset && hitCountStack[hitCountStack.length - 1] > 0) {
-      const lastResult = results[results.length - 1];
+      const lastResult = results2[results2.length - 1];
       if (lastResult && lastResult.end === lastOffset) {
         lastResult.end = point.offset;
       } else {
-        results.push({ start: lastOffset, end: point.offset });
+        results2.push({ start: lastOffset, end: point.offset });
       }
     }
     lastOffset = point.offset;
@@ -12524,7 +12524,7 @@ function convertToDisjointRanges(nestedRanges) {
       hitCountStack.pop();
     }
   }
-  return results.filter((range) => {
+  return results2.filter((range) => {
     return range.end - range.start > 0;
   });
 }
@@ -13975,30 +13975,30 @@ var init_ElementHandle2 = __esm({
             accessibleName: name,
             role
           });
-          const results = nodes.filter((node2) => {
-            if (node2.ignored) {
+          const results2 = nodes.filter((node3) => {
+            if (node3.ignored) {
               return false;
             }
-            if (!node2.role) {
+            if (!node3.role) {
               return false;
             }
-            if (NON_ELEMENT_NODE_ROLES.has(node2.role.value)) {
+            if (NON_ELEMENT_NODE_ROLES.has(node3.role.value)) {
               return false;
             }
             return true;
           });
-          return yield* AsyncIterableUtil.map(results, (node2) => {
-            return this.realm.adoptBackendNode(node2.backendDOMNodeId);
+          return yield* AsyncIterableUtil.map(results2, (node3) => {
+            return this.realm.adoptBackendNode(node3.backendDOMNodeId);
           });
         }
         async backendNodeId() {
           if (this.#backendNodeId) {
             return this.#backendNodeId;
           }
-          const { node: node2 } = await this.client.send("DOM.describeNode", {
+          const { node: node3 } = await this.client.send("DOM.describeNode", {
             objectId: this.handle.id
           });
-          this.#backendNodeId = node2.backendNodeId;
+          this.#backendNodeId = node3.backendNodeId;
           return this.#backendNodeId;
         }
       };
@@ -14099,10 +14099,10 @@ var init_ExecutionContext = __esm({
         return this.#ariaQuerySelectorAllBinding ??= new Binding(
           "__ariaQuerySelectorAll",
           (async (element, selector) => {
-            const results = ARIAQueryHandler.queryAll(element, selector);
+            const results2 = ARIAQueryHandler.queryAll(element, selector);
             return await element.realm.evaluateHandle((...elements) => {
               return elements;
-            }, ...await AsyncIterableUtil.collect(results));
+            }, ...await AsyncIterableUtil.collect(results2));
           }),
           "",
           // custom init
@@ -31378,10 +31378,10 @@ var init_BrowsingContextImpl = __esm({
             return {
               functionDeclaration: String((innerTextSelector, fullMatch, ignoreCase, maxNodeCount2, maxDepth, ...startNodes2) => {
                 const searchText = ignoreCase ? innerTextSelector.toUpperCase() : innerTextSelector;
-                const locateNodesUsingInnerText = (node2, currentMaxDepth) => {
+                const locateNodesUsingInnerText = (node3, currentMaxDepth) => {
                   const returnedNodes2 = [];
-                  if (node2 instanceof DocumentFragment || node2 instanceof Document) {
-                    const children = [...node2.children];
+                  if (node3 instanceof DocumentFragment || node3 instanceof Document) {
+                    const children = [...node3.children];
                     children.forEach((child) => (
                       // `currentMaxDepth` is not decremented intentionally according to
                       // https://github.com/w3c/webdriver-bidi/pull/713.
@@ -31389,10 +31389,10 @@ var init_BrowsingContextImpl = __esm({
                     ));
                     return returnedNodes2;
                   }
-                  if (!(node2 instanceof HTMLElement)) {
+                  if (!(node3 instanceof HTMLElement)) {
                     return [];
                   }
-                  const element = node2;
+                  const element = node3;
                   const nodeInnerText = ignoreCase ? element.innerText?.toUpperCase() : element.innerText;
                   if (!nodeInnerText.includes(searchText)) {
                     return [];
@@ -31528,17 +31528,17 @@ var init_BrowsingContextImpl = __esm({
           const { root: documentRoot } = await this.#cdpTarget.cdpClient.sendCommand("DOM.getDocument");
           startBackendNodeIds.push(documentRoot.backendNodeId);
         } else {
-          for (const node2 of startNodes) {
-            if (node2.sharedId) {
-              const parsed = parseSharedId(node2.sharedId);
+          for (const node3 of startNodes) {
+            if (node3.sharedId) {
+              const parsed = parseSharedId(node3.sharedId);
               if (!parsed) {
-                throw new NoSuchNodeException(`Invalid sharedId: ${node2.sharedId}`);
+                throw new NoSuchNodeException(`Invalid sharedId: ${node3.sharedId}`);
               }
               startBackendNodeIds.push(parsed.backendNodeId);
             } else {
-              if (node2.handle) {
+              if (node3.handle) {
                 const { nodeId } = await this.#cdpTarget.cdpClient.sendCommand("DOM.requestNode", {
-                  objectId: node2.handle
+                  objectId: node3.handle
                 });
                 const { node: describedNode } = await this.#cdpTarget.cdpClient.sendCommand("DOM.describeNode", {
                   nodeId
@@ -31557,9 +31557,9 @@ var init_BrowsingContextImpl = __esm({
             accessibleName: locator.value.name,
             role: locator.value.role
           });
-          for (const node2 of nodes) {
-            if (node2.backendDOMNodeId && node2.role?.type === "role") {
-              matchedBackendNodeIds.add(node2.backendDOMNodeId);
+          for (const node3 of nodes) {
+            if (node3.backendDOMNodeId && node3.role?.type === "role") {
+              matchedBackendNodeIds.add(node3.backendDOMNodeId);
               if (maxNodeCount !== void 0 && maxNodeCount > 0 && matchedBackendNodeIds.size >= maxNodeCount) {
                 break;
               }
@@ -33363,7 +33363,7 @@ var init_CdpTarget = __esm({
        */
       async #unblock() {
         const config3 = this.contextConfigStorage.getActiveConfig(this.topLevelId, this.userContext);
-        const results = await Promise.allSettled([
+        const results2 = await Promise.allSettled([
           this.#cdpClient.sendCommand("Page.enable", {
             enableFileChooserOpenedEvent: true
           }),
@@ -33409,7 +33409,7 @@ var init_CdpTarget = __esm({
           this.toggleDeviceAccessIfNeeded(),
           this.togglePreloadIfNeeded()
         ]);
-        for (const result of results) {
+        for (const result of results2) {
           if (result instanceof Error) {
             this.#logger?.(LogType.debugError)?.("Error happened when configuring a new target", result);
           }
@@ -37718,15 +37718,15 @@ var init_ElementHandle3 = __esm({
           await this.frame.setFiles(this, files);
         }
         async *queryAXTree(name, role) {
-          const results = await this.frame.locateNodes(this, {
+          const results2 = await this.frame.locateNodes(this, {
             type: "accessibility",
             value: {
               role,
               name
             }
           });
-          return yield* AsyncIterableUtil.map(results, (node2) => {
-            return Promise.resolve(BidiElementHandle2.from(node2, this.realm));
+          return yield* AsyncIterableUtil.map(results2, (node3) => {
+            return Promise.resolve(BidiElementHandle2.from(node3, this.realm));
           });
         }
         async backendNodeId() {
@@ -37736,10 +37736,10 @@ var init_ElementHandle3 = __esm({
           if (this.#backendNodeId) {
             return this.#backendNodeId;
           }
-          const { node: node2 } = await this.frame.client.send("DOM.describeNode", {
+          const { node: node3 } = await this.frame.client.send("DOM.describeNode", {
             objectId: this.handle.id
           });
-          this.#backendNodeId = node2.backendNodeId;
+          this.#backendNodeId = node3.backendNodeId;
           return this.#backendNodeId;
         }
       };
@@ -38858,8 +38858,8 @@ ${sourceUrlComment}
         });
       }
       async adoptHandle(handle) {
-        return await this.evaluateHandle((node2) => {
-          return node2;
+        return await this.evaluateHandle((node3) => {
+          return node3;
         }, handle);
       }
       async transferHandle(handle) {
@@ -38902,10 +38902,10 @@ ${sourceUrlComment}
           promise2 = Promise.all([
             ExposableFunction.from(this.environment, "__ariaQuerySelector", ARIAQueryHandler.queryOne, !!this.sandbox, this.logger),
             ExposableFunction.from(this.environment, "__ariaQuerySelectorAll", async (element, selector) => {
-              const results = ARIAQueryHandler.queryAll(element, selector);
+              const results2 = ARIAQueryHandler.queryAll(element, selector);
               return await element.realm.evaluateHandle((...elements) => {
                 return elements;
-              }, ...await AsyncIterableUtil.collect(results));
+              }, ...await AsyncIterableUtil.collect(results2));
             }, !!this.sandbox, this.logger)
           ]);
           this.#bindingsInstalled = true;
@@ -39465,16 +39465,16 @@ var init_Frame3 = __esm({
           if (!parentFrame) {
             return null;
           }
-          const [node2] = await parentFrame.browsingContext.locateNodes({
+          const [node3] = await parentFrame.browsingContext.locateNodes({
             type: "context",
             value: {
               context: this._id
             }
           });
-          if (!node2) {
+          if (!node3) {
             return null;
           }
-          return BidiElementHandle.from(node2, parentFrame.mainRealm());
+          return BidiElementHandle.from(node3, parentFrame.mainRealm());
         }
         async locateNodes(element, locator) {
           return await this.browsingContext.locateNodes(
@@ -48944,7 +48944,7 @@ function normalizeName(name) {
   return relative12;
 }
 function packTar(sources, options = {}) {
-  const results = /* @__PURE__ */ new Map();
+  const results2 = /* @__PURE__ */ new Map();
   const fileHandles = /* @__PURE__ */ new Map();
   const bodyStreams = /* @__PURE__ */ new Set();
   let resume = null;
@@ -48975,7 +48975,7 @@ function packTar(sources, options = {}) {
   const stop = async (reason) => {
     for (const body of bodyStreams) destroyBody(body, reason);
     const closing = Promise.allSettled([...fileHandles.keys()].map(closeHandle));
-    results.clear();
+    results2.clear();
     wakeWriter();
     for (const result of await closing) if (result.status === "rejected") throw result.reason;
   };
@@ -49038,14 +49038,14 @@ function packTar(sources, options = {}) {
       while (true) {
         if (stream.destroyed) return;
         if (allJobsQueued && writeIndex >= jobs.length) break;
-        if (!results.has(writeIndex)) {
+        if (!results2.has(writeIndex)) {
           await new Promise((resolve10) => {
             resumeWriter = resolve10;
           });
           continue;
         }
-        const result = results.get(writeIndex);
-        results.delete(writeIndex);
+        const result = results2.get(writeIndex);
+        results2.delete(writeIndex);
         if (!result) {
           writeIndex++;
           controller();
@@ -49290,7 +49290,7 @@ function packTar(sources, options = {}) {
           if (jobResult?.body instanceof Readable) destroyBody(jobResult.body, cancelError);
           else if (jobResult?.body && !(jobResult.body instanceof Uint8Array)) await closeHandle(jobResult.body.handle);
         } else {
-          results.set(index, jobResult);
+          results2.set(index, jobResult);
           if (index === writeIndex) wakeWriter();
         }
       }
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join25 } = await import("node:path");
+    const { join: join26 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join25(userDataDir, "DevToolsActivePort");
+    const portPath = join26(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line) => {
@@ -57194,24 +57194,24 @@ var require_identity = __commonJS({
     var SCALAR = /* @__PURE__ */ Symbol.for("yaml.scalar");
     var SEQ = /* @__PURE__ */ Symbol.for("yaml.seq");
     var NODE_TYPE = /* @__PURE__ */ Symbol.for("yaml.node.type");
-    var isAlias = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === ALIAS;
-    var isDocument = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === DOC;
-    var isMap2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === MAP;
-    var isPair2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === PAIR;
-    var isScalar2 = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === SCALAR;
-    var isSeq = (node2) => !!node2 && typeof node2 === "object" && node2[NODE_TYPE] === SEQ;
-    function isCollection(node2) {
-      if (node2 && typeof node2 === "object")
-        switch (node2[NODE_TYPE]) {
+    var isAlias = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === ALIAS;
+    var isDocument = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === DOC;
+    var isMap2 = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === MAP;
+    var isPair2 = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === PAIR;
+    var isScalar2 = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === SCALAR;
+    var isSeq = (node3) => !!node3 && typeof node3 === "object" && node3[NODE_TYPE] === SEQ;
+    function isCollection(node3) {
+      if (node3 && typeof node3 === "object")
+        switch (node3[NODE_TYPE]) {
           case MAP:
           case SEQ:
             return true;
         }
       return false;
     }
-    function isNode2(node2) {
-      if (node2 && typeof node2 === "object")
-        switch (node2[NODE_TYPE]) {
+    function isNode2(node3) {
+      if (node3 && typeof node3 === "object")
+        switch (node3[NODE_TYPE]) {
           case ALIAS:
           case MAP:
           case SCALAR:
@@ -57220,7 +57220,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node2) => (isScalar2(node2) || isCollection(node2)) && !!node2.anchor;
+    var hasAnchor = (node3) => (isScalar2(node3) || isCollection(node3)) && !!node3.anchor;
     exports.ALIAS = ALIAS;
     exports.DOC = DOC;
     exports.MAP = MAP;
@@ -57248,98 +57248,98 @@ var require_visit = __commonJS({
     var BREAK = /* @__PURE__ */ Symbol("break visit");
     var SKIP = /* @__PURE__ */ Symbol("skip children");
     var REMOVE = /* @__PURE__ */ Symbol("remove node");
-    function visit3(node2, visitor) {
+    function visit3(node3, visitor) {
       const visitor_ = initVisitor(visitor);
-      if (identity2.isDocument(node2)) {
-        const cd = visit_(null, node2.contents, visitor_, Object.freeze([node2]));
+      if (identity2.isDocument(node3)) {
+        const cd = visit_(null, node3.contents, visitor_, Object.freeze([node3]));
         if (cd === REMOVE)
-          node2.contents = null;
+          node3.contents = null;
       } else
-        visit_(null, node2, visitor_, Object.freeze([]));
+        visit_(null, node3, visitor_, Object.freeze([]));
     }
     visit3.BREAK = BREAK;
     visit3.SKIP = SKIP;
     visit3.REMOVE = REMOVE;
-    function visit_(key2, node2, visitor, path14) {
-      const ctrl = callVisitor(key2, node2, visitor, path14);
+    function visit_(key2, node3, visitor, path14) {
+      const ctrl = callVisitor(key2, node3, visitor, path14);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
         replaceNode(key2, path14, ctrl);
         return visit_(key2, ctrl, visitor, path14);
       }
       if (typeof ctrl !== "symbol") {
-        if (identity2.isCollection(node2)) {
-          path14 = Object.freeze(path14.concat(node2));
-          for (let i = 0; i < node2.items.length; ++i) {
-            const ci = visit_(i, node2.items[i], visitor, path14);
+        if (identity2.isCollection(node3)) {
+          path14 = Object.freeze(path14.concat(node3));
+          for (let i = 0; i < node3.items.length; ++i) {
+            const ci = visit_(i, node3.items[i], visitor, path14);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
               return BREAK;
             else if (ci === REMOVE) {
-              node2.items.splice(i, 1);
+              node3.items.splice(i, 1);
               i -= 1;
             }
           }
-        } else if (identity2.isPair(node2)) {
-          path14 = Object.freeze(path14.concat(node2));
-          const ck = visit_("key", node2.key, visitor, path14);
+        } else if (identity2.isPair(node3)) {
+          path14 = Object.freeze(path14.concat(node3));
+          const ck = visit_("key", node3.key, visitor, path14);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
-            node2.key = null;
-          const cv = visit_("value", node2.value, visitor, path14);
+            node3.key = null;
+          const cv = visit_("value", node3.value, visitor, path14);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
-            node2.value = null;
+            node3.value = null;
         }
       }
       return ctrl;
     }
-    async function visitAsync(node2, visitor) {
+    async function visitAsync(node3, visitor) {
       const visitor_ = initVisitor(visitor);
-      if (identity2.isDocument(node2)) {
-        const cd = await visitAsync_(null, node2.contents, visitor_, Object.freeze([node2]));
+      if (identity2.isDocument(node3)) {
+        const cd = await visitAsync_(null, node3.contents, visitor_, Object.freeze([node3]));
         if (cd === REMOVE)
-          node2.contents = null;
+          node3.contents = null;
       } else
-        await visitAsync_(null, node2, visitor_, Object.freeze([]));
+        await visitAsync_(null, node3, visitor_, Object.freeze([]));
     }
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key2, node2, visitor, path14) {
-      const ctrl = await callVisitor(key2, node2, visitor, path14);
+    async function visitAsync_(key2, node3, visitor, path14) {
+      const ctrl = await callVisitor(key2, node3, visitor, path14);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
         replaceNode(key2, path14, ctrl);
         return visitAsync_(key2, ctrl, visitor, path14);
       }
       if (typeof ctrl !== "symbol") {
-        if (identity2.isCollection(node2)) {
-          path14 = Object.freeze(path14.concat(node2));
-          for (let i = 0; i < node2.items.length; ++i) {
-            const ci = await visitAsync_(i, node2.items[i], visitor, path14);
+        if (identity2.isCollection(node3)) {
+          path14 = Object.freeze(path14.concat(node3));
+          for (let i = 0; i < node3.items.length; ++i) {
+            const ci = await visitAsync_(i, node3.items[i], visitor, path14);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
               return BREAK;
             else if (ci === REMOVE) {
-              node2.items.splice(i, 1);
+              node3.items.splice(i, 1);
               i -= 1;
             }
           }
-        } else if (identity2.isPair(node2)) {
-          path14 = Object.freeze(path14.concat(node2));
-          const ck = await visitAsync_("key", node2.key, visitor, path14);
+        } else if (identity2.isPair(node3)) {
+          path14 = Object.freeze(path14.concat(node3));
+          const ck = await visitAsync_("key", node3.key, visitor, path14);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
-            node2.key = null;
-          const cv = await visitAsync_("value", node2.value, visitor, path14);
+            node3.key = null;
+          const cv = await visitAsync_("value", node3.value, visitor, path14);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
-            node2.value = null;
+            node3.value = null;
         }
       }
       return ctrl;
@@ -57362,32 +57362,32 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key2, node2, visitor, path14) {
+    function callVisitor(key2, node3, visitor, path14) {
       if (typeof visitor === "function")
-        return visitor(key2, node2, path14);
-      if (identity2.isMap(node2))
-        return visitor.Map?.(key2, node2, path14);
-      if (identity2.isSeq(node2))
-        return visitor.Seq?.(key2, node2, path14);
-      if (identity2.isPair(node2))
-        return visitor.Pair?.(key2, node2, path14);
-      if (identity2.isScalar(node2))
-        return visitor.Scalar?.(key2, node2, path14);
-      if (identity2.isAlias(node2))
-        return visitor.Alias?.(key2, node2, path14);
+        return visitor(key2, node3, path14);
+      if (identity2.isMap(node3))
+        return visitor.Map?.(key2, node3, path14);
+      if (identity2.isSeq(node3))
+        return visitor.Seq?.(key2, node3, path14);
+      if (identity2.isPair(node3))
+        return visitor.Pair?.(key2, node3, path14);
+      if (identity2.isScalar(node3))
+        return visitor.Scalar?.(key2, node3, path14);
+      if (identity2.isAlias(node3))
+        return visitor.Alias?.(key2, node3, path14);
       return void 0;
     }
-    function replaceNode(key2, path14, node2) {
+    function replaceNode(key2, path14, node3) {
       const parent = path14[path14.length - 1];
       if (identity2.isCollection(parent)) {
-        parent.items[key2] = node2;
+        parent.items[key2] = node3;
       } else if (identity2.isPair(parent)) {
         if (key2 === "key")
-          parent.key = node2;
+          parent.key = node3;
         else
-          parent.value = node2;
+          parent.value = node3;
       } else if (identity2.isDocument(parent)) {
-        parent.contents = node2;
+        parent.contents = node3;
       } else {
         const pt = identity2.isAlias(parent) ? "alias" : "scalar";
         throw new Error(`Cannot replace node with ${pt} parent`);
@@ -57547,9 +57547,9 @@ var require_directives = __commonJS({
         let tagNames;
         if (doc && tagEntries.length > 0 && identity2.isNode(doc.contents)) {
           const tags = {};
-          visit3.visit(doc.contents, (_key, node2) => {
-            if (identity2.isNode(node2) && node2.tag)
-              tags[node2.tag] = true;
+          visit3.visit(doc.contents, (_key, node3) => {
+            if (identity2.isNode(node3) && node3.tag)
+              tags[node3.tag] = true;
           });
           tagNames = Object.keys(tags);
         } else
@@ -57586,9 +57586,9 @@ var require_anchors = __commonJS({
     function anchorNames(root) {
       const anchors = /* @__PURE__ */ new Set();
       visit3.visit(root, {
-        Value(_key, node2) {
-          if (node2.anchor)
-            anchors.add(node2.anchor);
+        Value(_key, node3) {
+          if (node3.anchor)
+            anchors.add(node3.anchor);
         }
       });
       return anchors;
@@ -57792,20 +57792,20 @@ var require_Alias = __commonJS({
         } else {
           nodes = [];
           visit3.visit(doc, {
-            Node: (_key, node2) => {
-              if (identity2.isAlias(node2) || identity2.hasAnchor(node2))
-                nodes.push(node2);
+            Node: (_key, node3) => {
+              if (identity2.isAlias(node3) || identity2.hasAnchor(node3))
+                nodes.push(node3);
             }
           });
           if (ctx)
             ctx.aliasResolveCache = nodes;
         }
         let found = void 0;
-        for (const node2 of nodes) {
-          if (node2 === this)
+        for (const node3 of nodes) {
+          if (node3 === this)
             break;
-          if (node2.anchor === this.source)
-            found = node2;
+          if (node3.anchor === this.source)
+            found = node3;
         }
         if (found && ctx) {
           const { anchors: anchors2, doc: doc2, maxAliasCount } = ctx;
@@ -57854,22 +57854,22 @@ var require_Alias = __commonJS({
         return src;
       }
     };
-    function getAliasCount(doc, node2, anchors2) {
-      if (identity2.isAlias(node2)) {
-        const source2 = node2.resolve(doc);
+    function getAliasCount(doc, node3, anchors2) {
+      if (identity2.isAlias(node3)) {
+        const source2 = node3.resolve(doc);
         const anchor2 = anchors2 && source2 && anchors2.get(source2);
         return anchor2 ? anchor2.count * anchor2.aliasCount : 0;
-      } else if (identity2.isCollection(node2)) {
+      } else if (identity2.isCollection(node3)) {
         let count = 0;
-        for (const item of node2.items) {
+        for (const item of node3.items) {
           const c = getAliasCount(doc, item, anchors2);
           if (c > count)
             count = c;
         }
         return count;
-      } else if (identity2.isPair(node2)) {
-        const kc = getAliasCount(doc, node2.key, anchors2);
-        const vc = getAliasCount(doc, node2.value, anchors2);
+      } else if (identity2.isPair(node3)) {
+        const kc = getAliasCount(doc, node3.key, anchors2);
+        const vc = getAliasCount(doc, node3.value, anchors2);
         return Math.max(kc, vc);
       }
       return 1;
@@ -57959,10 +57959,10 @@ var require_createNode = __commonJS({
           value = value.toJSON();
         }
         if (!value || typeof value !== "object") {
-          const node3 = new Scalar.Scalar(value);
+          const node4 = new Scalar.Scalar(value);
           if (ref)
-            ref.node = node3;
-          return node3;
+            ref.node = node4;
+          return node4;
         }
         tagObj = value instanceof Map ? schema[identity2.MAP] : Symbol.iterator in Object(value) ? schema[identity2.SEQ] : schema[identity2.MAP];
       }
@@ -57970,14 +57970,14 @@ var require_createNode = __commonJS({
         onTagObj(tagObj);
         delete ctx.onTagObj;
       }
-      const node2 = tagObj?.createNode ? tagObj.createNode(ctx.schema, value, ctx) : typeof tagObj?.nodeClass?.from === "function" ? tagObj.nodeClass.from(ctx.schema, value, ctx) : new Scalar.Scalar(value);
+      const node3 = tagObj?.createNode ? tagObj.createNode(ctx.schema, value, ctx) : typeof tagObj?.nodeClass?.from === "function" ? tagObj.nodeClass.from(ctx.schema, value, ctx) : new Scalar.Scalar(value);
       if (tagName)
-        node2.tag = tagName;
+        node3.tag = tagName;
       else if (!tagObj.default)
-        node2.tag = tagObj.tag;
+        node3.tag = tagObj.tag;
       if (ref)
-        ref.node = node2;
-      return node2;
+        ref.node = node3;
+      return node3;
     }
     exports.createNode = createNode;
   }
@@ -58047,10 +58047,10 @@ var require_Collection = __commonJS({
           this.add(value);
         else {
           const [key2, ...rest] = path14;
-          const node2 = this.get(key2, true);
-          if (identity2.isCollection(node2))
-            node2.addIn(rest, value);
-          else if (node2 === void 0 && this.schema)
+          const node3 = this.get(key2, true);
+          if (identity2.isCollection(node3))
+            node3.addIn(rest, value);
+          else if (node3 === void 0 && this.schema)
             this.set(key2, collectionFromPath(this.schema, rest, value));
           else
             throw new Error(`Expected YAML collection at ${key2}. Remaining path: ${rest}`);
@@ -58064,9 +58064,9 @@ var require_Collection = __commonJS({
         const [key2, ...rest] = path14;
         if (rest.length === 0)
           return this.delete(key2);
-        const node2 = this.get(key2, true);
-        if (identity2.isCollection(node2))
-          return node2.deleteIn(rest);
+        const node3 = this.get(key2, true);
+        if (identity2.isCollection(node3))
+          return node3.deleteIn(rest);
         else
           throw new Error(`Expected YAML collection at ${key2}. Remaining path: ${rest}`);
       }
@@ -58077,17 +58077,17 @@ var require_Collection = __commonJS({
        */
       getIn(path14, keepScalar) {
         const [key2, ...rest] = path14;
-        const node2 = this.get(key2, true);
+        const node3 = this.get(key2, true);
         if (rest.length === 0)
-          return !keepScalar && identity2.isScalar(node2) ? node2.value : node2;
+          return !keepScalar && identity2.isScalar(node3) ? node3.value : node3;
         else
-          return identity2.isCollection(node2) ? node2.getIn(rest, keepScalar) : void 0;
+          return identity2.isCollection(node3) ? node3.getIn(rest, keepScalar) : void 0;
       }
       hasAllNullValues(allowScalar) {
-        return this.items.every((node2) => {
-          if (!identity2.isPair(node2))
+        return this.items.every((node3) => {
+          if (!identity2.isPair(node3))
             return false;
-          const n = node2.value;
+          const n = node3.value;
           return n == null || allowScalar && identity2.isScalar(n) && n.value == null && !n.commentBefore && !n.comment && !n.tag;
         });
       }
@@ -58098,8 +58098,8 @@ var require_Collection = __commonJS({
         const [key2, ...rest] = path14;
         if (rest.length === 0)
           return this.has(key2);
-        const node2 = this.get(key2, true);
-        return identity2.isCollection(node2) ? node2.hasIn(rest) : false;
+        const node3 = this.get(key2, true);
+        return identity2.isCollection(node3) ? node3.hasIn(rest) : false;
       }
       /**
        * Sets a value in this collection. For `!!set`, `value` needs to be a
@@ -58110,10 +58110,10 @@ var require_Collection = __commonJS({
         if (rest.length === 0) {
           this.set(key2, value);
         } else {
-          const node2 = this.get(key2, true);
-          if (identity2.isCollection(node2))
-            node2.setIn(rest, value);
-          else if (node2 === void 0 && this.schema)
+          const node3 = this.get(key2, true);
+          if (identity2.isCollection(node3))
+            node3.setIn(rest, value);
+          else if (node3 === void 0 && this.schema)
             this.set(key2, collectionFromPath(this.schema, rest, value));
           else
             throw new Error(`Expected YAML collection at ${key2}. Remaining path: ${rest}`);
@@ -58639,16 +58639,16 @@ var require_stringify = __commonJS({
       }
       return tagObj;
     }
-    function stringifyProps(node2, tagObj, { anchors: anchors$1, doc }) {
+    function stringifyProps(node3, tagObj, { anchors: anchors$1, doc }) {
       if (!doc.directives)
         return "";
       const props = [];
-      const anchor2 = (identity2.isScalar(node2) || identity2.isCollection(node2)) && node2.anchor;
+      const anchor2 = (identity2.isScalar(node3) || identity2.isCollection(node3)) && node3.anchor;
       if (anchor2 && anchors.anchorIsValid(anchor2)) {
         anchors$1.add(anchor2);
         props.push(`&${anchor2}`);
       }
-      const tag = node2.tag ?? (tagObj.default ? null : tagObj.tag);
+      const tag = node3.tag ?? (tagObj.default ? null : tagObj.tag);
       if (tag)
         props.push(doc.directives.tagString(tag));
       return props.join(" ");
@@ -58670,15 +58670,15 @@ var require_stringify = __commonJS({
         }
       }
       let tagObj = void 0;
-      const node2 = identity2.isNode(item) ? item : ctx.doc.createNode(item, { onTagObj: (o) => tagObj = o });
-      tagObj ?? (tagObj = getTagObject(ctx.doc.schema.tags, node2));
-      const props = stringifyProps(node2, tagObj, ctx);
+      const node3 = identity2.isNode(item) ? item : ctx.doc.createNode(item, { onTagObj: (o) => tagObj = o });
+      tagObj ?? (tagObj = getTagObject(ctx.doc.schema.tags, node3));
+      const props = stringifyProps(node3, tagObj, ctx);
       if (props.length > 0)
         ctx.indentAtStart = (ctx.indentAtStart ?? 0) + props.length + 1;
-      const str = typeof tagObj.stringify === "function" ? tagObj.stringify(node2, ctx, onComment, onChompKeep) : identity2.isScalar(node2) ? stringifyString.stringifyString(node2, ctx, onComment, onChompKeep) : node2.toString(ctx, onComment, onChompKeep);
+      const str = typeof tagObj.stringify === "function" ? tagObj.stringify(node3, ctx, onComment, onChompKeep) : identity2.isScalar(node3) ? stringifyString.stringifyString(node3, ctx, onComment, onChompKeep) : node3.toString(ctx, onComment, onChompKeep);
       if (!props)
         return str;
-      return identity2.isScalar(node2) || str[0] === "{" || str[0] === "[" ? `${props} ${str}` : `${props}
+      return identity2.isScalar(node3) || str[0] === "{" || str[0] === "[" ? `${props} ${str}` : `${props}
 ${ctx.indent}${str}`;
     }
     exports.createStringifyContext = createStringifyContext;
@@ -58945,8 +58945,8 @@ var require_addPairToJSMap = __commonJS({
       if (identity2.isNode(key2) && ctx?.doc) {
         const strCtx = stringify2.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
-        for (const node2 of ctx.anchors.keys())
-          strCtx.anchors.add(node2.anchor);
+        for (const node3 of ctx.anchors.keys())
+          strCtx.anchors.add(node3.anchor);
         strCtx.inFlow = true;
         strCtx.inStringifyKey = true;
         const strKey = key2.toString(strCtx);
@@ -59255,8 +59255,8 @@ var require_YAMLMap = __commonJS({
       }
       get(key2, keepScalar) {
         const it = findPair(this.items, key2);
-        const node2 = it?.value;
-        return (!keepScalar && identity2.isScalar(node2) ? node2.value : node2) ?? void 0;
+        const node3 = it?.value;
+        return (!keepScalar && identity2.isScalar(node3) ? node3.value : node3) ?? void 0;
       }
       has(key2) {
         return !!findPair(this.items, key2);
@@ -59569,9 +59569,9 @@ var require_float = __commonJS({
       format: "EXP",
       test: /^[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)[eE][-+]?[0-9]+$/,
       resolve: (str) => parseFloat(str),
-      stringify(node2) {
-        const num = Number(node2.value);
-        return isFinite(num) ? num.toExponential() : stringifyNumber.stringifyNumber(node2);
+      stringify(node3) {
+        const num = Number(node3.value);
+        return isFinite(num) ? num.toExponential() : stringifyNumber.stringifyNumber(node3);
       }
     };
     var float = {
@@ -59580,11 +59580,11 @@ var require_float = __commonJS({
       tag: "tag:yaml.org,2002:float",
       test: /^[-+]?(?:\.[0-9]+|[0-9]+\.[0-9]*)$/,
       resolve(str) {
-        const node2 = new Scalar.Scalar(parseFloat(str));
+        const node3 = new Scalar.Scalar(parseFloat(str));
         const dot = str.indexOf(".");
         if (dot !== -1 && str[str.length - 1] === "0")
-          node2.minFractionDigits = str.length - dot - 1;
-        return node2;
+          node3.minFractionDigits = str.length - dot - 1;
+        return node3;
       },
       stringify: stringifyNumber.stringifyNumber
     };
@@ -59601,11 +59601,11 @@ var require_int = __commonJS({
     var stringifyNumber = require_stringifyNumber();
     var intIdentify = (value) => typeof value === "bigint" || Number.isInteger(value);
     var intResolve = (str, offset, radix, { intAsBigInt }) => intAsBigInt ? BigInt(str) : parseInt(str.substring(offset), radix);
-    function intStringify(node2, radix, prefix) {
-      const { value } = node2;
+    function intStringify(node3, radix, prefix) {
+      const { value } = node3;
       if (intIdentify(value) && value >= 0)
         return prefix + value.toString(radix);
-      return stringifyNumber.stringifyNumber(node2);
+      return stringifyNumber.stringifyNumber(node3);
     }
     var intOct = {
       identify: (value) => intIdentify(value) && value >= 0,
@@ -59614,7 +59614,7 @@ var require_int = __commonJS({
       format: "OCT",
       test: /^0o[0-7]+$/,
       resolve: (str, _onError, opt) => intResolve(str, 2, 8, opt),
-      stringify: (node2) => intStringify(node2, 8, "0o")
+      stringify: (node3) => intStringify(node3, 8, "0o")
     };
     var int2 = {
       identify: intIdentify,
@@ -59631,7 +59631,7 @@ var require_int = __commonJS({
       format: "HEX",
       test: /^0x[0-9a-fA-F]+$/,
       resolve: (str, _onError, opt) => intResolve(str, 2, 16, opt),
-      stringify: (node2) => intStringify(node2, 16, "0x")
+      stringify: (node3) => intStringify(node3, 16, "0x")
     };
     exports.int = int2;
     exports.intHex = intHex;
@@ -60009,9 +60009,9 @@ var require_float2 = __commonJS({
       format: "EXP",
       test: /^[-+]?(?:[0-9][0-9_]*)?(?:\.[0-9_]*)?[eE][-+]?[0-9]+$/,
       resolve: (str) => parseFloat(str.replace(/_/g, "")),
-      stringify(node2) {
-        const num = Number(node2.value);
-        return isFinite(num) ? num.toExponential() : stringifyNumber.stringifyNumber(node2);
+      stringify(node3) {
+        const num = Number(node3.value);
+        return isFinite(num) ? num.toExponential() : stringifyNumber.stringifyNumber(node3);
       }
     };
     var float = {
@@ -60020,14 +60020,14 @@ var require_float2 = __commonJS({
       tag: "tag:yaml.org,2002:float",
       test: /^[-+]?(?:[0-9][0-9_]*)?\.[0-9_]*$/,
       resolve(str) {
-        const node2 = new Scalar.Scalar(parseFloat(str.replace(/_/g, "")));
+        const node3 = new Scalar.Scalar(parseFloat(str.replace(/_/g, "")));
         const dot = str.indexOf(".");
         if (dot !== -1) {
           const f = str.substring(dot + 1).replace(/_/g, "");
           if (f[f.length - 1] === "0")
-            node2.minFractionDigits = f.length;
+            node3.minFractionDigits = f.length;
         }
-        return node2;
+        return node3;
       },
       stringify: stringifyNumber.stringifyNumber
     };
@@ -60066,13 +60066,13 @@ var require_int2 = __commonJS({
       const n = parseInt(str, radix);
       return sign === "-" ? -1 * n : n;
     }
-    function intStringify(node2, radix, prefix) {
-      const { value } = node2;
+    function intStringify(node3, radix, prefix) {
+      const { value } = node3;
       if (intIdentify(value)) {
         const str = value.toString(radix);
         return value < 0 ? "-" + prefix + str.substr(1) : prefix + str;
       }
-      return stringifyNumber.stringifyNumber(node2);
+      return stringifyNumber.stringifyNumber(node3);
     }
     var intBin = {
       identify: intIdentify,
@@ -60081,7 +60081,7 @@ var require_int2 = __commonJS({
       format: "BIN",
       test: /^[-+]?0b[0-1_]+$/,
       resolve: (str, _onError, opt) => intResolve(str, 2, 2, opt),
-      stringify: (node2) => intStringify(node2, 2, "0b")
+      stringify: (node3) => intStringify(node3, 2, "0b")
     };
     var intOct = {
       identify: intIdentify,
@@ -60090,7 +60090,7 @@ var require_int2 = __commonJS({
       format: "OCT",
       test: /^[-+]?0[0-7_]+$/,
       resolve: (str, _onError, opt) => intResolve(str, 1, 8, opt),
-      stringify: (node2) => intStringify(node2, 8, "0")
+      stringify: (node3) => intStringify(node3, 8, "0")
     };
     var int2 = {
       identify: intIdentify,
@@ -60107,7 +60107,7 @@ var require_int2 = __commonJS({
       format: "HEX",
       test: /^[-+]?0x[0-9a-fA-F_]+$/,
       resolve: (str, _onError, opt) => intResolve(str, 2, 16, opt),
-      stringify: (node2) => intStringify(node2, 16, "0x")
+      stringify: (node3) => intStringify(node3, 16, "0x")
     };
     exports.int = int2;
     exports.intBin = intBin;
@@ -60217,13 +60217,13 @@ var require_timestamp = __commonJS({
       const res = parts.replace(/_/g, "").split(":").reduce((res2, p) => res2 * num(60) + num(p), num(0));
       return sign === "-" ? num(-1) * res : res;
     }
-    function stringifySexagesimal(node2) {
-      let { value } = node2;
+    function stringifySexagesimal(node3) {
+      let { value } = node3;
       let num = (n) => n;
       if (typeof value === "bigint")
         num = (n) => BigInt(n);
       else if (isNaN(value) || !isFinite(value))
-        return stringifyNumber.stringifyNumber(node2);
+        return stringifyNumber.stringifyNumber(node3);
       let sign = "";
       if (value < 0) {
         sign = "-";
@@ -60634,13 +60634,13 @@ var require_Document = __commonJS({
        * `name` will be used as a prefix for a new unique anchor.
        * If `name` is undefined, the generated anchor will use 'a' as a prefix.
        */
-      createAlias(node2, name) {
-        if (!node2.anchor) {
+      createAlias(node3, name) {
+        if (!node3.anchor) {
           const prev = anchors.anchorNames(this);
-          node2.anchor = // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+          node3.anchor = // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           !name || prev.has(name) ? anchors.findNewAnchor(name || "a", prev) : name;
         }
-        return new Alias.Alias(node2.anchor);
+        return new Alias.Alias(node3.anchor);
       }
       createNode(value, replacer, options) {
         let _replacer = void 0;
@@ -60672,11 +60672,11 @@ var require_Document = __commonJS({
           schema: this.schema,
           sourceObjects
         };
-        const node2 = createNode.createNode(value, tag, ctx);
-        if (flow && identity2.isCollection(node2))
-          node2.flow = true;
+        const node3 = createNode.createNode(value, tag, ctx);
+        if (flow && identity2.isCollection(node3))
+          node3.flow = true;
         setAnchors();
-        return node2;
+        return node3;
       }
       /**
        * Convert a key and a value into a `Pair` using the current schema,
@@ -61273,11 +61273,11 @@ var require_resolve_block_seq = __commonJS({
             continue;
           }
         }
-        const node2 = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, start, null, props, onError);
+        const node3 = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, start, null, props, onError);
         if (ctx.schema.compat)
           utilFlowIndentCheck.flowIndentCheck(bs.indent, value, onError);
-        offset = node2.range[2];
-        seq.items.push(node2);
+        offset = node3.range[2];
+        seq.items.push(node3);
       }
       seq.range = [bs.offset, offset, commentEnd ?? offset];
       return seq;
@@ -61577,12 +61577,12 @@ var require_compose_collection = __commonJS({
       }
       const coll = resolveCollection(CN, ctx, token, onError, tagName, tag);
       const res = tag.resolve?.(coll, (msg) => onError(tagToken, "TAG_RESOLVE_FAILED", msg), ctx.options) ?? coll;
-      const node2 = identity2.isNode(res) ? res : new Scalar.Scalar(res);
-      node2.range = coll.range;
-      node2.tag = tagName;
+      const node3 = identity2.isNode(res) ? res : new Scalar.Scalar(res);
+      node3.range = coll.range;
+      node3.tag = tagName;
       if (tag?.format)
-        node2.format = tag.format;
-      return node2;
+        node3.format = tag.format;
+      return node3;
     }
     exports.composeCollection = composeCollection;
   }
@@ -62117,11 +62117,11 @@ var require_compose_node = __commonJS({
     function composeNode(ctx, token, props, onError) {
       const atKey = ctx.atKey;
       const { spaceBefore, comment, anchor: anchor2, tag } = props;
-      let node2;
+      let node3;
       let isSrcToken = true;
       switch (token.type) {
         case "alias":
-          node2 = composeAlias(ctx, token, onError);
+          node3 = composeAlias(ctx, token, onError);
           if (anchor2 || tag)
             onError(token, "ALIAS_PROPS", "An alias node must not specify any properties");
           break;
@@ -62129,17 +62129,17 @@ var require_compose_node = __commonJS({
         case "single-quoted-scalar":
         case "double-quoted-scalar":
         case "block-scalar":
-          node2 = composeScalar.composeScalar(ctx, token, tag, onError);
+          node3 = composeScalar.composeScalar(ctx, token, tag, onError);
           if (anchor2)
-            node2.anchor = anchor2.source.substring(1);
+            node3.anchor = anchor2.source.substring(1);
           break;
         case "block-map":
         case "block-seq":
         case "flow-collection":
           try {
-            node2 = composeCollection.composeCollection(CN, ctx, token, props, onError);
+            node3 = composeCollection.composeCollection(CN, ctx, token, props, onError);
             if (anchor2)
-              node2.anchor = anchor2.source.substring(1);
+              node3.anchor = anchor2.source.substring(1);
           } catch (error62) {
             const message = error62 instanceof Error ? error62.message : String(error62);
             onError(token, "RESOURCE_EXHAUSTION", message);
@@ -62151,24 +62151,24 @@ var require_compose_node = __commonJS({
           isSrcToken = false;
         }
       }
-      node2 ?? (node2 = composeEmptyNode(ctx, token.offset, void 0, null, props, onError));
-      if (anchor2 && node2.anchor === "")
+      node3 ?? (node3 = composeEmptyNode(ctx, token.offset, void 0, null, props, onError));
+      if (anchor2 && node3.anchor === "")
         onError(anchor2, "BAD_ALIAS", "Anchor cannot be an empty string");
-      if (atKey && ctx.options.stringKeys && (!identity2.isScalar(node2) || typeof node2.value !== "string" || node2.tag && node2.tag !== "tag:yaml.org,2002:str")) {
+      if (atKey && ctx.options.stringKeys && (!identity2.isScalar(node3) || typeof node3.value !== "string" || node3.tag && node3.tag !== "tag:yaml.org,2002:str")) {
         const msg = "With stringKeys, all keys must be strings";
         onError(tag ?? token, "NON_STRING_KEY", msg);
       }
       if (spaceBefore)
-        node2.spaceBefore = true;
+        node3.spaceBefore = true;
       if (comment) {
         if (token.type === "scalar" && token.source === "")
-          node2.comment = comment;
+          node3.comment = comment;
         else
-          node2.commentBefore = comment;
+          node3.commentBefore = comment;
       }
       if (ctx.options.keepSourceTokens && isSrcToken)
-        node2.srcToken = token;
-      return node2;
+        node3.srcToken = token;
+      return node3;
     }
     function composeEmptyNode(ctx, offset, before, pos, { spaceBefore, comment, anchor: anchor2, tag, end }, onError) {
       const token = {
@@ -62177,19 +62177,19 @@ var require_compose_node = __commonJS({
         indent: -1,
         source: ""
       };
-      const node2 = composeScalar.composeScalar(ctx, token, tag, onError);
+      const node3 = composeScalar.composeScalar(ctx, token, tag, onError);
       if (anchor2) {
-        node2.anchor = anchor2.source.substring(1);
-        if (node2.anchor === "")
+        node3.anchor = anchor2.source.substring(1);
+        if (node3.anchor === "")
           onError(anchor2, "BAD_ALIAS", "Anchor cannot be an empty string");
       }
       if (spaceBefore)
-        node2.spaceBefore = true;
+        node3.spaceBefore = true;
       if (comment) {
-        node2.comment = comment;
-        node2.range[2] = end;
+        node3.comment = comment;
+        node3.range[2] = end;
       }
-      return node2;
+      return node3;
     }
     function composeAlias({ options }, { offset, source: source2, end }, onError) {
       const alias = new Alias.Alias(source2.substring(1));
@@ -65709,8 +65709,8 @@ var require_codegen = __commonJS({
       endIf() {
         return this._endBlockNode(If, Else);
       }
-      _for(node2, forBody) {
-        this._blockNode(node2);
+      _for(node3, forBody) {
+        this._blockNode(node3);
         if (forBody)
           this.code(forBody).endFor();
         return this;
@@ -65759,10 +65759,10 @@ var require_codegen = __commonJS({
       }
       // `return` statement
       return(value) {
-        const node2 = new Return();
-        this._blockNode(node2);
+        const node3 = new Return();
+        this._blockNode(node3);
         this.code(value);
-        if (node2.nodes.length !== 1)
+        if (node3.nodes.length !== 1)
           throw new Error('CodeGen: "return" should have one node');
         return this._endBlockNode(Return);
       }
@@ -65770,16 +65770,16 @@ var require_codegen = __commonJS({
       try(tryBody, catchCode, finallyCode) {
         if (!catchCode && !finallyCode)
           throw new Error('CodeGen: "try" without "catch" and "finally"');
-        const node2 = new Try();
-        this._blockNode(node2);
+        const node3 = new Try();
+        this._blockNode(node3);
         this.code(tryBody);
         if (catchCode) {
           const error62 = this.name("e");
-          this._currNode = node2.catch = new Catch(error62);
+          this._currNode = node3.catch = new Catch(error62);
           catchCode(error62);
         }
         if (finallyCode) {
-          this._currNode = node2.finally = new Finally();
+          this._currNode = node3.finally = new Finally();
           this.code(finallyCode);
         }
         return this._endBlockNode(Catch, Finally);
@@ -65824,13 +65824,13 @@ var require_codegen = __commonJS({
           this._root.optimizeNames(this._root.names, this._constants);
         }
       }
-      _leafNode(node2) {
-        this._currNode.nodes.push(node2);
+      _leafNode(node3) {
+        this._currNode.nodes.push(node3);
         return this;
       }
-      _blockNode(node2) {
-        this._currNode.nodes.push(node2);
-        this._nodes.push(node2);
+      _blockNode(node3) {
+        this._currNode.nodes.push(node3);
+        this._nodes.push(node3);
       }
       _endBlockNode(N1, N2) {
         const n = this._currNode;
@@ -65840,12 +65840,12 @@ var require_codegen = __commonJS({
         }
         throw new Error(`CodeGen: not in block "${N2 ? `${N1.kind}/${N2.kind}` : N1.kind}"`);
       }
-      _elseNode(node2) {
+      _elseNode(node3) {
         const n = this._currNode;
         if (!(n instanceof If)) {
           throw new Error('CodeGen: "else" without "if"');
         }
-        this._currNode = n.else = node2;
+        this._currNode = n.else = node3;
         return this;
       }
       get _root() {
@@ -65855,9 +65855,9 @@ var require_codegen = __commonJS({
         const ns = this._nodes;
         return ns[ns.length - 1];
       }
-      set _currNode(node2) {
+      set _currNode(node3) {
         const ns = this._nodes;
-        ns[ns.length - 1] = node2;
+        ns[ns.length - 1] = node3;
       }
     };
     exports.CodeGen = CodeGen;
@@ -74028,7 +74028,7 @@ var require_png = __commonJS({
     var Parser2 = require_parser_async();
     var Packer = require_packer_async();
     var PNGSync = require_png_sync();
-    var PNG2 = exports.PNG = function(options) {
+    var PNG3 = exports.PNG = function(options) {
       Stream2.call(this);
       options = options || {};
       this.width = options.width | 0;
@@ -74057,9 +74057,9 @@ var require_png = __commonJS({
       this._parser.on("close", this._handleClose.bind(this));
       this._packer.on("error", this.emit.bind(this, "error"));
     };
-    util2.inherits(PNG2, Stream2);
-    PNG2.sync = PNGSync;
-    PNG2.prototype.pack = function() {
+    util2.inherits(PNG3, Stream2);
+    PNG3.sync = PNGSync;
+    PNG3.prototype.pack = function() {
       if (!this.data || !this.data.length) {
         this.emit("error", "No data provided");
         return this;
@@ -74071,7 +74071,7 @@ var require_png = __commonJS({
       );
       return this;
     };
-    PNG2.prototype.parse = function(data, callback) {
+    PNG3.prototype.parse = function(data, callback) {
       if (callback) {
         let onParsed, onError;
         onParsed = function(parsedData) {
@@ -74089,27 +74089,27 @@ var require_png = __commonJS({
       this.end(data);
       return this;
     };
-    PNG2.prototype.write = function(data) {
+    PNG3.prototype.write = function(data) {
       this._parser.write(data);
       return true;
     };
-    PNG2.prototype.end = function(data) {
+    PNG3.prototype.end = function(data) {
       this._parser.end(data);
     };
-    PNG2.prototype._metadata = function(metadata) {
+    PNG3.prototype._metadata = function(metadata) {
       this.width = metadata.width;
       this.height = metadata.height;
       this.emit("metadata", metadata);
     };
-    PNG2.prototype._gamma = function(gamma) {
+    PNG3.prototype._gamma = function(gamma) {
       this.gamma = gamma;
     };
-    PNG2.prototype._handleClose = function() {
+    PNG3.prototype._handleClose = function() {
       if (!this._parser.writable && !this._packer.readable) {
         this.emit("close");
       }
     };
-    PNG2.bitblt = function(src, dst, srcX, srcY, width, height, deltaX, deltaY) {
+    PNG3.bitblt = function(src, dst, srcX, srcY, width, height, deltaX, deltaY) {
       srcX |= 0;
       srcY |= 0;
       width |= 0;
@@ -74131,11 +74131,11 @@ var require_png = __commonJS({
         );
       }
     };
-    PNG2.prototype.bitblt = function(dst, srcX, srcY, width, height, deltaX, deltaY) {
-      PNG2.bitblt(this, dst, srcX, srcY, width, height, deltaX, deltaY);
+    PNG3.prototype.bitblt = function(dst, srcX, srcY, width, height, deltaX, deltaY) {
+      PNG3.bitblt(this, dst, srcX, srcY, width, height, deltaX, deltaY);
       return this;
     };
-    PNG2.adjustGamma = function(src) {
+    PNG3.adjustGamma = function(src) {
       if (src.gamma) {
         for (let y = 0; y < src.height; y++) {
           for (let x2 = 0; x2 < src.width; x2++) {
@@ -74150,8 +74150,8 @@ var require_png = __commonJS({
         src.gamma = 0;
       }
     };
-    PNG2.prototype.adjustGamma = function() {
-      PNG2.adjustGamma(this);
+    PNG3.prototype.adjustGamma = function() {
+      PNG3.adjustGamma(this);
     };
   }
 });
@@ -74983,10 +74983,10 @@ function getElementAtPath(obj, path14) {
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
   const promises = keys.map((key2) => promisesObj[key2]);
-  return Promise.all(promises).then((results) => {
+  return Promise.all(promises).then((results2) => {
     const resolvedObj = {};
     for (let i = 0; i < keys.length; i++) {
-      resolvedObj[keys[i]] = results[i];
+      resolvedObj[keys[i]] = results2[i];
     }
     return resolvedObj;
   });
@@ -75804,11 +75804,11 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
                 configurable: true
               });
             }
-            const node2 = curr[el];
+            const node3 = curr[el];
             if (terminal) {
-              node2._errors.push(mapper(issue2));
+              node3._errors.push(mapper(issue2));
             }
-            curr = node2;
+            curr = node3;
             i++;
           }
         }
@@ -77855,14 +77855,14 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return superParse(payload, ctx);
   };
 });
-function handleUnionResults(results, final, inst, ctx) {
-  for (const result of results) {
+function handleUnionResults(results2, final, inst, ctx) {
+  for (const result of results2) {
     if (result.issues.length === 0) {
       final.value = result.value;
       return final;
     }
   }
-  const nonaborted = results.filter((r) => !aborted(r));
+  const nonaborted = results2.filter((r) => !aborted(r));
   if (nonaborted.length === 1) {
     final.value = nonaborted[0].value;
     return nonaborted[0];
@@ -77871,7 +77871,7 @@ function handleUnionResults(results, final, inst, ctx) {
     code: "invalid_union",
     input: final.value,
     inst,
-    errors: results.map((result) => result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+    errors: results2.map((result) => result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
   });
   return final;
 }
@@ -77898,36 +77898,36 @@ var $ZodUnion = /* @__PURE__ */ $constructor("$ZodUnion", (inst, def) => {
       return first2(payload, ctx);
     }
     let async2 = false;
-    const results = [];
+    const results2 = [];
     for (const option of def.options) {
       const result = option._zod.run({
         value: payload.value,
         issues: []
       }, ctx);
       if (result instanceof Promise) {
-        results.push(result);
+        results2.push(result);
         async2 = true;
       } else {
         if (result.issues.length === 0)
           return result;
-        results.push(result);
+        results2.push(result);
       }
     }
     if (!async2)
-      return handleUnionResults(results, payload, inst, ctx);
-    return Promise.all(results).then((results2) => {
       return handleUnionResults(results2, payload, inst, ctx);
+    return Promise.all(results2).then((results3) => {
+      return handleUnionResults(results3, payload, inst, ctx);
     });
   };
 });
-function handleExclusiveUnionResults(results, final, inst, ctx) {
+function handleExclusiveUnionResults(results2, final, inst, ctx) {
   const matches = [];
-  for (let i = 0; i < results.length; i++) {
-    if (results[i].issues.length === 0)
+  for (let i = 0; i < results2.length; i++) {
+    if (results2[i].issues.length === 0)
       matches.push(i);
   }
   if (matches.length === 1) {
-    final.value = results[matches[0]].value;
+    final.value = results2[matches[0]].value;
     return final;
   }
   if (matches.length === 0) {
@@ -77935,7 +77935,7 @@ function handleExclusiveUnionResults(results, final, inst, ctx) {
       code: "invalid_union",
       input: final.value,
       inst,
-      errors: results.map((result) => result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+      errors: results2.map((result) => result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
     });
   } else {
     final.issues.push({
@@ -77958,23 +77958,23 @@ var $ZodXor = /* @__PURE__ */ $constructor("$ZodXor", (inst, def) => {
       return first2(payload, ctx);
     }
     let async2 = false;
-    const results = [];
+    const results2 = [];
     for (const option of def.options) {
       const result = option._zod.run({
         value: payload.value,
         issues: []
       }, ctx);
       if (result instanceof Promise) {
-        results.push(result);
+        results2.push(result);
         async2 = true;
       } else {
-        results.push(result);
+        results2.push(result);
       }
     }
     if (!async2)
-      return handleExclusiveUnionResults(results, payload, inst, ctx);
-    return Promise.all(results).then((results2) => {
       return handleExclusiveUnionResults(results2, payload, inst, ctx);
+    return Promise.all(results2).then((results3) => {
+      return handleExclusiveUnionResults(results3, payload, inst, ctx);
     });
   };
 });
@@ -93608,9 +93608,9 @@ function fromJSONSchema(schema, params) {
 // node_modules/zod/v4/core/visit.js
 var RESOLVING = /* @__PURE__ */ Symbol("z.visit/resolving");
 function visit(schema, fnOrHandlers) {
-  const fn = typeof fnOrHandlers === "function" ? fnOrHandlers : (node2, rewritten) => {
-    const h = fnOrHandlers[node2._zod.def.type];
-    return h ? h(node2, rewritten) : node2;
+  const fn = typeof fnOrHandlers === "function" ? fnOrHandlers : (node3, rewritten) => {
+    const h = fnOrHandlers[node3._zod.def.type];
+    return h ? h(node3, rewritten) : node3;
   };
   const cache = /* @__PURE__ */ new Map();
   function run(s) {
@@ -96342,7 +96342,7 @@ var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
       try {
         const backupSuffix = ".puppeteer";
         const backupFiles = ["prefs.js", "user.js"];
-        const results = await Promise.allSettled(backupFiles.map(async (file2) => {
+        const results2 = await Promise.allSettled(backupFiles.map(async (file2) => {
           const prefsBackupPath = path13.join(userDataDir, file2 + backupSuffix);
           if (fs7.existsSync(prefsBackupPath)) {
             const prefsPath = path13.join(userDataDir, file2);
@@ -96350,7 +96350,7 @@ var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
             await rename(prefsBackupPath, prefsPath);
           }
         }));
-        for (const result of results) {
+        for (const result of results2) {
           if (result.status === "rejected") {
             throw result.reason;
           }
@@ -96720,7 +96720,7 @@ var ScreenRecorder = (() => {
     /**
      * @internal
      */
-    constructor(page, width, height, { ffmpegPath, speed, scale, crop, format: format3, fps, loop, delay, quality, colors } = {}, logger) {
+    constructor(page, width, height, { ffmpegPath, speed, scale, crop: crop2, format: format3, fps, loop, delay, quality, colors } = {}, logger) {
       super({ allowHalfOpen: false });
       this.#logger = logger;
       ffmpegPath ??= "ffmpeg";
@@ -96742,8 +96742,8 @@ var ScreenRecorder = (() => {
       if (speed) {
         filters.push(`setpts=${1 / speed}*PTS`);
       }
-      if (crop) {
-        filters.push(`crop=${crop.width}:${crop.height}:${crop.x}:${crop.y}`);
+      if (crop2) {
+        filters.push(`crop=${crop2.width}:${crop2.height}:${crop2.x}:${crop2.y}`);
       }
       if (scale) {
         filters.push(`scale=iw*${scale}:-1:flags=lanczos`);
@@ -98037,9 +98037,9 @@ var ParseStatus = class _ParseStatus {
     if (this.value !== "aborted")
       this.value = "aborted";
   }
-  static mergeArray(status, results) {
+  static mergeArray(status, results2) {
     const arrayValue = [];
-    for (const s of results) {
+    for (const s of results2) {
       if (s.status === "aborted")
         return INVALID2;
       if (s.status === "dirty")
@@ -100213,19 +100213,19 @@ var ZodUnion2 = class extends ZodType2 {
   _parse(input3) {
     const { ctx } = this._processInputParams(input3);
     const options = this._def.options;
-    function handleResults(results) {
-      for (const result of results) {
+    function handleResults(results2) {
+      for (const result of results2) {
         if (result.result.status === "valid") {
           return result.result;
         }
       }
-      for (const result of results) {
+      for (const result of results2) {
         if (result.result.status === "dirty") {
           ctx.common.issues.push(...result.ctx.common.issues);
           return result.result;
         }
       }
-      const unionErrors = results.map((result) => new ZodError2(result.ctx.common.issues));
+      const unionErrors = results2.map((result) => new ZodError2(result.ctx.common.issues));
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_union,
         unionErrors
@@ -100541,8 +100541,8 @@ var ZodTuple2 = class _ZodTuple extends ZodType2 {
       return schema._parse(new ParseInputLazyPath(ctx, item, ctx.path, itemIndex));
     }).filter((x2) => !!x2);
     if (ctx.common.async) {
-      return Promise.all(items).then((results) => {
-        return ParseStatus.mergeArray(status, results);
+      return Promise.all(items).then((results2) => {
+        return ParseStatus.mergeArray(status, results2);
       });
     } else {
       return ParseStatus.mergeArray(status, items);
@@ -105701,10 +105701,10 @@ var RefTable = class {
     this.handles = [];
     await Promise.all(old.map((h) => h.dispose().catch(() => void 0)));
   }
-  add(node2, tabId, nav) {
+  add(node3, tabId, nav) {
     this.counter += 1;
     const ref = `e${this.counter}`;
-    this.entries.set(ref, { node: node2, tabId, nav });
+    this.entries.set(ref, { node: node3, tabId, nav });
     return ref;
   }
   // Gets the element for a ref. Fails if the page changed since the snapshot.
@@ -105762,23 +105762,23 @@ function pageCandidates(el) {
     out.push(`${tag}::-p-text(${text.replace(/[()]/g, "")})`);
   }
   const segments = [];
-  let node2 = el;
-  for (let depth = 0; node2 && depth < 5; depth++) {
-    const nodeTag = node2.tagName.toLowerCase();
-    if (node2.id && !/\d{3,}|^:|:$/.test(node2.id) && node2 !== el) {
-      segments.unshift(`#${CSS.escape(node2.id)}`);
+  let node3 = el;
+  for (let depth = 0; node3 && depth < 5; depth++) {
+    const nodeTag = node3.tagName.toLowerCase();
+    if (node3.id && !/\d{3,}|^:|:$/.test(node3.id) && node3 !== el) {
+      segments.unshift(`#${CSS.escape(node3.id)}`);
       break;
     }
-    const parent = node2.parentElement;
+    const parent = node3.parentElement;
     if (!parent || nodeTag === "body") {
       segments.unshift(nodeTag);
       break;
     }
-    const same = [...parent.children].filter((c) => c.tagName === node2?.tagName);
+    const same = [...parent.children].filter((c) => c.tagName === node3?.tagName);
     segments.unshift(
-      same.length > 1 ? `${nodeTag}:nth-of-type(${same.indexOf(node2) + 1})` : nodeTag
+      same.length > 1 ? `${nodeTag}:nth-of-type(${same.indexOf(node3) + 1})` : nodeTag
     );
-    node2 = parent;
+    node3 = parent;
   }
   out.push(segments.join(" > "));
   return out;
@@ -105902,10 +105902,10 @@ function panelMain(opts, candidates) {
     root.appendChild(style);
   }
   const el = (tag, className, text) => {
-    const node2 = document.createElement(tag);
-    if (className) node2.className = className;
-    if (text !== void 0) node2.textContent = text;
-    return node2;
+    const node3 = document.createElement(tag);
+    if (className) node3.className = className;
+    if (text !== void 0) node3.textContent = text;
+    return node3;
   };
   const pulse = el("div", "pulse");
   const pulseLabel = el("div", "pulse-label");
@@ -106146,12 +106146,12 @@ function panelMain(opts, candidates) {
     }
   };
   const inPanel = (target2) => target2 === host || host.contains(target2);
-  const roleOf = (node2) => {
-    const explicit = node2.getAttribute("role");
+  const roleOf = (node3) => {
+    const explicit = node3.getAttribute("role");
     if (explicit) return explicit;
-    const tag = node2.tagName.toLowerCase();
-    const type = (node2.getAttribute("type") ?? "text").toLowerCase();
-    if (tag === "a" && node2.hasAttribute("href")) return "link";
+    const tag = node3.tagName.toLowerCase();
+    const type = (node3.getAttribute("type") ?? "text").toLowerCase();
+    if (tag === "a" && node3.hasAttribute("href")) return "link";
     if (tag === "button") return "button";
     if (tag === "select") return "combobox";
     if (tag === "textarea") return "textbox";
@@ -106164,11 +106164,11 @@ function panelMain(opts, candidates) {
     }
     return void 0;
   };
-  const nameOf = (node2) => {
-    const html = node2;
-    const aria = node2.getAttribute("aria-label");
+  const nameOf = (node3) => {
+    const html = node3;
+    const aria = node3.getAttribute("aria-label");
     if (aria) return aria.trim();
-    const labelledBy = node2.getAttribute("aria-labelledby");
+    const labelledBy = node3.getAttribute("aria-labelledby");
     if (labelledBy) {
       const text2 = labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? "").join(" ").trim();
       if (text2) return text2;
@@ -106181,14 +106181,14 @@ function panelMain(opts, candidates) {
       const text2 = copy.textContent?.replace(/\s+/g, " ").trim();
       if (text2) return text2;
     }
-    const text = node2.innerText?.replace(/\s+/g, " ").trim();
-    if (text && ["a", "button"].includes(node2.tagName.toLowerCase())) return text;
-    return (html.placeholder || node2.getAttribute("title") || node2.getAttribute("alt") || html.value || text || "").trim();
+    const text = node3.innerText?.replace(/\s+/g, " ").trim();
+    if (text && ["a", "button"].includes(node3.tagName.toLowerCase())) return text;
+    return (html.placeholder || node3.getAttribute("title") || node3.getAttribute("alt") || html.value || text || "").trim();
   };
-  const targetOf = (node2) => {
-    const role = roleOf(node2);
-    const name = nameOf(node2).slice(0, 80);
-    const all = candidates(node2);
+  const targetOf = (node3) => {
+    const role = roleOf(node3);
+    const name = nameOf(node3).slice(0, 80);
+    const all = candidates(node3);
     const testId = all.find((c) => c.startsWith("[data-"));
     if (testId && document.querySelectorAll(testId).length === 1) return { selector: testId };
     if (role && name && !/[()[\]"]/.test(name)) {
@@ -106204,27 +106204,27 @@ function panelMain(opts, candidates) {
       } catch {
       }
     }
-    return { selector: all[all.length - 1] ?? node2.tagName.toLowerCase() };
+    return { selector: all[all.length - 1] ?? node3.tagName.toLowerCase() };
   };
-  const label = (node2) => {
-    const name = nameOf(node2);
-    return name ? `"${name.slice(0, 60)}"` : node2.tagName.toLowerCase();
+  const label = (node3) => {
+    const name = nameOf(node3);
+    return name ? `"${name.slice(0, 60)}"` : node3.tagName.toLowerCase();
   };
-  const record2 = (kind, node2, extra = {}) => {
+  const record2 = (kind, node3, extra = {}) => {
     if (!recording) return;
-    const target2 = targetOf(node2);
-    send({ type: "rec", kind, target: target2, label: label(node2), key: JSON.stringify(target2), ...extra });
+    const target2 = targetOf(node3);
+    send({ type: "rec", kind, target: target2, label: label(node3), key: JSON.stringify(target2), ...extra });
   };
-  const isTextField = (node2) => {
-    const tag = node2.tagName.toLowerCase();
-    return tag === "textarea" || tag === "input" && roleOf(node2) === "textbox" || node2.isContentEditable;
+  const isTextField = (node3) => {
+    const tag = node3.tagName.toLowerCase();
+    return tag === "textarea" || tag === "input" && roleOf(node3) === "textbox" || node3.isContentEditable;
   };
-  const fieldValue = (node2) => {
-    const input3 = node2;
+  const fieldValue = (node3) => {
+    const input3 = node3;
     if (input3.type === "password")
       return { secret: true, fieldName: input3.name || input3.id || "password" };
     return {
-      value: node2.isContentEditable ? node2.innerText : input3.value
+      value: node3.isContentEditable ? node3.innerText : input3.value
     };
   };
   document.addEventListener(
@@ -106232,14 +106232,14 @@ function panelMain(opts, candidates) {
     (event) => {
       if (!recording || !event.isTrusted || inPanel(event.target)) return;
       const start2 = event.target;
-      const node2 = start2?.closest?.(
+      const node3 = start2?.closest?.(
         'a[href], button, input, select, textarea, summary, label, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [onclick]'
       );
-      if (!node2) return;
-      const tag = node2.tagName.toLowerCase();
+      if (!node3) return;
+      const tag = node3.tagName.toLowerCase();
       if (tag === "select" || tag === "textarea" || tag === "label") return;
-      if (tag === "input" && roleOf(node2) !== "button") return;
-      record2("click", node2);
+      if (tag === "input" && roleOf(node3) !== "button") return;
+      record2("click", node3);
     },
     true
   );
@@ -106247,19 +106247,19 @@ function panelMain(opts, candidates) {
     "change",
     (event) => {
       if (!recording || !event.isTrusted || inPanel(event.target)) return;
-      const node2 = event.target;
-      const tag = node2.tagName.toLowerCase();
+      const node3 = event.target;
+      const tag = node3.tagName.toLowerCase();
       if (tag === "select") {
-        const option = node2.selectedOptions[0];
-        record2("select", node2, { value: option?.label.trim() || node2.value });
-      } else if (node2.type === "checkbox") {
-        record2(node2.checked ? "check" : "uncheck", node2);
-      } else if (node2.type === "radio") {
-        record2("check", node2);
-      } else if (node2.type === "file") {
-        record2("upload", node2, { files: Array.from(node2.files ?? []).map((f) => f.name) });
-      } else if (isTextField(node2)) {
-        record2("fill", node2, fieldValue(node2));
+        const option = node3.selectedOptions[0];
+        record2("select", node3, { value: option?.label.trim() || node3.value });
+      } else if (node3.type === "checkbox") {
+        record2(node3.checked ? "check" : "uncheck", node3);
+      } else if (node3.type === "radio") {
+        record2("check", node3);
+      } else if (node3.type === "file") {
+        record2("upload", node3, { files: Array.from(node3.files ?? []).map((f) => f.name) });
+      } else if (isTextField(node3)) {
+        record2("fill", node3, fieldValue(node3));
       }
     },
     true
@@ -106268,10 +106268,10 @@ function panelMain(opts, candidates) {
     "keydown",
     (event) => {
       if (!recording || !event.isTrusted || inPanel(event.target) || event.key !== "Enter") return;
-      const node2 = event.target;
-      if (!isTextField(node2) || node2.tagName.toLowerCase() === "textarea") return;
-      record2("fill", node2, fieldValue(node2));
-      record2("press", node2, { value: "Enter" });
+      const node3 = event.target;
+      if (!isTextField(node3) || node3.tagName.toLowerCase() === "textarea") return;
+      record2("fill", node3, fieldValue(node3));
+      record2("press", node3, { value: "Enter" });
     },
     true
   );
@@ -108318,21 +108318,21 @@ function clip(text) {
   const flat = text.replace(/\s+/g, " ").trim();
   return flat.length > MAX_TEXT ? `${flat.slice(0, MAX_TEXT)}...` : flat;
 }
-function details(node2) {
+function details(node3) {
   const parts = [];
-  if (node2.value !== void 0 && node2.value !== "")
-    parts.push(`value: "${clip(String(node2.value))}"`);
-  if (node2.checked !== void 0)
-    parts.push(node2.checked === "mixed" ? "mixed" : node2.checked ? "checked" : "not checked");
-  if (node2.pressed !== void 0) parts.push(node2.pressed ? "pressed" : "not pressed");
-  if (node2.selected) parts.push("selected");
-  if (node2.expanded !== void 0) parts.push(node2.expanded ? "expanded" : "collapsed");
-  if (node2.disabled) parts.push("disabled");
-  if (node2.required) parts.push("required");
-  if (node2.invalid && node2.invalid !== "false") parts.push("invalid");
-  if (node2.focused) parts.push("focused");
-  if (node2.level) parts.push(`level ${node2.level}`);
-  if (node2.url) parts.push(`url: ${node2.url}`);
+  if (node3.value !== void 0 && node3.value !== "")
+    parts.push(`value: "${clip(String(node3.value))}"`);
+  if (node3.checked !== void 0)
+    parts.push(node3.checked === "mixed" ? "mixed" : node3.checked ? "checked" : "not checked");
+  if (node3.pressed !== void 0) parts.push(node3.pressed ? "pressed" : "not pressed");
+  if (node3.selected) parts.push("selected");
+  if (node3.expanded !== void 0) parts.push(node3.expanded ? "expanded" : "collapsed");
+  if (node3.disabled) parts.push("disabled");
+  if (node3.required) parts.push("required");
+  if (node3.invalid && node3.invalid !== "false") parts.push("invalid");
+  if (node3.focused) parts.push("focused");
+  if (node3.level) parts.push(`level ${node3.level}`);
+  if (node3.url) parts.push(`url: ${node3.url}`);
   return parts.length ? ` (${parts.join(", ")})` : "";
 }
 async function buildSnapshot(tab, refs, root) {
@@ -108344,26 +108344,26 @@ async function buildSnapshot(tab, refs, root) {
   });
   const lines = [];
   let truncated = false;
-  const walk = (node2, depth, parentName = "") => {
+  const walk = (node3, depth, parentName = "") => {
     if (lines.length >= MAX_LINES) {
       truncated = true;
       return;
     }
     const indent = "  ".repeat(depth);
-    const name = node2.name ? clip(node2.name) : "";
+    const name = node3.name ? clip(node3.name) : "";
     let childDepth = depth + 1;
-    if (node2.role === "StaticText") {
+    if (node3.role === "StaticText") {
       if (name && !parentName.includes(name)) lines.push(`${indent}- text "${name}"`);
-    } else if (node2.role === "RootWebArea") {
-      if (depth > 0) lines.push(`${indent}- document "${name}"${details(node2)}`);
+    } else if (node3.role === "RootWebArea") {
+      if (depth > 0) lines.push(`${indent}- document "${name}"${details(node3)}`);
       else childDepth = depth;
-    } else if (SKIP_ROLES.has(node2.role) && !name) {
+    } else if (SKIP_ROLES.has(node3.role) && !name) {
       childDepth = depth;
     } else {
-      const ref = refs.add(node2, tab.id, tab.nav);
-      lines.push(`${indent}- [${ref}] ${node2.role}${name ? ` "${name}"` : ""}${details(node2)}`);
+      const ref = refs.add(node3, tab.id, tab.nav);
+      lines.push(`${indent}- [${ref}] ${node3.role}${name ? ` "${name}"` : ""}${details(node3)}`);
     }
-    for (const child of node2.children ?? []) walk(child, childDepth, name || parentName);
+    for (const child of node3.children ?? []) walk(child, childDepth, name || parentName);
   };
   if (tree) walk(tree, 0);
   if (!root) {
@@ -108728,6 +108728,9 @@ var CRITERIA = LIST.map(([number4, name, level]) => ({
   url: `https://www.w3.org/WAI/WCAG22/Understanding/${pageName(name)}.html`
 }));
 var BY_TAG = new Map(CRITERIA.map((c) => [`wcag${c.number.replaceAll(".", "")}`, c]));
+function criterionByNumber(number4) {
+  return CRITERIA.find((c) => c.number === number4);
+}
 function criteriaForTags(tags = []) {
   const found = [];
   for (const tag of tags) {
@@ -108945,8 +108948,8 @@ async function runAxe(page, options = {}) {
     await cdp.detach().catch(() => void 0);
   }
 }
-function where(node2) {
-  return node2.frame ? `in frame ${node2.frame.selector}: ${node2.target}` : node2.target;
+function where(node3) {
+  return node3.frame ? `in frame ${node3.frame.selector}: ${node3.target}` : node3.target;
 }
 function formatViolations(violations) {
   if (violations.length === 0) return "No accessibility problems found.";
@@ -108961,11 +108964,79 @@ function formatViolations(violations) {
       lines.push(
         `- ${v2.id}: ${v2.help} (${count} element${count === 1 ? "" : "s"})${wcag ? ` ${wcag}` : ""} ${v2.helpUrl}`
       );
-      for (const node2 of v2.nodes.slice(0, 3)) lines.push(`  - ${where(node2)}: ${node2.html}`);
+      for (const node3 of v2.nodes.slice(0, 3)) lines.push(`  - ${where(node3)}: ${node3.html}`);
       if (count > 3) lines.push(`  - and ${count - 3} more`);
     }
   }
   return lines.join("\n");
+}
+
+// packages/server/src/audit/custom-rules.ts
+var CUSTOM_RULES = {
+  "keyboard-trap": {
+    impact: "critical",
+    help: "Keyboard focus must not get stuck",
+    description: "Checks that Tab and Shift+Tab can move focus away from every element.",
+    wcag: "2.1.2",
+    tags: ["wcag2a", "wcag212", "cat.keyboard"]
+  },
+  "keyboard-unreachable": {
+    impact: "serious",
+    help: "Elements you can click must be reachable with the Tab key",
+    description: "Checks for elements that respond to a click but cannot get keyboard focus.",
+    wcag: "2.1.1",
+    tags: ["wcag2a", "wcag211", "cat.keyboard"]
+  },
+  "focus-visible": {
+    impact: "serious",
+    help: "Keyboard focus must be visible",
+    description: "Checks that the screen changes when an element gets keyboard focus.",
+    wcag: "2.4.7",
+    tags: ["wcag2aa", "wcag247", "cat.keyboard"]
+  },
+  reflow: {
+    impact: "serious",
+    help: "Content must fit a 320px wide screen without sideways scrolling",
+    description: "Checks that the page does not scroll sideways at a width of 320 CSS pixels.",
+    wcag: "1.4.10",
+    tags: ["wcag21aa", "wcag1410", "cat.layout"]
+  },
+  "color-contrast-dark": {
+    impact: "serious",
+    help: "Text must have enough contrast in dark mode",
+    description: "Checks color contrast with the dark color scheme, for problems that light mode does not have.",
+    wcag: "1.4.3",
+    tags: ["wcag2aa", "wcag143", "cat.color"]
+  }
+};
+function violation(id, nodes) {
+  const rule = CUSTOM_RULES[id];
+  return {
+    id,
+    impact: rule.impact,
+    ruleImpact: rule.impact,
+    help: rule.help,
+    description: rule.description,
+    helpUrl: criterionByNumber(rule.wcag)?.url ?? "",
+    tags: rule.tags,
+    nodes,
+    nodeCount: nodes.length
+  };
+}
+function results(check2) {
+  const out = [];
+  const extra = check2.checks ?? {};
+  if (extra.keyboard) {
+    out.push(["keyboard-trap", extra.keyboard.trap ?? []]);
+    out.push(["keyboard-unreachable", extra.keyboard.unreachable]);
+    out.push(["focus-visible", extra.keyboard.noVisibleFocus]);
+  }
+  if (extra.reflow) out.push(["reflow", extra.reflow.overflow ? extra.reflow.elements : []]);
+  if (extra.darkMode) out.push(["color-contrast-dark", extra.darkMode.darkOnly]);
+  return out;
+}
+function customViolations(check2) {
+  return results(check2).filter(([, nodes]) => nodes.length > 0).map(([id, nodes]) => violation(id, nodes));
 }
 
 // packages/server/src/report/common.ts
@@ -109057,7 +109128,7 @@ function stepAccessibility(run, step) {
   let elements = 0;
   let types = 0;
   for (const check2 of checks) {
-    for (const v2 of check2.violations) {
+    for (const v2 of [...check2.violations, ...customViolations(check2)]) {
       types += 1;
       elements += v2.nodeCount ?? v2.nodes.length;
       byImpact.set(v2.impact, (byImpact.get(v2.impact) ?? 0) + 1);
@@ -109134,8 +109205,105 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
-import { basename as basename4, dirname as dirname8, extname as extname4, join as join19, relative as relative7 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync6, readFileSync as readFileSync11, writeFileSync as writeFileSync5 } from "node:fs";
+import { basename as basename4, dirname as dirname8, extname as extname4, join as join20, relative as relative7 } from "node:path";
+
+// packages/server/src/audit/element-shots.ts
+import { mkdirSync as mkdirSync5, readdirSync as readdirSync5, writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join19 } from "node:path";
+
+// packages/server/src/text.ts
+function slug(text, max, fallback) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, max) || fallback;
+}
+
+// packages/server/src/audit/element-shots.ts
+function nextNumber(dir) {
+  try {
+    const numbers = readdirSync5(dir).map((f) => Number.parseInt(f.slice(0, 3), 10)).filter((n) => !Number.isNaN(n));
+    return numbers.length ? Math.max(...numbers) + 1 : 1;
+  } catch {
+    return 1;
+  }
+}
+async function findElement(tab, node3) {
+  let frame = tab.page.mainFrame();
+  if (node3.frame) {
+    const url2 = node3.frame.url;
+    frame = tab.page.frames().find((f) => f.url() === url2 || f.url() === url2.split("#")[0]);
+  }
+  if (!frame) return null;
+  return await frame.$(node3.target).catch(() => null);
+}
+async function shootElements(driver, tab, items, folder5, max) {
+  const dir = join19(folder5.root, folder5.sub);
+  mkdirSync5(dir, { recursive: true });
+  let number4 = nextNumber(dir);
+  const shots = [];
+  const page = tab.page;
+  await withCleanPage(driver, tab, {}, async () => {
+    for (const { rule, node: node3 } of items.slice(0, max)) {
+      const handle = await findElement(tab, node3);
+      if (!handle) continue;
+      try {
+        await handle.scrollIntoView().catch(() => void 0);
+        const box = await handle.boundingBox();
+        if (!box || box.width < 1 || box.height < 1) continue;
+        const viewport = await page.evaluate(() => ({
+          x: window.scrollX,
+          y: window.scrollY,
+          width: window.innerWidth,
+          height: window.innerHeight
+        }));
+        const outline = await page.evaluateHandle((b2) => {
+          const div = document.createElement("div");
+          div.setAttribute("data-uiwalk-outline", "");
+          Object.assign(div.style, {
+            position: "fixed",
+            left: `${b2.x - 3}px`,
+            top: `${b2.y - 3}px`,
+            width: `${b2.width + 6}px`,
+            height: `${b2.height + 6}px`,
+            border: "3px solid #e11d48",
+            borderRadius: "4px",
+            zIndex: "2147483647",
+            pointerEvents: "none",
+            boxSizing: "border-box"
+          });
+          document.documentElement.append(div);
+          return div;
+        }, box);
+        try {
+          const pad = 24;
+          const x2 = Math.max(0, box.x - pad);
+          const y = Math.max(0, box.y - pad);
+          const width = Math.min(viewport.width - x2, box.width + pad * 2);
+          const height = Math.min(viewport.height - y, box.height + pad * 2);
+          if (width < 1 || height < 1) continue;
+          const jpg = await page.screenshot({
+            type: "jpeg",
+            quality: 70,
+            clip: { x: x2 + viewport.x, y: y + viewport.y, width, height },
+            captureBeyondViewport: false
+          });
+          const name = `${String(number4).padStart(3, "0")}-${slug(rule, 40, "rule")}.jpg`;
+          writeFileSync4(join19(dir, name), jpg);
+          shots.push({ rule, target: node3.target, file: `${folder5.sub}/${name}` });
+          number4 += 1;
+        } finally {
+          await outline.evaluate((el) => el.remove()).catch(() => void 0);
+          await outline.dispose().catch(() => void 0);
+        }
+      } finally {
+        await handle.dispose().catch(() => void 0);
+      }
+    }
+  });
+  return shots;
+}
+
+// packages/server/src/audit/keyboard.ts
+var import_pngjs = __toESM(require_png(), 1);
 
 // packages/server/src/visual/capture.ts
 var FREEZE_CSS = "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; scroll-behavior: auto !important; }";
@@ -109175,6 +109343,284 @@ async function steadyCapture(driver, tab, options) {
   }
 }
 
+// packages/server/src/audit/keyboard.ts
+var SETUP = `(() => {
+  const state = { ids: new WeakMap(), els: [], next: 0 };
+  window.__uiwalkKb = state;
+  try { axe.setup(document); state.own = true; } catch {}
+  // Start at the top: focus a new first element, press Tab, then remove it.
+  const start = document.createElement('span');
+  start.tabIndex = -1;
+  document.body.prepend(start);
+  start.focus();
+  state.start = start;
+})()`;
+var TEARDOWN = `(() => {
+  const state = window.__uiwalkKb;
+  if (!state) return;
+  if (state.start) state.start.remove();
+  if (state.own) try { axe.teardown(); } catch {}
+  const active = document.activeElement;
+  if (active && active.blur) active.blur();
+  delete window.__uiwalkKb;
+})()`;
+var HELPERS = `
+  const simple = (el) => {
+    let s = el.tagName.toLowerCase();
+    if (el.id) return s + '#' + CSS.escape(el.id);
+    if (el.getAttribute('name')) return s + '[name="' + el.getAttribute('name') + '"]';
+    if (el.classList.length) s += '.' + [...el.classList].map((c) => CSS.escape(c)).join('.');
+    return s;
+  };
+  const selector = (el) => {
+    const root = el.getRootNode();
+    if (root !== document && root.host) return selector(root.host) + ' >>> ' + simple(el);
+    try { return axe.utils.getSelector(el); } catch { return simple(el); }
+  };
+  const pageRect = (el) => {
+    const b = el.getBoundingClientRect();
+    return { x: b.x + window.scrollX, y: b.y + window.scrollY, width: b.width, height: b.height };
+  };
+`;
+var CURRENT = `(() => {
+  const state = window.__uiwalkKb;
+  ${HELPERS}
+  if (state.start) { state.start.remove(); state.start = null; }
+  let el = document.activeElement;
+  let frame = null;
+  let crossFrame = false;
+  while (el) {
+    if (el.shadowRoot && el.shadowRoot.activeElement) { el = el.shadowRoot.activeElement; continue; }
+    if (el.tagName === 'IFRAME') {
+      let doc = null;
+      try { doc = el.contentDocument; } catch {}
+      if (!doc) { crossFrame = true; break; }
+      const inner = doc.activeElement;
+      if (!inner || inner === doc.body) break;
+      frame = frame || { selector: selector(el), url: doc.location.href };
+      el = inner;
+      continue;
+    }
+    break;
+  }
+  if (!el || el === document.body || el === document.documentElement) return { body: true };
+  if (el.tagName === 'UIWALK-PANEL') return { panel: true };
+  let id = state.ids.get(el);
+  if (!id) { id = ++state.next; state.ids.set(el, id); state.els[id] = el; }
+  const name = (el.getAttribute('aria-label') || el.innerText || el.getAttribute('alt') ||
+    el.getAttribute('title') || el.getAttribute('placeholder') || '').replace(/\\s+/g, ' ').trim().slice(0, 60);
+  return {
+    id, crossFrame, frame,
+    target: frame ? simple(el) : selector(el),
+    role: el.getAttribute('role') || el.tagName.toLowerCase(),
+    name,
+    html: el.outerHTML.slice(0, 2000),
+    rect: frame ? undefined : pageRect(el),
+  };
+})()`;
+var RECT_OF = (id) => `(() => {
+  ${HELPERS}
+  const el = window.__uiwalkKb.els[${id}];
+  return el && el.isConnected ? pageRect(el) : null;
+})()`;
+var POINTER_ONLY = `(() => {
+  ${HELPERS}
+  const FOCUSABLE = 'a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable=""], [contenteditable="true"], audio[controls], video[controls]';
+  const canFocus = (el) => el.matches(FOCUSABLE) && !el.disabled && el.tabIndex >= 0;
+  const hasFocusableParent = (el) => {
+    for (let p = el.parentElement; p; p = p.parentElement) if (canFocus(p)) return true;
+    return false;
+  };
+  const found = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    if (el.closest('uiwalk-panel')) continue;
+    const style = getComputedStyle(el);
+    if (style.cursor !== 'pointer' || style.visibility === 'hidden') continue;
+    const box = el.getBoundingClientRect();
+    if (!box.width || !box.height) continue;
+    if (canFocus(el) || hasFocusableParent(el)) continue;
+    if ([...el.querySelectorAll(FOCUSABLE)].some(canFocus)) continue;
+    if (el.tagName === 'LABEL' && el.control) continue;
+    // A child only has the pointer because its parent has it.
+    if (el.parentElement && getComputedStyle(el.parentElement).cursor === 'pointer') continue;
+    found.push(el);
+  }
+  window.__uiwalkPointer = found.slice(0, 20);
+  return window.__uiwalkPointer.map((el) => ({ target: selector(el), html: el.outerHTML.slice(0, 2000) }));
+})()`;
+function changedPixels(a2, b2) {
+  const x2 = import_pngjs.PNG.sync.read(a2);
+  const y = import_pngjs.PNG.sync.read(b2);
+  if (x2.width !== y.width || x2.height !== y.height) return Number.POSITIVE_INFINITY;
+  let changed = 0;
+  for (let i = 0; i < x2.data.length; i += 4) {
+    const diff = Math.abs((x2.data[i] ?? 0) - (y.data[i] ?? 0)) + Math.abs((x2.data[i + 1] ?? 0) - (y.data[i + 1] ?? 0)) + Math.abs((x2.data[i + 2] ?? 0) - (y.data[i + 2] ?? 0));
+    if (diff > 24) changed += 1;
+  }
+  return changed;
+}
+async function crop(page, rect) {
+  if (!rect || rect.width < 1 || rect.height < 1) return void 0;
+  const pad = 6;
+  return await page.screenshot({
+    type: "png",
+    clip: {
+      x: Math.max(0, rect.x - pad),
+      y: Math.max(0, rect.y - pad),
+      width: rect.width + pad * 2,
+      height: rect.height + pad * 2
+    },
+    captureBeyondViewport: false
+  }).catch(() => void 0);
+}
+function node2(stop, why, clean) {
+  return {
+    target: stop.target,
+    html: clean(stop.html).slice(0, 300),
+    failureSummary: why,
+    ...stop.frame ? { frame: stop.frame } : {}
+  };
+}
+async function pointerOnly(cdp, world, clean) {
+  const found = await evalIn(
+    cdp,
+    world,
+    `(${WITH_SELECTOR_DATA})(() => ${POINTER_ONLY})`
+  );
+  const confirmed = [];
+  for (const [i, item] of found.entries()) {
+    let clicks = false;
+    for (let up = 0; up < 4 && !clicks; up++) {
+      const path14 = `window.__uiwalkPointer[${i}]${".parentElement".repeat(up)}`;
+      const { result } = await cdp.send("Runtime.evaluate", {
+        expression: `(() => { const el = ${path14}; return el && el !== document.body ? el : null; })()`,
+        contextId: world
+      });
+      if (!result.objectId) break;
+      const { node: described } = await cdp.send("DOM.describeNode", {
+        objectId: result.objectId
+      });
+      const { object: object3 } = await cdp.send("DOM.resolveNode", {
+        backendNodeId: described.backendNodeId
+      });
+      if (!object3.objectId) break;
+      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", {
+        objectId: object3.objectId
+      });
+      clicks = listeners.some(
+        (l) => ["click", "mousedown", "mouseup", "pointerdown", "pointerup"].includes(l.type)
+      );
+    }
+    if (clicks) {
+      confirmed.push({
+        target: item.target,
+        html: clean(item.html).slice(0, 300),
+        failureSummary: "You can click this element, but you cannot reach it with the Tab key."
+      });
+    }
+  }
+  await cdp.send("Runtime.evaluate", { expression: "delete window.__uiwalkPointer", contextId: world }).catch(() => void 0);
+  return confirmed;
+}
+async function checkKeyboard(driver, tab, options = {}) {
+  const page = tab.page;
+  const clean = options.clean ?? ((t) => t);
+  const maxStops = options.maxStops ?? 80;
+  const cdp = await page.createCDPSession();
+  const scroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY })).catch(() => ({ x: 0, y: 0 }));
+  await driver.panel?.hide(tab.id, true);
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: true }).catch(() => void 0);
+  const style = await page.addStyleTag({ content: FREEZE_CSS }).catch(() => void 0);
+  await page.mouse.move(0, 0).catch(() => void 0);
+  const stops = [];
+  const noVisibleFocus = [];
+  let trap;
+  let endedBy = "limit";
+  try {
+    const { frameTree } = await cdp.send("Page.getFrameTree");
+    const world = await axeWorld(cdp, frameTree.frame.id);
+    await evalIn(cdp, world, SETUP);
+    const unreachable = await pointerOnly(cdp, world, clean);
+    const seen = /* @__PURE__ */ new Map();
+    let previous;
+    let sameFrame = 0;
+    for (let press = 0; press < maxStops * 2 && stops.length < maxStops; press++) {
+      await page.keyboard.press("Tab");
+      const now = await evalIn(cdp, world, CURRENT);
+      if (previous?.shot && now.id !== previous.stop.id) {
+        const rect = await evalIn(cdp, world, RECT_OF(previous.stop.id));
+        const after = rect ? await crop(page, rect) : void 0;
+        if (after && changedPixels(previous.shot, after) < 4) {
+          noVisibleFocus.push(
+            node2(
+              previous.stop,
+              "Nothing on the screen changes when this element gets keyboard focus.",
+              clean
+            )
+          );
+        }
+      }
+      if (now.body) {
+        endedBy = "left-page";
+        break;
+      }
+      if (now.panel || now.id === void 0) continue;
+      const stop = now;
+      if (now.crossFrame && previous?.stop.id === stop.id) {
+        if (++sameFrame > 40) break;
+        continue;
+      }
+      sameFrame = 0;
+      const seenAt = seen.get(stop.id);
+      if (seenAt !== void 0) {
+        if (seenAt === 0) {
+          endedBy = "wrapped";
+          break;
+        }
+        const loop = stops.slice(seenAt);
+        const loopIds = new Set(loop.map((s) => s.id));
+        let escaped = false;
+        for (let back = 0; back < 3 && !escaped; back++) {
+          await page.keyboard.down("Shift");
+          await page.keyboard.press("Tab");
+          await page.keyboard.up("Shift");
+          const after = await evalIn(cdp, world, CURRENT);
+          escaped = Boolean(after.body || after.id !== void 0 && !loopIds.has(after.id));
+        }
+        if (!escaped) {
+          endedBy = "trap";
+          trap = loop.map(
+            (s) => node2(s, "Tab and Shift+Tab cannot move keyboard focus away from here.", clean)
+          );
+        } else endedBy = "wrapped";
+        break;
+      }
+      seen.set(stop.id, stops.length);
+      stops.push(stop);
+      previous = { stop, shot: await crop(page, stop.rect) };
+    }
+    await evalIn(cdp, world, TEARDOWN).catch(() => void 0);
+    return {
+      stops: stops.map((s) => ({
+        target: s.target,
+        role: s.role,
+        name: clean(s.name),
+        ...s.frame ? { frame: s.frame } : {}
+      })),
+      endedBy,
+      trap,
+      noVisibleFocus,
+      unreachable
+    };
+  } finally {
+    await style?.evaluate((el) => el.remove()).catch(() => void 0);
+    await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false }).catch(() => void 0);
+    await cdp.detach().catch(() => void 0);
+    await page.evaluate((s) => window.scrollTo(s.x, s.y), scroll).catch(() => void 0);
+    await driver.panel?.hide(tab.id, false);
+  }
+}
+
 // packages/server/src/audit/visual-checks.ts
 async function settle4(page, ms) {
   await page.evaluate(
@@ -109184,19 +109630,19 @@ async function settle4(page, ms) {
   ).catch(() => void 0);
   if (ms) await new Promise((resolve10) => setTimeout(resolve10, ms));
 }
-function key(node2) {
-  return `${node2.frame?.selector ?? ""}|${node2.target}`;
+function key(node3) {
+  return `${node3.frame?.selector ?? ""}|${node3.target}`;
 }
 async function checkDarkMode(driver, tab, options) {
   const page = tab.page;
   const style = await page.addStyleTag({ content: FREEZE_CSS }).catch(() => void 0);
-  const results = {};
+  const results2 = {};
   try {
     for (const scheme of ["light", "dark"]) {
       await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: scheme }]);
       await settle4(page, 100);
       const run = await runAxe(page, { ...options, rules: ["color-contrast"] });
-      results[scheme] = run.violations.find((v2) => v2.id === "color-contrast");
+      results2[scheme] = run.violations.find((v2) => v2.id === "color-contrast");
     }
   } finally {
     const before = driver.emulation.colorScheme;
@@ -109205,12 +109651,12 @@ async function checkDarkMode(driver, tab, options) {
     ).catch(() => void 0);
     await style?.evaluate((el) => el.remove()).catch(() => void 0);
   }
-  const lightKeys = new Set((results.light?.nodes ?? []).map(key));
-  const darkKeys = new Set((results.dark?.nodes ?? []).map(key));
+  const lightKeys = new Set((results2.light?.nodes ?? []).map(key));
+  const darkKeys = new Set((results2.dark?.nodes ?? []).map(key));
   return {
-    ...results,
-    darkOnly: (results.dark?.nodes ?? []).filter((n) => !lightKeys.has(key(n))),
-    lightOnly: (results.light?.nodes ?? []).filter((n) => !darkKeys.has(key(n)))
+    ...results2,
+    darkOnly: (results2.dark?.nodes ?? []).filter((n) => !lightKeys.has(key(n))),
+    lightOnly: (results2.light?.nodes ?? []).filter((n) => !darkKeys.has(key(n)))
   };
 }
 var WIDE_ELEMENTS = `(${WITH_SELECTOR_DATA})(() => {
@@ -109258,8 +109704,8 @@ async function checkReflow(driver, tab, options = {}) {
       world,
       WIDE_ELEMENTS
     );
-    for (const node2 of found.elements) {
-      node2.html = (options.clean ? options.clean(node2.html) : node2.html).slice(0, 300);
+    for (const node3 of found.elements) {
+      node3.html = (options.clean ? options.clean(node3.html) : node3.html).slice(0, 300);
     }
     return {
       width: found.width,
@@ -109324,6 +109770,13 @@ async function auditPage(ctx, driver, tab, request3) {
   if (wants("reflow") && check2.checks) {
     check2.checks.reflow = await checkReflow(driver, tab, { clean });
   }
+  if (wants("keyboard") && check2.checks) {
+    check2.checks.keyboard = await checkKeyboard(driver, tab, { clean });
+  }
+  if (wants("screenshots") && request3.shots) {
+    const items = [...check2.violations, ...customViolations(check2)].filter((v2) => v2.id !== "color-contrast-dark" && v2.id !== "reflow").flatMap((v2) => v2.nodes[0] ? [{ rule: v2.id, node: v2.nodes[0] }] : []);
+    check2.shots = await shootElements(driver, tab, items, request3.shots, request3.shots.max);
+  }
   return { check: check2, result, notes };
 }
 function formatAudit(audit) {
@@ -109348,9 +109801,9 @@ function formatAudit(audit) {
     lines.push(
       darkOnly.length ? `Dark mode: ${darkOnly.length} element(s) have low contrast in dark mode only (WCAG 1.4.3 (AA)):` : "Dark mode: no contrast problems that show in dark mode only."
     );
-    for (const node2 of darkOnly.slice(0, 5)) {
-      const ratio = node2.contrast ? ` (${node2.contrast.ratio}:1, needs ${node2.contrast.expected}:1)` : "";
-      lines.push(`  - ${node2.target}${ratio}: ${node2.html}`);
+    for (const node3 of darkOnly.slice(0, 5)) {
+      const ratio = node3.contrast ? ` (${node3.contrast.ratio}:1, needs ${node3.contrast.expected}:1)` : "";
+      lines.push(`  - ${node3.target}${ratio}: ${node3.html}`);
     }
     if (lightOnly.length)
       lines.push(`  ${lightOnly.length} element(s) have low contrast in light mode only.`);
@@ -109360,19 +109813,45 @@ function formatAudit(audit) {
     lines.push(
       r.overflow ? `Reflow: at ${r.width}px wide, the page is ${r.pageWidth}px wide, so it scrolls sideways (WCAG 1.4.10 (AA)). Too wide:` : `Reflow: at ${r.width}px wide, the page does not scroll sideways.`
     );
-    for (const node2 of r.elements) {
-      lines.push(`  - ${node2.target}: ${node2.failureSummary}`, `    ${node2.html}`);
+    for (const node3 of r.elements) {
+      lines.push(`  - ${node3.target}: ${node3.failureSummary}`, `    ${node3.html}`);
+    }
+  }
+  if (extra.keyboard) {
+    const k = extra.keyboard;
+    const ends = {
+      wrapped: "focus went back to the first element",
+      "left-page": "focus left the page",
+      trap: "focus got stuck",
+      limit: "Walkthrough stopped at the limit"
+    };
+    lines.push(
+      `Keyboard: ${k.stops.length} Tab stop(s). The walk ended because ${ends[k.endedBy]}.`
+    );
+    const list = (title, nodes) => {
+      if (!nodes.length) return;
+      lines.push(title);
+      for (const n of nodes.slice(0, 5))
+        lines.push(`  - ${n.frame ? `in frame ${n.frame.selector}: ` : ""}${n.target}: ${n.html}`);
+      if (nodes.length > 5) lines.push(`  - and ${nodes.length - 5} more`);
+    };
+    list("Keyboard trap (WCAG 2.1.2 (A)): Tab and Shift+Tab cannot leave:", k.trap ?? []);
+    list(
+      `No visible focus (WCAG 2.4.7 (AA)), ${k.noVisibleFocus.length} element(s):`,
+      k.noVisibleFocus
+    );
+    list(
+      `Cannot reach with Tab (WCAG 2.1.1 (A)), ${k.unreachable.length} element(s):`,
+      k.unreachable
+    );
+    if (!k.trap && !k.noVisibleFocus.length && !k.unreachable.length) {
+      lines.push("  No keyboard problems found.");
     }
   }
   return lines.join("\n");
 }
 function standardLabel(standard) {
   return STANDARD_LABELS[standard] ?? standard ?? "";
-}
-
-// packages/server/src/text.ts
-function slug(text, max, fallback) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, max) || fallback;
 }
 
 // node_modules/pixelmatch/index.js
@@ -109559,7 +110038,7 @@ function drawGrayPixel(img, i, alpha, output3) {
 }
 
 // packages/server/src/visual/compare.ts
-var import_pngjs = __toESM(require_png(), 1);
+var import_pngjs2 = __toESM(require_png(), 1);
 function paintMasks(png, masks) {
   for (const mask of masks) {
     const x0 = Math.max(0, Math.floor(mask.x));
@@ -109578,8 +110057,8 @@ function paintMasks(png, masks) {
   }
 }
 function comparePng(baseline, actual, masks = [], threshold = 0.1) {
-  const a2 = import_pngjs.PNG.sync.read(baseline);
-  const b2 = import_pngjs.PNG.sync.read(actual);
+  const a2 = import_pngjs2.PNG.sync.read(baseline);
+  const b2 = import_pngjs2.PNG.sync.read(actual);
   const baselineSize = { width: a2.width, height: a2.height };
   if (a2.width !== b2.width || a2.height !== b2.height) {
     return {
@@ -109593,7 +110072,7 @@ function comparePng(baseline, actual, masks = [], threshold = 0.1) {
   }
   paintMasks(a2, masks);
   paintMasks(b2, masks);
-  const diff = new import_pngjs.PNG({ width: a2.width, height: a2.height });
+  const diff = new import_pngjs2.PNG({ width: a2.width, height: a2.height });
   const diffPixels = pixelmatch(a2.data, b2.data, diff.data, a2.width, a2.height, { threshold });
   return {
     sameSize: true,
@@ -109602,7 +110081,7 @@ function comparePng(baseline, actual, masks = [], threshold = 0.1) {
     baselineSize,
     diffPixels,
     diffPercent: diffPixels / (a2.width * a2.height) * 100,
-    diffPng: import_pngjs.PNG.sync.write(diff)
+    diffPng: import_pngjs2.PNG.sync.write(diff)
   };
 }
 
@@ -109713,7 +110192,7 @@ function registerQualityTools(server, ctx) {
       const group = ctx.run?.run.planFile ? basename4(ctx.run.run.planFile, extname4(ctx.run.run.planFile)) : "adhoc";
       const device = slug(driver.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
-      const baselinePath = join19(config3.projectDir, ".walkthrough", "baselines", group, file2);
+      const baselinePath = join20(config3.projectDir, ".walkthrough", "baselines", group, file2);
       const baselineRel = relative7(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
         handle: target2?.handle,
@@ -109722,8 +110201,8 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync12(baselinePath) || input3.updateBaseline) {
         const existed = existsSync12(baselinePath);
-        mkdirSync5(dirname8(baselinePath), { recursive: true });
-        writeFileSync4(baselinePath, capture.png);
+        mkdirSync6(dirname8(baselinePath), { recursive: true });
+        writeFileSync5(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -109736,7 +110215,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join19(dir, `${stamp3}-actual.png`);
+      const actualPath = join20(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -109746,7 +110225,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync4(actualPath, capture.png);
+        writeFileSync5(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -109759,8 +110238,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join19(dir, `${stamp3}-diff.png`);
-          writeFileSync4(diffPath, comparison.diffPng);
+          const diffPath = join20(dir, `${stamp3}-diff.png`);
+          writeFileSync5(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
             `Diff image (changed pixels in red): ${relative7(config3.projectDir, diffPath)}`
@@ -109799,8 +110278,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         tags: external_exports.array(external_exports.string()).optional().describe(
           'Only these axe-core rule groups, like ["wcag2a", "wcag2aa"]. Wins over standard.'
         ),
-        checks: external_exports.array(external_exports.enum(["darkMode", "reflow", "frames"])).optional().describe(
-          "Extra checks: darkMode (contrast in light and dark mode), reflow (sideways scrolling at 320px), frames (frames on allowed sites)."
+        checks: external_exports.array(external_exports.enum(CHECKS)).optional().describe(
+          "Extra checks: keyboard (press Tab through the page), darkMode (contrast in light and dark mode), reflow (sideways scrolling at 320px), frames (frames on allowed sites), screenshots (a picture of each problem)."
         ),
         stepId: external_exports.string().optional().describe("During a run: add the results to this step and the report.")
       }
@@ -109848,7 +110327,13 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           standard: std,
           tags: tags ?? standardTags(std, config3.accessibility.bestPractices),
           checks: checks ?? [],
-          stepId
+          stepId,
+          shots: {
+            // In a run, next to the run's screenshots. Otherwise in today's folder.
+            root: dirname8(ctx.evidenceDir(config3.projectDir)),
+            sub: "a11y",
+            max: config3.accessibility.maxScreenshots
+          }
         });
       } finally {
         await marked?.evaluate((el) => el.removeAttribute("data-uiwalk-a11y")).catch(() => void 0);
@@ -109859,12 +110344,13 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         store.run.accessibility.push(audit.check);
         store.save();
       }
-      const { violations } = audit.check;
+      const violations = [...audit.check.violations, ...customViolations(audit.check)];
       const count = violations.reduce((n, v2) => n + (v2.nodeCount ?? v2.nodes.length), 0);
       return [
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative7(config3.projectDir, join20(dirname8(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -109872,15 +110358,15 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/run-tools.ts
-import { writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join23, relative as relative10 } from "node:path";
+import { writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join24, relative as relative10 } from "node:path";
 
 // packages/server/src/report/html.ts
 import { readFileSync as readFileSync12 } from "node:fs";
-import { join as join20 } from "node:path";
+import { join as join21 } from "node:path";
 function image(runDir, path14, alt) {
   try {
-    const data = readFileSync12(join20(runDir, path14)).toString("base64");
+    const data = readFileSync12(join21(runDir, path14)).toString("base64");
     return `<a href="${esc2(path14)}"><img src="data:image/${imageType(path14)};base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
@@ -110097,10 +110583,10 @@ function markdownReport(run) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync5, readFileSync as readFileSync13, writeFileSync as writeFileSync5 } from "node:fs";
-import { basename as basename5, extname as extname5, isAbsolute as isAbsolute7, join as join21, relative as relative8, resolve as resolve9 } from "node:path";
+import { existsSync as existsSync13, mkdirSync as mkdirSync7, readdirSync as readdirSync6, readFileSync as readFileSync13, writeFileSync as writeFileSync6 } from "node:fs";
+import { basename as basename5, extname as extname5, isAbsolute as isAbsolute7, join as join22, relative as relative8, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
-  return join21(projectDir, ".walkthrough", "plans");
+  return join22(projectDir, ".walkthrough", "plans");
 }
 function validatePlanText(text) {
   const lineCounter = new import_yaml2.LineCounter();
@@ -110121,8 +110607,8 @@ function validatePlanText(text) {
     const path14 = issue2.path.map((p) => typeof p === "number" ? p : String(p));
     let line;
     for (let depth = path14.length; depth >= 0 && line === void 0; depth--) {
-      const node2 = depth === 0 ? doc.contents : doc.getIn(path14.slice(0, depth), true);
-      const range = node2?.range;
+      const node3 = depth === 0 ? doc.contents : doc.getIn(path14.slice(0, depth), true);
+      const range = node3?.range;
       if (range) line = lineCounter.linePos(range[0]).line;
     }
     const where2 = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
@@ -110139,9 +110625,9 @@ function formatProblems(file2, problems) {
 function findPlanFile(projectDir, name) {
   const dir = plansDir(projectDir);
   const candidates = [
-    join21(dir, name),
-    join21(dir, `${name}.yaml`),
-    join21(dir, `${name}.yml`),
+    join22(dir, name),
+    join22(dir, `${name}.yaml`),
+    join22(dir, `${name}.yml`),
     isAbsolute7(name) ? name : resolve9(projectDir, name)
   ];
   for (const file2 of candidates) {
@@ -110184,10 +110670,10 @@ function laterFeatures(plan) {
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
   if (!existsSync13(dir)) return [];
-  return readdirSync5(dir).filter((f) => [".yaml", ".yml"].includes(extname5(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync13(join21(dir, f), "utf8"));
+  return readdirSync6(dir).filter((f) => [".yaml", ".yml"].includes(extname5(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync13(join22(dir, f), "utf8"));
     const name = basename5(f, extname5(f));
-    const file2 = relative8(projectDir, join21(dir, f));
+    const file2 = relative8(projectDir, join22(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
   });
 }
@@ -110202,8 +110688,8 @@ function savePlan(projectDir, name, text, overwrite = false) {
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
   const dir = plansDir(projectDir);
-  mkdirSync6(dir, { recursive: true });
-  const file2 = join21(dir, `${name}.yaml`);
+  mkdirSync7(dir, { recursive: true });
+  const file2 = join22(dir, `${name}.yaml`);
   if (existsSync13(file2) && !overwrite) {
     throw new ToolError(
       `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
@@ -110211,7 +110697,7 @@ function savePlan(projectDir, name, text, overwrite = false) {
     );
   }
   const header = "# yaml-language-server: $schema=../plan.schema.json\n";
-  writeFileSync5(file2, text.startsWith("# yaml-language-server") ? text : header + text);
+  writeFileSync6(file2, text.startsWith("# yaml-language-server") ? text : header + text);
   return file2;
 }
 
@@ -110219,14 +110705,14 @@ function savePlan(projectDir, name, text, overwrite = false) {
 import { randomBytes as randomBytes5 } from "node:crypto";
 import {
   existsSync as existsSync14,
-  mkdirSync as mkdirSync7,
-  readdirSync as readdirSync6,
+  mkdirSync as mkdirSync8,
+  readdirSync as readdirSync7,
   readFileSync as readFileSync14,
   realpathSync as realpathSync2,
   renameSync,
-  writeFileSync as writeFileSync6
+  writeFileSync as writeFileSync7
 } from "node:fs";
-import { join as join22, relative as relative9, sep as sep4 } from "node:path";
+import { join as join23, relative as relative9, sep as sep4 } from "node:path";
 function stamp2(date5 = /* @__PURE__ */ new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`;
@@ -110247,8 +110733,8 @@ var RunStore = class _RunStore {
   projectDir;
   static create(projectDir, input3) {
     const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes5(2).toString("hex")}`;
-    const dir = join22(ensureWalkthroughDir(projectDir), "runs", id);
-    mkdirSync7(join22(dir, "screenshots"), { recursive: true });
+    const dir = join23(ensureWalkthroughDir(projectDir), "runs", id);
+    mkdirSync8(join23(dir, "screenshots"), { recursive: true });
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
@@ -110280,22 +110766,22 @@ var RunStore = class _RunStore {
   static open(projectDir, id) {
     const dir = checkRunId(projectDir, id);
     try {
-      const run = JSON.parse(readFileSync14(join22(dir, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync14(join23(dir, "run.json"), "utf8"));
       return new _RunStore(dir, run, projectDir);
     } catch {
       throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
     }
   }
   get screenshotsDir() {
-    return join22(this.dir, "screenshots");
+    return join23(this.dir, "screenshots");
   }
   get relativeDir() {
     return relative9(this.projectDir, this.dir);
   }
   // Writes run.json safely: a crash never leaves a half-written file.
   save() {
-    const file2 = join22(this.dir, "run.json");
-    writeFileSync6(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
+    const file2 = join23(this.dir, "run.json");
+    writeFileSync7(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
 `);
     renameSync(`${file2}.tmp`, file2);
   }
@@ -110342,8 +110828,8 @@ function checkRunId(projectDir, id) {
       "bad_run_id"
     );
   }
-  const root = join22(projectDir, ".walkthrough", "runs");
-  const dir = join22(root, id);
+  const root = join23(projectDir, ".walkthrough", "runs");
+  const dir = join23(root, id);
   let realRoot;
   let realDir;
   try {
@@ -110358,11 +110844,11 @@ function checkRunId(projectDir, id) {
   return dir;
 }
 function latestRunId(projectDir, options = {}) {
-  const dir = join22(projectDir, ".walkthrough", "runs");
+  const dir = join23(projectDir, ".walkthrough", "runs");
   if (!existsSync14(dir)) return void 0;
-  for (const id of readdirSync6(dir).sort().reverse()) {
+  for (const id of readdirSync7(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync14(join22(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync14(join23(dir, id, "run.json"), "utf8"));
       if (!options.finishedOnly || run.status !== "running") return id;
     } catch {
     }
@@ -110372,11 +110858,11 @@ function latestRunId(projectDir, options = {}) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown = join23(store.dir, "report.md");
-  const html = join23(store.dir, "report.html");
+  const markdown = join24(store.dir, "report.md");
+  const html = join24(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
-  writeFileSync7(markdown, secrets ? secrets.redact(markdownReport(run)) : markdownReport(run));
-  writeFileSync7(html, htmlReport(run, store.dir));
+  writeFileSync8(markdown, secrets ? secrets.redact(markdownReport(run)) : markdownReport(run));
+  writeFileSync8(html, htmlReport(run, store.dir));
   return { markdown: relative10(store.projectDir, markdown), html: relative10(store.projectDir, html) };
 }
 function describeAction(step) {
@@ -110675,8 +111161,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync15, mkdirSync as mkdirSync8, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join24, relative as relative11 } from "node:path";
+import { existsSync as existsSync15, mkdirSync as mkdirSync9, writeFileSync as writeFileSync9 } from "node:fs";
+import { join as join25, relative as relative11 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -111358,13 +111844,13 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join24(projectDir, ".walkthrough", "exports");
-      mkdirSync8(dir, { recursive: true });
-      const file2 = join24(dir, `${name}.mjs`);
+      const dir = join25(projectDir, ".walkthrough", "exports");
+      mkdirSync9(dir, { recursive: true });
+      const file2 = join25(dir, `${name}.mjs`);
       const existed = existsSync15(file2);
       const result = exportScript(store.run, { installedChrome });
       const rel = relative11(projectDir, file2);
-      writeFileSync8(file2, result.code.replace("<this file>", rel));
+      writeFileSync9(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
         `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
@@ -111406,18 +111892,18 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync15(join24(store.dir, "report.md")) ? { markdown: relative11(projectDir, join24(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative11(projectDir, join24(store.dir, s)));
+      const reports = existsSync15(join25(store.dir, "report.md")) ? { markdown: relative11(projectDir, join25(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative11(projectDir, join25(store.dir, s)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, { reportPath: reports.markdown, screenshots });
-      const bodyFile = join24(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
-      writeFileSync8(bodyFile, draft.body);
+      const bodyFile = join25(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      writeFileSync9(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
         `Body file: ${relative11(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join24(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join25(projectDir, s)}`).join("\n")}` : " none"}`,
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)

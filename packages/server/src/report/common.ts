@@ -1,4 +1,5 @@
 import { IMPACT_ORDER } from '../audit/axe.js';
+import { customViolations } from '../audit/custom-rules.js';
 import type { Run, RunStep, StepStatus } from '../run/run-store.js';
 
 // Makes text safe to put in HTML, in text or in an attribute.
@@ -126,7 +127,7 @@ export function stepAccessibility(run: Run, step: RunStep): string | undefined {
   let elements = 0;
   let types = 0;
   for (const check of checks) {
-    for (const v of check.violations) {
+    for (const v of [...check.violations, ...customViolations(check)]) {
       types += 1;
       elements += v.nodeCount ?? v.nodes.length;
       byImpact.set(v.impact, (byImpact.get(v.impact) ?? 0) + 1);
