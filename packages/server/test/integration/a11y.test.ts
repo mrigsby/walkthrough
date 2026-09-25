@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startDemoServer } from '../helpers/demo-server.js';
 import { startClient } from '../helpers/mcp.js';
+import { serveFolder } from '../helpers/static-server.js';
 import { tempDir } from '../helpers/temp.js';
 
 // Accessibility scans and reports on the demo app.
@@ -15,7 +16,7 @@ function makeProject(name: string): string {
   mkdirSync(join(dir, '.walkthrough', 'plans'), { recursive: true });
   writeFileSync(
     join(dir, '.walkthrough', 'config.yaml'),
-    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n`,
+    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n  - http://127.0.0.1:*\n`,
   );
   return dir;
 }
@@ -37,9 +38,9 @@ afterAll(async () => {
   demo?.stop();
 });
 
-describe('a11y_scan', () => {
-  let runId: string;
+let runId: string;
 
+describe('a11y_scan', () => {
   it('checks a list of pages and makes a run with a step for each', async () => {
     const scan = await mcp.call(
       'a11y_scan',
@@ -110,6 +111,110 @@ describe('a11y_scan', () => {
     expect(scan.text).toContain('A run is going');
     await mcp.call('run_finish');
   });
+});
+
+describe('a11y_report', () => {
+  const dir = () => join(project, '.walkthrough', 'runs', runId);
+  let digest: string;
+  let ids: Record<string, string>;
+
+  it('refuses text without the right digest, or with an unknown ID', async () => {
+    const first = await mcp.call('a11y_report', { runId });
+    digest = /Digest: ([0-9a-f]{12})/.exec(first.text)?.[1] as string;
+    ids = Object.fromEntries(
+      [...first.text.matchAll(/(A11Y-\d{3}) \[\w+\] ([\w-]+):/g)].map((m) => [m[2], m[1]]),
+    );
+    const item = { id: ids['button-name'], explain: 'x', fix: 'y' };
+    const wrong = await mcp.call('a11y_report', { runId, digest: 'abc', items: [item] });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.text).toContain('The findings changed after the first call');
+    expect(wrong.text).toContain(`Digest: ${digest}`);
+    const bad = await mcp.call('a11y_report', {
+      runId,
+      digest,
+      items: [{ id: 'A11Y-999', explain: 'x', fix: 'y' }],
+    });
+    expect(bad.isError).toBe(true);
+    expect(bad.text).toContain('There is no issue A11Y-999 in this run.');
+  });
+
+  it('writes accessibility.html, .md, and .json next to report.html', async () => {
+    const reply = await mcp.call('a11y_report', {
+      runId,
+      digest,
+      summary: 'The shop has buttons with no name and a keyboard trap. Fix those first.',
+      items: [
+        {
+          id: ids['button-name'],
+          explain: 'The heart buttons have an icon but no name. Screen readers say only "button".',
+          fix: 'Add `aria-label="Add to wishlist"` to each heart button.',
+          code: '<button class="wish" aria-label="Add to wishlist">',
+          where: [{ file: '.walkthrough/config.yaml', line: 1 }, { file: '../outside.js' }],
+        },
+        {
+          id: ids['keyboard-trap'],
+          explain: 'Tab cannot leave the Get deals email field.',
+          fix: 'Remove the keydown handler that blocks the Tab key.',
+        },
+      ],
+    });
+    expect(reply.isError, reply.text).toBe(false);
+    expect(reply.text).toContain(`- .walkthrough/runs/${runId}/accessibility.html`);
+    expect(reply.text).toContain('left out "../outside.js"');
+    expect(reply.text).toMatch(/No text for A11Y-\d{3}/);
+    expect(reply.text).toContain(`Read .walkthrough/runs/${runId}/accessibility.md.`);
+    expect(reply.text).toContain('run /walkthrough:a11y / /login /help.html /cart again.');
+
+    const html = readFileSync(join(dir(), 'accessibility.html'), 'utf8');
+    expect(html).toContain(
+      'Add <code>aria-label=&#34;Add to wishlist&#34;</code> to each heart button.',
+    );
+    expect(html).toContain('<code>.walkthrough/config.yaml:1</code>');
+    expect(html).toContain('This text comes from axe-core.');
+    expect(html).toContain("script-src 'nonce-");
+    const md = readFileSync(join(dir(), 'accessibility.md'), 'utf8');
+    expect(md).toContain('## How to use this file');
+    expect(md).toMatch(/```page-data\nselector: /);
+    expect(md).toContain('**Where to fix:** `.walkthrough/config.yaml:1`');
+    const json = JSON.parse(readFileSync(join(dir(), 'accessibility.json'), 'utf8'));
+    expect(json.findings.find((f: { rule: string }) => f.rule === 'button-name').where).toEqual([
+      { file: '.walkthrough/config.yaml', line: 1 },
+    ]);
+    expect(readFileSync(join(dir(), 'report.html'), 'utf8')).toContain(
+      '<a href="accessibility.html">Accessibility report</a>',
+    );
+    expect((await mcp.call('runs')).text).toContain('accessibility report written');
+  });
+
+  it('keeps the IDs in the next report, and marks what is still there', async () => {
+    const scan = await mcp.call(
+      'a11y_scan',
+      { urls: ['/', '/login', '/help.html', '/cart'], checks: ['keyboard', 'reflow'] },
+      { timeoutMs: 120_000 },
+    );
+    const next = /runId "([^"]+)"/.exec(scan.text)?.[1] as string;
+    const again = await mcp.call('a11y_report', { runId: next });
+    expect(again.text).toContain(`Compared with the report of run ${runId}`);
+    expect(again.text).toContain('Fixed since then: 0 issue(s).');
+    for (const [rule, id] of Object.entries(ids)) {
+      expect(again.text, rule).toContain(`${id} [`);
+      expect(again.text).toMatch(new RegExp(`${id} \\[\\w+\\] ${rule}:`));
+    }
+  }, 150_000);
+
+  it('makes reports that pass axe themselves, in light and dark mode', async () => {
+    const files = await serveFolder(dir());
+    try {
+      for (const page of ['accessibility.html', 'report.html']) {
+        await mcp.call('navigate', { url: `${files.base}/${page}` });
+        const audit = await mcp.call('a11y_audit', { checks: ['darkMode'] });
+        expect(audit.text, page).toMatch(/: 0 problem type\(s\), 0 element\(s\)\./);
+        expect(audit.text, page).toContain('Dark mode: no contrast problems');
+      }
+    } finally {
+      files.stop();
+    }
+  }, 60_000);
 });
 
 describe('a11y_scan time limit', () => {

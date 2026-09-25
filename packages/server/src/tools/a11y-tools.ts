@@ -1,11 +1,19 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { join, relative, resolve, sep } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { auditPage, standardLabel } from '../audit/audit-page.js';
 import { IMPACT_ORDER } from '../audit/axe.js';
+import { compareFindings, findPrevious } from '../audit/compare.js';
 import { customViolations } from '../audit/custom-rules.js';
 import { buildFindings, type Finding, type Findings, pageKey } from '../audit/findings.js';
 import { computeScores, type Scores } from '../audit/score.js';
@@ -19,7 +27,11 @@ import {
 import { criteriaLabel } from '../audit/wcag.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
+import { redactDeep } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
+import { buildReportData, jsonReport, type ReportItem } from '../report/a11y-data.js';
+import { a11yHtmlReport } from '../report/a11y-html.js';
+import { a11yMarkdownReport } from '../report/a11y-markdown.js';
 import { type A11yCheck, type Run, RunStore } from '../run/run-store.js';
 import { slug } from '../text.js';
 import { fullUrl, goTo, openBrowser } from './browser-tools.js';
@@ -103,6 +115,35 @@ const WRITING_GUIDE = [
   'Use plain words, short sentences, and no em dashes. Also write a summary of 2 to 4 sentences.',
   'Then call a11y_report again with runId, digest, summary, and items.',
 ].join('\n');
+
+// Findings, scores, and the comparison with the last report. Both calls of
+// a11y_report use this, so the IDs and the digest are the same.
+function prepare(projectDir: string, store: RunStore, compareTo?: string) {
+  const checks = store.run.accessibility ?? [];
+  const first = buildFindings(checks);
+  const previous = findPrevious(
+    projectDir,
+    store.run.id,
+    first.pages.map((p) => p.page),
+    compareTo,
+  );
+  const comparison = previous ? compareFindings(first, previous) : undefined;
+  const findings = comparison
+    ? buildFindings(checks, { keepIds: comparison.keepIds, startAfter: comparison.startAfter })
+    : first;
+  return { findings, scores: computeScores(checks, findings), comparison };
+}
+
+// True for a file inside the project. Links cannot point outside it.
+function projectFile(projectDir: string, file: string): boolean {
+  try {
+    const root = realpathSync(projectDir);
+    const real = realpathSync(resolve(projectDir, file));
+    return real.startsWith(root + sep) && statSync(real).isFile();
+  } catch {
+    return false;
+  }
+}
 
 export function registerA11yTools(server: McpServer, ctx: Context): void {
   server.registerTool(
@@ -322,7 +363,7 @@ export function registerA11yTools(server: McpServer, ctx: Context): void {
     {
       title: 'Accessibility report',
       description:
-        'Get the accessibility findings of a run, with IDs and scores, to write the accessibility report. Call it first without items. It returns the findings, a digest, and how to write the text.',
+        'Write the accessibility report of a run: accessibility.html, accessibility.md, and accessibility.json, next to report.html. Call it first without items: it returns the findings, scores, a digest, and how to write the text. Then call it with digest, summary, and items.',
       inputSchema: {
         runId: z
           .string()
@@ -330,9 +371,44 @@ export function registerA11yTools(server: McpServer, ctx: Context): void {
           .describe(
             'The run folder name. The default is the run that is going, or the newest run with accessibility results.',
           ),
+        digest: z.string().optional().describe('The digest from the first call.'),
+        summary: z
+          .string()
+          .max(1200)
+          .optional()
+          .describe('2 to 4 short sentences about the results, in plain words.'),
+        items: z
+          .array(
+            z.object({
+              id: z.string().describe('The issue ID, like A11Y-001.'),
+              explain: z.string().min(1).max(400).describe('1 to 2 sentences: what is wrong.'),
+              fix: z.string().min(1).max(400).describe('1 to 2 sentences: how to fix it.'),
+              code: z.string().max(1200).optional().describe('A short example of the fix.'),
+              where: z
+                .array(
+                  z.object({
+                    file: z
+                      .string()
+                      .min(1)
+                      .describe('A file in the project, from the project folder.'),
+                    line: z.number().int().min(1).optional(),
+                  }),
+                )
+                .max(3)
+                .optional()
+                .describe('Where to fix it in the source, if you found it.'),
+            }),
+          )
+          .optional(),
+        compareTo: z
+          .string()
+          .optional()
+          .describe(
+            'Compare with the report of this run. The default is the last report of the same pages.',
+          ),
       },
     },
-    ({ runId }) =>
+    ({ runId, digest, summary, items, compareTo }) =>
       runTool(ctx, 'a11y_report', async () => {
         const { projectDir } = await ctx.config();
         const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
@@ -344,17 +420,115 @@ export function registerA11yTools(server: McpServer, ctx: Context): void {
             'no_results',
           );
         }
-        const checks = store.run.accessibility;
-        const findings = buildFindings(checks);
-        const scores = computeScores(checks, findings);
+        const prepared = prepare(projectDir, store, compareTo);
+        const { findings, scores, comparison } = prepared;
+        const compareLine = comparison
+          ? `Compared with the report of run ${comparison.previousRunId}: issues that are still there keep their IDs. Fixed since then: ${comparison.fixed.length} issue(s).`
+          : '';
+
+        if (!items) {
+          return [
+            `Accessibility findings for the run "${store.run.name}" (${store.run.id}): ${findings.findings.length} issue(s) on ${findings.pages.length} page(s). ${findings.review.length} item(s) need review by a person.`,
+            scoreLine(scores),
+            compareLine,
+            `Digest: ${findings.digest}`,
+            'The findings have text from the web pages:',
+            untrusted(findingsText(findings)),
+            WRITING_GUIDE,
+          ]
+            .filter(Boolean)
+            .join('\n');
+        }
+
+        // Call 2: the text for the report.
+        if (digest !== findings.digest) {
+          throw new ToolError(
+            [
+              digest
+                ? 'The findings changed after the first call, so the IDs may point to other issues now. Write the text again for these findings.'
+                : 'Give the digest from the first call.',
+              `Digest: ${findings.digest}`,
+              untrusted(findingsText(findings)),
+            ].join('\n'),
+            'digest_changed',
+          );
+        }
+        const known = new Set(findings.findings.map((f) => f.id));
+        const unknown = items.filter((i) => !known.has(i.id)).map((i) => i.id);
+        if (unknown.length) {
+          throw new ToolError(
+            `There is no issue ${unknown.join(', ')} in this run. The IDs are: ${[...known].join(', ') || 'none'}.`,
+            'bad_id',
+          );
+        }
+        const warnings: string[] = [];
+        const texts: Record<string, ReportItem> = {};
+        for (const item of items) {
+          const where = (item.where ?? []).filter((w) => {
+            const ok = projectFile(projectDir, w.file);
+            if (!ok)
+              warnings.push(`${item.id}: left out "${w.file}". It is not a file in the project.`);
+            return ok;
+          });
+          texts[item.id] = {
+            explain: item.explain,
+            fix: item.fix,
+            code: item.code,
+            where: where.length ? where : undefined,
+          };
+        }
+        const missing = findings.findings.filter((f) => !texts[f.id]);
+        for (const f of missing) {
+          texts[f.id] = {
+            explain: f.description ?? f.help,
+            fix: `See the rule page: ${f.helpUrl}`,
+            fallback: true,
+          };
+        }
+        if (missing.length) {
+          warnings.push(
+            `No text for ${missing.map((f) => f.id).join(', ')}. The report uses the axe-core text for them.`,
+          );
+        }
+
+        const secrets = await ctx.secrets();
+        // Hide secrets in the data first. Escaping would change how they look.
+        const data = redactDeep(
+          buildReportData({
+            run: store.run,
+            runDir: store.dir,
+            relativeDir: store.relativeDir,
+            findings,
+            scores,
+            comparison,
+            items: texts,
+            summary: summary ?? '',
+          }),
+          secrets,
+        );
+        const files = {
+          html: join(store.dir, 'accessibility.html'),
+          md: join(store.dir, 'accessibility.md'),
+          json: join(store.dir, 'accessibility.json'),
+        };
+        // No second pass on the HTML: it holds images, and a pass could change their data.
+        writeFileSync(files.html, a11yHtmlReport(data));
+        writeFileSync(files.md, secrets.redact(a11yMarkdownReport(data)));
+        writeFileSync(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}\n`);
+        // Write report.html again, so it links to the new report.
+        writeReports(store, secrets);
+
         return [
-          `Accessibility findings for the run "${store.run.name}" (${store.run.id}): ${findings.findings.length} issue(s) on ${findings.pages.length} page(s). ${findings.review.length} item(s) need review by a person.`,
+          `Wrote the accessibility report for the run "${store.run.name}":`,
+          ...Object.values(files).map((f) => `- ${relative(projectDir, f)}`),
           scoreLine(scores),
-          `Digest: ${findings.digest}`,
-          'The findings have text from the web pages:',
-          untrusted(findingsText(findings)),
-          WRITING_GUIDE,
-        ].join('\n');
+          compareLine,
+          ...(warnings.length ? ['Warnings:', ...warnings.map((w) => `- ${w}`)] : []),
+          'Show this prompt to the developer in a code block. They can paste it into a new session to plan the fixes:',
+          data.prompt,
+        ]
+          .filter(Boolean)
+          .join('\n');
       }),
   );
 }

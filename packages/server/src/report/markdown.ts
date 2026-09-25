@@ -34,7 +34,7 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
 }
 
 // A report that reads well in a code editor, a pull request, or an issue.
-export function markdownReport(run: Run): string {
+export function markdownReport(run: Run, options: { a11yReport?: boolean } = {}): string {
   const problems = run.steps.filter(isProblem);
   const lines = [
     `# Walkthrough report: ${run.name}`,
@@ -48,6 +48,9 @@ export function markdownReport(run: Run): string {
     ...(run.setup ? [`- **Setup:** ${run.setup}`] : []),
     `- **Started:** ${run.startedAt}`,
     `- **Time:** ${duration(run)}`,
+    ...(options.a11yReport
+      ? ['- **Accessibility report:** accessibility.html and accessibility.md']
+      : []),
     '',
   ];
   if (run.summary) lines.push('## Summary', '', run.summary, '');

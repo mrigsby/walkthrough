@@ -83,12 +83,17 @@ export async function shootElements(
           return div;
         }, box);
         try {
-          // Some space around the element, inside the visible part of the page.
-          const pad = 24;
-          const x = Math.max(0, box.x - pad);
-          const y = Math.max(0, box.y - pad);
-          const width = Math.min(viewport.width - x, box.width + pad * 2);
-          const height = Math.min(viewport.height - y, box.height + pad * 2);
+          // Some space around the element, at least 360 by 200, inside the visible page.
+          const width = Math.min(viewport.width, Math.max(360, box.width + 48));
+          const height = Math.min(viewport.height, Math.max(200, box.height + 48));
+          const x = Math.min(
+            Math.max(0, box.x + box.width / 2 - width / 2),
+            viewport.width - width,
+          );
+          const y = Math.min(
+            Math.max(0, box.y + box.height / 2 - height / 2),
+            viewport.height - height,
+          );
           if (width < 1 || height < 1) continue;
           const jpg = await page.screenshot({
             type: 'jpeg',

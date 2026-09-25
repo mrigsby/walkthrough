@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -35,7 +35,9 @@ export function writeReports(
   const html = join(store.dir, 'report.html');
   // Hide secrets in the data first. Escaping would change how they look.
   const run = redactDeep(store.run, secrets);
-  writeFileSync(markdown, secrets ? secrets.redact(markdownReport(run)) : markdownReport(run));
+  const a11yReport = existsSync(join(store.dir, 'accessibility.html'));
+  const md = markdownReport(run, { a11yReport });
+  writeFileSync(markdown, secrets ? secrets.redact(md) : md);
   // No second pass on the HTML: it holds images, and a pass could change their data.
   writeFileSync(html, htmlReport(run, store.dir));
   return { markdown: relative(store.projectDir, markdown), html: relative(store.projectDir, html) };

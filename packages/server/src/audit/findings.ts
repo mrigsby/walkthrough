@@ -112,7 +112,7 @@ function add(
 // "keepIds" gives an issue the ID it had in an earlier report.
 export function buildFindings(
   checks: A11yCheck[],
-  options: { keepIds?: Map<string, string> } = {},
+  options: { keepIds?: Map<string, string>; startAfter?: number } = {},
 ): Findings {
   const groups = new Map<string, Group>();
   const review = new Map<string, Group>();
@@ -132,7 +132,9 @@ export function buildFindings(
   );
   // Issues from an earlier report keep their ID. New issues get the next numbers.
   const keep = options.keepIds ?? new Map<string, string>();
-  let next = Math.max(0, ...[...keep.values()].map((id) => Number(id.slice(5)) || 0)) + 1;
+  let next =
+    Math.max(options.startAfter ?? 0, ...[...keep.values()].map((id) => Number(id.slice(5)) || 0)) +
+    1;
   const findings: Finding[] = sorted.map((g) => {
     const tags = g.rule.tags ?? [];
     const criteria = criteriaForTags(tags);

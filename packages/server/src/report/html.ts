@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { imageType } from '../evidence/screenshot.js';
 import type { Run, RunStep } from '../run/run-store.js';
@@ -138,7 +138,7 @@ export function htmlReport(run: Run, runDir: string): string {
 <body>
 <main>
 <h1>${esc(run.name)}</h1>
-<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.</p>
+<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.${existsSync(join(runDir, 'accessibility.html')) ? ' <a href="accessibility.html">Accessibility report</a>' : ''}</p>
 <div class="meta">${meta.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc(STATUS_LABELS[status as RunStep['status']])}</span>`).join('')}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}
