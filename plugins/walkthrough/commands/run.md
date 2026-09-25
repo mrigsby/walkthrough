@@ -14,5 +14,7 @@ Arguments: $ARGUMENTS
 4. Do each step in the order that `run_start` gives:
    - For a "confirm" step, call `ask_developer`.
    - For an "agent checks" step, check the result yourself and call `run_step`.
+   - For an "accessibility check" step, call `a11y_audit` with the `stepId`.
 5. When every step has a result, or the developer says stop, call `run_finish` with a short summary.
 6. Tell the developer the result, the bugs and failures, and the path to `report.html`.
+7. If `run_finish` says that the plan asks for an accessibility report, write it like `/walkthrough:a11y` does, from step 3.

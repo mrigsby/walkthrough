@@ -6,7 +6,7 @@ import type { ElementHandle } from 'puppeteer-core';
 import { z } from 'zod';
 import { auditPage, formatAudit, type PageAudit, standardLabel } from '../audit/audit-page.js';
 import { customViolations } from '../audit/custom-rules.js';
-import { CHECKS, STANDARDS, standardTags } from '../audit/standards.js';
+import { CHECKS, STANDARDS, type Standard, standardTags } from '../audit/standards.js';
 import { describeEmulation, NETWORKS } from '../browser/devices.js';
 import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
@@ -288,6 +288,9 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
         }
 
         // The selector the report shows, and the one axe gets.
+        // A plan step with "a11y" gives the checks and the selector, unless the call does.
+        const planned = stepId ? store?.run.steps.find((s) => s.id === stepId)?.a11y : undefined;
+        if (!ref && !selector && planned?.selector) selector = planned.selector;
         let label = selector;
         let scope = selector;
         let marked: ElementHandle<Element> | undefined;
@@ -310,7 +313,10 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             scope = `[data-uiwalk-a11y="${mark}"]`;
           }
         }
-        const std = standard ?? config.accessibility.standard;
+        const std =
+          standard ??
+          (store?.run.a11yPlan?.standard as Standard | undefined) ??
+          config.accessibility.standard;
         let audit: PageAudit;
         try {
           audit = await auditPage(ctx, driver, tab, {
@@ -318,7 +324,7 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             label,
             standard: std,
             tags: tags ?? standardTags(std, config.accessibility.bestPractices),
-            checks: checks ?? [],
+            checks: checks ?? planned?.checks ?? [],
             stepId,
             shots: {
               // In a run, next to the run's screenshots. Otherwise in today's folder.

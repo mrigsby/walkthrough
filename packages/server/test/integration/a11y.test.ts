@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startDemoServer } from '../helpers/demo-server.js';
+import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { startClient } from '../helpers/mcp.js';
 import { serveFolder } from '../helpers/static-server.js';
 import { tempDir } from '../helpers/temp.js';
@@ -16,7 +16,7 @@ function makeProject(name: string): string {
   mkdirSync(join(dir, '.walkthrough', 'plans'), { recursive: true });
   writeFileSync(
     join(dir, '.walkthrough', 'config.yaml'),
-    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n  - http://127.0.0.1:*\n`,
+    `baseUrl: ${demo.base}\nallowedOrigins:\n  - http://localhost:*\n  - http://127.0.0.1:*\n`,
   );
   return dir;
 }
@@ -215,6 +215,114 @@ describe('a11y_report', () => {
       files.stop();
     }
   }, 60_000);
+});
+
+describe('plans with accessibility checks', () => {
+  it('checks the plan steps and asks for the report at the end', async () => {
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'a11y.yaml'),
+      [
+        'name: A11y plan',
+        'mode: autonomous',
+        'accessibility:',
+        '  report: true',
+        '  checks: { keyboard: false, darkMode: false, reflow: false, screenshots: false }',
+        'steps:',
+        '  - id: add-mug',
+        '    do: Add the mug',
+        '    action: { click: { selector: \'[data-add="mug"]\' } }',
+        '  - id: checkout',
+        '    do: Open the checkout page',
+        '    action: { navigate: /checkout }',
+        '    a11y: true',
+        '  - id: login',
+        '    do: Open the login page',
+        '    action: { navigate: /login }',
+        '    a11y: { checks: [keyboard] }',
+        '',
+      ].join('\n'),
+    );
+    await mcp.call('navigate', { url: '/' });
+    const start = await mcp.call('run_start', { plan: 'a11y' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain('(agent checks, accessibility check) Open the checkout page');
+    expect(start.text).toContain('(agent checks, accessibility check (checks: keyboard))');
+    expect(start.text).toContain('call a11y_audit with stepId set to the step id');
+
+    await mcp.call('navigate', { url: '/' });
+    await mcp.call('act', { action: 'click', selector: '[data-add="mug"]' });
+    await mcp.call('run_step', { stepId: 'add-mug', status: 'pass' });
+    await mcp.call('navigate', { url: '/checkout' });
+    await mcp.call('wait_for', { text: 'Card details' }).catch(() => undefined);
+    // The plan turns frames on (the default) and the other checks off.
+    const checkout = await mcp.call('a11y_audit', { stepId: 'checkout' });
+    expect(checkout.text).toContain('in frame iframe: input[name="holder"]');
+    expect(checkout.text).not.toContain('Keyboard:');
+    await mcp.call('run_step', { stepId: 'checkout', status: 'fail' });
+    await mcp.call('navigate', { url: '/login' });
+    const login = await mcp.call('a11y_audit', { stepId: 'login' });
+    expect(login.text).toContain('Keyboard: ');
+    await mcp.call('run_step', { stepId: 'login', status: 'fail' });
+    const finish = await mcp.call('run_finish');
+    expect(finish.text).toContain('This plan asks for an accessibility report.');
+
+    const first = await mcp.call('a11y_report');
+    expect(first.text).toMatch(/A11Y-\d{3} \[critical\] label:/);
+    const digest = /Digest: ([0-9a-f]{12})/.exec(first.text)?.[1] as string;
+    const done = await mcp.call('a11y_report', { digest, summary: 'Two pages.', items: [] });
+    expect(done.isError, done.text).toBe(false);
+    // A plan run: the prompt checks the plan again.
+    expect(done.text).toContain('run /walkthrough:a11y a11y again.');
+  }, 120_000);
+});
+
+describe('comparing reports', () => {
+  it('lists an issue as fixed after the fix', async () => {
+    // A copy of the demo site, with the heart buttons fixed.
+    const site = tempDir('fixed-site');
+    cpSync(join(repoRoot, 'examples/demo-app/site'), site, { recursive: true });
+    const app = join(site, 'app.js');
+    writeFileSync(
+      app,
+      readFileSync(app, 'utf8').replace(
+        'class="wish" data-wish=',
+        'class="wish" aria-label="Add to wishlist" data-wish=',
+      ),
+    );
+    const fixedDemo = await startDemoServer(site);
+    const dir = makeProject('a11y-compare');
+    const client = await startClient({ UIWALK_PROJECT_DIR: dir, TMPDIR: tempDir('compare-tmp') });
+    try {
+      const writeReport = async (url: string) => {
+        const scan = await client.call('a11y_scan', { urls: [url], checks: [] });
+        expect(scan.isError, scan.text).toBe(false);
+        const first = await client.call('a11y_report');
+        const digest = /Digest: ([0-9a-f]{12})/.exec(first.text)?.[1] as string;
+        await client.call('a11y_report', { digest, summary: 'Shop.', items: [] });
+        return first.text;
+      };
+      const before = await writeReport(`${demo.base}/`);
+      const buttonId = /(A11Y-\d{3}) \[critical\] button-name:/.exec(before)?.[1] as string;
+      const imageId = /(A11Y-\d{3}) \[critical\] image-alt:/.exec(before)?.[1] as string;
+
+      const after = await writeReport(`${fixedDemo.base}/`);
+      expect(after).toContain('Fixed since then: 1 issue(s).');
+      expect(after).not.toContain('button-name:');
+      expect(after).toContain(`${imageId} [critical] image-alt:`);
+
+      const runs = readdirSync(join(dir, '.walkthrough', 'runs')).sort();
+      const html = readFileSync(
+        join(dir, '.walkthrough', 'runs', runs.at(-1) as string, 'accessibility.html'),
+        'utf8',
+      );
+      expect(html).toContain('Fixed since the last report');
+      expect(html).toContain(`<strong>${buttonId}</strong> Buttons must have discernible text`);
+      expect(html).toContain('Still there');
+    } finally {
+      await client.close();
+      fixedDemo.stop();
+    }
+  }, 120_000);
 });
 
 describe('a11y_scan time limit', () => {

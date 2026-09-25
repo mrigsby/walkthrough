@@ -6,10 +6,13 @@ import { fileURLToPath } from 'node:url';
 export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 // Starts the demo shop on a port the system picks, so two test files never share one.
-export async function startDemoServer(): Promise<{ base: string; port: number; stop: () => void }> {
+// With "site", it serves a copy of the demo site from that folder.
+export async function startDemoServer(
+  site?: string,
+): Promise<{ base: string; port: number; stop: () => void }> {
   const child: ChildProcess = spawn(
     process.execPath,
-    [join(repoRoot, 'scripts/demo-server.mjs'), '--port', '0'],
+    [join(repoRoot, 'scripts/demo-server.mjs'), '--port', '0', ...(site ? ['--site', site] : [])],
     { stdio: ['ignore', 'pipe', 'ignore'] },
   );
   const base = await new Promise<string>((resolve, reject) => {

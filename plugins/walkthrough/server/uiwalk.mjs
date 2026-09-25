@@ -97446,8 +97446,8 @@ function stepCapture(plan, step) {
   }
   return capture;
 }
-var LATER_KEYS = { accessibility: "a later update" };
-var LATER_STEP_KEYS = { a11y: "a later update" };
+var LATER_KEYS = {};
+var LATER_STEP_KEYS = {};
 function planJsonSchema() {
   return {
     ...external_exports.toJSONSchema(planSchema, { target: "draft-7" }),
@@ -108381,6 +108381,8 @@ var RunStore = class _RunStore {
     const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes4(2).toString("hex")}`;
     const dir = join15(ensureWalkthroughDir(projectDir), "runs", id);
     mkdirSync4(join15(dir, "screenshots"), { recursive: true });
+    const settings = input3.plan?.accessibility;
+    const planChecks = settings?.checks ? CHECKS.filter((c) => settings.checks?.[c] ?? input3.a11yChecks?.includes(c)) : void 0;
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
@@ -108389,7 +108391,13 @@ var RunStore = class _RunStore {
       confirm: needsConfirm(input3.mode, step.checkpoint),
       status: "pending",
       screenshots: [],
-      actions: []
+      actions: [],
+      ...step.a11y ? {
+        a11y: {
+          selector: step.a11y === true ? void 0 : step.a11y.selector,
+          checks: (step.a11y === true ? void 0 : step.a11y.checks) ?? planChecks ?? input3.a11yChecks ?? []
+        }
+      } : {}
     }));
     const run = {
       version: 1,
@@ -108403,7 +108411,14 @@ var RunStore = class _RunStore {
       chrome: input3.chrome,
       setup: input3.setup,
       emulation: input3.emulation,
-      steps
+      steps,
+      ...settings || input3.plan?.steps.some((s) => s.a11y) ? {
+        a11yPlan: {
+          report: settings?.report ?? false,
+          standard: settings?.standard,
+          checks: planChecks
+        }
+      } : {}
     };
     const store = new _RunStore(dir, run, projectDir);
     store.save();
@@ -110866,13 +110881,22 @@ function describeCapture(plan, step) {
   ].filter(Boolean);
   return `screenshot to ${capture.path}${extra.length ? ` (${extra.join(", ")})` : ""}`;
 }
+function describeA11y(step) {
+  if (step.a11y === true || !step.a11y) return "accessibility check";
+  const extra = [
+    step.a11y.selector ? `selector ${step.a11y.selector}` : "",
+    step.a11y.checks?.length ? `checks: ${step.a11y.checks.join(", ")}` : ""
+  ].filter(Boolean);
+  return `accessibility check${extra.length ? ` (${extra.join("; ")})` : ""}`;
+}
 function stepList(plan, mode) {
   return plan.steps.map((step, i) => {
     const id = step.id ?? `step-${i + 1}`;
     const flags = [
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
       describeCapture(plan, step),
-      step.visual ? "visual check" : ""
+      step.visual ? "visual check" : "",
+      step.a11y ? describeA11y(step) : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
     if (step.expect) lines.push(`   Expect: ${step.expect}`);
@@ -111008,7 +111032,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         emulation: {
           device: driver.emulation.device,
           colorScheme: driver.emulation.colorScheme
-        }
+        },
+        a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c])
       });
       const lines = [
         `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
@@ -111020,7 +111045,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-        "5. When every step has a result, or the developer says stop, call run_finish.",
+        '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.',
+        "6. When every step has a result, or the developer says stop, call run_finish.",
         ""
       ];
       if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
@@ -111122,6 +111148,9 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           ...problems.map(
             (s) => `- Step ${s.index}: ${s.title}${s.notes ? `. Notes: ${s.notes}` : ""}`
           )
+        ] : [],
+        ...store.run.a11yPlan?.report && store.run.accessibility?.length ? [
+          `This plan asks for an accessibility report. Call a11y_report with runId "${store.run.id}" and no items. Write the text it asks for, then call it again with the items.`
         ] : [],
         "Tell the developer the result and where the HTML report is."
       ].join("\n");
@@ -111250,8 +111279,8 @@ function registerA11yTools(server, ctx) {
         standard = saved.standard;
         checks = saved.checks;
       } else {
-        standard = input3.standard ?? config3.accessibility.standard;
-        checks = input3.checks ?? CHECKS.filter((c) => config3.accessibility.checks[c]);
+        standard = input3.standard ?? live?.run.a11yPlan?.standard ?? config3.accessibility.standard;
+        checks = input3.checks ?? live?.run.a11yPlan?.checks ?? CHECKS.filter((c) => config3.accessibility.checks[c]);
         owned = !live;
         pending = [];
       }
@@ -112653,6 +112682,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           "bad_step"
         );
       }
+      const planned = stepId ? store?.run.steps.find((s) => s.id === stepId)?.a11y : void 0;
+      if (!ref && !selector && planned?.selector) selector = planned.selector;
       let label = selector;
       let scope = selector;
       let marked;
@@ -112674,7 +112705,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           scope = `[data-uiwalk-a11y="${mark}"]`;
         }
       }
-      const std = standard ?? config3.accessibility.standard;
+      const std = standard ?? store?.run.a11yPlan?.standard ?? config3.accessibility.standard;
       let audit;
       try {
         audit = await auditPage(ctx, driver, tab, {
@@ -112682,7 +112713,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           label,
           standard: std,
           tags: tags ?? standardTags(std, config3.accessibility.bestPractices),
-          checks: checks ?? [],
+          checks: checks ?? planned?.checks ?? [],
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.

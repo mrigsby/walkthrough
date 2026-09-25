@@ -185,8 +185,9 @@ export function stepCapture(
 }
 
 // Keys that a later update makes work. Until then, a run stops with a clear message.
-export const LATER_KEYS: Record<string, string> = { accessibility: 'a later update' };
-export const LATER_STEP_KEYS: Record<string, string> = { a11y: 'a later update' };
+// Empty now. A future version can list new keys here before they work.
+export const LATER_KEYS: Record<string, string> = {};
+export const LATER_STEP_KEYS: Record<string, string> = {};
 
 // JSON Schema for editors, from the same rules.
 export function planJsonSchema(): Record<string, unknown> {

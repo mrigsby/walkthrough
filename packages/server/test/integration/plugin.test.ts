@@ -33,6 +33,7 @@ describe('plugin files', () => {
 
   it('has the commands', () => {
     expect(commands.sort()).toEqual([
+      'a11y.md',
       'bug.md',
       'doctor.md',
       'export.md',
@@ -52,6 +53,8 @@ describe('plugin files', () => {
       .map((t) => t.trim())
       .filter(Boolean);
     for (const tool of allowed) {
+      // Commands may also use a few read-only Claude Code tools.
+      if (['Read', 'Grep', 'Glob'].includes(tool)) continue;
       expect(tool.startsWith(PREFIX), tool).toBe(true);
       const name = tool.slice(PREFIX.length);
       if (name !== '*') expect(toolNames, `${file} names ${name}`).toContain(name);
@@ -103,6 +106,8 @@ describe('plugin files', () => {
       expect(open.isError, open.text).toBe(false);
       const audit = await copy.call('a11y_audit');
       expect(audit.isError, audit.text).toBe(false);
+      const scan = await copy.call('a11y_scan', { urls: ['about:blank'], checks: [] });
+      expect(scan.isError, scan.text).toBe(false);
     } finally {
       await copy.close();
     }

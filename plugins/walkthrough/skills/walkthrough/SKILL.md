@@ -68,7 +68,8 @@ When the developer asks for a new plan:
 ## More checks
 
 - **Visual:** `visual_check` compares the page with a baseline. On `result: mismatch`, show the developer the diff image path. Ask whether the change is expected. If they say yes, call it again with `updateBaseline: true`. Otherwise, record the step as failed.
-- **Accessibility:** `a11y_audit` lists problems by impact. During a run, give `stepId`, and the results go into the report. Tell the developer about critical and serious problems.
+- **Accessibility:** `a11y_audit` checks the current page with axe-core and names the WCAG criteria. It runs extra checks only when you ask: `keyboard` (press Tab through the page), `darkMode`, `reflow` (320px wide), `frames`, and `screenshots`. During a run, give `stepId`, and the results go into the report. For an "accessibility check" plan step, give `stepId`, and Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.
+- **Accessibility report:** when the developer wants a report for one or more pages, use `/walkthrough:a11y`, or do the same steps: `a11y_scan` with `urls`, then `a11y_report` without items, then `a11y_report` with a digest, a summary, and text for each issue. Follow `references/a11y-report.md`. Always show the developer the suggested prompt from the reply.
 - **Devices:** `emulate` sets the screen (`mobile`, `tablet`, `desktop`), `colorScheme`, and `network`. Take a new snapshot after it.
 - **Saved logins:** after the developer logs in, `session` with action `save` keeps the login. Later, `browser_open` with `session`, or `session:` in a plan, starts logged in. Never show the content of a session file.
 
@@ -94,3 +95,4 @@ When the developer asks for a new plan:
 - `references/plan-format.md`: every plan key, exact actions, run modes, and reports.
 - `references/tools.md`: what each tool does.
 - `references/bug-report.md`: how to describe a bug.
+- `references/a11y-report.md`: how to write the accessibility report text.

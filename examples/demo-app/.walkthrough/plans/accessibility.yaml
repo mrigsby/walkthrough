@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Accessibility check
+description: Checks the shop, login, help, cart, and checkout pages for accessibility problems, then writes an accessibility report.
+mode: autonomous
+accessibility:
+  report: true
+steps:
+  - id: shop
+    do: Open the shop page
+    action: { navigate: / }
+    a11y: true
+
+  - id: login
+    do: Open the login page
+    action: { navigate: /login }
+    a11y: true
+
+  - id: help
+    do: Open the help page
+    action: { navigate: /help.html }
+    a11y: true
+
+  - id: back-to-shop
+    do: Go back to the shop page
+    action: { navigate: / }
+
+  - id: add-mug
+    do: On the shop page, add the Coffee Mug to the cart
+    action: { click: { selector: '[data-add="mug"]' } }
+    expect: The cart count in the header is 1.
+
+  - id: cart
+    do: Open the cart
+    action: { navigate: /cart }
+    expect: The cart shows the Coffee Mug.
+    a11y: true
+
+  - id: checkout
+    do: Open the checkout page
+    action: { navigate: /checkout }
+    expect: The checkout page shows the payment form.
+    a11y: true

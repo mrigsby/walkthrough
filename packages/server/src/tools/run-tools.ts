@@ -2,6 +2,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { CHECKS } from '../audit/standards.js';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
@@ -88,6 +89,15 @@ function describeCapture(plan: Plan, step: PlanStep): string {
   return `screenshot to ${capture.path}${extra.length ? ` (${extra.join(', ')})` : ''}`;
 }
 
+function describeA11y(step: PlanStep): string {
+  if (step.a11y === true || !step.a11y) return 'accessibility check';
+  const extra = [
+    step.a11y.selector ? `selector ${step.a11y.selector}` : '',
+    step.a11y.checks?.length ? `checks: ${step.a11y.checks.join(', ')}` : '',
+  ].filter(Boolean);
+  return `accessibility check${extra.length ? ` (${extra.join('; ')})` : ''}`;
+}
+
 function stepList(plan: Plan, mode: Mode): string {
   return plan.steps
     .map((step, i) => {
@@ -96,6 +106,7 @@ function stepList(plan: Plan, mode: Mode): string {
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
         describeCapture(plan, step),
         step.visual ? 'visual check' : '',
+        step.a11y ? describeA11y(step) : '',
       ]
         .filter(Boolean)
         .join(', ');
@@ -263,6 +274,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             device: driver.emulation.device,
             colorScheme: driver.emulation.colorScheme,
           },
+          a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
         });
 
         const lines = [
@@ -275,7 +287,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-          '5. When every step has a result, or the developer says stop, call run_finish.',
+          '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.',
+          '6. When every step has a result, or the developer says stop, call run_finish.',
           '',
         ];
         if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
@@ -394,6 +407,11 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
                 ...problems.map(
                   (s) => `- Step ${s.index}: ${s.title}${s.notes ? `. Notes: ${s.notes}` : ''}`,
                 ),
+              ]
+            : []),
+          ...(store.run.a11yPlan?.report && store.run.accessibility?.length
+            ? [
+                `This plan asks for an accessibility report. Call a11y_report with runId "${store.run.id}" and no items. Write the text it asks for, then call it again with the items.`,
               ]
             : []),
           'Tell the developer the result and where the HTML report is.',

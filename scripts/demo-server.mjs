@@ -1,13 +1,18 @@
 // Small web server for the demo shop. No dependencies.
-// Usage: node scripts/demo-server.mjs [--port 4321]
+// Usage: node scripts/demo-server.mjs [--port 4321] [--site <folder>]
 // Use --port 0 to let the system pick a free port. The first line of output shows it.
+// Use --site to serve a copy of the site, for tests.
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const siteDir = join(dirname(fileURLToPath(import.meta.url)), '../examples/demo-app/site');
+const siteArg = process.argv.indexOf('--site');
+const siteDir =
+  siteArg > -1
+    ? process.argv[siteArg + 1]
+    : join(dirname(fileURLToPath(import.meta.url)), '../examples/demo-app/site');
 const portArg = process.argv.indexOf('--port');
 let port = Number(portArg > -1 ? process.argv[portArg + 1] : process.env.PORT || 4321);
 

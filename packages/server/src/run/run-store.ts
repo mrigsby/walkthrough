@@ -11,6 +11,7 @@ import {
 import { join, relative, sep } from 'node:path';
 import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
 import type { KeyboardResult } from '../audit/keyboard.js';
+import { CHECKS, type CheckName } from '../audit/standards.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -42,6 +43,8 @@ export interface RunStep {
     Pick<ActionRecord, 'action' | 'label' | 'selector' | 'value' | 'files' | 'frameUrl' | 'url'>
   >;
   at?: string;
+  // The accessibility check this step asks for, from the plan.
+  a11y?: { selector?: string; checks: CheckName[] };
 }
 
 export interface Run {
@@ -62,6 +65,8 @@ export interface Run {
   emulation?: { device?: string; colorScheme?: string };
   steps: RunStep[];
   accessibility?: A11yCheck[];
+  // Accessibility settings from the plan.
+  a11yPlan?: { report: boolean; standard?: string; checks?: CheckName[] };
   // A scan that stopped at its time limit, with the pages still to check.
   a11yScan?: { pending: string[]; standard: string; tags: string[]; checks: string[] };
 }
@@ -125,11 +130,18 @@ export class RunStore {
       chrome?: string;
       setup?: string;
       emulation?: Run['emulation'];
+      // The checks a plain "a11y: true" step runs when the plan names none.
+      a11yChecks?: CheckName[];
     },
   ): RunStore {
     const id = `${stamp()}-${slug(input.name, 40, 'run')}-${randomBytes(2).toString('hex')}`;
     const dir = join(ensureWalkthroughDir(projectDir), 'runs', id);
     mkdirSync(join(dir, 'screenshots'), { recursive: true });
+    const settings = input.plan?.accessibility;
+    // Plan checks, like { keyboard: false }, change the defaults one by one.
+    const planChecks = settings?.checks
+      ? CHECKS.filter((c) => settings.checks?.[c] ?? input.a11yChecks?.includes(c))
+      : undefined;
     const steps: RunStep[] = (input.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
@@ -139,6 +151,18 @@ export class RunStore {
       status: 'pending',
       screenshots: [],
       actions: [],
+      ...(step.a11y
+        ? {
+            a11y: {
+              selector: step.a11y === true ? undefined : step.a11y.selector,
+              checks:
+                (step.a11y === true ? undefined : step.a11y.checks) ??
+                planChecks ??
+                input.a11yChecks ??
+                [],
+            },
+          }
+        : {}),
     }));
     const run: Run = {
       version: 1,
@@ -153,6 +177,15 @@ export class RunStore {
       setup: input.setup,
       emulation: input.emulation,
       steps,
+      ...(settings || input.plan?.steps.some((s) => s.a11y)
+        ? {
+            a11yPlan: {
+              report: settings?.report ?? false,
+              standard: settings?.standard,
+              checks: planChecks,
+            },
+          }
+        : {}),
     };
     const store = new RunStore(dir, run, projectDir);
     store.save();

@@ -31,7 +31,9 @@ All tools come from the `uiwalk` MCP server.
 | `emulate` | Set the screen (`device`), `colorScheme`, and `network` for all tabs. |
 | `session` | `save`, `list`, or `delete` saved logins. |
 | `visual_check` | Compare the page or one element with a baseline screenshot. |
-| `a11y_audit` | Check accessibility with axe-core. |
+| `a11y_audit` | Check the current page with axe-core. With `checks`, also run keyboard, dark mode, reflow, frame, and screenshot checks. |
+| `a11y_scan` | Check one page or a list of pages, and save the results in a run with `report.html`. |
+| `a11y_report` | Get the findings of a run, then write `accessibility.html`, `.md`, and `.json` from your text. |
 
 ## Developer and runs
 

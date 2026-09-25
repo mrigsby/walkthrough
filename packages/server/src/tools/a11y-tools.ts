@@ -201,8 +201,15 @@ export function registerA11yTools(server: McpServer, ctx: Context): void {
           standard = saved.standard as Standard;
           checks = saved.checks as CheckName[];
         } else {
-          standard = input.standard ?? config.accessibility.standard;
-          checks = input.checks ?? CHECKS.filter((c) => config.accessibility.checks[c]);
+          // The call wins over the plan, and the plan wins over config.yaml.
+          standard =
+            input.standard ??
+            (live?.run.a11yPlan?.standard as Standard | undefined) ??
+            config.accessibility.standard;
+          checks =
+            input.checks ??
+            live?.run.a11yPlan?.checks ??
+            CHECKS.filter((c) => config.accessibility.checks[c]);
           owned = !live;
           pending = [];
         }
