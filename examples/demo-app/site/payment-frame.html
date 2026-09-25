@@ -8,6 +8,9 @@
   <body class="frame-body">
     <form id="payment-form" class="stack">
       <h2>Card details</h2>
+      <!-- Planted accessibility issue: this field has no label. -->
+      <p class="field-name">Name on card</p>
+      <input name="holder" autocomplete="off" />
       <label>Card number <input name="card" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242" /></label>
       <label>Expiry date <input name="expiry" placeholder="MM/YY" /></label>
       <button type="submit">Save card</button>

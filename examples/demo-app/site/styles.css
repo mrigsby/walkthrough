@@ -187,7 +187,7 @@ textarea {
 .payment-frame {
   width: 100%;
   max-width: 480px;
-  height: 260px;
+  height: 340px;
   margin-top: 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -203,4 +203,80 @@ textarea {
 .stock-status {
   min-height: 1.5em;
   font-size: 14px;
+}
+
+/* Planted accessibility issues. See the README. */
+
+/* Low contrast in light mode. */
+.ship-note {
+  color: #cbd5e1;
+  margin: 0 0 16px;
+}
+
+.wish {
+  float: right;
+  padding: 4px;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+.wish svg {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.wish.on svg {
+  fill: var(--error);
+  stroke: var(--error);
+}
+
+/* Looks like a link, but it is a div. */
+.quick-view {
+  margin: 0 0 12px;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.deals {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.deals label {
+  margin-right: 8px;
+}
+
+/* No focus ring on the Log in button. */
+#login-form button:focus,
+#login-form button:focus-visible {
+  outline: none;
+}
+
+.login-hint {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+/* Low contrast in dark mode only. */
+@media (prefers-color-scheme: dark) {
+  .login-hint {
+    color: #334155;
+  }
+}
+
+.field-name {
+  margin: 0;
+}
+
+/* Too wide for a phone: the page scrolls sideways at 320px. */
+.rates-banner {
+  width: 700px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }

@@ -67,8 +67,14 @@ async function loadUser() {
 // ---------- Pages ----------
 
 function shopPage() {
+  // Planted accessibility issues on this page:
+  // - the shipping note has low contrast
+  // - the heart buttons have no name
+  // - "Quick view" is a div you can click but cannot reach with Tab
+  // - the "Get deals" email field traps Tab and Shift+Tab
   app.innerHTML = `
     <h1>Shop</h1>
+    <p class="ship-note">Free shipping over $50</p>
     <div class="grid">
       ${products
         .map(
@@ -77,13 +83,39 @@ function shopPage() {
           <img src="${p.image}" ${p.alt ? `alt="${escapeHtml(p.alt)}"` : ''} width="120" height="120" />
           <h2>${escapeHtml(p.name)}</h2>
           <p class="price">${money(p.price)}</p>
+          <button type="button" class="wish" data-wish="${p.id}">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z" /></svg>
+          </button>
+          <div class="quick-view" data-quick="${p.id}">Quick view</div>
           <button type="button" data-add="${p.id}">Add to cart</button>
           <button type="button" class="secondary" data-stock="${p.id}">Check stock</button>
           <p class="stock-status" data-stock-status="${p.id}" role="status"></p>
         </article>`,
         )
         .join('')}
-    </div>`;
+    </div>
+    <section class="deals">
+      <h2>Get deals</h2>
+      <label>Email <input id="deals-email" type="email" autocomplete="email" /></label>
+      <button type="button" id="deals-button" class="secondary">Sign up</button>
+    </section>`;
+
+  app.querySelectorAll('[data-wish]').forEach((button) => {
+    button.addEventListener('click', () => button.classList.toggle('on'));
+  });
+
+  app.querySelectorAll('[data-quick]').forEach((div) => {
+    div.addEventListener('click', () => {
+      const product = products.find((p) => p.id === div.dataset.quick);
+      const status = app.querySelector(`[data-stock-status="${div.dataset.quick}"]`);
+      status.textContent = `${product.name}: ${money(product.price)}`;
+    });
+  });
+
+  // Planted accessibility issue: Tab and Shift+Tab cannot leave this field.
+  document.getElementById('deals-email').addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') event.preventDefault();
+  });
 
   app.querySelectorAll('[data-add]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -139,6 +171,7 @@ function cartPage() {
     </table>
     <p class="total">Total: <strong id="cart-total">${money(cartTotal(lines))}</strong></p>
 
+    <!-- Planted accessibility issue: the coupon field has no label. -->
     <div class="coupon">
       <span>Have a coupon?</span>
       <input id="coupon-code" />
@@ -227,6 +260,7 @@ function loginPage() {
       <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
       <button type="submit">Log in</button>
       <p id="login-error" class="error" role="alert"></p>
+      <p class="login-hint">Forgot your password? Ask the shop owner.</p>
     </form>`;
 
   document.getElementById('login-form').addEventListener('submit', async (event) => {

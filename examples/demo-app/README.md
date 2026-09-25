@@ -31,8 +31,21 @@ Then open http://localhost:4321. Log in with username `demo` and password `demo1
 
 ## Planted accessibility issues
 
-- The Baseball Cap image has no alt text.
-- The coupon field has no label. The text "Have a coupon?" is next to it, but it is not tied to the field.
+| Issue | Page | Found by |
+| --- | --- | --- |
+| The Baseball Cap image has no alt text. | Shop | axe (`image-alt`) |
+| The heart buttons have an icon but no name. | Shop | axe (`button-name`) |
+| The "Free shipping over $50" note has low contrast. | Shop | axe (`color-contrast`) |
+| "Quick view" is a `div`. You can click it, but you cannot reach it with Tab. | Shop | Keyboard check |
+| Tab and Shift+Tab cannot leave the "Get deals" email field. | Shop | Keyboard check |
+| The Log in button shows no focus ring. | Log in | Keyboard check |
+| The "Forgot your password?" hint has low contrast in dark mode only. | Log in | Dark mode check |
+| The coupon field has no label. The text "Have a coupon?" is next to it, but it is not tied to the field. | Cart | axe (`label`) |
+| The "Name on card" field in the payment form has no label. | Checkout (payment frame) | axe (`label`), frame check |
+| The shipping rates banner is 700px wide, so the page scrolls sideways on a phone. | Help | Reflow check |
+| The "Was this page helpful?" checkbox has no label. It is inside a shadow root. | Help | axe (`label`) |
+
+The keyboard, dark mode, reflow, and frame checks are part of the accessibility report. To see the cart and checkout issues, add an item to the cart first.
 
 ## Walkthrough files
 
