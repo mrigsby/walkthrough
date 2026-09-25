@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../plan.schema.json
 name: Help shots
 mode: autonomous
 device: laptop

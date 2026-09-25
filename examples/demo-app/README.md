@@ -37,3 +37,14 @@ Then open http://localhost:4321. Log in with username `demo` and password `demo1
 ## Walkthrough files
 
 The `.walkthrough/` folder holds the settings and test plans for this project. Copy `.walkthrough/.env.example` to `.walkthrough/.env` to set the demo password as a secret.
+
+## Screenshots for docs
+
+The `help-shots` plan saves two screenshots to exact files in `docs/images/help/`: the cart page, and the cart total only. Ask the agent to "run the help-shots plan", then export the run as a script. The script saves the screenshots again without an agent:
+
+```sh
+node .walkthrough/exports/help-shots.mjs
+SHOT=total node .walkthrough/exports/help-shots.mjs
+```
+
+The second command saves only `total.png`. See [Screenshots for docs](../../docs/plan-format.md#screenshots-for-docs).
