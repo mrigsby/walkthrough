@@ -25,7 +25,7 @@ Add this to `.claude/settings.json` in your project, and commit it:
     "walkthrough": {
       "source": {
         "source": "github",
-        "repo": "oistechnologies/walkthrough"
+        "repo": "mrigsby/walkthrough"
       }
     }
   },

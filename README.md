@@ -41,7 +41,7 @@ Read more in [Safety](docs/safety.md).
 1. In Claude Code, add the marketplace and install the plugin:
 
    ```text
-   /plugin marketplace add oistechnologies/walkthrough
+   /plugin marketplace add mrigsby/walkthrough
    /plugin install walkthrough@walkthrough
    ```
 

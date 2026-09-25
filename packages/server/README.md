@@ -1,11 +1,11 @@
 # uiwalk
 
-`uiwalk` is the MCP server of [Walkthrough](https://github.com/oistechnologies/walkthrough). It lets an AI agent test your web app in a visible Chrome, one step at a time, with you. After each step, you confirm it or report a bug in a panel in the browser.
+`uiwalk` is the MCP server of [Walkthrough](https://github.com/mrigsby/walkthrough). It lets an AI agent test your web app in a visible Chrome, one step at a time, with you. After each step, you confirm it or report a bug in a panel in the browser.
 
 In Claude Code, install the Walkthrough plugin instead. It includes this server, a skill, and slash commands:
 
 ```text
-/plugin marketplace add oistechnologies/walkthrough
+/plugin marketplace add mrigsby/walkthrough
 /plugin install walkthrough@walkthrough
 ```
 
@@ -37,4 +37,4 @@ Add a local (stdio) server that runs `npx -y uiwalk`. Set `UIWALK_PROJECT_DIR` t
 
 Walkthrough needs Node.js 22.12 or later and Google Chrome.
 
-See the [documentation](https://github.com/oistechnologies/walkthrough#documentation) for the guides. MIT license.
+See the [documentation](https://github.com/mrigsby/walkthrough#documentation) for the guides. MIT license.

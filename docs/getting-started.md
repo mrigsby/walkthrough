@@ -16,7 +16,7 @@ You need:
 In Claude Code, run:
 
 ```text
-/plugin marketplace add oistechnologies/walkthrough
+/plugin marketplace add mrigsby/walkthrough
 /plugin install walkthrough@walkthrough
 ```
 

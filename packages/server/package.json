@@ -9,13 +9,13 @@
     "claude",
     "browser"
   ],
-  "homepage": "https://github.com/oistechnologies/walkthrough#readme",
+  "homepage": "https://github.com/mrigsby/walkthrough#readme",
   "bugs": {
-    "url": "https://github.com/oistechnologies/walkthrough/issues"
+    "url": "https://github.com/mrigsby/walkthrough/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oistechnologies/walkthrough.git",
+    "url": "git+https://github.com/mrigsby/walkthrough.git",
     "directory": "packages/server"
   },
   "license": "MIT",
