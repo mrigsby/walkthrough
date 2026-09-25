@@ -57,6 +57,49 @@
       "type": "string",
       "minLength": 1
     },
+    "accessibility": {
+      "description": "Settings for accessibility checks in this plan.",
+      "type": "object",
+      "properties": {
+        "report": {
+          "description": "Write an accessibility report when the run ends.",
+          "type": "boolean"
+        },
+        "standard": {
+          "description": "The standard to check against.",
+          "type": "string",
+          "enum": [
+            "wcag2a",
+            "wcag2aa",
+            "wcag21aa",
+            "wcag22aa"
+          ]
+        },
+        "checks": {
+          "type": "object",
+          "properties": {
+            "keyboard": {
+              "type": "boolean"
+            },
+            "darkMode": {
+              "type": "boolean"
+            },
+            "reflow": {
+              "type": "boolean"
+            },
+            "frames": {
+              "type": "boolean"
+            },
+            "screenshots": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Turn extra checks on or off: keyboard, darkMode, reflow, frames, screenshots."
+        }
+      },
+      "additionalProperties": false
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -426,6 +469,40 @@
           "visual": {
             "description": "Compare a screenshot with the saved baseline after this step.",
             "type": "boolean"
+          },
+          "a11y": {
+            "description": "Check accessibility after this step.",
+            "anyOf": [
+              {
+                "type": "boolean",
+                "const": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selector": {
+                    "description": "Check only this part of the page.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checks": {
+                    "description": "Extra checks for this step, like [keyboard, darkMode].",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "keyboard",
+                        "darkMode",
+                        "reflow",
+                        "frames",
+                        "screenshots"
+                      ]
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [

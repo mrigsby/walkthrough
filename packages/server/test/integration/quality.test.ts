@@ -189,6 +189,60 @@ describe('accessibility', () => {
     expect(help.text).toContain('help-feedback >>> input: ');
   });
 
+  it('finds low contrast that shows in dark mode only, then puts light mode back', async () => {
+    await mcp.call('navigate', { url: '/login' });
+    const dark = () =>
+      withPage((p) => p.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
+    const before = await dark();
+    const login = await mcp.call('a11y_audit', { checks: ['darkMode'] });
+    expect(login.isError, login.text).toBe(false);
+    expect(login.text).toContain(
+      'Dark mode: 1 element(s) have low contrast in dark mode only (WCAG 1.4.3 (AA))',
+    );
+    expect(login.text).toContain('.login-hint');
+    expect(await dark()).toBe(before);
+
+    // The shipping note fails in both modes, so it is not in the "only" lists.
+    await mcp.call('navigate', { url: '/' });
+    const shop = await mcp.call('a11y_audit', { checks: ['darkMode'] });
+    expect(shop.text).toMatch(/- color-contrast: .*\n {2}- \.ship-note/);
+    expect(shop.text).toContain('Dark mode: no contrast problems that show in dark mode only.');
+    expect(shop.text).not.toContain('light mode only');
+  }, 60_000);
+
+  it('finds sideways scrolling at 320px, then puts the size back', async () => {
+    await mcp.call('navigate', { url: '/help.html' });
+    const before = await withPage((p) => p.evaluate(() => window.innerWidth));
+    const help = await mcp.call('a11y_audit', { checks: ['reflow'] });
+    expect(help.text).toMatch(
+      /Reflow: at 320px wide, the page is \d+px wide, so it scrolls sideways/,
+    );
+    expect(help.text).toContain('<div class="rates-banner">');
+    expect(await withPage((p) => p.evaluate(() => window.innerWidth))).toBe(before);
+
+    await mcp.call('navigate', { url: '/login' });
+    const narrowOk = await mcp.call('a11y_audit', { checks: ['reflow'] });
+    expect(narrowOk.text).toContain('Reflow: at 320px wide, the page does not scroll sideways.');
+  }, 60_000);
+
+  it('checks a frame on the same site', async () => {
+    await withPage((p) =>
+      p.evaluate(() => localStorage.setItem('cart', JSON.stringify([{ id: 'mug', qty: 1 }]))),
+    );
+    await mcp.call('navigate', { url: '/checkout' });
+    await mcp.call('wait_for', { text: 'Card details' }).catch(() => undefined);
+    const without = await mcp.call('a11y_audit');
+    expect(without.text).not.toContain('in frame');
+    const checkout = await mcp.call('a11y_audit', { checks: ['frames'] });
+    expect(checkout.text).toMatch(/Frames checked: \S+\/payment-frame\.html/);
+    expect(checkout.text).toMatch(/label: Form elements must have labels/);
+    expect(checkout.text).toContain('in frame iframe: input[name="holder"]');
+    expect(checkout.text).not.toContain('frame-tested');
+    // Page rules, like "one main landmark", do not run in a frame.
+    expect(checkout.text).not.toContain('landmark-one-main');
+    await withPage((p) => p.evaluate(() => localStorage.removeItem('cart')));
+  }, 60_000);
+
   it('refuses a stepId when no run is going', async () => {
     const result = await mcp.call('a11y_audit', { stepId: 'nope' });
     expect(result.isError).toBe(true);
@@ -221,5 +275,17 @@ describe('plans with Phase 5 keys', () => {
     );
     expect(md).toContain('## Accessibility');
     expect(md).toMatch(/- \*\*Accessibility:\*\* /);
+
+    // The run keeps rule impacts, passes, and the axe-core version for the report.
+    const runJson = JSON.parse(
+      readFileSync(join(project, report.replace(/report\.md$/, 'run.json')), 'utf8'),
+    );
+    const check = runJson.accessibility.at(-1);
+    expect(check.engine).toMatch(/^axe-core 4\./);
+    expect(check.standard).toBe('wcag22aa');
+    expect(check.passes.find((p: { id: string }) => p.id === 'document-title')?.ruleImpact).toBe(
+      'serious',
+    );
+    expect(check.inapplicable).toBeGreaterThan(0);
   });
 });

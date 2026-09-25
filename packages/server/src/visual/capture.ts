@@ -5,7 +5,7 @@ import { withCleanPage } from '../evidence/annotate.js';
 import type { Rect } from '../panel/controller.js';
 
 // Stops movement on the page, so two screenshots of the same page match.
-const FREEZE_CSS =
+export const FREEZE_CSS =
   '*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; scroll-behavior: auto !important; }';
 
 export interface Capture {

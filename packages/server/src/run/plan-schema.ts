@@ -1,5 +1,6 @@
 import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
+import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -96,6 +97,21 @@ export const stepSchema = z
       .boolean()
       .optional()
       .describe('Compare a screenshot with the saved baseline after this step.'),
+    a11y: z
+      .union([
+        z.literal(true),
+        z
+          .object({
+            selector: z.string().min(1).optional().describe('Check only this part of the page.'),
+            checks: z
+              .array(z.enum(CHECKS))
+              .optional()
+              .describe('Extra checks for this step, like [keyboard, darkMode].'),
+          })
+          .strict(),
+      ])
+      .optional()
+      .describe('Check accessibility after this step.'),
   })
   .strict();
 
@@ -130,6 +146,15 @@ export const planSchema = z
       .describe(
         'The folder for step screenshot paths, from the project folder, like "docs/images/help".',
       ),
+    accessibility: z
+      .object({
+        report: z.boolean().optional().describe('Write an accessibility report when the run ends.'),
+        standard: z.enum(STANDARDS).optional().describe('The standard to check against.'),
+        checks: checksSchema.optional(),
+      })
+      .strict()
+      .optional()
+      .describe('Settings for accessibility checks in this plan.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict();
@@ -159,10 +184,9 @@ export function stepCapture(
   return capture;
 }
 
-// Keys that a later phase makes work. Until then, a run stops with a clear message.
-// Empty now. A future version can list new keys here before they work.
-export const LATER_KEYS: Record<string, string> = {};
-export const LATER_STEP_KEYS: Record<string, string> = {};
+// Keys that a later update makes work. Until then, a run stops with a clear message.
+export const LATER_KEYS: Record<string, string> = { accessibility: 'a later update' };
+export const LATER_STEP_KEYS: Record<string, string> = { a11y: 'a later update' };
 
 // JSON Schema for editors, from the same rules.
 export function planJsonSchema(): Record<string, unknown> {

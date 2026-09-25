@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import type { A11yViolation } from '../audit/axe.js';
+import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -60,13 +60,34 @@ export interface Run {
   // The screen and color scheme, for exported scripts.
   emulation?: { device?: string; colorScheme?: string };
   steps: RunStep[];
-  accessibility?: Array<{
-    at: string;
-    stepId?: string;
-    url: string;
-    scope?: string;
-    violations: A11yViolation[];
-  }>;
+  accessibility?: A11yCheck[];
+}
+
+// One accessibility check of one page. Fields after "violations" are optional,
+// because older runs do not have them.
+export interface A11yCheck {
+  at: string;
+  stepId?: string;
+  url: string;
+  // The page that was asked for, when a redirect went somewhere else.
+  requestedUrl?: string;
+  scope?: string;
+  violations: A11yViolation[];
+  incomplete?: A11yViolation[];
+  passes?: A11yPass[];
+  inapplicable?: number;
+  engine?: string;
+  standard?: string;
+  tags?: string[];
+  colorScheme?: string;
+  viewport?: string;
+  checks?: {
+    darkMode?: { darkOnly: A11yNode[]; lightOnly: A11yNode[]; dark?: A11yViolation };
+    reflow?: { width: number; pageWidth: number; overflow: boolean; elements: A11yNode[] };
+    framesChecked?: string[];
+    framesNotChecked?: Array<{ url: string; reason: string }>;
+  };
+  shots?: Array<{ rule: string; target: string; file: string }>;
 }
 
 function stamp(date = new Date()): string {

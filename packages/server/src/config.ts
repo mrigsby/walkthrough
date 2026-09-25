@@ -3,6 +3,13 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import {
+  CHECKS,
+  type CheckName,
+  checksSchema,
+  STANDARDS,
+  type Standard,
+} from './audit/standards.js';
 import { ToolError } from './errors.js';
 import { DEFAULT_ORIGINS } from './guards/origins.js';
 
@@ -29,7 +36,16 @@ export interface Config {
   uploadsRoot: string;
   // Folders outside the project where screenshots may go.
   screenshotRoots: string[];
+  accessibility: AccessibilityConfig;
   warnings: string[];
+}
+
+export interface AccessibilityConfig {
+  standard: Standard;
+  bestPractices: boolean;
+  // Extra checks that a full scan runs.
+  checks: Record<CheckName, boolean>;
+  maxScreenshots: number;
 }
 
 // Settings that anyone can commit.
@@ -49,6 +65,15 @@ const sharedSchema = z
     askTimeoutSec: z.number().int().min(10).max(3600).optional(),
     panel: z.boolean().optional(),
     highlightMs: z.number().int().min(0).max(5000).optional(),
+    accessibility: z
+      .object({
+        standard: z.enum(STANDARDS).optional(),
+        bestPractices: z.boolean().optional(),
+        checks: checksSchema.optional(),
+        maxScreenshots: z.number().int().min(0).max(200).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .loose();
 
@@ -127,6 +152,12 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
   const shared = validate(sharedSchema, sharedRaw, sharedFile);
   const local: LocalFile = validate(localSchema, readYaml(localFile), localFile);
   const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
+  // Merge key by key, so the local file can change one check only.
+  const a11y = {
+    ...shared.accessibility,
+    ...local.accessibility,
+    checks: { ...shared.accessibility?.checks, ...local.accessibility?.checks },
+  };
 
   const fromProject = (dir: string) => (isAbsolute(dir) ? dir : resolve(projectDir, dir));
   const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
@@ -156,6 +187,14 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
     screenshotRoots,
+    accessibility: {
+      standard: a11y.standard ?? 'wcag22aa',
+      bestPractices: a11y.bestPractices ?? true,
+      checks: Object.fromEntries(
+        CHECKS.map((c) => [c, (a11y.checks as Record<string, boolean | undefined>)[c] ?? true]),
+      ) as Record<CheckName, boolean>,
+      maxScreenshots: a11y.maxScreenshots ?? 25,
+    },
     warnings,
   };
 }

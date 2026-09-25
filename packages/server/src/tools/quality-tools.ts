@@ -4,12 +4,12 @@ import { basename, dirname, extname, join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ElementHandle } from 'puppeteer-core';
 import { z } from 'zod';
-import { type A11yViolation, formatViolations, runAxe } from '../audit/axe.js';
+import { auditPage, formatAudit, type PageAudit, standardLabel } from '../audit/audit-page.js';
+import { STANDARDS, standardTags } from '../audit/standards.js';
 import { describeEmulation, NETWORKS } from '../browser/devices.js';
 import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
-import { scrubText, scrubUrl } from '../evidence/scrub.js';
 import { untrusted } from '../guards/untrusted.js';
 import { resolveTarget } from '../page/actions.js';
 import { stableSelector } from '../page/selectors.js';
@@ -245,15 +245,25 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
     {
       title: 'Accessibility audit',
       description:
-        'Check the page, or one element, for accessibility problems with axe-core. It groups the results by impact: critical, serious, moderate, minor.',
+        'Check the page, or one element, for accessibility problems with axe-core. It groups the results by impact: critical, serious, moderate, minor, and names the WCAG criteria. Extra checks run only when you ask for them.',
       inputSchema: {
         ref: z.string().optional().describe('Check one part of the page, from the last snapshot.'),
         selector: z.string().optional(),
+        standard: z
+          .enum(STANDARDS)
+          .optional()
+          .describe('The standard to check. The default comes from config.yaml (wcag22aa).'),
         tags: z
           .array(z.string())
           .optional()
           .describe(
-            'Only these rule groups, like ["wcag2a", "wcag2aa"]. The default is all rules.',
+            'Only these axe-core rule groups, like ["wcag2a", "wcag2aa"]. Wins over standard.',
+          ),
+        checks: z
+          .array(z.enum(['darkMode', 'reflow', 'frames']))
+          .optional()
+          .describe(
+            'Extra checks: darkMode (contrast in light and dark mode), reflow (sideways scrolling at 320px), frames (frames on allowed sites).',
           ),
         stepId: z
           .string()
@@ -261,8 +271,9 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
           .describe('During a run: add the results to this step and the report.'),
       },
     },
-    ({ ref, selector, tags, stepId }) =>
+    ({ ref, selector, standard, tags, checks, stepId }) =>
       runTool(ctx, 'a11y_audit', async () => {
+        const config = await ctx.config();
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
@@ -298,9 +309,17 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             scope = `[data-uiwalk-a11y="${mark}"]`;
           }
         }
-        let violations: A11yViolation[];
+        const std = standard ?? config.accessibility.standard;
+        let audit: PageAudit;
         try {
-          violations = await runAxe(tab.page, { selector: scope, tags });
+          audit = await auditPage(ctx, driver, tab, {
+            selector: scope,
+            label,
+            standard: std,
+            tags: tags ?? standardTags(std, config.accessibility.bestPractices),
+            checks: checks ?? [],
+            stepId,
+          });
         } finally {
           await marked
             ?.evaluate((el) => el.removeAttribute('data-uiwalk-a11y'))
@@ -309,25 +328,15 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
         if (store) {
           if (stepId && !store.run.planFile) store.step({ id: stepId });
           store.run.accessibility ??= [];
-          store.run.accessibility.push({
-            at: new Date().toISOString(),
-            stepId,
-            url: scrubUrl(tab.page.url()),
-            scope: label,
-            // Snippets can hold links with tokens.
-            violations: violations.map((v) => ({
-              ...v,
-              nodes: v.nodes.map((n) => ({ ...n, html: scrubText(n.html) })),
-            })),
-          });
+          store.run.accessibility.push(audit.check);
           store.save();
         }
-        const count = violations.reduce((n, v) => n + v.nodes.length, 0);
+        const { violations } = audit.check;
+        const count = violations.reduce((n, v) => n + (v.nodeCount ?? v.nodes.length), 0);
         return [
-          `Accessibility check: ${violations.length} problem type(s), ${count} element(s).`,
-          untrusted(
-            `Checked: ${label ? `"${label}" at ` : ''}${tab.page.url()}\n${formatViolations(violations)}`,
-          ),
+          `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
+          ...audit.notes,
+          untrusted(formatAudit(audit)),
           store ? 'Walkthrough added these results to the run report.' : '',
         ]
           .filter(Boolean)

@@ -110,6 +110,19 @@ describe('validatePlanText', () => {
     if (!result.ok) throw new Error('should be valid');
     expect(laterFeatures(result.plan)).toEqual([]);
   });
+
+  it('accepts the accessibility keys, but they do not run yet', () => {
+    const result = validatePlanText(
+      'name: Demo\naccessibility:\n  report: true\n  standard: wcag21aa\n  checks:\n    keyboard: false\nsteps:\n  - do: One\n    a11y: true\n  - do: Two\n    a11y:\n      selector: main\n      checks: [keyboard, darkMode]\n',
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.problems));
+    expect(laterFeatures(result.plan)).toEqual([
+      '"accessibility" (comes in a later update)',
+      '"a11y" in step 1 (comes in a later update)',
+      '"a11y" in step 2 (comes in a later update)',
+    ]);
+    expect(problems('name: Demo\nsteps:\n  - do: One\n    a11y: false\n')).not.toEqual([]);
+  });
 });
 
 describe('sample plans and schema', () => {

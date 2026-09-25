@@ -110,7 +110,7 @@ export function accessibilityRows(run: Run): A11ySummaryRow[] {
         impact: v.impact,
         rule: v.id,
         help: v.help,
-        count: v.nodes.length,
+        count: v.nodeCount ?? v.nodes.length,
         helpUrl: v.helpUrl,
       });
     }
@@ -128,7 +128,7 @@ export function stepAccessibility(run: Run, step: RunStep): string | undefined {
   for (const check of checks) {
     for (const v of check.violations) {
       types += 1;
-      elements += v.nodes.length;
+      elements += v.nodeCount ?? v.nodes.length;
       byImpact.set(v.impact, (byImpact.get(v.impact) ?? 0) + 1);
     }
   }

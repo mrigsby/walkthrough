@@ -207,9 +207,9 @@ textarea {
 
 /* Planted accessibility issues. See the README. */
 
-/* Low contrast in light mode. */
+/* Low contrast in light mode and in dark mode (about 4.2:1, needs 4.5:1). */
 .ship-note {
-  color: #cbd5e1;
+  color: #777777;
   margin: 0 0 16px;
 }
 
