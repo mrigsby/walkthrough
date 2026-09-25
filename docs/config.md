@@ -45,6 +45,7 @@ These settings can harm your data or your secrets. Walkthrough ignores them in `
 | --- | --- | --- |
 | `allowEvaluate` | `false` | Turn on the `evaluate` tool, which runs JavaScript in the page. |
 | `uploadsRoot` | the project folder | The folder that uploads can come from. Walkthrough never uploads hidden files, `.env`, or saved logins. |
+| `screenshotRoots` | none | A list of folders outside the project where the `screenshot` tool can save files with `path`. Example: `[../website/static/images]`. |
 
 ## Secrets
 

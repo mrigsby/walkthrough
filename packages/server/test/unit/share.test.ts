@@ -1,7 +1,11 @@
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkableText, exportScript } from '../../src/export/puppeteer-script.js';
 import { draftIssue, MAX_ENCODED_BODY } from '../../src/issue/draft.js';
 import type { Run, RunStep } from '../../src/run/run-store.js';
+import { tempDir } from '../helpers/temp.js';
 
 const bug: RunStep = {
   id: 'check-total',
@@ -73,6 +77,109 @@ describe('exportScript', () => {
     expect(result.code).toContain('await expectText("$30.00");');
     expect(result.failedSteps).toEqual(['2. Read the cart total']);
     expect(result.actions).toBe(2);
+    expect(result.captures).toEqual([]);
+    expect(result.code).not.toContain('async function capture(');
+    // Without a device, a fixed size, so screenshots always match.
+    expect(result.code).toContain(
+      'await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });',
+    );
+  });
+
+  const shotRun: Run = {
+    ...run,
+    emulation: { device: 'desktop', colorScheme: 'dark' },
+    steps: [
+      {
+        id: 'login',
+        index: 1,
+        title: 'Log in',
+        confirm: false,
+        status: 'pass',
+        screenshots: [],
+        actions: [
+          {
+            action: 'fill',
+            label: 'textbox "Password"',
+            selector: '#password',
+            value: '{{secret:PASSWORD}}',
+            url: 'http://localhost:4321/login',
+          },
+        ],
+      },
+      {
+        id: 'cart',
+        index: 2,
+        title: 'Open the cart',
+        confirm: false,
+        status: 'pass',
+        screenshots: [],
+        actions: [],
+        captures: [
+          { path: 'docs/images/cart.png' },
+          { path: 'docs/images/total.png', selector: '#total' },
+          { path: 'docs/images/page.webp', fullPage: true },
+          { path: 'docs/images/lost.png', element: 'region "Offers" [e9]' },
+        ],
+      },
+      // A step with a screenshot but no result still takes the screenshot.
+      {
+        id: 'later',
+        index: 3,
+        title: 'Later',
+        confirm: false,
+        status: 'pending',
+        screenshots: [],
+        actions: [],
+        captures: [{ path: '/tmp/outside/later.png' }],
+      },
+    ],
+  };
+
+  it('saves screenshots to exact files, with the screen and color of the run', () => {
+    const result = exportScript(shotRun);
+    expect(result.code).toContain(
+      'await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });',
+    );
+    expect(result.code).toContain('value: "dark"');
+    expect(result.code).toContain('await capture(resolve(PROJECT_DIR, "docs/images/cart.png"));');
+    expect(result.code).toContain(
+      'await capture(resolve(PROJECT_DIR, "docs/images/total.png"), { selector: "#total" });',
+    );
+    expect(result.code).toContain(
+      'await capture(resolve(PROJECT_DIR, "docs/images/page.webp"), { fullPage: true });',
+    );
+    expect(result.code).toContain('await capture("/tmp/outside/later.png");');
+    expect(result.code).toContain(
+      '// Fix by hand: Walkthrough found no stable selector for the screenshot of region "Offers" [e9]',
+    );
+    expect(result.missingSelectors).toEqual(['Step 2: screenshot of region "Offers" [e9]']);
+    expect(result.captures).toEqual([
+      'docs/images/cart.png',
+      'docs/images/total.png',
+      'docs/images/page.webp',
+      '/tmp/outside/later.png',
+    ]);
+    expect(result.code).toContain('const SECRET_FIELDS = ["#password"];');
+    expect(result.code).toContain('SHOT matches no screenshot.');
+  });
+
+  it('writes a script that Node can parse', () => {
+    const dir = tempDir('export-syntax');
+    for (const [name, value] of [
+      ['plain.mjs', run],
+      ['shots.mjs', shotRun],
+    ] as const) {
+      const file = join(dir, name);
+      writeFileSync(file, exportScript(value).code);
+      expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
+    }
+  });
+
+  it('uses the viewport of a named device', () => {
+    const result = exportScript({ ...run, emulation: { device: 'mobile' } });
+    expect(result.code).toContain('// Screen: mobile.');
+    expect(result.code).toMatch(/await page\.setViewport\(\{"width":\d+,"height":\d+/);
+    expect(result.code).toContain('await page.setUserAgent(');
   });
 });
 

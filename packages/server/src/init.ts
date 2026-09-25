@@ -37,7 +37,8 @@ browser:
 
 # Put personal settings in config.local.yaml. Git does not track that file.
 # Only that file can turn on the evaluate tool (allowEvaluate: true)
-# or change the upload folder (uploadsRoot).
+# or change the upload folder (uploadsRoot), or let screenshots go to
+# folders outside the project (screenshotRoots).
 `;
 }
 

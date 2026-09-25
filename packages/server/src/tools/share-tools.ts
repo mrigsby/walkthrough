@@ -158,7 +158,7 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
     {
       title: 'Export a script',
       description:
-        'Turn a finished run into a plain Puppeteer script in .walkthrough/exports. It repeats the actions and checks the quoted text in each "expect". It can run in CI without an agent.',
+        'Turn a finished run into a plain Puppeteer script in .walkthrough/exports. It repeats the actions, checks the quoted text in each "expect", and saves the screenshots that the run saved to exact files. It can run in CI without an agent.',
       inputSchema: {
         runId: z
           .string()
@@ -200,6 +200,12 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
           ...(result.failedSteps.length
             ? [
                 `These steps failed in the run, so the script fails there until the bug is fixed: ${result.failedSteps.join('; ')}.`,
+              ]
+            : []),
+          ...(result.captures.length
+            ? [
+                `It saves ${result.captures.length} screenshot(s) and replaces the old files: ${result.captures.join(', ')}.`,
+                'To save only some of them, set SHOT to their file names, like SHOT=cart,settings. The steps still all run.',
               ]
             : []),
           ...(result.secrets.length

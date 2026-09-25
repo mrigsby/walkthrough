@@ -27,6 +27,8 @@ export interface Config {
   // Only read from config.local.yaml.
   allowEvaluate: boolean;
   uploadsRoot: string;
+  // Folders outside the project where screenshots may go.
+  screenshotRoots: string[];
   warnings: string[];
 }
 
@@ -51,10 +53,11 @@ const sharedSchema = z
   .loose();
 
 // Risky settings. Only the local, uncommitted file may turn these on.
-const LOCAL_ONLY = ['allowEvaluate', 'uploadsRoot'] as const;
+const LOCAL_ONLY = ['allowEvaluate', 'uploadsRoot', 'screenshotRoots'] as const;
 const localSchema = sharedSchema.extend({
   allowEvaluate: z.boolean().optional(),
   uploadsRoot: z.string().optional(),
+  screenshotRoots: z.array(z.string().min(1)).optional(),
 });
 
 type LocalFile = z.infer<typeof localSchema>;
@@ -125,11 +128,9 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
   const local: LocalFile = validate(localSchema, readYaml(localFile), localFile);
   const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
 
-  const uploadsRoot = local.uploadsRoot
-    ? isAbsolute(local.uploadsRoot)
-      ? local.uploadsRoot
-      : resolve(projectDir, local.uploadsRoot)
-    : projectDir;
+  const fromProject = (dir: string) => (isAbsolute(dir) ? dir : resolve(projectDir, dir));
+  const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
+  const screenshotRoots = (local.screenshotRoots ?? []).map(fromProject);
 
   // Headless is useful for tests and CI.
   const envHeadless = process.env.UIWALK_HEADLESS;
@@ -154,6 +155,7 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
     highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
+    screenshotRoots,
     warnings,
   };
 }

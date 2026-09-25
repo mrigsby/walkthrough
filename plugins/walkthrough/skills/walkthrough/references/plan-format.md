@@ -37,6 +37,7 @@ steps:
 | `colorScheme` | No | `light` or `dark`. |
 | `network` | No | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
 | `session` | No | A saved login, from the `session` tool. The run starts logged in. |
+| `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
 
 ## Step keys
 
@@ -47,7 +48,7 @@ steps:
 | `expect` | No | What you should see after the step. Make it specific, such as "The total is $10.00". |
 | `checkpoint` | No | In `checkpoints` mode, the developer confirms this step in the panel. |
 | `action` | No | An exact action, so the agent does not have to guess. See below. |
-| `screenshot` | No | Save a screenshot after the step. |
+| `screenshot` | No | Save a screenshot after the step. `true` saves it with the run. A path saves it to that exact file. See [Screenshots for docs](#screenshots-for-docs). |
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
 
 ### Write a good `expect`
@@ -96,6 +97,45 @@ A step with `visual: true` compares the page with a baseline screenshot.
 - Each baseline is for one screen preset and one operating system, because fonts look different on each system.
 - A later check saves a diff image, with the changed pixels in red. Any real change fails the check. Edge noise from font smoothing does not.
 - The agent asks you whether the change is expected. If you say yes, it saves the new baseline.
+
+## Screenshots for docs
+
+Use a plan to make the screenshots for help pages or other docs. Each step can save its screenshot to an exact file. Walkthrough replaces the file if it exists.
+
+```yaml
+name: Help screenshots
+mode: autonomous
+device: desktop
+colorScheme: light
+screenshotDir: docs/images/help
+steps:
+  - id: login
+    do: Log in as the help user
+    action: { fill: { selector: "#password", value: "{{secret:HELP_PASSWORD}}" } }
+
+  - id: cart
+    do: Open the cart
+    action: { navigate: /cart }
+    screenshot: cart.png
+
+  - id: cart-total
+    do: Show the cart total
+    screenshot: { path: cart-total.png, selector: "#total" }
+
+  - id: settings
+    do: Open the settings
+    action: { navigate: /settings }
+    screenshot: { path: settings.png, fullPage: true }
+```
+
+- `screenshot` can be a path, or an object with `path`, `selector` (capture only this element), and `fullPage` (capture the whole page).
+- The path must end in `.png`, `.jpg`, `.jpeg`, or `.webp`. The file type comes from the extension.
+- `screenshotDir` goes in front of each relative path. Without it, paths start at the project folder.
+- Files must be in the project folder, and not in a hidden folder such as `.git`. To save to another folder, add it to `screenshotRoots` in `config.local.yaml`. See [Settings](config.md).
+- Walkthrough checks the paths when the run starts, so a bad path stops the run before the browser opens.
+- Set `device` and `colorScheme`, so the screenshots have the same size and colors each time.
+
+To make the screenshots again without an agent, export the run as a script. `SHOT=cart` makes only one of them again. See [Make screenshots again](sharing.md#make-screenshots-again).
 
 ## Saved logins
 

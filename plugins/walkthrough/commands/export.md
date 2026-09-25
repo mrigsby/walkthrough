@@ -19,3 +19,4 @@ Run: $ARGUMENTS
    - the environment variables to set for secrets
    - the lines to fix by hand, and the steps that failed in the run
    - how to run it: `node <path>`, with `BASE_URL` for another address and `HEADFUL=1` to watch
+   - if the script saves screenshots: the files it replaces, and `SHOT=<name>` to save only some of them

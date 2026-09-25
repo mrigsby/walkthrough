@@ -1,9 +1,13 @@
+import { isAbsolute } from 'node:path';
+import { resolveDevice } from '../browser/devices.js';
 import type { Run, RunStep } from '../run/run-store.js';
 
 export interface ExportResult {
   code: string;
   actions: number;
   checks: number;
+  // Screenshot files that the script saves.
+  captures: string[];
   handChecks: number;
   missingSelectors: string[];
   secrets: string[];
@@ -45,6 +49,7 @@ function frameCode(frameUrl?: string): string {
 function actionCode(
   action: RunStep['actions'][number],
   secrets: Set<string>,
+  secretFields: Set<string>,
   baseUrl?: string,
 ): string[] {
   const where = frameCode(action.frameUrl);
@@ -54,6 +59,8 @@ function actionCode(
     const secret = SECRET.exec(v);
     if (secret?.[1]) {
       secrets.add(secret[1]);
+      // Screenshots hide the text of these fields.
+      if (action.selector && !action.frameUrl) secretFields.add(action.selector);
       return `process.env.${secret[1]}`;
     }
     return js(v);
@@ -91,13 +98,86 @@ function actionCode(
   }
 }
 
+// The screen and color scheme of the run. Without a device, a fixed size, so screenshots match.
+function setupCode(emulation: Run['emulation']): string[] {
+  const lines: string[] = [];
+  let resolved: ReturnType<typeof resolveDevice>;
+  try {
+    resolved = emulation?.device ? resolveDevice(emulation.device) : undefined;
+  } catch {
+    lines.push(`// Walkthrough does not know the device "${emulation?.device}". Using 1280x800.`);
+  }
+  if (resolved?.device) {
+    lines.push(
+      `// Screen: ${resolved.label}.`,
+      `await page.setUserAgent(${js(resolved.device.userAgent)});`,
+      `await page.setViewport(${JSON.stringify(resolved.device.viewport)});`,
+    );
+  } else {
+    const size = resolved?.size ?? { width: 1280, height: 800 };
+    lines.push(
+      `// Screen: ${resolved?.label ?? 'default'}.`,
+      `await page.setViewport({ width: ${size.width}, height: ${size.height}, deviceScaleFactor: 1 });`,
+    );
+  }
+  const scheme = emulation?.colorScheme;
+  if (scheme === 'light' || scheme === 'dark') {
+    lines.push(
+      `await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: ${js(scheme)} }]);`,
+    );
+  }
+  return lines;
+}
+
+// The screenshot helpers. Only scripts with screenshots get them.
+function captureHelpers(secretFields: string[]): string {
+  return `
+// SHOT=cart,settings saves only those screenshots. The steps still run.
+// Use the file name, with or without the extension, or the end of the path.
+const SHOT = (process.env.SHOT ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+// Fields filled from secrets. Screenshots hide their text.
+const SECRET_FIELDS = ${JSON.stringify(secretFields)};
+let shots = 0;
+
+function wanted(file) {
+  if (SHOT.length === 0) return true;
+  const path = file.split(sep).join('/');
+  return SHOT.some((s) => s === basename(file) || s === basename(file, extname(file)) || path.endsWith(\`/\${s}\`));
+}
+
+// Saves a screenshot to an exact file, and replaces the file if it exists.
+async function capture(file, options = {}) {
+  if (!wanted(file)) return;
+  mkdirSync(dirname(file), { recursive: true });
+  await page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => {});
+  await page.waitForNetworkIdle({ idleTime: 300, timeout: 5000 }).catch(() => {});
+  for (const selector of SECRET_FIELDS) {
+    await page
+      .$$eval(selector, (els) => els.forEach((el) => el.style.setProperty('-webkit-text-security', 'disc', 'important')))
+      .catch(() => {});
+  }
+  if (options.selector) {
+    const handle = await page.waitForSelector(options.selector);
+    await handle.scrollIntoView();
+    await handle.screenshot({ path: file });
+  } else {
+    await page.screenshot({ path: file, fullPage: Boolean(options.fullPage) });
+  }
+  shots += 1;
+  console.log(\`shot  \${relative(PROJECT_DIR, file)}\`);
+}
+`;
+}
+
 // Writes a plain Puppeteer script that repeats a run, for CI or a quick check.
 export function exportScript(
   run: Run,
   options: { installedChrome?: boolean; exportedAt?: string } = {},
 ): ExportResult {
   const secrets = new Set<string>();
+  const secretFields = new Set<string>();
   const missingSelectors: string[] = [];
+  const captures: string[] = [];
   const failedSteps = run.steps
     .filter((s) => ['bug', 'fail', 'blocked'].includes(s.status))
     .map((s) => `${s.index}. ${s.title}`);
@@ -108,7 +188,8 @@ export function exportScript(
   const body: string[] = [];
 
   for (const step of run.steps) {
-    if (step.status === 'pending' || step.status === 'skip') continue;
+    const shots = step.captures ?? [];
+    if ((step.status === 'pending' || step.status === 'skip') && shots.length === 0) continue;
     const lines: string[] = [];
     for (const action of step.actions) {
       if (action.url && action.url !== lastUrl) {
@@ -123,7 +204,7 @@ export function exportScript(
         );
         continue;
       }
-      lines.push(...actionCode(action, secrets, run.baseUrl));
+      lines.push(...actionCode(action, secrets, secretFields, run.baseUrl));
       actions += 1;
       // After a page load, the next action starts at the new address.
       if (action.action === 'navigate') lastUrl = action.value ?? lastUrl;
@@ -136,6 +217,26 @@ export function exportScript(
         lines.push(`// Check by hand: ${step.expect.replace(/\n/g, ' ')}`);
         handChecks += 1;
       }
+    }
+    for (const shot of shots) {
+      if (shot.element && !shot.selector) {
+        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
+        lines.push(
+          `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${shot.element.replace(/\n/g, ' ')} (${shot.path}).`,
+        );
+        continue;
+      }
+      const where = isAbsolute(shot.path)
+        ? js(shot.path)
+        : `resolve(PROJECT_DIR, ${js(shot.path.split('\\').join('/'))})`;
+      if (isAbsolute(shot.path))
+        lines.push('// This folder is outside the project. It only works on this computer.');
+      const options = [
+        shot.selector ? `selector: ${js(shot.selector)}` : '',
+        shot.fullPage ? 'fullPage: true' : '',
+      ].filter(Boolean);
+      lines.push(`await capture(${where}${options.length ? `, { ${options.join(', ')} }` : ''});`);
+      captures.push(shot.path);
     }
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
@@ -152,13 +253,14 @@ export function exportScript(
     ? "{ channel: 'chrome', headless: !process.env.HEADFUL }"
     : '{ headless: !process.env.HEADFUL }';
   const secretList = [...secrets];
+  const hasShots = captures.length > 0;
   const code = `#!/usr/bin/env node
 // Walkthrough export of the run "${run.name.replace(/\n/g, ' ')}" (${run.id}).
 // It repeats the actions from the run and checks the text that the expectations quote.
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? ' (and Google Chrome)' : ''}
 // Run:   node ${'<this file>'}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
-${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}import { dirname, resolve } from 'node:path';
+${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
 import { fileURLToPath } from 'node:url';
 import puppeteer from '${pkg}';
 
@@ -172,6 +274,7 @@ for (const name of ${JSON.stringify(secretList)}) {
 const browser = await puppeteer.launch(${launch});
 const page = await browser.newPage();
 page.setDefaultTimeout(10_000);
+${setupCode(run.emulation).join('\n')}
 // Accept confirm dialogs, like the run did.
 page.on('dialog', (dialog) => void dialog.accept());
 
@@ -234,11 +337,19 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-
+${hasShots ? captureHelpers([...secretFields]) : ''}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 
-${body.join('\n')}  console.log('Passed: every step and check.');
+${body.join('\n')}${
+  hasShots
+    ? `  if (SHOT.length && shots === 0) {
+    throw new Error(\`SHOT matches no screenshot. The screenshots are: \${${js(captures.map((c) => c.split('\\').join('/')).join(', '))}}.\`);
+  }
+  console.log(\`Saved \${shots} screenshot(s).\`);
+`
+    : ''
+}  console.log('Passed: every step and check.');
 } catch (error) {
   console.error(\`Failed: \${error.message}\`);
   await page.screenshot({ path: resolve(PROJECT_DIR, 'walkthrough-export-failure.png') }).catch(() => {});
@@ -247,5 +358,14 @@ ${body.join('\n')}  console.log('Passed: every step and check.');
   await browser.close();
 }
 `;
-  return { code, actions, checks, handChecks, missingSelectors, secrets: secretList, failedSteps };
+  return {
+    code,
+    actions,
+    checks,
+    captures,
+    handChecks,
+    missingSelectors,
+    secrets: secretList,
+    failedSteps,
+  };
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { planJsonSchema } from '../../src/run/plan-schema.js';
+import { planJsonSchema, stepCapture } from '../../src/run/plan-schema.js';
 import { laterFeatures, validatePlanText } from '../../src/run/plans.js';
 import { repoRoot } from '../helpers/demo-server.js';
 
@@ -19,6 +19,50 @@ function problems(text: string) {
   if (result.ok) throw new Error('expected problems');
   return result.problems;
 }
+
+describe('screenshot paths', () => {
+  const plan = (dir: string, shot: string) =>
+    `name: Help\n${dir}steps:\n  - id: cart\n    do: Open the cart\n    screenshot: ${shot}\n`;
+
+  it('accepts true, a path, and an object', () => {
+    for (const shot of [
+      'true',
+      'docs/cart.png',
+      '{ path: cart.jpg, selector: "#total", fullPage: true }',
+    ]) {
+      const result = validatePlanText(plan('', shot));
+      expect(result.ok, `${shot}: ${JSON.stringify(result)}`).toBe(true);
+    }
+  });
+
+  it('joins screenshotDir to the path', () => {
+    const result = validatePlanText(
+      plan('screenshotDir: docs/images/help/\n', '{ path: cart.png, selector: "#total" }'),
+    );
+    if (!result.ok) throw new Error('expected a valid plan');
+    const [step] = result.plan.steps;
+    expect(stepCapture(result.plan, step as never)).toEqual({
+      path: join('docs', 'images', 'help', 'cart.png'),
+      selector: '#total',
+    });
+  });
+
+  it('keeps an absolute path, and has no capture for true', () => {
+    const steps = [
+      { do: 'x', screenshot: '/tmp/a.png' },
+      { do: 'y', screenshot: true },
+    ];
+    expect(stepCapture({ screenshotDir: 'docs' }, steps[0] as never)?.path).toBe('/tmp/a.png');
+    expect(stepCapture({ screenshotDir: 'docs' }, steps[1] as never)).toBeUndefined();
+  });
+
+  it('explains a bad path or key', () => {
+    expect(problems(plan('', 'docs/cart.gif'))[0]?.message).toMatch(/End the path with .png/);
+    expect(problems(plan('', '{ path: cart.png, zoom: 2 }'))[0]?.message).toMatch(/zoom/);
+    expect(problems(plan('', '5'))[0]?.message).toMatch(/Use true, a file path/);
+    expect(problems(plan('', '5'))[0]?.line).toBe(5);
+  });
+});
 
 describe('validatePlanText', () => {
   it('accepts a good plan', () => {

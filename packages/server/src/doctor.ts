@@ -50,6 +50,10 @@ export async function doctorReport(
   );
   lines.push(info(`Dialogs: ${config.dialogs}`));
   lines.push(info(`Page JavaScript (evaluate tool): ${config.allowEvaluate ? 'ON' : 'off'}`));
+  if (config.screenshotRoots.length)
+    lines.push(
+      info(`Screenshot folders outside the project: ${config.screenshotRoots.join(', ')}`),
+    );
   lines.push(
     secrets.names.length > 0
       ? ok(`Secrets in .walkthrough/.env: ${secrets.names.join(', ')}`)

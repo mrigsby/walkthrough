@@ -62,6 +62,7 @@ When the developer asks for a new plan:
 ## Evidence
 
 - `screenshot` saves a picture. With a ref and `annotate: true`, it draws a red box around the element.
+- A step can say "screenshot to <path>". For that step, call `screenshot` with the `path` and the `stepId`. Also give the `selector` or `fullPage` from the step. Walkthrough replaces the file, and an exported script can save it again.
 - `logs` shows console errors, page errors, and failed requests since the current step started.
 
 ## More checks

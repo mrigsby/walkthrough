@@ -2,6 +2,19 @@
 
 This file lists all notable changes to the project.
 
+## Unreleased
+
+### Added
+
+- Screenshots for docs: a plan step can save its screenshot to an exact file, such as `screenshot: docs/images/help/cart.png`, or `{ path, selector, fullPage }`. The plan key `screenshotDir` sets the folder for these paths. Walkthrough checks the paths when a run starts.
+- The `screenshot` tool has `path`, to save to an exact file, and `stepId`, to add the screenshot to a run step.
+- Exported scripts save these screenshots again and replace the old files. `SHOT=<name>` saves only some of them.
+- `screenshotRoots` in `config.local.yaml` lets screenshots go to folders outside the project. Walkthrough never saves them in hidden folders, such as `.git`.
+
+### Changed
+
+- Exported scripts use the screen size and the color scheme of the run. Without a device, the screen is 1280x800, not 800x600.
+
 ## 0.1.0 (2026-09-24)
 
 The first version.

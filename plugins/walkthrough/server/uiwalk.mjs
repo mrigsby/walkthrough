@@ -48339,10 +48339,10 @@ function transformHeader(header, options) {
     if (!newName) return null;
     h.name = h.type === "directory" && !newName.endsWith("/") ? `${newName}/` : newName;
     if (h.linkname) {
-      const isAbsolute7 = h.linkname.startsWith("/");
-      if (isAbsolute7 || h.type === "link") {
+      const isAbsolute9 = h.linkname.startsWith("/");
+      if (isAbsolute9 || h.type === "link") {
         const stripped = stripPath(h.linkname, strip);
-        h.linkname = isAbsolute7 ? `/${stripped}` || "/" : stripped;
+        h.linkname = isAbsolute9 ? `/${stripped}` || "/" : stripped;
       }
     }
   }
@@ -48937,11 +48937,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative11 = path14;
-  if (/^[a-zA-Z]:/.test(relative11)) relative11 = relative11.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative11.startsWith("/")) relative11 = relative11.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative11.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative11;
+  let relative12 = path14;
+  if (/^[a-zA-Z]:/.test(relative12)) relative12 = relative12.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative12.startsWith("/")) relative12 = relative12.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative12.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative12;
 }
 function packTar(sources, options = {}) {
   const results = /* @__PURE__ */ new Map();
@@ -49927,8 +49927,8 @@ var init_fs = __esm({
           for (const { linkTarget, outPath } of deferredLinks) try {
             const realTargetDir = await fsp.realpath(path8.dirname(linkTarget));
             validateBounds(realTargetDir, destRoot, `Hardlink "${linkTarget}" points outside the extraction directory.`);
-            const realTarget = path8.join(realTargetDir, path8.basename(linkTarget));
-            const [targetResult, outDirResult] = await Promise.allSettled([opQueue.add(() => fsp.lstat(realTarget)), opQueue.add(() => fsp.realpath(path8.dirname(outPath)))]);
+            const realTarget2 = path8.join(realTargetDir, path8.basename(linkTarget));
+            const [targetResult, outDirResult] = await Promise.allSettled([opQueue.add(() => fsp.lstat(realTarget2)), opQueue.add(() => fsp.realpath(path8.dirname(outPath)))]);
             if (targetResult.status === "rejected") throw targetResult.reason;
             const targetStat = targetResult.value;
             if (targetStat.isSymbolicLink()) throw new Error(`Hardlink "${linkTarget}" is a symlink.`);
@@ -49937,7 +49937,7 @@ var init_fs = __esm({
             validateBounds(realOutDir, destRoot, `Hardlink "${outPath}" points outside the extraction directory.`);
             const realOutPath = path8.join(realOutDir, path8.basename(outPath));
             try {
-              await fsp.link(realTarget, realOutPath);
+              await fsp.link(realTarget2, realOutPath);
             } catch (err) {
               const code = err.code;
               if (code !== "EEXIST" && code !== ENOENT) throw err;
@@ -49948,7 +49948,7 @@ var init_fs = __esm({
               } catch (err2) {
                 if (err2.code !== ENOENT) throw err2;
               }
-              await fsp.link(realTarget, realOutPath);
+              await fsp.link(realTarget2, realOutPath);
             }
             const linkStat = await fsp.lstat(realOutPath);
             if (linkStat.dev !== targetStat.dev || linkStat.ino !== targetStat.ino) {
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join23 } = await import("node:path");
+    const { join: join25 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join23(userDataDir, "DevToolsActivePort");
+    const portPath = join25(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line) => {
@@ -68743,49 +68743,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative11, options, skipNormalization) {
+    function resolveComponent(base, relative12, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
         base = parse6(serialize(base, options), options);
-        relative11 = parse6(serialize(relative11, options), options);
+        relative12 = parse6(serialize(relative12, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative11.scheme) {
-        target2.scheme = relative11.scheme;
-        target2.userinfo = relative11.userinfo;
-        target2.host = relative11.host;
-        target2.port = relative11.port;
-        target2.path = removeDotSegments(relative11.path || "");
-        target2.query = relative11.query;
+      if (!options.tolerant && relative12.scheme) {
+        target2.scheme = relative12.scheme;
+        target2.userinfo = relative12.userinfo;
+        target2.host = relative12.host;
+        target2.port = relative12.port;
+        target2.path = removeDotSegments(relative12.path || "");
+        target2.query = relative12.query;
       } else {
-        if (relative11.userinfo !== void 0 || relative11.host !== void 0 || relative11.port !== void 0) {
-          target2.userinfo = relative11.userinfo;
-          target2.host = relative11.host;
-          target2.port = relative11.port;
-          target2.path = removeDotSegments(relative11.path || "");
-          target2.query = relative11.query;
+        if (relative12.userinfo !== void 0 || relative12.host !== void 0 || relative12.port !== void 0) {
+          target2.userinfo = relative12.userinfo;
+          target2.host = relative12.host;
+          target2.port = relative12.port;
+          target2.path = removeDotSegments(relative12.path || "");
+          target2.query = relative12.query;
         } else {
-          if (!relative11.path) {
+          if (!relative12.path) {
             target2.path = base.path;
-            if (relative11.query !== void 0) {
-              target2.query = relative11.query;
+            if (relative12.query !== void 0) {
+              target2.query = relative12.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative11.path[0] === "/") {
-              target2.path = removeDotSegments(relative11.path);
+            if (relative12.path[0] === "/") {
+              target2.path = removeDotSegments(relative12.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative11.path;
+                target2.path = "/" + relative12.path;
               } else if (!base.path) {
-                target2.path = relative11.path;
+                target2.path = relative12.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative11.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative12.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative11.query;
+            target2.query = relative12.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -68793,7 +68793,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative11.fragment;
+      target2.fragment = relative12.fragment;
       return target2;
     }
     function equal2(uriA, uriB, options) {
@@ -97087,10 +97087,11 @@ var sharedSchema = external_exports.object({
   panel: external_exports.boolean().optional(),
   highlightMs: external_exports.number().int().min(0).max(5e3).optional()
 }).loose();
-var LOCAL_ONLY = ["allowEvaluate", "uploadsRoot"];
+var LOCAL_ONLY = ["allowEvaluate", "uploadsRoot", "screenshotRoots"];
 var localSchema = sharedSchema.extend({
   allowEvaluate: external_exports.boolean().optional(),
-  uploadsRoot: external_exports.string().optional()
+  uploadsRoot: external_exports.string().optional(),
+  screenshotRoots: external_exports.array(external_exports.string().min(1)).optional()
 });
 function readYaml(file2) {
   if (!existsSync4(file2)) return {};
@@ -97140,7 +97141,9 @@ function loadConfig(projectDir, projectDirSource = "current folder") {
   const shared = validate3(sharedSchema, sharedRaw, sharedFile);
   const local = validate3(localSchema, readYaml(localFile), localFile);
   const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
-  const uploadsRoot = local.uploadsRoot ? isAbsolute3(local.uploadsRoot) ? local.uploadsRoot : resolve7(projectDir, local.uploadsRoot) : projectDir;
+  const fromProject = (dir) => isAbsolute3(dir) ? dir : resolve7(projectDir, dir);
+  const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
+  const screenshotRoots = (local.screenshotRoots ?? []).map(fromProject);
   const envHeadless = process.env.UIWALK_HEADLESS;
   const headless = envHeadless ? envHeadless !== "0" : merged.browser.headless ?? false;
   const panel = (merged.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === "1");
@@ -97161,6 +97164,7 @@ function loadConfig(projectDir, projectDirSource = "current folder") {
     highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
+    screenshotRoots,
     warnings
   };
 }
@@ -97210,6 +97214,10 @@ async function doctorReport(config3, secrets, driver) {
   );
   lines.push(info(`Dialogs: ${config3.dialogs}`));
   lines.push(info(`Page JavaScript (evaluate tool): ${config3.allowEvaluate ? "ON" : "off"}`));
+  if (config3.screenshotRoots.length)
+    lines.push(
+      info(`Screenshot folders outside the project: ${config3.screenshotRoots.join(", ")}`)
+    );
   lines.push(
     secrets.names.length > 0 ? ok(`Secrets in .walkthrough/.env: ${secrets.names.join(", ")}`) : info("No secrets in .walkthrough/.env.")
   );
@@ -97297,9 +97305,10 @@ var SecretStore = class _SecretStore {
 
 // packages/server/src/init.ts
 import { existsSync as existsSync6, mkdirSync, writeFileSync } from "node:fs";
-import { dirname as dirname5, join as join9 } from "node:path";
+import { dirname as dirname5, join as join10 } from "node:path";
 
 // packages/server/src/run/plan-schema.ts
+import { isAbsolute as isAbsolute4, join as join9 } from "node:path";
 var MODES = ["interactive", "checkpoints", "autonomous"];
 var target = external_exports.object({
   role: external_exports.string().optional().describe('ARIA role, like "button" or "textbox".'),
@@ -97324,6 +97333,24 @@ var action = external_exports.object({
 }).strict().refine((value) => Object.keys(value).length === 1, {
   message: 'Use exactly one action, like "click" or "fill".'
 }).describe("An exact action for this step. The agent uses it instead of guessing.");
+var IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+var imagePath = external_exports.string().min(1).regex(/\.(png|jpe?g|webp)$/i, "End the path with .png, .jpg, .jpeg, or .webp.").describe("Where to save the file, from the project folder or from screenshotDir.");
+var screenshot = external_exports.union(
+  [
+    external_exports.boolean(),
+    imagePath,
+    external_exports.object({
+      path: imagePath,
+      selector: external_exports.string().optional().describe("Capture only this element."),
+      fullPage: external_exports.boolean().optional().describe("Capture the whole page, not only the visible part.")
+    }).strict()
+  ],
+  {
+    error: 'Use true, a file path like "docs/images/cart.png", or { path, selector, fullPage }.'
+  }
+).describe(
+  "Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists."
+);
 var stepSchema = external_exports.object({
   id: external_exports.string().regex(
     /^[a-z0-9][a-z0-9-]*$/,
@@ -97333,7 +97360,7 @@ var stepSchema = external_exports.object({
   expect: external_exports.string().optional().describe("What the developer should see after the step. Make it specific."),
   checkpoint: external_exports.boolean().optional().describe("In checkpoints mode, ask the developer to confirm this step."),
   action: action.optional(),
-  screenshot: external_exports.boolean().optional().describe("Save a screenshot after this step."),
+  screenshot: screenshot.optional(),
   visual: external_exports.boolean().optional().describe("Compare a screenshot with the saved baseline after this step.")
 }).strict();
 var planSchema = external_exports.object({
@@ -97347,8 +97374,20 @@ var planSchema = external_exports.object({
   colorScheme: external_exports.enum(["light", "dark"]).optional().describe("Light or dark mode."),
   network: external_exports.enum(["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"]).optional().describe("Network speed."),
   session: external_exports.string().optional().describe("A saved login to use. Save one with the session tool."),
+  screenshotDir: external_exports.string().min(1).optional().describe(
+    'The folder for step screenshot paths, from the project folder, like "docs/images/help".'
+  ),
   steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
 }).strict();
+function stepCapture(plan, step) {
+  const shot = step.screenshot;
+  if (shot === void 0 || typeof shot === "boolean") return void 0;
+  const capture = typeof shot === "string" ? { path: shot } : { ...shot };
+  if (plan.screenshotDir && !isAbsolute4(capture.path)) {
+    capture.path = join9(plan.screenshotDir, capture.path);
+  }
+  return capture;
+}
 var LATER_KEYS = {};
 var LATER_STEP_KEYS = {};
 function planJsonSchema() {
@@ -97392,7 +97431,8 @@ browser:
 
 # Put personal settings in config.local.yaml. Git does not track that file.
 # Only that file can turn on the evaluate tool (allowEvaluate: true)
-# or change the upload folder (uploadsRoot).
+# or change the upload folder (uploadsRoot), or let screenshots go to
+# folders outside the project (screenshotRoots).
 `;
 }
 var SAMPLE_PLAN = `# yaml-language-server: $schema=../plan.schema.json
@@ -97433,7 +97473,7 @@ function initProject(projectDir, baseUrl = "http://localhost:3000") {
   ];
   const result = { created: [], kept: [] };
   for (const [name, content, replace] of files) {
-    const file2 = join9(projectDir, ".walkthrough", name);
+    const file2 = join10(projectDir, ".walkthrough", name);
     const shown = `.walkthrough/${name}`;
     if (existsSync6(file2) && !replace) {
       result.kept.push(shown);
@@ -106479,9 +106519,9 @@ var DeveloperPanel = class {
 
 // packages/server/src/browser/attach.ts
 import { existsSync as existsSync7, readFileSync as readFileSync7, statSync as statSync3 } from "node:fs";
-import { join as join10 } from "node:path";
+import { join as join11 } from "node:path";
 function endpointFromProfile(dir) {
-  const file2 = join10(dir, "DevToolsActivePort");
+  const file2 = join11(dir, "DevToolsActivePort");
   if (!existsSync7(file2)) {
     throw new ToolError(
       `No DevToolsActivePort file in ${dir}. Start Chrome with --remote-debugging-port=9222 and --user-data-dir=${dir}.`,
@@ -106583,11 +106623,11 @@ function describeEmulation(emulation) {
 // packages/server/src/browser/launch.ts
 import { mkdtempSync, rmSync as rmSync2 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join11 } from "node:path";
+import { join as join12 } from "node:path";
 async function launchChrome(config3) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
-  const profileDir = mkdtempSync(join11(tmpdir2(), "uiwalk-profile-"));
+  const profileDir = mkdtempSync(join12(tmpdir2(), "uiwalk-profile-"));
   const headless = config3.browser.headless;
   try {
     const browser = await puppeteer_core_default.launch({
@@ -106993,7 +107033,7 @@ var Mutex3 = class {
 
 // packages/server/src/project-files.ts
 import { existsSync as existsSync8, mkdirSync as mkdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join12 } from "node:path";
+import { join as join13 } from "node:path";
 var GITIGNORE2 = `# Created by Walkthrough. These files stay on this computer.
 .env
 sessions/
@@ -107001,9 +107041,9 @@ runs/
 config.local.yaml
 `;
 function ensureWalkthroughDir(projectDir) {
-  const dir = join12(projectDir, ".walkthrough");
+  const dir = join13(projectDir, ".walkthrough");
   mkdirSync2(dir, { recursive: true });
-  const ignore = join12(dir, ".gitignore");
+  const ignore = join13(dir, ".gitignore");
   if (!existsSync8(ignore)) writeFileSync2(ignore, GITIGNORE2);
   return dir;
 }
@@ -107015,7 +107055,7 @@ function stamp(date5 = /* @__PURE__ */ new Date()) {
   };
 }
 function adhocEvidenceDir(projectDir) {
-  const dir = join12(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
+  const dir = join13(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
   mkdirSync2(dir, { recursive: true });
   return dir;
 }
@@ -107101,9 +107141,9 @@ import {
   rmSync as rmSync3,
   writeFileSync as writeFileSync3
 } from "node:fs";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 function sessionsDir(projectDir) {
-  return join13(projectDir, ".walkthrough", "sessions");
+  return join14(projectDir, ".walkthrough", "sessions");
 }
 function sessionFile(projectDir, name) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
@@ -107112,7 +107152,7 @@ function sessionFile(projectDir, name) {
       "bad_input"
     );
   }
-  return join13(sessionsDir(projectDir), `${name}.json`);
+  return join14(sessionsDir(projectDir), `${name}.json`);
 }
 function cookieMatches(cookie, hosts) {
   const domain2 = cookie.domain.replace(/^\./, "");
@@ -107179,7 +107219,7 @@ function listSessions(projectDir) {
   if (!existsSync9(dir)) return [];
   return readdirSync3(dir).filter((f) => f.endsWith(".json")).sort().flatMap((f) => {
     try {
-      return [JSON.parse(readFileSync8(join13(dir, f), "utf8"))];
+      return [JSON.parse(readFileSync8(join14(dir, f), "utf8"))];
     } catch {
       return [];
     }
@@ -107552,22 +107592,32 @@ async function elementRect(handle) {
 }
 
 // packages/server/src/evidence/screenshot.ts
-import { join as join14, relative as relative3 } from "node:path";
+import { mkdirSync as mkdirSync4 } from "node:fs";
+import { dirname as dirname6, extname as extname2, join as join15, relative as relative3 } from "node:path";
+function imageType(path14) {
+  const ext = extname2(path14).toLowerCase();
+  return ext === ".jpg" || ext === ".jpeg" ? "jpeg" : ext === ".webp" ? "webp" : "png";
+}
 async function takeScreenshot(tab, dir, projectDir, options) {
-  const path14 = join14(dir, `${fileStamp(options.label)}.png`);
+  const path14 = options.path ?? join15(dir, `${fileStamp(options.label)}.png`);
   const { handle, fullPage = false } = options;
+  const type = imageType(path14);
+  if (options.path) {
+    mkdirSync4(dirname6(path14), { recursive: true });
+    await tab.page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => void 0);
+  }
   if (handle) {
     await handle.scrollIntoView().catch(() => void 0);
-    await handle.screenshot({ path: path14 });
+    await handle.screenshot({ path: path14, type });
   } else {
-    await tab.page.screenshot({ path: path14, fullPage });
+    await tab.page.screenshot({ path: path14, type, fullPage });
   }
   const preview = handle ? await handle.screenshot({ type: "jpeg", quality: 60, encoding: "base64" }) : await tab.page.screenshot({ type: "jpeg", quality: 60, encoding: "base64" });
   return { path: path14, relativePath: relative3(projectDir, path14), preview };
 }
 
 // packages/server/src/run/record.ts
-import { isAbsolute as isAbsolute4, join as join15, relative as relative4 } from "node:path";
+import { isAbsolute as isAbsolute5, join as join16, relative as relative4 } from "node:path";
 function recordResult(ctx, ref, result) {
   const store = ctx.run;
   if (store?.run.status !== "running") return void 0;
@@ -107577,7 +107627,7 @@ function recordResult(ctx, ref, result) {
   if (result.notes !== void 0) step.notes = result.notes || void 0;
   if (result.actual !== void 0) step.actual = result.actual || void 0;
   if (result.screenshot) {
-    const full = isAbsolute4(result.screenshot) ? result.screenshot : join15(store.projectDir, result.screenshot);
+    const full = isAbsolute5(result.screenshot) ? result.screenshot : join16(store.projectDir, result.screenshot);
     step.screenshots.push(relative4(store.dir, full));
   }
   if (result.logs) {
@@ -107824,12 +107874,15 @@ function registerDeveloperTools(server, ctx) {
   );
 }
 
+// packages/server/src/tools/page-tools.ts
+import { relative as relative6 } from "node:path";
+
 // packages/server/src/guards/paths.ts
-import { realpathSync, statSync as statSync4 } from "node:fs";
-import { basename as basename3, isAbsolute as isAbsolute5, relative as relative5, resolve as resolve8, sep as sep3 } from "node:path";
+import { existsSync as existsSync10, realpathSync, statSync as statSync4 } from "node:fs";
+import { basename as basename3, dirname as dirname7, extname as extname3, isAbsolute as isAbsolute6, join as join17, relative as relative5, resolve as resolve8, sep as sep3 } from "node:path";
 var BLOCKED_NAMES = /* @__PURE__ */ new Set(["config.local.yaml", "config.local.yml"]);
 function checkUploadPath(file2, uploadsRoot, projectDir) {
-  const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
+  const full = isAbsolute6(file2) ? file2 : resolve8(projectDir, file2);
   let real;
   try {
     real = realpathSync(full);
@@ -107841,7 +107894,7 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
   }
   const root = realpathSync(uploadsRoot);
   const rel = relative5(root, real);
-  if (rel.startsWith("..") || isAbsolute5(rel)) {
+  if (rel.startsWith("..") || isAbsolute6(rel)) {
     throw new ToolError(
       `Walkthrough can only upload files inside ${root}. ${file2} is outside that folder.`,
       "upload_blocked"
@@ -107855,6 +107908,53 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
     );
   }
   return real;
+}
+function realTarget(full) {
+  if (existsSync10(full)) return realpathSync(full);
+  const missing = [];
+  let dir = full;
+  while (!existsSync10(dir)) {
+    missing.unshift(basename3(dir));
+    const up = dirname7(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return join17(realpathSync(dir), ...missing);
+}
+var inside = (root, path14) => {
+  const rel = relative5(root, path14);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute6(rel);
+};
+function checkScreenshotPath(file2, projectDir, extraRoots = []) {
+  const full = isAbsolute6(file2) ? resolve8(file2) : resolve8(projectDir, file2);
+  const ext = extname3(full).toLowerCase();
+  if (!IMAGE_EXTENSIONS.includes(ext)) {
+    throw new ToolError(
+      `End the screenshot path with ${IMAGE_EXTENSIONS.join(", ")}. ${file2} does not.`,
+      "screenshot_blocked"
+    );
+  }
+  const real = realTarget(full);
+  if (existsSync10(real) && !statSync4(real).isFile()) {
+    throw new ToolError(`${file2} is a folder, not a file.`, "screenshot_blocked");
+  }
+  const project = realTarget(projectDir);
+  const roots = [project, ...extraRoots.map(realTarget)];
+  const root = roots.find((r) => inside(r, real));
+  if (!root) {
+    const extra = extraRoots.length ? ` or in ${extraRoots.join(", ")}` : "";
+    throw new ToolError(
+      `Walkthrough saves screenshots only in the project folder${extra}. ${file2} is outside. To allow another folder, add it to screenshotRoots in .walkthrough/config.local.yaml.`,
+      "screenshot_blocked"
+    );
+  }
+  if (relative5(root, real).split(sep3).some((part) => part.startsWith("."))) {
+    throw new ToolError(
+      `Walkthrough does not save screenshots in hidden files or folders, such as .git. ${file2} is blocked.`,
+      "screenshot_blocked"
+    );
+  }
+  return { path: real, display: inside(project, real) ? relative5(project, real) : real };
 }
 
 // packages/server/src/page/actions.ts
@@ -108402,7 +108502,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
     "screenshot",
     {
       title: "Screenshot",
-      description: "Save a screenshot of the active tab, the full page, or one element. Walkthrough saves the full-size PNG in the project and returns a small preview.",
+      description: "Save a screenshot of the active tab, the full page, or one element. Walkthrough saves the full-size image in the project and returns a small preview. With path, it saves to that exact file, for example for help pages.",
       inputSchema: {
         ref: refField,
         selector: selectorField,
@@ -108410,15 +108510,25 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
         label: external_exports.string().optional().describe('Short name for the file, like "cart-total".'),
         annotate: external_exports.boolean().optional().describe(
           "With a ref or selector: capture the page and draw a red box around the element."
+        ),
+        path: external_exports.string().optional().describe(
+          'Save to this exact file, like "docs/images/cart.png". It replaces the file if it exists. Use .png, .jpg, .jpeg, or .webp.'
+        ),
+        stepId: external_exports.string().optional().describe(
+          "During a run: add the screenshot to this step. Exported scripts take it again."
         )
       }
     },
-    ({ ref, selector, fullPage, label, annotate }) => runTool(ctx, "screenshot", async () => {
+    ({ ref, selector, fullPage, label, annotate, path: path14, stepId }) => runTool(ctx, "screenshot", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const config3 = await ctx.config();
+      const store = ctx.run?.run.status === "running" ? ctx.run : void 0;
+      if (stepId && !store)
+        throw new ToolError("No run is going, so there is no step to add it to.", "no_run");
+      const exact = path14 ? checkScreenshotPath(path14, config3.projectDir, config3.screenshotRoots) : void 0;
       const target2 = await resolveTarget(driver, tab, { ref, selector });
-      const dir = ctx.evidenceDir(config3.projectDir);
+      const dir = exact ? "" : ctx.evidenceDir(config3.projectDir);
       const rect = annotate && target2 ? await elementRect(target2.handle) : void 0;
       const shot = await withCleanPage(
         driver,
@@ -108427,13 +108537,31 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
         () => takeScreenshot(tab, dir, config3.projectDir, {
           handle: rect ? void 0 : target2?.handle,
           fullPage,
-          label
+          label,
+          path: exact?.path
         })
       );
+      const saved = exact?.display ?? shot.relativePath;
+      if (stepId && store) {
+        const step = store.step({ id: stepId });
+        step.screenshots.push(relative6(store.dir, shot.path));
+        if (exact) {
+          const element = target2 && !rect ? target2 : void 0;
+          const found = element ? selector ?? await stableSelector(element.handle, element) : void 0;
+          const capture = {
+            path: saved,
+            ...found ? { selector: found } : {},
+            ...element && !found ? { element: element.label } : {},
+            ...fullPage ? { fullPage } : {}
+          };
+          step.captures = [...(step.captures ?? []).filter((c) => c.path !== saved), capture];
+        }
+        store.save();
+      }
       const page = fullPage ? "the full page" : "the visible page";
       const what = target2 && !rect ? target2.label : rect ? `${page}, with ${target2?.label} marked` : page;
       const note = fullPage && !(target2 && !rect) ? " The preview shows only the visible part." : "";
-      return textResult(`Saved a screenshot of ${what}: ${shot.relativePath}${note}`, [
+      return textResult(`Saved a screenshot of ${what}: ${saved}${note}`, [
         { type: "image", data: shot.preview, mimeType: "image/jpeg" }
       ]);
     })
@@ -108441,8 +108569,8 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 }
 
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync10, readdirSync as readdirSync4, readFileSync as readFileSync10 } from "node:fs";
-import { join as join16 } from "node:path";
+import { existsSync as existsSync11, readdirSync as readdirSync4, readFileSync as readFileSync10 } from "node:fs";
+import { join as join18 } from "node:path";
 
 // packages/server/src/audit/axe.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
@@ -108642,16 +108770,16 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join16(projectDir, ".walkthrough", "runs");
-      if (!existsSync10(dir)) return "There are no runs yet.";
+      const dir = join18(projectDir, ".walkthrough", "runs");
+      if (!existsSync11(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync4(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join16(dir, id, "run.json");
-        if (!existsSync10(file2)) continue;
+        const file2 = join18(dir, id, "run.json");
+        if (!existsSync11(file2)) continue;
         try {
           const run = JSON.parse(readFileSync10(file2, "utf8"));
-          const report = existsSync10(join16(dir, id, "report.html")) ? "report written" : "no report yet";
+          const report = existsSync11(join18(dir, id, "report.html")) ? "report written" : "no report yet";
           rows.push(
             `- ${id}: "${run.name}", ${run.status}, ${resultLine(run) || "no steps"} (${report})`
           );
@@ -108665,8 +108793,8 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { existsSync as existsSync11, mkdirSync as mkdirSync4, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
-import { basename as basename4, dirname as dirname6, extname as extname2, join as join17, relative as relative6 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
+import { basename as basename4, dirname as dirname8, extname as extname4, join as join19, relative as relative7 } from "node:path";
 
 // packages/server/src/visual/capture.ts
 var FREEZE_CSS = "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; scroll-behavior: auto !important; }";
@@ -109041,19 +109169,19 @@ function registerQualityTools(server, ctx) {
         ref: input3.ref,
         selector: input3.selector
       });
-      const group = ctx.run?.run.planFile ? basename4(ctx.run.run.planFile, extname2(ctx.run.run.planFile)) : "adhoc";
+      const group = ctx.run?.run.planFile ? basename4(ctx.run.run.planFile, extname4(ctx.run.run.planFile)) : "adhoc";
       const device = slug(driver.emulation.device ?? "default");
       const file2 = `${slug(input3.name)}@${device}-${process.platform}.png`;
-      const baselinePath = join17(config3.projectDir, ".walkthrough", "baselines", group, file2);
-      const baselineRel = relative6(config3.projectDir, baselinePath);
+      const baselinePath = join19(config3.projectDir, ".walkthrough", "baselines", group, file2);
+      const baselineRel = relative7(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
         handle: target2?.handle,
         fullPage: input3.fullPage,
         mask: input3.mask
       });
-      if (!existsSync11(baselinePath) || input3.updateBaseline) {
-        const existed = existsSync11(baselinePath);
-        mkdirSync4(dirname6(baselinePath), { recursive: true });
+      if (!existsSync12(baselinePath) || input3.updateBaseline) {
+        const existed = existsSync12(baselinePath);
+        mkdirSync5(dirname8(baselinePath), { recursive: true });
         writeFileSync4(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
@@ -109067,7 +109195,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join17(dir, `${stamp3}-actual.png`);
+      const actualPath = join19(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -109090,11 +109218,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join17(dir, `${stamp3}-diff.png`);
+          const diffPath = join19(dir, `${stamp3}-diff.png`);
           writeFileSync4(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
-            `Diff image (changed pixels in red): ${relative6(config3.projectDir, diffPath)}`
+            `Diff image (changed pixels in red): ${relative7(config3.projectDir, diffPath)}`
           );
           images.push({
             type: "image",
@@ -109103,7 +109231,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           });
         }
         lines.push(
-          `Screenshot now: ${relative6(config3.projectDir, actualPath)}`,
+          `Screenshot now: ${relative7(config3.projectDir, actualPath)}`,
           `Baseline: ${baselineRel}`
         );
         lines.push(
@@ -109112,7 +109240,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       }
       if (input3.stepId && ctx.run?.run.status === "running" && saved.length) {
         const step = ctx.run.step({ id: input3.stepId });
-        step.screenshots.push(...saved.map((p) => relative6(ctx.run?.dir ?? "", p)));
+        step.screenshots.push(...saved.map((p) => relative7(ctx.run?.dir ?? "", p)));
         ctx.run.save();
       }
       return textResult(lines.join("\n"), images);
@@ -109169,17 +109297,17 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 
 // packages/server/src/tools/run-tools.ts
 import { writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join21, relative as relative9 } from "node:path";
+import { join as join23, relative as relative10 } from "node:path";
 
 // packages/server/src/report/html.ts
 import { readFileSync as readFileSync12 } from "node:fs";
-import { join as join18 } from "node:path";
+import { join as join20 } from "node:path";
 function esc2(text) {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 function image(runDir, path14, alt) {
   try {
-    const data = readFileSync12(join18(runDir, path14)).toString("base64");
+    const data = readFileSync12(join20(runDir, path14)).toString("base64");
     return `<a href="${esc2(path14)}"><img src="data:image/png;base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
@@ -109386,10 +109514,10 @@ function markdownReport(run) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync12, mkdirSync as mkdirSync5, readdirSync as readdirSync5, readFileSync as readFileSync13, writeFileSync as writeFileSync5 } from "node:fs";
-import { basename as basename5, extname as extname3, isAbsolute as isAbsolute6, join as join19, relative as relative7, resolve as resolve9 } from "node:path";
+import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync5, readFileSync as readFileSync13, writeFileSync as writeFileSync5 } from "node:fs";
+import { basename as basename5, extname as extname5, isAbsolute as isAbsolute7, join as join21, relative as relative8, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
-  return join19(projectDir, ".walkthrough", "plans");
+  return join21(projectDir, ".walkthrough", "plans");
 }
 function validatePlanText(text) {
   const lineCounter = new import_yaml2.LineCounter();
@@ -109428,15 +109556,15 @@ function formatProblems(file2, problems) {
 function findPlanFile(projectDir, name) {
   const dir = plansDir(projectDir);
   const candidates = [
-    join19(dir, name),
-    join19(dir, `${name}.yaml`),
-    join19(dir, `${name}.yml`),
-    isAbsolute6(name) ? name : resolve9(projectDir, name)
+    join21(dir, name),
+    join21(dir, `${name}.yaml`),
+    join21(dir, `${name}.yml`),
+    isAbsolute7(name) ? name : resolve9(projectDir, name)
   ];
   for (const file2 of candidates) {
-    if (existsSync12(file2) && [".yaml", ".yml"].includes(extname3(file2))) {
-      const rel = relative7(projectDir, file2);
-      if (rel.startsWith("..") || isAbsolute6(rel)) {
+    if (existsSync13(file2) && [".yaml", ".yml"].includes(extname5(file2))) {
+      const rel = relative8(projectDir, file2);
+      if (rel.startsWith("..") || isAbsolute7(rel)) {
         throw new ToolError(`The plan ${name} is outside the project folder.`, "plan_not_found");
       }
       return file2;
@@ -109452,7 +109580,7 @@ function loadPlan(projectDir, name) {
   const result = validatePlanText(readFileSync13(file2, "utf8"));
   if (!result.ok)
     throw new ToolError(
-      formatProblems(relative7(projectDir, file2), result.problems),
+      formatProblems(relative8(projectDir, file2), result.problems),
       "plan_invalid"
     );
   return { file: file2, plan: result.plan };
@@ -109472,11 +109600,11 @@ function laterFeatures(plan) {
 }
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
-  if (!existsSync12(dir)) return [];
-  return readdirSync5(dir).filter((f) => [".yaml", ".yml"].includes(extname3(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync13(join19(dir, f), "utf8"));
-    const name = basename5(f, extname3(f));
-    const file2 = relative7(projectDir, join19(dir, f));
+  if (!existsSync13(dir)) return [];
+  return readdirSync5(dir).filter((f) => [".yaml", ".yml"].includes(extname5(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync13(join21(dir, f), "utf8"));
+    const name = basename5(f, extname5(f));
+    const file2 = relative8(projectDir, join21(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
   });
 }
@@ -109491,9 +109619,9 @@ function savePlan(projectDir, name, text, overwrite = false) {
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
   const dir = plansDir(projectDir);
-  mkdirSync5(dir, { recursive: true });
-  const file2 = join19(dir, `${name}.yaml`);
-  if (existsSync12(file2) && !overwrite) {
+  mkdirSync6(dir, { recursive: true });
+  const file2 = join21(dir, `${name}.yaml`);
+  if (existsSync13(file2) && !overwrite) {
     throw new ToolError(
       `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
       "plan_exists"
@@ -109507,14 +109635,14 @@ function savePlan(projectDir, name, text, overwrite = false) {
 // packages/server/src/run/run-store.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
 import {
-  existsSync as existsSync13,
-  mkdirSync as mkdirSync6,
+  existsSync as existsSync14,
+  mkdirSync as mkdirSync7,
   readdirSync as readdirSync6,
   readFileSync as readFileSync14,
   renameSync,
   writeFileSync as writeFileSync6
 } from "node:fs";
-import { join as join20, relative as relative8 } from "node:path";
+import { join as join22, relative as relative9 } from "node:path";
 function slug2(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "run";
 }
@@ -109538,8 +109666,8 @@ var RunStore = class _RunStore {
   projectDir;
   static create(projectDir, input3) {
     const id = `${stamp2()}-${slug2(input3.name)}-${randomBytes4(2).toString("hex")}`;
-    const dir = join20(ensureWalkthroughDir(projectDir), "runs", id);
-    mkdirSync6(join20(dir, "screenshots"), { recursive: true });
+    const dir = join22(ensureWalkthroughDir(projectDir), "runs", id);
+    mkdirSync7(join22(dir, "screenshots"), { recursive: true });
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
@@ -109554,13 +109682,14 @@ var RunStore = class _RunStore {
       version: 1,
       id,
       name: input3.name,
-      planFile: input3.planFile ? relative8(projectDir, input3.planFile) : void 0,
+      planFile: input3.planFile ? relative9(projectDir, input3.planFile) : void 0,
       mode: input3.mode,
       status: "running",
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       baseUrl: input3.baseUrl,
       chrome: input3.chrome,
       setup: input3.setup,
+      emulation: input3.emulation,
       steps
     };
     const store = new _RunStore(dir, run, projectDir);
@@ -109568,23 +109697,23 @@ var RunStore = class _RunStore {
     return store;
   }
   static open(projectDir, id) {
-    const dir = join20(projectDir, ".walkthrough", "runs", id);
+    const dir = join22(projectDir, ".walkthrough", "runs", id);
     try {
-      const run = JSON.parse(readFileSync14(join20(dir, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync14(join22(dir, "run.json"), "utf8"));
       return new _RunStore(dir, run, projectDir);
     } catch {
       throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
     }
   }
   get screenshotsDir() {
-    return join20(this.dir, "screenshots");
+    return join22(this.dir, "screenshots");
   }
   get relativeDir() {
-    return relative8(this.projectDir, this.dir);
+    return relative9(this.projectDir, this.dir);
   }
   // Writes run.json safely: a crash never leaves a half-written file.
   save() {
-    const file2 = join20(this.dir, "run.json");
+    const file2 = join22(this.dir, "run.json");
     writeFileSync6(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
 `);
     renameSync(`${file2}.tmp`, file2);
@@ -109626,11 +109755,11 @@ var RunStore = class _RunStore {
   }
 };
 function latestRunId(projectDir, options = {}) {
-  const dir = join20(projectDir, ".walkthrough", "runs");
-  if (!existsSync13(dir)) return void 0;
+  const dir = join22(projectDir, ".walkthrough", "runs");
+  if (!existsSync14(dir)) return void 0;
   for (const id of readdirSync6(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync14(join20(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync14(join22(dir, id, "run.json"), "utf8"));
       if (!options.finishedOnly || run.status !== "running") return id;
     } catch {
     }
@@ -109640,11 +109769,11 @@ function latestRunId(projectDir, options = {}) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store) {
-  const markdown = join21(store.dir, "report.md");
-  const html = join21(store.dir, "report.html");
+  const markdown = join23(store.dir, "report.md");
+  const html = join23(store.dir, "report.html");
   writeFileSync7(markdown, markdownReport(store.run));
   writeFileSync7(html, htmlReport(store.run, store.dir));
-  return { markdown: relative9(store.projectDir, markdown), html: relative9(store.projectDir, html) };
+  return { markdown: relative10(store.projectDir, markdown), html: relative10(store.projectDir, html) };
 }
 function describeAction(step) {
   if (!step.action) return void 0;
@@ -109656,12 +109785,34 @@ function describeAction(step) {
   const extra = t.value !== void 0 ? ` with "${t.value}"` : t.files ? ` with ${t.files.join(", ")}` : "";
   return `${kind} ${where}${extra}`;
 }
+function screenshotProblems(plan, projectDir, extraRoots) {
+  const problems = [];
+  plan.steps.forEach((step, i) => {
+    const capture = stepCapture(plan, step);
+    if (!capture) return;
+    try {
+      checkScreenshotPath(capture.path, projectDir, extraRoots);
+    } catch (error62) {
+      problems.push(`Step ${i + 1} [${step.id ?? `step-${i + 1}`}]: ${error62.message}`);
+    }
+  });
+  return problems;
+}
+function describeCapture(plan, step) {
+  const capture = stepCapture(plan, step);
+  if (!capture) return step.screenshot ? "screenshot" : "";
+  const extra = [
+    capture.selector ? `selector ${capture.selector}` : "",
+    capture.fullPage ? "full page" : ""
+  ].filter(Boolean);
+  return `screenshot to ${capture.path}${extra.length ? ` (${extra.join(", ")})` : ""}`;
+}
 function stepList(plan, mode) {
   return plan.steps.map((step, i) => {
     const id = step.id ?? `step-${i + 1}`;
     const flags = [
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
-      step.screenshot ? "screenshot" : "",
+      describeCapture(plan, step),
       step.visual ? "visual check" : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
@@ -109690,7 +109841,7 @@ function registerRunTools(server, ctx) {
       }
     },
     ({ action: action2, name, content, overwrite }) => runTool(ctx, "plan", async () => {
-      const { projectDir } = await ctx.config();
+      const { projectDir, screenshotRoots } = await ctx.config();
       if (action2 === "list") {
         const plans = listPlans(projectDir);
         if (plans.length === 0) return "There are no plans in .walkthrough/plans yet.";
@@ -109702,7 +109853,7 @@ function registerRunTools(server, ctx) {
         if (!name || !content)
           throw new ToolError("Give a name and the plan content to save.", "bad_input");
         const file3 = savePlan(projectDir, name, content, overwrite);
-        return `Saved the plan: ${relative9(projectDir, file3)}`;
+        return `Saved the plan: ${relative10(projectDir, file3)}`;
       }
       if (action2 === "validate" && content) {
         const result = validatePlanText(content);
@@ -109712,11 +109863,18 @@ function registerRunTools(server, ctx) {
       const { file: file2, plan } = loadPlan(projectDir, name);
       const later = laterFeatures(plan);
       if (action2 === "validate") {
-        return `The plan ${relative9(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
+        const shots = screenshotProblems(plan, projectDir, screenshotRoots);
+        if (shots.length) {
+          return [
+            `The plan ${relative10(projectDir, file2)} has screenshot paths that Walkthrough cannot use:`,
+            ...shots.map((p) => `- ${p}`)
+          ].join("\n");
+        }
+        return `The plan ${relative10(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
       }
       const mode = plan.mode ?? "checkpoints";
       return [
-        `Plan: ${plan.name} (${relative9(projectDir, file2)})`,
+        `Plan: ${plan.name} (${relative10(projectDir, file2)})`,
         plan.description ? `About: ${plan.description}` : "",
         `Mode: ${mode}`,
         plan.baseUrl ? `Start page: ${plan.baseUrl}` : "",
@@ -109756,6 +109914,14 @@ function registerRunTools(server, ctx) {
             "not_supported_yet"
           );
         }
+        const shots = screenshotProblems(plan, config3.projectDir, config3.screenshotRoots);
+        if (shots.length) {
+          throw new ToolError(
+            `This plan has screenshot paths that Walkthrough cannot use:
+${shots.map((p) => `- ${p}`).join("\n")}`,
+            "screenshot_blocked"
+          );
+        }
       }
       const mode = modeArg ?? plan?.mode ?? "checkpoints";
       const baseUrl = plan?.baseUrl ?? config3.baseUrl;
@@ -109779,7 +109945,11 @@ function registerRunTools(server, ctx) {
         planFile: loaded?.file,
         baseUrl,
         chrome: driver.chromeVersion,
-        setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`
+        setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
+        emulation: {
+          device: driver.emulation.device,
+          colorScheme: driver.emulation.colorScheme
+        }
       });
       const lines = [
         `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
@@ -109790,7 +109960,7 @@ function registerRunTools(server, ctx) {
         "1. Do what the step says. If it has an Action, use it.",
         '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
-        '4. For a "screenshot" step, call screenshot after the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
+        '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
         "5. When every step has a result, or the developer says stop, call run_finish.",
         ""
       ];
@@ -109818,7 +109988,7 @@ function registerRunTools(server, ctx) {
         screenshot: external_exports.boolean().optional().describe("Save a screenshot. The default is yes on fail or blocked.")
       }
     },
-    ({ stepId, step, title, status, actual, notes, screenshot }) => runTool(ctx, "run_step", async () => {
+    ({ stepId, step, title, status, actual, notes, screenshot: screenshot2 }) => runTool(ctx, "run_step", async () => {
       const store = ctx.run;
       if (store?.run.status !== "running") {
         throw new ToolError("No run is going. Call run_start first.", "no_run");
@@ -109832,7 +110002,7 @@ function registerRunTools(server, ctx) {
       const lines = [];
       const extra = [];
       let shotPath;
-      if (screenshot ?? (status === "fail" || status === "blocked")) {
+      if (screenshot2 ?? (status === "fail" || status === "blocked")) {
         const shot = await bugScreenshot(ctx, driver, tab, stepId ?? String(step ?? "step"));
         shotPath = shot.relativePath;
         lines.push(`Screenshot: ${shot.relativePath}`);
@@ -109901,10 +110071,11 @@ function registerRunTools(server, ctx) {
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync14, mkdirSync as mkdirSync7, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join22, relative as relative10 } from "node:path";
+import { existsSync as existsSync15, mkdirSync as mkdirSync8, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join24, relative as relative11 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
+import { isAbsolute as isAbsolute8 } from "node:path";
 var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
 function checkableText(expect) {
   const found = /* @__PURE__ */ new Set();
@@ -109932,7 +110103,7 @@ function frameCode(frameUrl) {
   }
   return `frame(${js(part)})`;
 }
-function actionCode(action2, secrets, baseUrl) {
+function actionCode(action2, secrets, secretFields, baseUrl) {
   const where = frameCode(action2.frameUrl);
   const sel = action2.selector ? js(action2.selector) : "";
   const value = (() => {
@@ -109940,6 +110111,7 @@ function actionCode(action2, secrets, baseUrl) {
     const secret = SECRET.exec(v2);
     if (secret?.[1]) {
       secrets.add(secret[1]);
+      if (action2.selector && !action2.frameUrl) secretFields.add(action2.selector);
       return `process.env.${secret[1]}`;
     }
     return js(v2);
@@ -109974,9 +110146,78 @@ function actionCode(action2, secrets, baseUrl) {
       ];
   }
 }
+function setupCode(emulation) {
+  const lines = [];
+  let resolved;
+  try {
+    resolved = emulation?.device ? resolveDevice(emulation.device) : void 0;
+  } catch {
+    lines.push(`// Walkthrough does not know the device "${emulation?.device}". Using 1280x800.`);
+  }
+  if (resolved?.device) {
+    lines.push(
+      `// Screen: ${resolved.label}.`,
+      `await page.setUserAgent(${js(resolved.device.userAgent)});`,
+      `await page.setViewport(${JSON.stringify(resolved.device.viewport)});`
+    );
+  } else {
+    const size = resolved?.size ?? { width: 1280, height: 800 };
+    lines.push(
+      `// Screen: ${resolved?.label ?? "default"}.`,
+      `await page.setViewport({ width: ${size.width}, height: ${size.height}, deviceScaleFactor: 1 });`
+    );
+  }
+  const scheme = emulation?.colorScheme;
+  if (scheme === "light" || scheme === "dark") {
+    lines.push(
+      `await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: ${js(scheme)} }]);`
+    );
+  }
+  return lines;
+}
+function captureHelpers(secretFields) {
+  return `
+// SHOT=cart,settings saves only those screenshots. The steps still run.
+// Use the file name, with or without the extension, or the end of the path.
+const SHOT = (process.env.SHOT ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+// Fields filled from secrets. Screenshots hide their text.
+const SECRET_FIELDS = ${JSON.stringify(secretFields)};
+let shots = 0;
+
+function wanted(file) {
+  if (SHOT.length === 0) return true;
+  const path = file.split(sep).join('/');
+  return SHOT.some((s) => s === basename(file) || s === basename(file, extname(file)) || path.endsWith(\`/\${s}\`));
+}
+
+// Saves a screenshot to an exact file, and replaces the file if it exists.
+async function capture(file, options = {}) {
+  if (!wanted(file)) return;
+  mkdirSync(dirname(file), { recursive: true });
+  await page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => {});
+  await page.waitForNetworkIdle({ idleTime: 300, timeout: 5000 }).catch(() => {});
+  for (const selector of SECRET_FIELDS) {
+    await page
+      .$$eval(selector, (els) => els.forEach((el) => el.style.setProperty('-webkit-text-security', 'disc', 'important')))
+      .catch(() => {});
+  }
+  if (options.selector) {
+    const handle = await page.waitForSelector(options.selector);
+    await handle.scrollIntoView();
+    await handle.screenshot({ path: file });
+  } else {
+    await page.screenshot({ path: file, fullPage: Boolean(options.fullPage) });
+  }
+  shots += 1;
+  console.log(\`shot  \${relative(PROJECT_DIR, file)}\`);
+}
+`;
+}
 function exportScript(run, options = {}) {
   const secrets = /* @__PURE__ */ new Set();
+  const secretFields = /* @__PURE__ */ new Set();
   const missingSelectors = [];
+  const captures = [];
   const failedSteps = run.steps.filter((s) => ["bug", "fail", "blocked"].includes(s.status)).map((s) => `${s.index}. ${s.title}`);
   let actions = 0;
   let checks = 0;
@@ -109984,7 +110225,8 @@ function exportScript(run, options = {}) {
   let lastUrl = run.baseUrl ?? "";
   const body = [];
   for (const step of run.steps) {
-    if (step.status === "pending" || step.status === "skip") continue;
+    const shots = step.captures ?? [];
+    if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
     const lines = [];
     for (const action2 of step.actions) {
       if (action2.url && action2.url !== lastUrl) {
@@ -109999,7 +110241,7 @@ function exportScript(run, options = {}) {
         );
         continue;
       }
-      lines.push(...actionCode(action2, secrets, run.baseUrl));
+      lines.push(...actionCode(action2, secrets, secretFields, run.baseUrl));
       actions += 1;
       if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
     }
@@ -110011,6 +110253,24 @@ function exportScript(run, options = {}) {
         lines.push(`// Check by hand: ${step.expect.replace(/\n/g, " ")}`);
         handChecks += 1;
       }
+    }
+    for (const shot of shots) {
+      if (shot.element && !shot.selector) {
+        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
+        lines.push(
+          `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${shot.element.replace(/\n/g, " ")} (${shot.path}).`
+        );
+        continue;
+      }
+      const where = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
+      if (isAbsolute8(shot.path))
+        lines.push("// This folder is outside the project. It only works on this computer.");
+      const options2 = [
+        shot.selector ? `selector: ${js(shot.selector)}` : "",
+        shot.fullPage ? "fullPage: true" : ""
+      ].filter(Boolean);
+      lines.push(`await capture(${where}${options2.length ? `, { ${options2.join(", ")} }` : ""});`);
+      captures.push(shot.path);
     }
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
@@ -110024,14 +110284,16 @@ function exportScript(run, options = {}) {
   const pkg = options.installedChrome ? "puppeteer-core" : "puppeteer";
   const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL }" : "{ headless: !process.env.HEADFUL }";
   const secretList = [...secrets];
+  const hasShots = captures.length > 0;
   const code = `#!/usr/bin/env node
 // Walkthrough export of the run "${run.name.replace(/\n/g, " ")}" (${run.id}).
 // It repeats the actions from the run and checks the text that the expectations quote.
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? " (and Google Chrome)" : ""}
 // Run:   node ${"<this file>"}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
-${secretList.length ? `// Secrets come from environment variables: ${secretList.join(", ")}.
-` : ""}import { dirname, resolve } from 'node:path';
+${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.
+` : ""}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(", ")}.
+` : ""}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
 import { fileURLToPath } from 'node:url';
 import puppeteer from '${pkg}';
 
@@ -110045,6 +110307,7 @@ for (const name of ${JSON.stringify(secretList)}) {
 const browser = await puppeteer.launch(${launch3});
 const page = await browser.newPage();
 page.setDefaultTimeout(10_000);
+${setupCode(run.emulation).join("\n")}
 // Accept confirm dialogs, like the run did.
 page.on('dialog', (dialog) => void dialog.accept());
 
@@ -110107,11 +110370,15 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-
+${hasShots ? captureHelpers([...secretFields]) : ""}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 
-${body.join("\n")}  console.log('Passed: every step and check.');
+${body.join("\n")}${hasShots ? `  if (SHOT.length && shots === 0) {
+    throw new Error(\`SHOT matches no screenshot. The screenshots are: \${${js(captures.map((c) => c.split("\\").join("/")).join(", "))}}.\`);
+  }
+  console.log(\`Saved \${shots} screenshot(s).\`);
+` : ""}  console.log('Passed: every step and check.');
 } catch (error) {
   console.error(\`Failed: \${error.message}\`);
   await page.screenshot({ path: resolve(PROJECT_DIR, 'walkthrough-export-failure.png') }).catch(() => {});
@@ -110120,7 +110387,16 @@ ${body.join("\n")}  console.log('Passed: every step and check.');
   await browser.close();
 }
 `;
-  return { code, actions, checks, handChecks, missingSelectors, secrets: secretList, failedSteps };
+  return {
+    code,
+    actions,
+    checks,
+    captures,
+    handChecks,
+    missingSelectors,
+    secrets: secretList,
+    failedSteps
+  };
 }
 
 // packages/server/src/issue/draft.ts
@@ -110468,7 +110744,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
     "export_script",
     {
       title: "Export a script",
-      description: 'Turn a finished run into a plain Puppeteer script in .walkthrough/exports. It repeats the actions and checks the quoted text in each "expect". It can run in CI without an agent.',
+      description: 'Turn a finished run into a plain Puppeteer script in .walkthrough/exports. It repeats the actions, checks the quoted text in each "expect", and saves the screenshots that the run saved to exact files. It can run in CI without an agent.',
       inputSchema: {
         runId: external_exports.string().optional().describe("The run folder name. The default is the newest finished run."),
         installedChrome: external_exports.boolean().optional().describe(
@@ -110482,12 +110758,12 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
       const name = slug4(
         store.run.planFile ? (store.run.planFile.split("/").pop() ?? "").replace(/\.ya?ml$/, "") : store.run.name
       );
-      const dir = join22(projectDir, ".walkthrough", "exports");
-      mkdirSync7(dir, { recursive: true });
-      const file2 = join22(dir, `${name}.mjs`);
-      const existed = existsSync14(file2);
+      const dir = join24(projectDir, ".walkthrough", "exports");
+      mkdirSync8(dir, { recursive: true });
+      const file2 = join24(dir, `${name}.mjs`);
+      const existed = existsSync15(file2);
       const result = exportScript(store.run, { installedChrome });
-      const rel = relative10(projectDir, file2);
+      const rel = relative11(projectDir, file2);
       writeFileSync8(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
@@ -110498,6 +110774,10 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         ] : [],
         ...result.failedSteps.length ? [
           `These steps failed in the run, so the script fails there until the bug is fixed: ${result.failedSteps.join("; ")}.`
+        ] : [],
+        ...result.captures.length ? [
+          `It saves ${result.captures.length} screenshot(s) and replaces the old files: ${result.captures.join(", ")}.`,
+          "To save only some of them, set SHOT to their file names, like SHOT=cart,settings. The steps still all run."
         ] : [],
         ...result.secrets.length ? [`Set these environment variables before a run: ${result.secrets.join(", ")}.`] : [],
         `To run it: npm install --save-dev ${pkg}, then node ${rel}`
@@ -110525,16 +110805,16 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
           "no_step"
         );
       }
-      const reports = existsSync14(join22(store.dir, "report.md")) ? { markdown: relative10(projectDir, join22(store.dir, "report.md")) } : writeReports(store);
-      const screenshots = step.screenshots.map((s) => relative10(projectDir, join22(store.dir, s)));
+      const reports = existsSync15(join24(store.dir, "report.md")) ? { markdown: relative11(projectDir, join24(store.dir, "report.md")) } : writeReports(store);
+      const screenshots = step.screenshots.map((s) => relative11(projectDir, join24(store.dir, s)));
       const draft = draftIssue(store.run, step, { reportPath: reports.markdown, screenshots });
-      const bodyFile = join22(store.dir, `issue-${step.id}.md`);
+      const bodyFile = join24(store.dir, `issue-${step.id}.md`);
       writeFileSync8(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
-        `Body file: ${relative10(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
+        `Body file: ${relative11(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join22(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join24(projectDir, s)}`).join("\n")}` : " none"}`,
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)

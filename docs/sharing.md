@@ -149,3 +149,21 @@ jobs:
 ```
 
 The script prints `ok` for each step. When a check fails, it prints the step and the reason, saves `walkthrough-export-failure.png` in the project folder, and exits with code 1.
+
+The script uses the screen size and the color scheme of the run. If the plan has no `device`, the screen is 1280x800. The script does not use saved logins, so a plan for pages behind a login must have the login steps.
+
+## Make screenshots again
+
+If a run saved screenshots to exact files (see [Screenshots for docs](plan-format.md#screenshots-for-docs)), the exported script saves them again. It replaces the old files. Use it to update the screenshots in your help pages after the UI changes.
+
+```sh
+# All the screenshots
+node .walkthrough/exports/help-screenshots.mjs
+
+# Only some of them. The script still does every step.
+SHOT=cart,settings node .walkthrough/exports/help-screenshots.mjs
+```
+
+`SHOT` takes a list of names, with commas between them. A name can be the file name, with or without the extension, such as `cart` or `cart.png`. It can also be the end of the path, such as `help/cart.png`. If no screenshot matches, the script stops with the list of names.
+
+The script prints `shot` and the path for each file that it saves. It hides the text of fields that it filled from secrets, but check the images before you publish them.

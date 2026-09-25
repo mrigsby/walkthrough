@@ -1,12 +1,15 @@
+import { relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { elementRect, withCleanPage } from '../evidence/annotate.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
+import { checkScreenshotPath } from '../guards/paths.js';
 import { untrusted } from '../guards/untrusted.js';
 import { ACTIONS, act, resolveTarget } from '../page/actions.js';
 import { formatState, readElement } from '../page/read.js';
+import { stableSelector } from '../page/selectors.js';
 import { buildSnapshot } from '../page/snapshot.js';
 import { waitFor } from '../page/wait.js';
 import { runTool, textResult } from './util.js';
@@ -154,7 +157,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
     {
       title: 'Screenshot',
       description:
-        'Save a screenshot of the active tab, the full page, or one element. Walkthrough saves the full-size PNG in the project and returns a small preview.',
+        'Save a screenshot of the active tab, the full page, or one element. Walkthrough saves the full-size image in the project and returns a small preview. With path, it saves to that exact file, for example for help pages.',
       inputSchema: {
         ref: refField,
         selector: selectorField,
@@ -169,15 +172,34 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
           .describe(
             'With a ref or selector: capture the page and draw a red box around the element.',
           ),
+        path: z
+          .string()
+          .optional()
+          .describe(
+            'Save to this exact file, like "docs/images/cart.png". It replaces the file if it exists. Use .png, .jpg, .jpeg, or .webp.',
+          ),
+        stepId: z
+          .string()
+          .optional()
+          .describe(
+            'During a run: add the screenshot to this step. Exported scripts take it again.',
+          ),
       },
     },
-    ({ ref, selector, fullPage, label, annotate }) =>
+    ({ ref, selector, fullPage, label, annotate, path, stepId }) =>
       runTool(ctx, 'screenshot', async () => {
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const config = await ctx.config();
+        const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+        if (stepId && !store)
+          throw new ToolError('No run is going, so there is no step to add it to.', 'no_run');
+        // Check the path before the capture, so a bad path changes nothing.
+        const exact = path
+          ? checkScreenshotPath(path, config.projectDir, config.screenshotRoots)
+          : undefined;
         const target = await resolveTarget(driver, tab, { ref, selector });
-        const dir = ctx.evidenceDir(config.projectDir);
+        const dir = exact ? '' : ctx.evidenceDir(config.projectDir);
         // With annotate, the whole view is saved, with a red box on the element.
         const rect = annotate && target ? await elementRect(target.handle) : undefined;
         const shot = await withCleanPage(driver, tab, { annotate: rect }, () =>
@@ -185,14 +207,36 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
             handle: rect ? undefined : target?.handle,
             fullPage,
             label,
+            path: exact?.path,
           }),
         );
+        const saved = exact?.display ?? shot.relativePath;
+
+        if (stepId && store) {
+          const step = store.step({ id: stepId });
+          step.screenshots.push(relative(store.dir, shot.path));
+          if (exact) {
+            const element = target && !rect ? target : undefined;
+            const found = element
+              ? (selector ?? (await stableSelector(element.handle, element)))
+              : undefined;
+            const capture = {
+              path: saved,
+              ...(found ? { selector: found } : {}),
+              ...(element && !found ? { element: element.label } : {}),
+              ...(fullPage ? { fullPage } : {}),
+            };
+            step.captures = [...(step.captures ?? []).filter((c) => c.path !== saved), capture];
+          }
+          store.save();
+        }
+
         const page = fullPage ? 'the full page' : 'the visible page';
         const what =
           target && !rect ? target.label : rect ? `${page}, with ${target?.label} marked` : page;
         const note =
           fullPage && !(target && !rect) ? ' The preview shows only the visible part.' : '';
-        return textResult(`Saved a screenshot of ${what}: ${shot.relativePath}${note}`, [
+        return textResult(`Saved a screenshot of ${what}: ${saved}${note}`, [
           { type: 'image', data: shot.preview, mimeType: 'image/jpeg' },
         ]);
       }),

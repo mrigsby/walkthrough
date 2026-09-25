@@ -52,6 +52,11 @@
       "description": "A saved login to use. Save one with the session tool.",
       "type": "string"
     },
+    "screenshotDir": {
+      "description": "The folder for step screenshot paths, from the project folder, like \"docs/images/help\".",
+      "type": "string",
+      "minLength": 1
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -382,8 +387,41 @@
             "description": "An exact action for this step. The agent uses it instead of guessing."
           },
           "screenshot": {
-            "description": "Save a screenshot after this step.",
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\.(png|jpe?g|webp)$",
+                "description": "Where to save the file, from the project folder or from screenshotDir."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\.(png|jpe?g|webp)$",
+                    "description": "Where to save the file, from the project folder or from screenshotDir."
+                  },
+                  "selector": {
+                    "description": "Capture only this element.",
+                    "type": "string"
+                  },
+                  "fullPage": {
+                    "description": "Capture the whole page, not only the visible part.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists."
           },
           "visual": {
             "description": "Compare a screenshot with the saved baseline after this step.",

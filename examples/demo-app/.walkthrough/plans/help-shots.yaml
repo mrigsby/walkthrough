@@ -1,0 +1,14 @@
+name: Help shots
+mode: autonomous
+device: laptop
+screenshotDir: docs/images/help
+steps:
+  - id: add-mug
+    do: Add the Coffee Mug to the cart
+  - id: cart
+    do: Open the cart
+    action: { navigate: /cart }
+    screenshot: cart.png
+  - id: total
+    do: Show the total
+    screenshot: { path: total.png, selector: "#cart-total" }

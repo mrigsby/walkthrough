@@ -1,5 +1,13 @@
 import { execFile } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
@@ -170,4 +178,108 @@ describe('script export', () => {
     expect(body).toMatch(/3\. Go to http:\/\/localhost:\d+\/cart/);
     expect(issue.text).toMatch(/Screenshots to drag into the issue:\n- \/.+\.png/);
   }, 60_000);
+});
+
+describe('screenshots for docs', () => {
+  const HELP = `name: Help shots
+mode: autonomous
+device: laptop
+colorScheme: dark
+screenshotDir: docs/images/help
+steps:
+  - id: add-mug
+    do: Add the mug
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    screenshot: cart.png
+  - id: total
+    do: Show the total
+    screenshot: { path: total.png, selector: "#cart-total" }
+`;
+  const shots = () => join(project, 'docs', 'images', 'help');
+  // The width of a PNG, from its header.
+  const pngWidth = (file: string) => readFileSync(file).readUInt32BE(16);
+
+  it('saves screenshots to exact files during a run', async () => {
+    writeFileSync(join(project, '.walkthrough', 'plans', 'help-shots.yaml'), HELP);
+    const start = await mcp.call('run_start', { plan: 'help-shots' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain(`screenshot to ${join('docs', 'images', 'help', 'cart.png')}`);
+    expect(start.text).toContain('(selector #cart-total)');
+
+    const outline = (await mcp.call('snapshot')).text;
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Add to cart') });
+    await mcp.call('run_step', { stepId: 'add-mug', status: 'pass' });
+    await mcp.call('navigate', { url: '/cart' });
+
+    const blocked = await mcp.call('screenshot', { path: '../outside.png' });
+    expect(blocked.isError).toBe(true);
+    expect(blocked.text).toContain('only in the project folder');
+
+    const cart = await mcp.call('screenshot', {
+      path: 'docs/images/help/cart.png',
+      stepId: 'open-cart',
+    });
+    expect(cart.text).toContain(`: ${join('docs', 'images', 'help', 'cart.png')}`);
+    await mcp.call('run_step', { stepId: 'open-cart', status: 'pass' });
+    await mcp.call('screenshot', {
+      path: 'docs/images/help/total.png',
+      selector: '#cart-total',
+      stepId: 'total',
+    });
+    await mcp.call('run_step', { stepId: 'total', status: 'pass' });
+    const finish = await mcp.call('run_finish');
+    expect(finish.text).toContain('is finished');
+
+    expect(pngWidth(join(shots(), 'cart.png'))).toBe(1280);
+    expect(existsSync(join(shots(), 'total.png'))).toBe(true);
+    const runDir = /Reports: (\S+)\/report\.md/.exec(finish.text)?.[1] as string;
+    const saved = JSON.parse(readFileSync(join(project, runDir, 'run.json'), 'utf8'));
+    expect(saved.emulation).toEqual({ device: 'laptop', colorScheme: 'dark' });
+    expect(saved.steps[1].captures).toEqual([{ path: join('docs', 'images', 'help', 'cart.png') }]);
+    expect(saved.steps[2].captures).toEqual([
+      { path: join('docs', 'images', 'help', 'total.png'), selector: '#cart-total' },
+    ]);
+  }, 60_000);
+
+  it('exports a script that saves all or some screenshots again', async () => {
+    const reply = await mcp.call('export_script', { installedChrome: true });
+    expect(reply.text).toContain('It saves 2 screenshot(s)');
+    const script = join(project, '.walkthrough/exports/help-shots.mjs');
+    const env = { ...process.env, BASE_URL: demo.base };
+
+    rmSync(join(shots(), 'cart.png'));
+    const before = statSync(join(shots(), 'total.png')).mtimeMs;
+    const one = await run(process.execPath, [script], {
+      cwd: project,
+      env: { ...env, SHOT: 'cart' },
+    });
+    expect(one.stdout).toContain(`shot  ${join('docs', 'images', 'help', 'cart.png')}`);
+    expect(one.stdout).toContain('Saved 1 screenshot(s).');
+    expect(pngWidth(join(shots(), 'cart.png'))).toBe(1280);
+    expect(statSync(join(shots(), 'total.png')).mtimeMs).toBe(before);
+
+    const all = await run(process.execPath, [script], { cwd: project, env });
+    expect(all.stdout).toContain('Saved 2 screenshot(s).');
+
+    const none = await run(process.execPath, [script], {
+      cwd: project,
+      env: { ...env, SHOT: 'nothing' },
+    }).catch((error: { code: number; stderr: string }) => error);
+    expect((none as { code: number }).code).toBe(1);
+    expect((none as { stderr: string }).stderr).toContain('SHOT matches no screenshot.');
+  }, 60_000);
+
+  it('stops a run when a plan has a screenshot path outside the project', async () => {
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'bad-shots.yaml'),
+      'name: Bad shots\nsteps:\n  - id: one\n    do: Open the shop\n    screenshot: ../../x.png\n',
+    );
+    const check = await mcp.call('plan', { action: 'validate', name: 'bad-shots' });
+    expect(check.text).toContain('Step 1 [one]');
+    const start = await mcp.call('run_start', { plan: 'bad-shots' });
+    expect(start.isError).toBe(true);
+    expect(start.text).toContain('only in the project folder');
+  });
 });

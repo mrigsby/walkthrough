@@ -1,3 +1,4 @@
+import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 
 // How the agent checks each step.
@@ -37,6 +38,39 @@ const action = z
   })
   .describe('An exact action for this step. The agent uses it instead of guessing.');
 
+// Image types that a screenshot file can have. The extension sets the type.
+export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'] as const;
+
+const imagePath = z
+  .string()
+  .min(1)
+  .regex(/\.(png|jpe?g|webp)$/i, 'End the path with .png, .jpg, .jpeg, or .webp.')
+  .describe('Where to save the file, from the project folder or from screenshotDir.');
+
+const screenshot = z
+  .union(
+    [
+      z.boolean(),
+      imagePath,
+      z
+        .object({
+          path: imagePath,
+          selector: z.string().optional().describe('Capture only this element.'),
+          fullPage: z
+            .boolean()
+            .optional()
+            .describe('Capture the whole page, not only the visible part.'),
+        })
+        .strict(),
+    ],
+    {
+      error: 'Use true, a file path like "docs/images/cart.png", or { path, selector, fullPage }.',
+    },
+  )
+  .describe(
+    'Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists.',
+  );
+
 export const stepSchema = z
   .object({
     id: z
@@ -57,7 +91,7 @@ export const stepSchema = z
       .optional()
       .describe('In checkpoints mode, ask the developer to confirm this step.'),
     action: action.optional(),
-    screenshot: z.boolean().optional().describe('Save a screenshot after this step.'),
+    screenshot: screenshot.optional(),
     visual: z
       .boolean()
       .optional()
@@ -89,12 +123,41 @@ export const planSchema = z
       .string()
       .optional()
       .describe('A saved login to use. Save one with the session tool.'),
+    screenshotDir: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'The folder for step screenshot paths, from the project folder, like "docs/images/help".',
+      ),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict();
 
 export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
+
+// A screenshot saved to an exact file.
+export interface Capture {
+  path: string;
+  selector?: string;
+  fullPage?: boolean;
+}
+
+// The exact-file screenshot of a step, with screenshotDir applied. Undefined for true or none.
+export function stepCapture(
+  plan: Pick<Plan, 'screenshotDir'>,
+  step: PlanStep,
+): Capture | undefined {
+  const shot = step.screenshot;
+  if (shot === undefined || typeof shot === 'boolean') return undefined;
+  const capture = typeof shot === 'string' ? { path: shot } : { ...shot };
+  // An absolute path ignores screenshotDir.
+  if (plan.screenshotDir && !isAbsolute(capture.path)) {
+    capture.path = join(plan.screenshotDir, capture.path);
+  }
+  return capture;
+}
 
 // Keys that a later phase makes work. Until then, a run stops with a clear message.
 // Empty now. A future version can list new keys here before they work.

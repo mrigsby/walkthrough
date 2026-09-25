@@ -20,7 +20,7 @@ All tools come from the `uiwalk` MCP server.
 | `act` | Do one action on a ref or selector: click, dblclick, hover, fill, select, check, uncheck, press, scroll, upload. |
 | `wait_for` | Wait for `text`, `textGone`, a `selector`, a `url`, `networkIdle`, or `ms`. |
 | `read` | Read the text, value, and state of one element. |
-| `screenshot` | Save a screenshot. With a ref and `annotate: true`, draw a red box around the element. |
+| `screenshot` | Save a screenshot. With a ref and `annotate: true`, draw a red box around the element. With `path`, save to that exact file. With `stepId`, add it to a run step. |
 | `logs` | See console errors, page errors, and failed requests. |
 | `evaluate` | Run page JavaScript. It is off unless the developer turns it on in `config.local.yaml`. |
 

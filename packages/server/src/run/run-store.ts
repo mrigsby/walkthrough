@@ -12,10 +12,13 @@ import type { A11yViolation } from '../audit/axe.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
-import type { Mode, Plan } from './plan-schema.js';
+import type { Capture, Mode, Plan } from './plan-schema.js';
 
 export type StepStatus = 'pending' | 'pass' | 'fail' | 'bug' | 'skip' | 'stop' | 'blocked';
 export type RunStatus = 'running' | 'finished' | 'stopped' | 'incomplete';
+
+// A screenshot saved to an exact file. "element" names an element that has no stable selector.
+export type RunCapture = Capture & { element?: string };
 
 export interface RunStep {
   id: string;
@@ -28,6 +31,8 @@ export interface RunStep {
   notes?: string;
   actual?: string;
   screenshots: string[];
+  // Screenshots saved to exact files. Exported scripts take them again.
+  captures?: RunCapture[];
   logs?: string;
   errorCount?: number;
   actions: Array<
@@ -50,6 +55,8 @@ export interface Run {
   summary?: string;
   // Screen, color scheme, network, and saved login used for the run.
   setup?: string;
+  // The screen and color scheme, for exported scripts.
+  emulation?: { device?: string; colorScheme?: string };
   steps: RunStep[];
   accessibility?: Array<{
     at: string;
@@ -100,6 +107,7 @@ export class RunStore {
       baseUrl?: string;
       chrome?: string;
       setup?: string;
+      emulation?: Run['emulation'];
     },
   ): RunStore {
     const id = `${stamp()}-${slug(input.name)}-${randomBytes(2).toString('hex')}`;
@@ -126,6 +134,7 @@ export class RunStore {
       baseUrl: input.baseUrl,
       chrome: input.chrome,
       setup: input.setup,
+      emulation: input.emulation,
       steps,
     };
     const store = new RunStore(dir, run, projectDir);

@@ -39,6 +39,17 @@ describe('loadConfig', () => {
     expect(loadConfig(project(undefined, 'allowEvaluate: true\n')).allowEvaluate).toBe(true);
   });
 
+  it('reads screenshot folders only from the local file', () => {
+    const shared = loadConfig(project('screenshotRoots:\n  - /tmp/shots\n'));
+    expect(shared.screenshotRoots).toEqual([]);
+    expect(shared.warnings.join(' ')).toMatch(/screenshotRoots.*config\.local\.yaml/);
+    const dir = project(undefined, 'screenshotRoots:\n  - /tmp/shots\n  - ../site/images\n');
+    expect(loadConfig(dir).screenshotRoots).toEqual([
+      '/tmp/shots',
+      join(dir, '..', 'site', 'images'),
+    ]);
+  });
+
   it('explains bad settings', () => {
     expect(() => loadConfig(project('dialogs: maybe\n'))).toThrow(/not valid.*dialogs/);
   });

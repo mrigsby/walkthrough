@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
+import { checkScreenshotPath } from '../guards/paths.js';
 import { untrusted } from '../guards/untrusted.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
 import { markdownReport } from '../report/markdown.js';
-import { MODES, type Mode, type Plan, type PlanStep } from '../run/plan-schema.js';
+import { MODES, type Mode, type Plan, type PlanStep, stepCapture } from '../run/plan-schema.js';
 import {
   formatProblems,
   laterFeatures,
@@ -53,13 +54,38 @@ function describeAction(step: PlanStep): string | undefined {
   return `${kind} ${where}${extra}`;
 }
 
+// Checks every exact screenshot path in a plan. Returns the problems.
+function screenshotProblems(plan: Plan, projectDir: string, extraRoots: string[]): string[] {
+  const problems: string[] = [];
+  plan.steps.forEach((step, i) => {
+    const capture = stepCapture(plan, step);
+    if (!capture) return;
+    try {
+      checkScreenshotPath(capture.path, projectDir, extraRoots);
+    } catch (error) {
+      problems.push(`Step ${i + 1} [${step.id ?? `step-${i + 1}`}]: ${(error as Error).message}`);
+    }
+  });
+  return problems;
+}
+
+function describeCapture(plan: Plan, step: PlanStep): string {
+  const capture = stepCapture(plan, step);
+  if (!capture) return step.screenshot ? 'screenshot' : '';
+  const extra = [
+    capture.selector ? `selector ${capture.selector}` : '',
+    capture.fullPage ? 'full page' : '',
+  ].filter(Boolean);
+  return `screenshot to ${capture.path}${extra.length ? ` (${extra.join(', ')})` : ''}`;
+}
+
 function stepList(plan: Plan, mode: Mode): string {
   return plan.steps
     .map((step, i) => {
       const id = step.id ?? `step-${i + 1}`;
       const flags = [
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
-        step.screenshot ? 'screenshot' : '',
+        describeCapture(plan, step),
         step.visual ? 'visual check' : '',
       ]
         .filter(Boolean)
@@ -103,7 +129,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
     },
     ({ action, name, content, overwrite }) =>
       runTool(ctx, 'plan', async () => {
-        const { projectDir } = await ctx.config();
+        const { projectDir, screenshotRoots } = await ctx.config();
         if (action === 'list') {
           const plans = listPlans(projectDir);
           if (plans.length === 0) return 'There are no plans in .walkthrough/plans yet.';
@@ -131,6 +157,13 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const { file, plan } = loadPlan(projectDir, name);
         const later = laterFeatures(plan);
         if (action === 'validate') {
+          const shots = screenshotProblems(plan, projectDir, screenshotRoots);
+          if (shots.length) {
+            return [
+              `The plan ${relative(projectDir, file)} has screenshot paths that Walkthrough cannot use:`,
+              ...shots.map((p) => `- ${p}`),
+            ].join('\n');
+          }
           return `The plan ${relative(projectDir, file)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(', ')}.` : ''}`;
         }
         const mode = plan.mode ?? 'checkpoints';
@@ -183,6 +216,13 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
               'not_supported_yet',
             );
           }
+          const shots = screenshotProblems(plan, config.projectDir, config.screenshotRoots);
+          if (shots.length) {
+            throw new ToolError(
+              `This plan has screenshot paths that Walkthrough cannot use:\n${shots.map((p) => `- ${p}`).join('\n')}`,
+              'screenshot_blocked',
+            );
+          }
         }
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
         const baseUrl = plan?.baseUrl ?? config.baseUrl;
@@ -210,6 +250,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           baseUrl,
           chrome: driver.chromeVersion,
           setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
+          emulation: {
+            device: driver.emulation.device,
+            colorScheme: driver.emulation.colorScheme,
+          },
         });
 
         const lines = [
@@ -221,7 +265,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '1. Do what the step says. If it has an Action, use it.',
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
-          '4. For a "screenshot" step, call screenshot after the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
+          '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
           '5. When every step has a result, or the developer says stop, call run_finish.',
           '',
         ];

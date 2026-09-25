@@ -65,7 +65,7 @@ Reads one element, by `ref` or `selector`: its text, its value, and if it is vis
 
 ### `screenshot`
 
-Saves a PNG and returns a small preview.
+Saves a PNG and returns a small preview. By default, the file goes in the run folder, or in a folder for today when no run is going.
 
 | Parameter | What it does |
 | --- | --- |
@@ -73,6 +73,8 @@ Saves a PNG and returns a small preview.
 | `annotate` | With `ref` or `selector`: capture the page with a red box on the element. |
 | `fullPage` | Capture the whole page. |
 | `label` | A short name for the file. |
+| `path` | Save to this exact file, such as `docs/images/help/cart.png`, and replace the file if it exists. Use `.png`, `.jpg`, `.jpeg`, or `.webp`. The file must be in the project folder, and not in a hidden folder. `screenshotRoots` in `config.local.yaml` can allow other folders. |
+| `stepId` | During a run: add the screenshot to this step. With `path`, an [exported script](sharing.md#make-screenshots-again) saves the same file again. |
 
 ### `logs`
 
