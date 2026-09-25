@@ -169,8 +169,30 @@ describe('accessibility', () => {
 
     await mcp.call('navigate', { url: '/cart' });
     const cart = await mcp.call('a11y_audit', { selector: '.coupon' });
-    expect(cart.text).toContain('Accessibility check of ".coupon"');
+    expect(cart.text).toContain('Checked: ".coupon" at');
     expect(cart.text).toMatch(/label: Form elements must have labels/);
+  });
+
+  it('checks one element from a ref, even with a Puppeteer-only selector', async () => {
+    await mcp.call('navigate', { url: '/' });
+    const snap = await mcp.call('snapshot');
+    const ref = refFor(snap.text, 'link', 'Account');
+    const part = await mcp.call('a11y_audit', { ref });
+    expect(part.isError, part.text).toBe(false);
+    expect(part.text).toContain('Checked: "::-p-aria(');
+    expect(await withPage((p) => p.$$eval('[data-uiwalk-a11y]', (els) => els.length))).toBe(0);
+  });
+
+  it('shows elements inside a shadow root with >>>', async () => {
+    await mcp.call('navigate', { url: '/help.html' });
+    const help = await mcp.call('a11y_audit');
+    expect(help.text).toContain('help-feedback >>> input: ');
+  });
+
+  it('refuses a stepId when no run is going', async () => {
+    const result = await mcp.call('a11y_audit', { stepId: 'nope' });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain('No run is going');
   });
 });
 
@@ -186,6 +208,9 @@ describe('plans with Phase 5 keys', () => {
     expect(start.text).toContain('Loaded the saved login "demo-user".');
     await mcp.call('navigate', { url: '/account' });
     expect(await withPage(async (p) => p.url())).toContain('/account');
+    const wrong = await mcp.call('a11y_audit', { stepId: 'not-a-step' });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.text).toContain('The plan has no step "not-a-step"');
     await mcp.call('a11y_audit', { stepId: 'account' });
     await mcp.call('run_step', { stepId: 'account', status: 'pass' });
     const finish = await mcp.call('run_finish');
@@ -195,5 +220,6 @@ describe('plans with Phase 5 keys', () => {
       '- **Setup:** device: mobile, color scheme: dark, network: normal, saved login: demo-user',
     );
     expect(md).toContain('## Accessibility');
+    expect(md).toMatch(/- \*\*Accessibility:\*\* /);
   });
 });

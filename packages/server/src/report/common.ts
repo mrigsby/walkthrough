@@ -1,6 +1,27 @@
 import { IMPACT_ORDER } from '../audit/axe.js';
 import type { Run, RunStep, StepStatus } from '../run/run-store.js';
 
+// Makes text safe to put in HTML, in text or in an attribute.
+export function esc(text: string): string {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+// A link target that is safe to click: only http and https. Anything else becomes "#".
+export function safeHref(url: string | undefined): string {
+  if (!url) return '#';
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? esc(parsed.href) : '#';
+  } catch {
+    return '#';
+  }
+}
+
+// Makes text safe for one cell of a Markdown table.
+export function cell(text?: string): string {
+  return (text ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' ');
+}
+
 export const STATUS_LABELS: Record<StepStatus, string> = {
   pass: 'Passed',
   fail: 'Failed',
@@ -95,6 +116,25 @@ export function accessibilityRows(run: Run): A11ySummaryRow[] {
     }
   }
   return rows;
+}
+
+// A short line about the accessibility checks of one step, or undefined.
+export function stepAccessibility(run: Run, step: RunStep): string | undefined {
+  const checks = (run.accessibility ?? []).filter((c) => c.stepId === step.id);
+  if (checks.length === 0) return undefined;
+  const byImpact = new Map<string, number>();
+  let elements = 0;
+  let types = 0;
+  for (const check of checks) {
+    for (const v of check.violations) {
+      types += 1;
+      elements += v.nodes.length;
+      byImpact.set(v.impact, (byImpact.get(v.impact) ?? 0) + 1);
+    }
+  }
+  if (types === 0) return 'No accessibility problems found.';
+  const parts = IMPACT_ORDER.filter((i) => byImpact.get(i)).map((i) => `${byImpact.get(i)} ${i}`);
+  return `${types} accessibility problem type(s), ${elements} element(s): ${parts.join(', ')}.`;
 }
 
 export const RUN_STATUS_LABELS: Record<Run['status'], string> = {

@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes5, createHash: createHash2 } = __require("crypto");
+    var { randomBytes: randomBytes6, createHash: createHash2 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes5(16).toString("base64");
+      const key = randomBytes6(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -54133,13 +54133,13 @@ function usage(yargs, shim3) {
   };
   self2.stringifiedValues = function stringifiedValues(values, separator) {
     let string4 = "";
-    const sep4 = separator || ", ";
+    const sep5 = separator || ", ";
     const array2 = [].concat(values);
     if (!values || !array2.length)
       return string4;
     array2.forEach((value) => {
       if (string4.length)
-        string4 += sep4;
+        string4 += sep5;
       string4 += JSON.stringify(value);
     });
     return string4;
@@ -61146,10 +61146,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -61163,7 +61163,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep4) {
+          if (!keyProps.anchor && !keyProps.tag && !sep5) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map3.comment)
@@ -61187,7 +61187,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map3.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep5 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -61203,7 +61203,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep4, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep5, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -61294,7 +61294,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep4 = "";
+        let sep5 = "";
         for (const token of end) {
           const { source: source2, type } = token;
           switch (type) {
@@ -61308,13 +61308,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep4 + cb;
-              sep4 = "";
+                comment += sep5 + cb;
+              sep5 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep4 += source2;
+                sep5 += source2;
               hasSpace = true;
               break;
             default:
@@ -61357,18 +61357,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep4 && !value) {
+          if (!props.anchor && !props.tag && !sep5 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -61422,8 +61422,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap2 && !sep4 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep4, null, props, onError);
+        if (!isMap2 && !sep5 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep5, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -61435,7 +61435,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep5 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -61446,8 +61446,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap2 && !props.found && ctx.options.strict) {
-              if (sep4)
-                for (const st of sep4) {
+              if (sep5)
+                for (const st of sep5) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -61464,7 +61464,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep4, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep5, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -61644,7 +61644,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep4 = "";
+      let sep5 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -61661,24 +61661,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep4 === " ")
-            sep4 = "\n";
-          else if (!prevMoreIndented && sep4 === "\n")
-            sep4 = "\n\n";
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          if (sep5 === " ")
+            sep5 = "\n";
+          else if (!prevMoreIndented && sep5 === "\n")
+            sep5 = "\n\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep4 === "\n")
+          if (sep5 === "\n")
             value += "\n";
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          value += sep4 + content;
-          sep4 = " ";
+          value += sep5 + content;
+          sep5 = " ";
           prevMoreIndented = false;
         }
       }
@@ -61861,25 +61861,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match[1].replace(trimEnd, "");
-      let sep4 = " ";
+      let sep5 = " ";
       let pos = line.lastIndex;
       while (match = line.exec(source2)) {
         const lm = match[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep4 === "\n")
-            res += sep4;
+          if (sep5 === "\n")
+            res += sep5;
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          res += sep4 + lm;
-          sep4 = " ";
+          res += sep5 + lm;
+          sep5 = " ";
         }
         pos = line.lastIndex;
       }
       const last2 = /[ \t]*(.*)/sy;
       last2.lastIndex = pos;
       match = last2.exec(source2);
-      return res + sep4 + (match?.[1] ?? "");
+      return res + sep5 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source2, onError) {
       let res = "";
@@ -62689,14 +62689,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep4, value }) {
+    function stringifyItem({ start, key, sep: sep5, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep4)
-        for (const st of sep4)
+      if (sep5)
+        for (const st of sep5)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -63863,18 +63863,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep4;
+          let sep5;
           if (scalar.end) {
-            sep4 = scalar.end;
-            sep4.push(this.sourceToken);
+            sep5 = scalar.end;
+            sep5.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep4 = [this.sourceToken];
+            sep5 = [this.sourceToken];
           const map3 = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep4 }]
+            items: [{ start, key: scalar, sep: sep5 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map3;
@@ -64027,15 +64027,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep4 = it.sep;
-                  sep4.push(this.sourceToken);
+                  const sep5 = it.sep;
+                  sep5.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep4 }]
+                    items: [{ start: start2, key, sep: sep5 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -64229,13 +64229,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep4 = fc.end.splice(1, fc.end.length);
-            sep4.push(this.sourceToken);
+            const sep5 = fc.end.splice(1, fc.end.length);
+            sep5.push(this.sourceToken);
             const map3 = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep4 }]
+              items: [{ start, key: fc, sep: sep5 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map3;
@@ -97302,6 +97302,13 @@ var SecretStore = class _SecretStore {
     return out;
   }
 };
+function redactDeep(value, secrets) {
+  if (!secrets) return value;
+  return JSON.parse(
+    JSON.stringify(value),
+    (_key, v2) => typeof v2 === "string" ? secrets.redact(v2) : v2
+  );
+}
 
 // packages/server/src/init.ts
 import { existsSync as existsSync6, mkdirSync, writeFileSync } from "node:fs";
@@ -108622,7 +108629,10 @@ async function runAxe(page, options) {
     };
     const expression = `axe.run(${JSON.stringify(context2)}, ${JSON.stringify(runOptions)}).then((r) => JSON.stringify(r.violations.map((v) => ({
       id: v.id, impact: v.impact || 'minor', help: v.help, helpUrl: v.helpUrl,
-      nodes: v.nodes.map((n) => ({ target: n.target.join(' '), html: n.html.slice(0, 300) })),
+      nodes: v.nodes.map((n) => ({
+        target: n.target.map((t) => (Array.isArray(t) ? t.join(' >>> ') : t)).join(' '),
+        html: n.html.slice(0, 300),
+      })),
     }))))`;
     const result = await cdp.send("Runtime.evaluate", {
       expression,
@@ -108661,6 +108671,21 @@ function formatViolations(violations) {
 }
 
 // packages/server/src/report/common.ts
+function esc2(text) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+function safeHref(url2) {
+  if (!url2) return "#";
+  try {
+    const parsed = new URL(url2);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? esc2(parsed.href) : "#";
+  } catch {
+    return "#";
+  }
+}
+function cell(text) {
+  return (text ?? "").replace(/\|/g, "\\|").replace(/\n+/g, " ");
+}
 var STATUS_LABELS = {
   pass: "Passed",
   fail: "Failed",
@@ -108726,6 +108751,23 @@ function accessibilityRows(run) {
     }
   }
   return rows;
+}
+function stepAccessibility(run, step) {
+  const checks = (run.accessibility ?? []).filter((c) => c.stepId === step.id);
+  if (checks.length === 0) return void 0;
+  const byImpact = /* @__PURE__ */ new Map();
+  let elements = 0;
+  let types = 0;
+  for (const check2 of checks) {
+    for (const v2 of check2.violations) {
+      types += 1;
+      elements += v2.nodes.length;
+      byImpact.set(v2.impact, (byImpact.get(v2.impact) ?? 0) + 1);
+    }
+  }
+  if (types === 0) return "No accessibility problems found.";
+  const parts = IMPACT_ORDER.filter((i) => byImpact.get(i)).map((i) => `${byImpact.get(i)} ${i}`);
+  return `${types} accessibility problem type(s), ${elements} element(s): ${parts.join(", ")}.`;
 }
 var RUN_STATUS_LABELS = {
   running: "Running",
@@ -108793,8 +108835,14 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
+import { randomBytes as randomBytes4 } from "node:crypto";
 import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
 import { basename as basename4, dirname as dirname8, extname as extname4, join as join19, relative as relative7 } from "node:path";
+
+// packages/server/src/text.ts
+function slug(text, max, fallback) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, max) || fallback;
+}
 
 // packages/server/src/visual/capture.ts
 var FREEZE_CSS = "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; scroll-behavior: auto !important; }";
@@ -109066,8 +109114,8 @@ function comparePng(baseline, actual, masks = [], threshold = 0.1) {
 }
 
 // packages/server/src/tools/quality-tools.ts
-function slug(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "check";
+function isPlainCss(selector) {
+  return !/::-p-|>>>/.test(selector);
 }
 function registerQualityTools(server, ctx) {
   server.registerTool(
@@ -109170,8 +109218,8 @@ function registerQualityTools(server, ctx) {
         selector: input3.selector
       });
       const group = ctx.run?.run.planFile ? basename4(ctx.run.run.planFile, extname4(ctx.run.run.planFile)) : "adhoc";
-      const device = slug(driver.emulation.device ?? "default");
-      const file2 = `${slug(input3.name)}@${device}-${process.platform}.png`;
+      const device = slug(driver.emulation.device ?? "default", 60, "check");
+      const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const baselinePath = join19(config3.projectDir, ".walkthrough", "baselines", group, file2);
       const baselineRel = relative7(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
@@ -109263,33 +109311,66 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
     ({ ref, selector, tags, stepId }) => runTool(ctx, "a11y_audit", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
+      const store = ctx.run?.run.status === "running" ? ctx.run : void 0;
+      if (stepId && !store)
+        throw new ToolError("No run is going, so there is no step to add it to.", "no_run");
+      if (stepId && store?.run.planFile && !store.run.steps.some((s) => s.id === stepId)) {
+        throw new ToolError(
+          `The plan has no step "${stepId}". Use a step id from run_start.`,
+          "bad_step"
+        );
+      }
+      let label = selector;
       let scope = selector;
-      if (ref) {
-        const target2 = await resolveTarget(driver, tab, { ref });
-        scope = target2 ? await stableSelector(target2.handle, target2) : void 0;
-        if (!scope)
+      let marked;
+      if (ref || selector && !isPlainCss(selector)) {
+        const target2 = await resolveTarget(driver, tab, { ref, selector });
+        if (!target2) throw new ToolError("Give a ref or a selector.", "bad_target");
+        if (target2.handle.frame !== tab.page.mainFrame()) {
           throw new ToolError(
-            "Walkthrough could not find a selector for that ref. Use a selector.",
+            "That element is inside a frame. Walkthrough checks the top page only.",
             "bad_target"
           );
+        }
+        label = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
+        if (label && isPlainCss(label)) scope = label;
+        else {
+          const mark = randomBytes4(4).toString("hex");
+          await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
+          marked = target2.handle;
+          scope = `[data-uiwalk-a11y="${mark}"]`;
+        }
       }
-      const violations = await runAxe(tab.page, { selector: scope, tags });
-      if (ctx.run?.run.status === "running") {
-        ctx.run.run.accessibility ??= [];
-        ctx.run.run.accessibility.push({
+      let violations;
+      try {
+        violations = await runAxe(tab.page, { selector: scope, tags });
+      } finally {
+        await marked?.evaluate((el) => el.removeAttribute("data-uiwalk-a11y")).catch(() => void 0);
+      }
+      if (store) {
+        if (stepId && !store.run.planFile) store.step({ id: stepId });
+        store.run.accessibility ??= [];
+        store.run.accessibility.push({
           at: (/* @__PURE__ */ new Date()).toISOString(),
           stepId,
-          url: tab.page.url(),
-          scope,
-          violations
+          url: scrubUrl(tab.page.url()),
+          scope: label,
+          // Snippets can hold links with tokens.
+          violations: violations.map((v2) => ({
+            ...v2,
+            nodes: v2.nodes.map((n) => ({ ...n, html: scrubText(n.html) }))
+          }))
         });
-        ctx.run.save();
+        store.save();
       }
       const count = violations.reduce((n, v2) => n + v2.nodes.length, 0);
       return [
-        `Accessibility check of ${scope ? `"${scope}"` : "the page"} at ${tab.page.url()}: ${violations.length} problem type(s), ${count} element(s).`,
-        untrusted(formatViolations(violations)),
-        ctx.run?.run.status === "running" ? "Walkthrough added these results to the run report." : ""
+        `Accessibility check: ${violations.length} problem type(s), ${count} element(s).`,
+        untrusted(
+          `Checked: ${label ? `"${label}" at ` : ""}${tab.page.url()}
+${formatViolations(violations)}`
+        ),
+        store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
   );
@@ -109302,13 +109383,10 @@ import { join as join23, relative as relative10 } from "node:path";
 // packages/server/src/report/html.ts
 import { readFileSync as readFileSync12 } from "node:fs";
 import { join as join20 } from "node:path";
-function esc2(text) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
 function image(runDir, path14, alt) {
   try {
     const data = readFileSync12(join20(runDir, path14)).toString("base64");
-    return `<a href="${esc2(path14)}"><img src="data:image/png;base64,${data}" alt="${esc2(alt)}"></a>`;
+    return `<a href="${esc2(path14)}"><img src="data:image/${imageType(path14)};base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
   }
@@ -109326,26 +109404,29 @@ function stepCard(run, runDir, step, open4) {
       `<dt>Checked by</dt><dd>${step.checkedBy === "developer" ? "The developer" : "The agent"}</dd>`
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc2(step.notes)}</dd>`);
+  const a11y = stepAccessibility(run, step);
+  if (a11y) parts.push(`<dt>Accessibility</dt><dd>${esc2(a11y)}</dd>`);
   parts.push("</dl>");
   if (isProblem(step)) {
     parts.push(
-      "<h4>Steps to reproduce</h4><ol>",
+      "<h3>Steps to reproduce</h3><ol>",
       ...reproSteps(run, step).map((s) => `<li>${esc2(s)}</li>`),
       "</ol>"
     );
   }
   for (const shot of step.screenshots)
-    parts.push(image(runDir, shot, `Step ${step.index} screenshot`));
+    parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
   if (step.logs && step.logs !== "(none)") {
-    parts.push("<h4>Errors and failed requests</h4>", `<pre>${esc2(step.logs)}</pre>`);
+    parts.push("<h3>Errors and failed requests</h3>", `<pre tabindex="0">${esc2(step.logs)}</pre>`);
   }
   parts.push("</details>");
   return parts.join("\n");
 }
 var CSS2 = `
-:root { --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #64748b; --line: #e2e8f0;
-  --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #94a3b8; --blocked: #c2410c; }
-@media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; } }
+:root { color-scheme: light dark; --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0; --link: #1d4ed8;
+  --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #475569; --blocked: #c2410c;
+  --critical: #7f1d1d; --serious: #b91c1c; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; --link: #93c5fd; } }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
 main { max-width: 960px; margin: 0 auto; }
@@ -109358,8 +109439,11 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
 .badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
 .badge.stop { background: var(--stop); }
-.badge.impact-critical, .badge.impact-serious { background: var(--bug); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
+.badge.impact-critical { background: var(--critical); } .badge.impact-serious { background: var(--serious); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
 h2 { margin-top: 28px; font-size: 18px; }
+h3 { margin: 12px 0 4px; font-size: 15px; }
+a { color: var(--link); text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .step { margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .step.bug, .step.fail, .step.blocked { border-left: 4px solid var(--bug); }
 summary { cursor: pointer; font-weight: 600; }
@@ -109368,6 +109452,7 @@ dt { color: var(--muted); } dd { margin: 0; white-space: pre-wrap; }
 img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
 pre { overflow-x: auto; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
 table { width: 100%; border-collapse: collapse; background: var(--card); }
+caption { text-align: left; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 `;
 function accessibilitySection(run) {
@@ -109375,11 +109460,12 @@ function accessibilitySection(run) {
   const rows = accessibilityRows(run);
   if (rows.length === 0) return "<h2>Accessibility</h2><p>No accessibility problems found.</p>";
   const body = rows.map(
-    (r) => `<tr><td>${esc2(r.where)}</td><td><span class="badge impact-${esc2(r.impact)}">${esc2(r.impact)}</span></td><td><a href="${esc2(r.helpUrl)}">${esc2(r.rule)}</a>: ${esc2(r.help)}</td><td>${r.count}</td></tr>`
+    (r) => `<tr><td>${esc2(r.where)}</td><td><span class="badge impact-${esc2(r.impact)}">${esc2(r.impact)}</span></td><td><a href="${safeHref(r.helpUrl)}">${esc2(r.rule)}</a>: ${esc2(r.help)}</td><td>${r.count}</td></tr>`
   ).join("\n");
   return `<h2>Accessibility</h2>
 <table>
-<thead><tr><th>Where</th><th>Impact</th><th>Problem</th><th>Elements</th></tr></thead>
+<caption class="sr-only">Accessibility problems</caption>
+<thead><tr><th scope="col">Where</th><th scope="col">Impact</th><th scope="col">Problem</th><th scope="col">Elements</th></tr></thead>
 <tbody>
 ${body}
 </tbody>
@@ -109418,7 +109504,8 @@ ${problems.length ? `<h2>Bugs and failures</h2>
 ${problems.map((s) => stepCard(run, runDir, s, true)).join("\n")}` : ""}
 <h2>All steps</h2>
 <table>
-<thead><tr><th>#</th><th>Step</th><th>Result</th><th>Checked by</th><th>Notes</th></tr></thead>
+<caption class="sr-only">All steps</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Step</th><th scope="col">Result</th><th scope="col">Checked by</th><th scope="col">Notes</th></tr></thead>
 <tbody>
 ${run.steps.map(
     (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(STATUS_LABELS[s.status])}</span></td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
@@ -109442,6 +109529,8 @@ function stepDetails(run, step, withRepro) {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === "developer" ? "the developer" : "the agent"}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  const a11y = stepAccessibility(run, step);
+  if (a11y) out.push(`- **Accessibility:** ${a11y}`);
   out.push("");
   if (withRepro) {
     out.push("**Steps to reproduce:**", "");
@@ -109482,7 +109571,6 @@ function markdownReport(run) {
     "|---|---|---|---|---|"
   );
   for (const step of run.steps) {
-    const cell = (text) => (text ?? "").replace(/\|/g, "\\|").replace(/\n+/g, " ");
     const who = step.checkedBy === "developer" ? "Developer" : step.checkedBy === "agent" ? "Agent" : "";
     lines.push(
       `| ${step.index} | ${cell(step.title)} | ${STATUS_LABELS[step.status]} | ${who} | ${cell(step.notes)} |`
@@ -109497,7 +109585,7 @@ function markdownReport(run) {
       lines.push("| Where | Impact | Problem | Elements |", "|---|---|---|---|");
       for (const r of rows) {
         lines.push(
-          `| ${r.where} | ${r.impact} | [${r.rule}](${r.helpUrl}): ${r.help} | ${r.count} |`
+          `| ${cell(r.where)} | ${r.impact} | [${cell(r.rule)}](${r.helpUrl.replace(/[()\s|]/g, encodeURIComponent)}): ${cell(r.help)} | ${r.count} |`
         );
       }
       lines.push("");
@@ -109633,19 +109721,17 @@ function savePlan(projectDir, name, text, overwrite = false) {
 }
 
 // packages/server/src/run/run-store.ts
-import { randomBytes as randomBytes4 } from "node:crypto";
+import { randomBytes as randomBytes5 } from "node:crypto";
 import {
   existsSync as existsSync14,
   mkdirSync as mkdirSync7,
   readdirSync as readdirSync6,
   readFileSync as readFileSync14,
+  realpathSync as realpathSync2,
   renameSync,
   writeFileSync as writeFileSync6
 } from "node:fs";
-import { join as join22, relative as relative9 } from "node:path";
-function slug2(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "run";
-}
+import { join as join22, relative as relative9, sep as sep4 } from "node:path";
 function stamp2(date5 = /* @__PURE__ */ new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`;
@@ -109665,7 +109751,7 @@ var RunStore = class _RunStore {
   run;
   projectDir;
   static create(projectDir, input3) {
-    const id = `${stamp2()}-${slug2(input3.name)}-${randomBytes4(2).toString("hex")}`;
+    const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes5(2).toString("hex")}`;
     const dir = join22(ensureWalkthroughDir(projectDir), "runs", id);
     mkdirSync7(join22(dir, "screenshots"), { recursive: true });
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
@@ -109697,7 +109783,7 @@ var RunStore = class _RunStore {
     return store;
   }
   static open(projectDir, id) {
-    const dir = join22(projectDir, ".walkthrough", "runs", id);
+    const dir = checkRunId(projectDir, id);
     try {
       const run = JSON.parse(readFileSync14(join22(dir, "run.json"), "utf8"));
       return new _RunStore(dir, run, projectDir);
@@ -109754,6 +109840,28 @@ var RunStore = class _RunStore {
     this.save();
   }
 };
+function checkRunId(projectDir, id) {
+  if (!/^[A-Za-z0-9][\w.-]*$/.test(id) || id.includes("..")) {
+    throw new ToolError(
+      `"${id}" is not a run folder name. Use a name from the runs tool.`,
+      "bad_run_id"
+    );
+  }
+  const root = join22(projectDir, ".walkthrough", "runs");
+  const dir = join22(root, id);
+  let realRoot;
+  let realDir;
+  try {
+    realRoot = realpathSync2(root);
+    realDir = realpathSync2(dir);
+  } catch {
+    throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
+  }
+  if (!realDir.startsWith(realRoot + sep4)) {
+    throw new ToolError(`"${id}" is not a run folder inside .walkthrough/runs.`, "bad_run_id");
+  }
+  return dir;
+}
 function latestRunId(projectDir, options = {}) {
   const dir = join22(projectDir, ".walkthrough", "runs");
   if (!existsSync14(dir)) return void 0;
@@ -109768,11 +109876,12 @@ function latestRunId(projectDir, options = {}) {
 }
 
 // packages/server/src/tools/run-tools.ts
-function writeReports(store) {
+function writeReports(store, secrets) {
   const markdown = join23(store.dir, "report.md");
   const html = join23(store.dir, "report.html");
-  writeFileSync7(markdown, markdownReport(store.run));
-  writeFileSync7(html, htmlReport(store.run, store.dir));
+  const run = redactDeep(store.run, secrets);
+  writeFileSync7(markdown, secrets ? secrets.redact(markdownReport(run)) : markdownReport(run));
+  writeFileSync7(html, htmlReport(run, store.dir));
   return { markdown: relative10(store.projectDir, markdown), html: relative10(store.projectDir, html) };
 }
 function describeAction(step) {
@@ -110053,7 +110162,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         store.run.summary = summary;
         store.save();
       }
-      const paths = writeReports(store);
+      const paths = writeReports(store, await ctx.secrets());
       const problems = store.run.steps.filter(isProblem);
       return [
         `The run "${store.run.name}" is ${store.run.status}. Result: ${resultLine(store.run) || "no steps"}.`,
@@ -110485,9 +110594,6 @@ function secretName(field) {
   const name = field.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").toUpperCase();
   return name.includes("PASSWORD") || name.includes("SECRET") || name.includes("TOKEN") ? name : `${name || "FIELD"}_SECRET`;
 }
-function slug3(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "step";
-}
 var Recorder = class {
   constructor(name, baseUrl) {
     this.name = name;
@@ -110561,8 +110667,8 @@ var Recorder = class {
   toYaml() {
     const ids = /* @__PURE__ */ new Set();
     const steps = this.steps.map((step) => {
-      let id = slug3(describe3(step));
-      for (let n = 2; ids.has(id); n++) id = `${slug3(describe3(step))}-${n}`;
+      let id = slug(describe3(step), 40, "step");
+      for (let n = 2; ids.has(id); n++) id = `${slug(describe3(step), 40, "step")}-${n}`;
       ids.add(id);
       const out = { id, do: describe3(step) };
       out.action = actionOf(step);
@@ -110622,9 +110728,6 @@ function actionOf(step) {
 }
 
 // packages/server/src/tools/share-tools.ts
-function slug4(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "run";
-}
 function openRun(ctx, projectDir, runId) {
   if (!runId && ctx.run?.run.status === "running") {
     throw new ToolError(
@@ -110755,8 +110858,10 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
     ({ runId, installedChrome }) => runTool(ctx, "export_script", async () => {
       const { projectDir } = await ctx.config();
       const store = openRun(ctx, projectDir, runId);
-      const name = slug4(
-        store.run.planFile ? (store.run.planFile.split("/").pop() ?? "").replace(/\.ya?ml$/, "") : store.run.name
+      const name = slug(
+        store.run.planFile ? (store.run.planFile.split("/").pop() ?? "").replace(/\.ya?ml$/, "") : store.run.name,
+        50,
+        "run"
       );
       const dir = join24(projectDir, ".walkthrough", "exports");
       mkdirSync8(dir, { recursive: true });
@@ -110805,10 +110910,13 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
           "no_step"
         );
       }
-      const reports = existsSync15(join24(store.dir, "report.md")) ? { markdown: relative11(projectDir, join24(store.dir, "report.md")) } : writeReports(store);
+      const secrets = await ctx.secrets();
+      const reports = existsSync15(join24(store.dir, "report.md")) ? { markdown: relative11(projectDir, join24(store.dir, "report.md")) } : writeReports(store, secrets);
       const screenshots = step.screenshots.map((s) => relative11(projectDir, join24(store.dir, s)));
-      const draft = draftIssue(store.run, step, { reportPath: reports.markdown, screenshots });
-      const bodyFile = join24(store.dir, `issue-${step.id}.md`);
+      const run = redactDeep(store.run, secrets);
+      const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
+      const draft = draftIssue(run, safeStep, { reportPath: reports.markdown, screenshots });
+      const bodyFile = join24(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
       writeFileSync8(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
@@ -110839,11 +110947,11 @@ function createServer() {
   registerProjectTools(server, ctx);
   registerQualityTools(server, ctx);
   registerShareTools(server, ctx);
-  onShutdown(() => {
+  onShutdown(async () => {
     if (ctx.run?.run.status !== "running") return;
     try {
       ctx.run.markIncomplete();
-      writeReports(ctx.run);
+      writeReports(ctx.run, await ctx.secrets().catch(() => void 0));
     } catch (error62) {
       log.warn("could not write the reports for the unfinished run", error62);
     }

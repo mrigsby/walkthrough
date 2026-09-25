@@ -1,12 +1,14 @@
 import type { Run, RunStep } from '../run/run-store.js';
 import {
   accessibilityRows,
+  cell,
   duration,
   isProblem,
   RUN_STATUS_LABELS,
   reproSteps,
   resultLine,
   STATUS_LABELS,
+  stepAccessibility,
 } from './common.js';
 
 function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
@@ -16,6 +18,8 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === 'developer' ? 'the developer' : 'the agent'}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  const a11y = stepAccessibility(run, step);
+  if (a11y) out.push(`- **Accessibility:** ${a11y}`);
   out.push('');
   if (withRepro) {
     out.push('**Steps to reproduce:**', '');
@@ -60,7 +64,6 @@ export function markdownReport(run: Run): string {
     '|---|---|---|---|---|',
   );
   for (const step of run.steps) {
-    const cell = (text?: string) => (text ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' ');
     const who =
       step.checkedBy === 'developer' ? 'Developer' : step.checkedBy === 'agent' ? 'Agent' : '';
     lines.push(
@@ -77,7 +80,7 @@ export function markdownReport(run: Run): string {
       lines.push('| Where | Impact | Problem | Elements |', '|---|---|---|---|');
       for (const r of rows) {
         lines.push(
-          `| ${r.where} | ${r.impact} | [${r.rule}](${r.helpUrl}): ${r.help} | ${r.count} |`,
+          `| ${cell(r.where)} | ${r.impact} | [${cell(r.rule)}](${r.helpUrl.replace(/[()\s|]/g, encodeURIComponent)}): ${cell(r.help)} | ${r.count} |`,
         );
       }
       lines.push('');

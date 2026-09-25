@@ -1,28 +1,27 @@
+import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ElementHandle } from 'puppeteer-core';
 import { z } from 'zod';
-import { formatViolations, runAxe } from '../audit/axe.js';
+import { type A11yViolation, formatViolations, runAxe } from '../audit/axe.js';
 import { describeEmulation, NETWORKS } from '../browser/devices.js';
 import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
+import { scrubText, scrubUrl } from '../evidence/scrub.js';
 import { untrusted } from '../guards/untrusted.js';
 import { resolveTarget } from '../page/actions.js';
 import { stableSelector } from '../page/selectors.js';
 import { fileStamp } from '../project-files.js';
+import { slug } from '../text.js';
 import { steadyCapture } from '../visual/capture.js';
 import { comparePng } from '../visual/compare.js';
 import { type Content, runTool, textResult } from './util.js';
 
-function slug(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 60) || 'check'
-  );
+// True for plain CSS. axe cannot read Puppeteer-only selectors.
+function isPlainCss(selector: string): boolean {
+  return !/::-p-|>>>/.test(selector);
 }
 
 export function registerQualityTools(server: McpServer, ctx: Context): void {
@@ -158,8 +157,8 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
         const group = ctx.run?.run.planFile
           ? basename(ctx.run.run.planFile, extname(ctx.run.run.planFile))
           : 'adhoc';
-        const device = slug(driver.emulation.device ?? 'default');
-        const file = `${slug(input.name)}@${device}-${process.platform}.png`;
+        const device = slug(driver.emulation.device ?? 'default', 60, 'check');
+        const file = `${slug(input.name, 60, 'check')}@${device}-${process.platform}.png`;
         const baselinePath = join(config.projectDir, '.walkthrough', 'baselines', group, file);
         const baselineRel = relative(config.projectDir, baselinePath);
 
@@ -266,35 +265,70 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
       runTool(ctx, 'a11y_audit', async () => {
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
+        const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+        if (stepId && !store)
+          throw new ToolError('No run is going, so there is no step to add it to.', 'no_run');
+        if (stepId && store?.run.planFile && !store.run.steps.some((s) => s.id === stepId)) {
+          throw new ToolError(
+            `The plan has no step "${stepId}". Use a step id from run_start.`,
+            'bad_step',
+          );
+        }
+
+        // The selector the report shows, and the one axe gets.
+        let label = selector;
         let scope = selector;
-        if (ref) {
-          const target = await resolveTarget(driver, tab, { ref });
-          scope = target ? await stableSelector(target.handle, target) : undefined;
-          if (!scope)
+        let marked: ElementHandle<Element> | undefined;
+        if (ref || (selector && !isPlainCss(selector))) {
+          const target = await resolveTarget(driver, tab, { ref, selector });
+          if (!target) throw new ToolError('Give a ref or a selector.', 'bad_target');
+          if (target.handle.frame !== tab.page.mainFrame()) {
             throw new ToolError(
-              'Walkthrough could not find a selector for that ref. Use a selector.',
+              'That element is inside a frame. Walkthrough checks the top page only.',
               'bad_target',
             );
+          }
+          label = ref ? ((await stableSelector(target.handle, target)) ?? target.label) : selector;
+          if (label && isPlainCss(label)) scope = label;
+          else {
+            // axe reads plain CSS only. Mark the element for a moment instead.
+            const mark = randomBytes(4).toString('hex');
+            await target.handle.evaluate((el, m) => el.setAttribute('data-uiwalk-a11y', m), mark);
+            marked = target.handle;
+            scope = `[data-uiwalk-a11y="${mark}"]`;
+          }
         }
-        const violations = await runAxe(tab.page, { selector: scope, tags });
-        if (ctx.run?.run.status === 'running') {
-          ctx.run.run.accessibility ??= [];
-          ctx.run.run.accessibility.push({
+        let violations: A11yViolation[];
+        try {
+          violations = await runAxe(tab.page, { selector: scope, tags });
+        } finally {
+          await marked
+            ?.evaluate((el) => el.removeAttribute('data-uiwalk-a11y'))
+            .catch(() => undefined);
+        }
+        if (store) {
+          if (stepId && !store.run.planFile) store.step({ id: stepId });
+          store.run.accessibility ??= [];
+          store.run.accessibility.push({
             at: new Date().toISOString(),
             stepId,
-            url: tab.page.url(),
-            scope,
-            violations,
+            url: scrubUrl(tab.page.url()),
+            scope: label,
+            // Snippets can hold links with tokens.
+            violations: violations.map((v) => ({
+              ...v,
+              nodes: v.nodes.map((n) => ({ ...n, html: scrubText(n.html) })),
+            })),
           });
-          ctx.run.save();
+          store.save();
         }
         const count = violations.reduce((n, v) => n + v.nodes.length, 0);
         return [
-          `Accessibility check of ${scope ? `"${scope}"` : 'the page'} at ${tab.page.url()}: ${violations.length} problem type(s), ${count} element(s).`,
-          untrusted(formatViolations(violations)),
-          ctx.run?.run.status === 'running'
-            ? 'Walkthrough added these results to the run report.'
-            : '',
+          `Accessibility check: ${violations.length} problem type(s), ${count} element(s).`,
+          untrusted(
+            `Checked: ${label ? `"${label}" at ` : ''}${tab.page.url()}\n${formatViolations(violations)}`,
+          ),
+          store ? 'Walkthrough added these results to the run report.' : '',
         ]
           .filter(Boolean)
           .join('\n');

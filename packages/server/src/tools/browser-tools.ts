@@ -15,7 +15,7 @@ async function pageSummary(tab: Tab): Promise<string> {
 }
 
 // Makes a full URL from a path like "/cart", using the current page or the base URL.
-function fullUrl(input: string, current: string, baseUrl?: string): string {
+export function fullUrl(input: string, current: string, baseUrl?: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(input)) return input;
   const base = /^https?:/.test(current) ? current : baseUrl;
   if (!base) {
@@ -32,7 +32,7 @@ async function settle(tab: Tab): Promise<void> {
   await tab.page.waitForNetworkIdle({ idleTime: 300, timeout: 3000 }).catch(() => undefined);
 }
 
-async function goTo(tab: Tab, url: string): Promise<string | undefined> {
+export async function goTo(tab: Tab, url: string): Promise<string | undefined> {
   try {
     const response = await tab.page.goto(url, { waitUntil: 'load' });
     await settle(tab);

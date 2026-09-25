@@ -33,11 +33,11 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerShareTools(server, ctx);
 
   // If the server stops during a run, keep what we have and write the reports.
-  onShutdown(() => {
+  onShutdown(async () => {
     if (ctx.run?.run.status !== 'running') return;
     try {
       ctx.run.markIncomplete();
-      writeReports(ctx.run);
+      writeReports(ctx.run, await ctx.secrets().catch(() => undefined));
     } catch (error) {
       log.warn('could not write the reports for the unfinished run', error);
     }

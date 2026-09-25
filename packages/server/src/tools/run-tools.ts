@@ -6,6 +6,7 @@ import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { checkScreenshotPath } from '../guards/paths.js';
+import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
@@ -25,12 +26,18 @@ import { openBrowser } from './browser-tools.js';
 import { bugScreenshot } from './developer-tools.js';
 import { type Content, runTool, textResult } from './util.js';
 
-// Writes report.md and report.html in the run folder.
-export function writeReports(store: RunStore): { markdown: string; html: string } {
+// Writes report.md and report.html in the run folder, with secrets hidden.
+export function writeReports(
+  store: RunStore,
+  secrets: SecretStore | undefined,
+): { markdown: string; html: string } {
   const markdown = join(store.dir, 'report.md');
   const html = join(store.dir, 'report.html');
-  writeFileSync(markdown, markdownReport(store.run));
-  writeFileSync(html, htmlReport(store.run, store.dir));
+  // Hide secrets in the data first. Escaping would change how they look.
+  const run = redactDeep(store.run, secrets);
+  writeFileSync(markdown, secrets ? secrets.redact(markdownReport(run)) : markdownReport(run));
+  // No second pass on the HTML: it holds images, and a pass could change their data.
+  writeFileSync(html, htmlReport(run, store.dir));
   return { markdown: relative(store.projectDir, markdown), html: relative(store.projectDir, html) };
 }
 
@@ -374,7 +381,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           store.run.summary = summary;
           store.save();
         }
-        const paths = writeReports(store);
+        const paths = writeReports(store, await ctx.secrets());
         const problems = store.run.steps.filter(isProblem);
         return [
           `The run "${store.run.name}" is ${store.run.status}. Result: ${resultLine(store.run) || 'no steps'}.`,

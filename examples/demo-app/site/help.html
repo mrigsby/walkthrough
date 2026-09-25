@@ -13,6 +13,19 @@
       <h2>Demo login</h2>
       <p>Username: <code>demo</code>. Password: <code>demo123</code>.</p>
       <p><a href="/">Back to the shop</a></p>
+      <help-feedback></help-feedback>
     </main>
+    <script>
+      // Planted accessibility issue: a checkbox with no label, inside a shadow root.
+      customElements.define(
+        'help-feedback',
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' }).innerHTML =
+              '<p>Was this page helpful? <input type="checkbox" class="helpful" /></p>';
+          }
+        },
+      );
+    </script>
   </body>
 </html>

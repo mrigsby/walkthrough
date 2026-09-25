@@ -17,6 +17,7 @@ To test a staging server, add it to the list, such as `https://*.staging.example
 
 - Put passwords in `.walkthrough/.env`, and use them as `{{secret:NAME}}`. Walkthrough puts the value into the field, and the agent sees `****`.
 - Walkthrough removes secret values from everything it sends to the agent: page outlines, element values, logs, and reports. It also removes the URL-encoded and Base64 forms of each value.
+- Report files and issue drafts hide the values in `.walkthrough/.env`. They also hide secrets from environment variables that the server used during the run. When Walkthrough writes a report again later, such as with `/walkthrough:report`, it knows only the values in `.walkthrough/.env`.
 - A text field that got a secret shows dots in screenshots. Password fields show dots anyway.
 - Run records keep `{{secret:NAME}}`, never the value.
 - In record mode, the value of a password field never leaves the page. For other private fields, click **Mark last field as secret**. Walkthrough throws the value away.

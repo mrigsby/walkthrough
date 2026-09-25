@@ -1,4 +1,5 @@
 import { Document, isMap, isPair, isScalar, visit } from 'yaml';
+import { slug } from '../text.js';
 
 export interface RecordedTarget {
   role?: string;
@@ -27,16 +28,6 @@ function secretName(field: string): string {
   return name.includes('PASSWORD') || name.includes('SECRET') || name.includes('TOKEN')
     ? name
     : `${name || 'FIELD'}_SECRET`;
-}
-
-function slug(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 40) || 'step'
-  );
 }
 
 // Collects what the developer does while recording, and writes a plan draft.
@@ -127,8 +118,8 @@ export class Recorder {
   toYaml(): string {
     const ids = new Set<string>();
     const steps = this.steps.map((step) => {
-      let id = slug(describe(step));
-      for (let n = 2; ids.has(id); n++) id = `${slug(describe(step))}-${n}`;
+      let id = slug(describe(step), 40, 'step');
+      for (let n = 2; ids.has(id); n++) id = `${slug(describe(step), 40, 'step')}-${n}`;
       ids.add(id);
       const out: Record<string, unknown> = { id, do: describe(step) };
       out.action = actionOf(step);

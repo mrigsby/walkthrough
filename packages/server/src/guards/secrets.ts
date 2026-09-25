@@ -78,3 +78,12 @@ export class SecretStore {
     return out;
   }
 }
+
+// Returns a copy of the data with every secret replaced by ****.
+// Call it before escaping. Escaping changes how a secret looks, so a later search misses it.
+export function redactDeep<T>(value: T, secrets: SecretStore | undefined): T {
+  if (!secrets) return value;
+  return JSON.parse(JSON.stringify(value), (_key, v) =>
+    typeof v === 'string' ? secrets.redact(v) : v,
+  ) as T;
+}

@@ -5,23 +5,15 @@ import { z } from 'zod';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { exportScript } from '../export/puppeteer-script.js';
+import { redactDeep } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { draftIssue } from '../issue/draft.js';
 import { Recorder } from '../record/recorder.js';
 import { isProblem } from '../report/common.js';
 import { latestRunId, RunStore } from '../run/run-store.js';
+import { slug } from '../text.js';
 import { writeReports } from './run-tools.js';
 import { runTool } from './util.js';
-
-function slug(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 50) || 'run'
-  );
-}
 
 // Opens a run by id, or the newest finished run.
 function openRun(ctx: Context, projectDir: string, runId?: string): RunStore {
@@ -180,6 +172,8 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
           store.run.planFile
             ? (store.run.planFile.split('/').pop() ?? '').replace(/\.ya?ml$/, '')
             : store.run.name,
+          50,
+          'run',
         );
         const dir = join(projectDir, '.walkthrough', 'exports');
         mkdirSync(dir, { recursive: true });
@@ -245,12 +239,16 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
             'no_step',
           );
         }
+        const secrets = await ctx.secrets();
         const reports = existsSync(join(store.dir, 'report.md'))
           ? { markdown: relative(projectDir, join(store.dir, 'report.md')) }
-          : writeReports(store);
+          : writeReports(store, secrets);
         const screenshots = step.screenshots.map((s) => relative(projectDir, join(store.dir, s)));
-        const draft = draftIssue(store.run, step, { reportPath: reports.markdown, screenshots });
-        const bodyFile = join(store.dir, `issue-${step.id}.md`);
+        // Hide secrets before draftIssue runs, so its length limit still holds.
+        const run = redactDeep(store.run, secrets);
+        const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
+        const draft = draftIssue(run, safeStep, { reportPath: reports.markdown, screenshots });
+        const bodyFile = join(store.dir, `issue-${slug(step.id, 50, 'step')}.md`);
         writeFileSync(bodyFile, draft.body);
         return [
           `Title: ${draft.title}`,

@@ -11,7 +11,7 @@ export interface Shot {
 }
 
 // The image type from the file extension.
-function imageType(path: string): 'png' | 'jpeg' | 'webp' {
+export function imageType(path: string): 'png' | 'jpeg' | 'webp' {
   const ext = extname(path).toLowerCase();
   return ext === '.jpg' || ext === '.jpeg' ? 'jpeg' : ext === '.webp' ? 'webp' : 'png';
 }

@@ -1,25 +1,25 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { imageType } from '../evidence/screenshot.js';
 import type { Run, RunStep } from '../run/run-store.js';
 import {
   accessibilityRows,
   duration,
+  esc,
   isProblem,
   RUN_STATUS_LABELS,
   reproSteps,
   resultLine,
   STATUS_LABELS,
+  safeHref,
+  stepAccessibility,
 } from './common.js';
-
-function esc(text: string): string {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
 
 // Puts the image inside the file, so the report works on its own.
 function image(runDir: string, path: string, alt: string): string {
   try {
     const data = readFileSync(join(runDir, path)).toString('base64');
-    return `<a href="${esc(path)}"><img src="data:image/png;base64,${data}" alt="${esc(alt)}"></a>`;
+    return `<a href="${esc(path)}"><img src="data:image/${imageType(path)};base64,${data}" alt="${esc(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc(path)}</p>`;
   }
@@ -38,27 +38,30 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
       `<dt>Checked by</dt><dd>${step.checkedBy === 'developer' ? 'The developer' : 'The agent'}</dd>`,
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc(step.notes)}</dd>`);
+  const a11y = stepAccessibility(run, step);
+  if (a11y) parts.push(`<dt>Accessibility</dt><dd>${esc(a11y)}</dd>`);
   parts.push('</dl>');
   if (isProblem(step)) {
     parts.push(
-      '<h4>Steps to reproduce</h4><ol>',
+      '<h3>Steps to reproduce</h3><ol>',
       ...reproSteps(run, step).map((s) => `<li>${esc(s)}</li>`),
       '</ol>',
     );
   }
   for (const shot of step.screenshots)
-    parts.push(image(runDir, shot, `Step ${step.index} screenshot`));
+    parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
   if (step.logs && step.logs !== '(none)') {
-    parts.push('<h4>Errors and failed requests</h4>', `<pre>${esc(step.logs)}</pre>`);
+    parts.push('<h3>Errors and failed requests</h3>', `<pre tabindex="0">${esc(step.logs)}</pre>`);
   }
   parts.push('</details>');
   return parts.join('\n');
 }
 
 const CSS = `
-:root { --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #64748b; --line: #e2e8f0;
-  --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #94a3b8; --blocked: #c2410c; }
-@media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; } }
+:root { color-scheme: light dark; --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0; --link: #1d4ed8;
+  --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #475569; --blocked: #c2410c;
+  --critical: #7f1d1d; --serious: #b91c1c; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; --link: #93c5fd; } }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
 main { max-width: 960px; margin: 0 auto; }
@@ -71,8 +74,11 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
 .badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
 .badge.stop { background: var(--stop); }
-.badge.impact-critical, .badge.impact-serious { background: var(--bug); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
+.badge.impact-critical { background: var(--critical); } .badge.impact-serious { background: var(--serious); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
 h2 { margin-top: 28px; font-size: 18px; }
+h3 { margin: 12px 0 4px; font-size: 15px; }
+a { color: var(--link); text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .step { margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .step.bug, .step.fail, .step.blocked { border-left: 4px solid var(--bug); }
 summary { cursor: pointer; font-weight: 600; }
@@ -81,6 +87,7 @@ dt { color: var(--muted); } dd { margin: 0; white-space: pre-wrap; }
 img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
 pre { overflow-x: auto; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
 table { width: 100%; border-collapse: collapse; background: var(--card); }
+caption { text-align: left; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 `;
 
@@ -91,12 +98,13 @@ function accessibilitySection(run: Run): string {
   const body = rows
     .map(
       (r) =>
-        `<tr><td>${esc(r.where)}</td><td><span class="badge impact-${esc(r.impact)}">${esc(r.impact)}</span></td><td><a href="${esc(r.helpUrl)}">${esc(r.rule)}</a>: ${esc(r.help)}</td><td>${r.count}</td></tr>`,
+        `<tr><td>${esc(r.where)}</td><td><span class="badge impact-${esc(r.impact)}">${esc(r.impact)}</span></td><td><a href="${safeHref(r.helpUrl)}">${esc(r.rule)}</a>: ${esc(r.help)}</td><td>${r.count}</td></tr>`,
     )
     .join('\n');
   return `<h2>Accessibility</h2>
 <table>
-<thead><tr><th>Where</th><th>Impact</th><th>Problem</th><th>Elements</th></tr></thead>
+<caption class="sr-only">Accessibility problems</caption>
+<thead><tr><th scope="col">Where</th><th scope="col">Impact</th><th scope="col">Problem</th><th scope="col">Elements</th></tr></thead>
 <tbody>
 ${body}
 </tbody>
@@ -137,7 +145,8 @@ ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}
 ${problems.length ? `<h2>Bugs and failures</h2>\n${problems.map((s) => stepCard(run, runDir, s, true)).join('\n')}` : ''}
 <h2>All steps</h2>
 <table>
-<thead><tr><th>#</th><th>Step</th><th>Result</th><th>Checked by</th><th>Notes</th></tr></thead>
+<caption class="sr-only">All steps</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Step</th><th scope="col">Result</th><th scope="col">Checked by</th><th scope="col">Notes</th></tr></thead>
 <tbody>
 ${run.steps
   .map(

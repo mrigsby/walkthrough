@@ -17,6 +17,7 @@ export const IMPACT_ORDER: Impact[] = ['critical', 'serious', 'moderate', 'minor
 
 // Runs axe-core in an isolated world, so the page cannot see or change it.
 // It checks the top page only. It does not check frames inside the page.
+// A target inside a shadow root looks like "host >>> inner". Puppeteer can find it.
 export async function runAxe(
   page: Page,
   options: { selector?: string; tags?: string[] },
@@ -47,7 +48,10 @@ export async function runAxe(
     };
     const expression = `axe.run(${JSON.stringify(context)}, ${JSON.stringify(runOptions)}).then((r) => JSON.stringify(r.violations.map((v) => ({
       id: v.id, impact: v.impact || 'minor', help: v.help, helpUrl: v.helpUrl,
-      nodes: v.nodes.map((n) => ({ target: n.target.join(' '), html: n.html.slice(0, 300) })),
+      nodes: v.nodes.map((n) => ({
+        target: n.target.map((t) => (Array.isArray(t) ? t.join(' >>> ') : t)).join(' '),
+        html: n.html.slice(0, 300),
+      })),
     }))))`;
     const result = await cdp.send('Runtime.evaluate', {
       expression,

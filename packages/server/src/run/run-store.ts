@@ -4,14 +4,16 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   writeFileSync,
 } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import type { A11yViolation } from '../audit/axe.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
+import { slug } from '../text.js';
 import type { Capture, Mode, Plan } from './plan-schema.js';
 
 export type StepStatus = 'pending' | 'pass' | 'fail' | 'bug' | 'skip' | 'stop' | 'blocked';
@@ -67,16 +69,6 @@ export interface Run {
   }>;
 }
 
-function slug(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 40) || 'run'
-  );
-}
-
 function stamp(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
@@ -110,7 +102,7 @@ export class RunStore {
       emulation?: Run['emulation'];
     },
   ): RunStore {
-    const id = `${stamp()}-${slug(input.name)}-${randomBytes(2).toString('hex')}`;
+    const id = `${stamp()}-${slug(input.name, 40, 'run')}-${randomBytes(2).toString('hex')}`;
     const dir = join(ensureWalkthroughDir(projectDir), 'runs', id);
     mkdirSync(join(dir, 'screenshots'), { recursive: true });
     const steps: RunStep[] = (input.plan?.steps ?? []).map((step, i) => ({
@@ -143,7 +135,7 @@ export class RunStore {
   }
 
   static open(projectDir: string, id: string): RunStore {
-    const dir = join(projectDir, '.walkthrough', 'runs', id);
+    const dir = checkRunId(projectDir, id);
     try {
       const run = JSON.parse(readFileSync(join(dir, 'run.json'), 'utf8')) as Run;
       return new RunStore(dir, run, projectDir);
@@ -208,6 +200,32 @@ export class RunStore {
     this.run.endedAt = new Date().toISOString();
     this.save();
   }
+}
+
+// Checks a run folder name, and returns the folder path.
+// It must be a plain name, and the folder must be inside .walkthrough/runs.
+export function checkRunId(projectDir: string, id: string): string {
+  if (!/^[A-Za-z0-9][\w.-]*$/.test(id) || id.includes('..')) {
+    throw new ToolError(
+      `"${id}" is not a run folder name. Use a name from the runs tool.`,
+      'bad_run_id',
+    );
+  }
+  const root = join(projectDir, '.walkthrough', 'runs');
+  const dir = join(root, id);
+  let realRoot: string;
+  let realDir: string;
+  try {
+    // Links can point anywhere, so compare the real paths.
+    realRoot = realpathSync(root);
+    realDir = realpathSync(dir);
+  } catch {
+    throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, 'run_not_found');
+  }
+  if (!realDir.startsWith(realRoot + sep)) {
+    throw new ToolError(`"${id}" is not a run folder inside .walkthrough/runs.`, 'bad_run_id');
+  }
+  return dir;
 }
 
 // The newest run folder that has a run.json, or undefined.
