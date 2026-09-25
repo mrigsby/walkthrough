@@ -38,6 +38,7 @@ steps:
 | `network` | No | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
 | `session` | No | A saved login, from the `session` tool. The run starts logged in. |
 | `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
+| `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
 
 ## Step keys
 
@@ -50,6 +51,7 @@ steps:
 | `action` | No | An exact action, so the agent does not have to guess. See below. |
 | `screenshot` | No | Save a screenshot after the step. `true` saves it with the run. A path saves it to that exact file. See [Screenshots for docs](#screenshots-for-docs). |
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
+| `a11y` | No | Check accessibility after the step. `true`, or `{ selector, checks }`. See [Accessibility checks](#accessibility-checks). |
 
 ### Write a good `expect`
 
@@ -97,6 +99,31 @@ A step with `visual: true` compares the page with a baseline screenshot.
 - Each baseline is for one screen preset and one operating system, because fonts look different on each system.
 - A later check saves a diff image, with the changed pixels in red. Any real change fails the check. Edge noise from font smoothing does not.
 - The agent asks you whether the change is expected. If you say yes, it saves the new baseline.
+
+## Accessibility checks
+
+A step with `a11y: true` checks the page for accessibility problems after the step. The results go into the run report, and into the accessibility report.
+
+```yaml
+name: Checkout accessibility
+accessibility:
+  report: true
+  standard: wcag22aa
+  checks: { keyboard: true, screenshots: false }
+steps:
+  - do: Open the checkout page
+    action: { navigate: /checkout }
+    a11y: true
+  - do: Open the payment form
+    a11y: { selector: "#payment", checks: [frames] }
+```
+
+- `accessibility.report: true` asks the agent to write the accessibility report when the run ends.
+- `accessibility.standard` is `wcag2a`, `wcag2aa`, `wcag21aa`, or `wcag22aa`.
+- `accessibility.checks` turns checks on or off: `keyboard`, `darkMode`, `reflow`, `frames`, and `screenshots`. Checks that it does not name keep the setting from `config.yaml`.
+- A step can name its own `checks` and a `selector`. The selector limits axe-core only. The other checks look at the whole page.
+
+See [Accessibility reports](accessibility.md).
 
 ## Screenshots for docs
 
@@ -155,6 +182,8 @@ Each run gets a folder in `.walkthrough/runs/`. It holds:
 - `screenshots/`: the screenshots from the run.
 - `report.md`: a report for a code editor, a pull request, or an issue.
 - `report.html`: one file with the screenshots inside. Open it in any browser.
+- `accessibility.html`, `accessibility.md`, `accessibility.json`: the accessibility report, when the agent writes one. See [Accessibility reports](accessibility.md).
+- `a11y/`: screenshots of accessibility problems.
 
 If a run ends early, Walkthrough still writes the reports and marks the run "Incomplete".
 

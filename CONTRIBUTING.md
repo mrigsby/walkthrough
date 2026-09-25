@@ -47,8 +47,9 @@ Inside `packages/server/src`:
 | `guards/` | Allowed sites, secrets, upload paths, and the marks on page text. |
 | `evidence/` | Screenshots, logs, and the removal of tokens. |
 | `run/` | Test plans, runs, and step results. |
-| `report/` | The Markdown and HTML reports. |
-| `visual/`, `audit/` | Visual checks and accessibility audits. |
+| `report/` | The Markdown and HTML reports, and the accessibility reports. |
+| `visual/` | Visual checks. |
+| `audit/` | Accessibility checks (axe-core, keyboard, dark mode, reflow), findings, scores, and report comparison. |
 | `record/`, `export/`, `issue/` | Record mode, script export, and issue drafts. |
 | `tools/` | The MCP tools. Each file registers a group of tools. |
 

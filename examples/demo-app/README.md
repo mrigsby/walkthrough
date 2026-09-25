@@ -47,6 +47,19 @@ Then open http://localhost:4321. Log in with username `demo` and password `demo1
 
 The keyboard, dark mode, reflow, and frame checks are part of the accessibility report. To see the cart and checkout issues, add an item to the cart first.
 
+## Accessibility report
+
+Try the accessibility report on the demo:
+
+1. Start the demo shop, and open Claude Code in this folder.
+2. Run `/walkthrough:a11y / /login /help.html /cart`. The agent checks the four pages and writes the report. "Where to fix" points to lines in `site/app.js` and `site/help.html`.
+3. Open `accessibility.html` from the run folder. Try the filters, the copy buttons, and the checklist.
+4. Run `/walkthrough:a11y accessibility`. The `accessibility` plan adds the mug to the cart first, so it also checks the cart and the payment frame on the checkout page.
+5. Fix one issue. For example, add `aria-label="Add to wishlist"` to the heart button in `site/app.js`. Then run step 2 again. The heart button issue shows under "Fixed since the last report", and the other issues keep their IDs.
+6. Paste the prompt from the agent into a new session. It plans the fixes from `accessibility.md`.
+
+Undo your fix when you are done, so the demo keeps its planted issues.
+
 ## Walkthrough files
 
 The `.walkthrough/` folder holds the settings and test plans for this project. Copy `.walkthrough/.env.example` to `.walkthrough/.env` to set the demo password as a secret.

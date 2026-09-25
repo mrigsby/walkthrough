@@ -35,6 +35,11 @@ browser:
   # Wait this many milliseconds between browser steps, so you can watch each step.
   slowMo: 0
 
+# Accessibility checks and reports. See docs/accessibility.md.
+# accessibility:
+#   standard: wcag22aa
+#   checks: { keyboard: true, darkMode: true, reflow: true, frames: true, screenshots: true }
+
 # Put personal settings in config.local.yaml. Git does not track that file.
 # Only that file can turn on the evaluate tool (allowEvaluate: true)
 # or change the upload folder (uploadsRoot), or let screenshots go to

@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 27 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 29 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -147,9 +147,36 @@ Compares the page, or one element (`ref` or `selector`), with a baseline screens
 
 The reply starts with `result:` and then `created`, `match`, `mismatch`, or `updated`.
 
+## Accessibility
+
+See [Accessibility reports](accessibility.md) for the whole flow.
+
 ### `a11y_audit`
 
-Checks accessibility with axe-core, for the page or for one part (`ref` or `selector`). `tags` picks rule groups, such as `["wcag2a", "wcag2aa"]`. During a run, `stepId` adds the results to the report.
+Checks the current page with axe-core, or one part of it. The reply groups the problems by impact and names the WCAG criteria. Extra checks run only when you ask for them.
+
+| Parameter | What it does |
+| --- | --- |
+| `ref`, `selector` | Check one part of the page. |
+| `standard` | `wcag2a`, `wcag2aa`, `wcag21aa`, or `wcag22aa`. The default comes from `config.yaml`. |
+| `tags` | axe-core rule groups, such as `["wcag2a", "wcag2aa"]`. They replace `standard`. |
+| `checks` | Extra checks: `keyboard`, `darkMode`, `reflow`, `frames`, `screenshots`. |
+| `stepId` | During a run, add the results to this step and the report. For a plan step with `a11y`, the checks come from the plan. |
+
+### `a11y_scan`
+
+Checks one page or a list of pages (`urls`) with axe-core and the checks from `config.yaml`. Without a run, it makes a run with one step per page, and writes `report.md` and `report.html`. During a run, it adds the pages as steps.
+
+A scan stops after about 45 seconds. The reply then says to call it again with `runId`. `session` loads a saved login first. `standard` and `checks` replace the settings.
+
+### `a11y_report`
+
+Writes the accessibility report of a run. It has two calls:
+
+1. Without `items`, it returns the findings with IDs, the scores, a `digest`, and how to write the text.
+2. With `digest`, `summary`, and `items`, it writes `accessibility.html`, `accessibility.md`, and `accessibility.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`. The reply has a prompt for the next session.
+
+`runId` picks the run. The default is the run that is going, or the newest run with accessibility results. `compareTo` picks the report to compare with.
 
 ## Record and share
 

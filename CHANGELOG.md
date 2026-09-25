@@ -10,10 +10,26 @@ This file lists all notable changes to the project.
 - The `screenshot` tool has `path`, to save to an exact file, and `stepId`, to add the screenshot to a run step.
 - Exported scripts save these screenshots again and replace the old files. `SHOT=<name>` saves only some of them.
 - `screenshotRoots` in `config.local.yaml` lets screenshots go to folders outside the project. Walkthrough never saves them in hidden folders, such as `.git`.
+- Accessibility reports: `/walkthrough:a11y` checks one page, a list of pages, or a plan, and writes `accessibility.html`, `accessibility.md`, and `accessibility.json` next to `report.html`. The report has scores, an explanation and a fix for each issue, where to fix it in the source, screenshots, a WCAG criteria table, and a prompt to plan the fixes in a new session.
+- New tools `a11y_scan` and `a11y_report`. The server has 29 tools.
+- New checks for accessibility: a keyboard walk (traps, focus that you cannot see, elements that Tab cannot reach), contrast in dark mode, reflow at 320 pixels wide, frames on allowed sites, and screenshots of problems.
+- A new report compares itself with the last report of the same pages. Issues keep their IDs, and fixed issues are listed.
+- Plans can use `accessibility` and the step key `a11y`. `config.yaml` has `accessibility` settings.
+- The demo app has more planted accessibility issues, and an `accessibility` plan.
 
 ### Changed
 
 - Exported scripts use the screen size and the color scheme of the run. Without a device, the screen is 1280x800, not 800x600.
+- `a11y_audit` checks WCAG 2.2 AA and best practices by default, names the WCAG criteria, and saves more data: items that need review, rules that passed, and contrast ratios.
+- `report.html` is more accessible: better contrast for badges and links, heading order, and table captions. Step cards show a short accessibility summary.
+
+### Fixed
+
+- Walkthrough refuses a run id that points outside `.walkthrough/runs`.
+- Report files and issue drafts hide secrets, also secrets with characters such as `"` or `&`.
+- `a11y_audit` refuses a `stepId` when no run is going, or when the plan has no such step.
+- `a11y_audit` with a `ref` no longer fails on selectors that only Puppeteer can read.
+- Elements inside a shadow root show as `host >>> inner`.
 
 ## 0.1.0 (2026-09-24)
 

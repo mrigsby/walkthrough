@@ -15,7 +15,8 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 - **Reports.** Each run writes `report.md` and a single-file `report.html`, with bugs first, steps to reproduce, screenshots, and errors.
 - **Evidence.** Screenshots with a red box on the element, console errors, page errors, and failed requests.
 - **Record mode.** Use the app yourself, and Walkthrough turns your clicks and typing into a draft plan.
-- **More checks.** Visual checks against saved baselines, accessibility audits with axe-core, phone and tablet screens, dark mode, and slow networks.
+- **Accessibility reports.** Check one page or many with axe-core, a keyboard walk, dark mode, and reflow checks. Get scores, a short explanation and fix for each issue, and a prompt to plan the fixes in a new session. See [Accessibility reports](docs/accessibility.md).
+- **More checks.** Visual checks against saved baselines, phone and tablet screens, dark mode, and slow networks.
 - **Sharing.** Export a run as a plain Puppeteer script for CI. Turn a bug into a GitHub issue draft.
 
 ![A Walkthrough report with a failed step, steps to reproduce, and a screenshot](docs/images/report.png)
@@ -70,6 +71,7 @@ The [getting started guide](docs/getting-started.md) has the details.
 | `/walkthrough:plan <what to test>` | Writes a new test plan from a description. |
 | `/walkthrough:record [name]` | Records you as you use the app, and drafts a plan from it. |
 | `/walkthrough:report [run]` | Shows the result of a run and writes its reports again. |
+| `/walkthrough:a11y [pages or plan]` | Checks pages for accessibility problems and writes an accessibility report. |
 | `/walkthrough:export [run]` | Turns a finished run into a Puppeteer script for CI. |
 | `/walkthrough:bug [run] [step]` | Drafts a GitHub issue for a bug and opens the issue page for you. |
 | `/walkthrough:doctor` | Checks the setup and explains how to fix problems. |
@@ -96,6 +98,7 @@ You can also ask in plain words. The walkthrough skill loads when you ask the ag
 - [Getting started](docs/getting-started.md)
 - [Test plan format](docs/plan-format.md)
 - [Settings](docs/config.md)
+- [Accessibility reports](docs/accessibility.md)
 - [Tools](docs/tools.md)
 - [Safety](docs/safety.md)
 - [Use with other tools and share with a team](docs/sharing.md)

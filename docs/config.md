@@ -20,6 +20,9 @@ highlightMs: 600
 browser:
   headless: false
   slowMo: 0
+accessibility:
+  standard: wcag22aa
+  checks: { keyboard: true, darkMode: true, reflow: true, frames: true, screenshots: true }
 ```
 
 ## Settings for `config.yaml`
@@ -36,6 +39,19 @@ browser:
 | `browser.headless` | `false` | `true` hides the browser. With a hidden browser there is no panel, so the agent asks in the chat. |
 | `browser.slowMo` | `0` | Milliseconds to wait between browser steps, so you can watch each one. Up to 5000. |
 | `browser.executablePath` | none | The path to a Chrome that Walkthrough uses instead of the installed Chrome. |
+
+### Accessibility
+
+These settings are for accessibility checks and reports. See [Accessibility reports](accessibility.md).
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `accessibility.standard` | `wcag22aa` | The standard to check: `wcag2a`, `wcag2aa`, `wcag21aa`, or `wcag22aa`. |
+| `accessibility.bestPractices` | `true` | Also check axe-core best practices. They do not change the WCAG score. |
+| `accessibility.checks` | all `true` | The extra checks for a scan: `keyboard`, `darkMode`, `reflow`, `frames`, and `screenshots`. |
+| `accessibility.maxScreenshots` | `25` | The most screenshots of problems for each page. From 0 to 200. |
+
+`config.local.yaml` can change one check, such as `accessibility: { checks: { screenshots: false } }`. The other checks keep their values.
 
 ## Settings only for `config.local.yaml`
 
@@ -70,7 +86,7 @@ Walkthrough also hides these values if they appear on a page, in a log, or in a 
 | `UIWALK_CACHE_DIR` | Where `uiwalk setup` saves Chrome for Testing. The default is `~/.cache/uiwalk`. |
 | `UIWALK_TRACE_FILE` | A file path. The server writes one JSON line for each action, for debugging. |
 
-The tests use two more variables: `UIWALK_FORCE_PANEL` shows the panel in a hidden browser, and `UIWALK_DEBUG_PORT` sets the Chrome debug port. Do not use them for normal testing.
+The tests use three more variables: `UIWALK_FORCE_PANEL` shows the panel in a hidden browser, `UIWALK_DEBUG_PORT` sets the Chrome debug port, and `UIWALK_SCAN_LIMIT_MS` sets the time limit of one `a11y_scan` call. Do not use them for normal testing.
 
 ## How Walkthrough finds the project folder
 
