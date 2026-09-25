@@ -49,6 +49,8 @@ describe('uiwalk tools', () => {
     expect(names).toEqual(
       [
         'a11y_audit',
+        'a11y_report',
+        'a11y_scan',
         'act',
         'ask_developer',
         'browser_close',

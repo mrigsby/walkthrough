@@ -62,6 +62,8 @@ export interface Run {
   emulation?: { device?: string; colorScheme?: string };
   steps: RunStep[];
   accessibility?: A11yCheck[];
+  // A scan that stopped at its time limit, with the pages still to check.
+  a11yScan?: { pending: string[]; standard: string; tags: string[]; checks: string[] };
 }
 
 // One accessibility check of one page. Fields after "violations" are optional,

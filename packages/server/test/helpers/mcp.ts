@@ -16,7 +16,11 @@ export async function startClient(
   env: Record<string, string>,
   serverFile = bundle,
 ): Promise<{
-  call: (name: string, args?: Record<string, unknown>) => Promise<ToolReply>;
+  call: (
+    name: string,
+    args?: Record<string, unknown>,
+    options?: { timeoutMs?: number },
+  ) => Promise<ToolReply>;
   client: Client;
   close: () => Promise<void>;
 }> {
@@ -29,8 +33,15 @@ export async function startClient(
       stderr: 'ignore',
     }),
   );
-  const call = async (name: string, args: Record<string, unknown> = {}): Promise<ToolReply> => {
-    const result = await client.callTool({ name, arguments: args });
+  const call = async (
+    name: string,
+    args: Record<string, unknown> = {},
+    options: { timeoutMs?: number } = {},
+  ): Promise<ToolReply> => {
+    // Long tools, like a scan of many pages, can pass a longer time limit.
+    const result = await client.callTool({ name, arguments: args }, undefined, {
+      ...(options.timeoutMs ? { timeout: options.timeoutMs } : {}),
+    });
     const parts = result.content as Array<{ type: string; text?: string }>;
     return {
       text: parts
