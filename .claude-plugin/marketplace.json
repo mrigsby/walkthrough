@@ -12,7 +12,7 @@
       "name": "walkthrough",
       "source": "./plugins/walkthrough",
       "description": "Test a web app step by step in a visible browser. The agent explains each step, and you confirm it or report a bug.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

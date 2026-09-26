@@ -62,7 +62,7 @@ export async function findChrome(configPath?: string): Promise<ChromeInfo | unde
 }
 
 // The command that runs this server file, so the message works with or without npm.
-const SELF = process.argv[1] ? `node "${process.argv[1]}"` : 'npx uiwalk';
+const SELF = process.argv[1] ? `node "${process.argv[1]}"` : 'npx -y walkthrough-ui';
 
 export const NO_CHROME_MESSAGE = `Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome. Or, to download a copy for testing (about 170 MB), run: ${SELF} setup`;
 

@@ -96986,7 +96986,7 @@ async function findChrome(configPath) {
   if (downloaded) return { path: downloaded, source: "downloaded" };
   return void 0;
 }
-var SELF = process.argv[1] ? `node "${process.argv[1]}"` : "npx uiwalk";
+var SELF = process.argv[1] ? `node "${process.argv[1]}"` : "npx -y walkthrough-ui";
 var NO_CHROME_MESSAGE = `Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome. Or, to download a copy for testing (about 170 MB), run: ${SELF} setup`;
 async function installChrome(onProgress) {
   const platform = detectBrowserPlatform();
@@ -97213,7 +97213,7 @@ import { existsSync as existsSync5 } from "node:fs";
 import { join as join7 } from "node:path";
 
 // packages/server/src/version.ts
-var VERSION = true ? "0.1.0" : "0.0.0-dev";
+var VERSION = true ? "0.2.0" : "0.0.0-dev";
 var MIN_NODE = [22, 12];
 function nodeVersionOk(version2 = process.versions.node) {
   const [major = 0, minor = 0] = version2.split(".").map(Number);

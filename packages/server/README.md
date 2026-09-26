@@ -1,6 +1,6 @@
-# uiwalk
+# walkthrough-ui
 
-`uiwalk` is the MCP server of [Walkthrough](https://github.com/mrigsby/walkthrough). It lets an AI agent test your web app in a visible Chrome, one step at a time, with you. After each step, you confirm it or report a bug in a panel in the browser.
+This package has `uiwalk`, the MCP server of [Walkthrough](https://github.com/mrigsby/walkthrough). It lets an AI agent test your web app in a visible Chrome, one step at a time, with you. After each step, you confirm it or report a bug in a panel in the browser.
 
 In Claude Code, install the Walkthrough plugin instead. It includes this server, a skill, and slash commands:
 
@@ -11,14 +11,14 @@ In Claude Code, install the Walkthrough plugin instead. It includes this server,
 
 ## Use with other MCP clients
 
-Add a local (stdio) server that runs `npx -y uiwalk`. Set `UIWALK_PROJECT_DIR` to your project folder. For example, in Cursor (`.cursor/mcp.json`):
+Add a local (stdio) server that runs `npx -y walkthrough-ui`. Set `UIWALK_PROJECT_DIR` to your project folder. For example, in Cursor (`.cursor/mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "uiwalk": {
       "command": "npx",
-      "args": ["-y", "uiwalk"],
+      "args": ["-y", "walkthrough-ui"],
       "env": { "UIWALK_PROJECT_DIR": "${workspaceFolder}" }
     }
   }
@@ -26,6 +26,8 @@ Add a local (stdio) server that runs `npx -y uiwalk`. Set `UIWALK_PROJECT_DIR` t
 ```
 
 ## Commands
+
+To use these commands, install the package with `npm install -g walkthrough-ui`. Or put `npx -y walkthrough-ui` in place of `uiwalk`, such as `npx -y walkthrough-ui doctor`.
 
 | Command | What it does |
 | --- | --- |

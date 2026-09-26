@@ -2,10 +2,11 @@
 
 This file lists all notable changes to the project.
 
-## Unreleased
+## 0.2.0 (2026-09-25)
 
 ### Added
 
+- The server is on npm as `walkthrough-ui`. Other MCP clients can start it with `npx -y walkthrough-ui`. The command name stays `uiwalk`.
 - Screenshots for docs: a plan step can save its screenshot to an exact file, such as `screenshot: docs/images/help/cart.png`, or `{ path, selector, fullPage }`. The plan key `screenshotDir` sets the folder for these paths. Walkthrough checks the paths when a run starts.
 - The `screenshot` tool has `path`, to save to an exact file, and `stepId`, to add the screenshot to a run step.
 - Exported scripts save these screenshots again and replace the old files. `SHOT=<name>` saves only some of them.

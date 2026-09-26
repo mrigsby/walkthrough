@@ -1,6 +1,6 @@
 {
-  "name": "uiwalk",
-  "version": "0.1.0",
+  "name": "walkthrough-ui",
+  "version": "0.2.0",
   "description": "An MCP server that lets an AI agent test a web app step by step in a visible browser. The developer confirms each step.",
   "keywords": [
     "mcp",

@@ -103,15 +103,20 @@ UIWALK_TRACE_FILE=/tmp/uiwalk-trace.jsonl npx vitest run packages/server/test/in
 
 GitHub Actions runs `.github/workflows/ci.yml` on each push to `main` and on each pull request. It runs lint, the type check, and the tests on Ubuntu 24.04 (Node 22 and 24) and macOS (Node 24). It also fails if the committed bundle does not match the source.
 
-The Linux runner is set to Ubuntu 24.04, not `ubuntu-latest`. This stops a new Ubuntu version from changing CI without warning. To move to a new version, change `os` in `ci.yml` and check that CI passes.
+`ci.yml` sets the Linux runner to Ubuntu 24.04, not `ubuntu-latest`. This stops a new Ubuntu version from changing CI without warning. To move to a new version, change `os` in `ci.yml`. Then make sure that CI passes.
 
 ## Make a release
 
-1. Set the same version in `packages/server/package.json`, `plugins/walkthrough/.claude-plugin/plugin.json`, and `.claude-plugin/marketplace.json`.
-2. Move the "Unreleased" notes in `CHANGELOG.md` under the new version.
-3. Run `npm run build`, `npm test`, and `npm run check:bundle`.
-4. Run `npm pack -w packages/server --dry-run` to see the files in the npm package.
-5. Commit the change.
-6. Tag the commit, such as `v0.1.0`.
-7. Push the commit and the tag.
-8. To publish the npm package, run `npm publish -w packages/server`. The `prepack` step builds the bundle first.
+1. Run `npm version <version> -w packages/server --no-git-tag-version`. This sets the version in `packages/server/package.json` and `package-lock.json`.
+2. Set the same version in `plugins/walkthrough/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`.
+3. Move the "Unreleased" notes in `CHANGELOG.md` under the new version.
+4. Run `npm run build` and `npm test`.
+5. Run `npm pack -w packages/server --dry-run` to see the files in the npm package.
+6. Stage the changed files.
+7. Run `npm run check:bundle`. It compares the bundle with the staged files.
+8. Commit the change.
+9. Tag the commit, such as `v0.2.0`. Do not push yet.
+10. Publish the npm package: `npm publish -w packages/server`. The `prepack` step builds the bundle first. Publish before you push, so the docs never point to a package that is not on npm.
+11. Push the commit and the tag.
+12. Copy the notes of this version from `CHANGELOG.md` into a file, such as `notes.md`.
+13. Make a GitHub release from the tag: `gh release create v0.2.0 --title "0.2.0" --notes-file notes.md`.

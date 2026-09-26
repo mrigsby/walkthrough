@@ -41,7 +41,9 @@ When a teammate trusts the project folder, Claude Code asks them to install the 
 
 The `uiwalk` server works with any MCP client that can start a local (stdio) server. The skill and the slash commands work only in Claude Code. In other clients, the tool descriptions guide the agent.
 
-Walkthrough is not on npm yet. Clone the repository. The server is one file, `plugins/walkthrough/server/uiwalk.mjs`, and it needs no `npm install`. The examples below use `/path/to/walkthrough` for the clone.
+The server is on npm as `walkthrough-ui`. The client starts it with `npx -y walkthrough-ui`, so you do not install it first. You need Node.js 22.12 or later.
+
+You can also run the server from a clone of the repository. The server is one file, and it needs no `npm install`. Use `"command": "node"` and `"args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"]`.
 
 Most clients do not tell the server which project is open, so set `UIWALK_PROJECT_DIR`.
 
@@ -57,8 +59,8 @@ Edit the config file:
   "mcpServers": {
     "uiwalk": {
       "type": "stdio",
-      "command": "node",
-      "args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"],
+      "command": "npx",
+      "args": ["-y", "walkthrough-ui"],
       "env": {
         "UIWALK_PROJECT_DIR": "/path/to/your/project"
       }
@@ -67,7 +69,7 @@ Edit the config file:
 }
 ```
 
-Quit Claude Desktop and open it again.
+Quit Claude Desktop and open it again. If Claude Desktop cannot find `npx`, set `command` to the full path of `npx`. To find it, run `which npx` (macOS) or `where npx` (Windows).
 
 ### Cursor
 
@@ -77,8 +79,8 @@ Add `.cursor/mcp.json` to your project:
 {
   "mcpServers": {
     "uiwalk": {
-      "command": "node",
-      "args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"],
+      "command": "npx",
+      "args": ["-y", "walkthrough-ui"],
       "env": {
         "UIWALK_PROJECT_DIR": "${workspaceFolder}"
       }
@@ -96,8 +98,8 @@ Add `.vscode/mcp.json` to your project. VS Code uses `servers`, not `mcpServers`
   "servers": {
     "uiwalk": {
       "type": "stdio",
-      "command": "node",
-      "args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"],
+      "command": "npx",
+      "args": ["-y", "walkthrough-ui"],
       "env": {
         "UIWALK_PROJECT_DIR": "${workspaceFolder}"
       }
