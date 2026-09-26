@@ -16,9 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             node: 22
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             node: 24
           - os: macos-latest
             node: 24

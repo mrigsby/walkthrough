@@ -101,7 +101,9 @@ UIWALK_TRACE_FILE=/tmp/uiwalk-trace.jsonl npx vitest run packages/server/test/in
 
 ## CI
 
-GitHub Actions runs `.github/workflows/ci.yml` on each push to `main` and on each pull request. It runs lint, the type check, and the tests on Linux (Node 22 and 24) and macOS (Node 24). It also fails if the committed bundle does not match the source.
+GitHub Actions runs `.github/workflows/ci.yml` on each push to `main` and on each pull request. It runs lint, the type check, and the tests on Ubuntu 24.04 (Node 22 and 24) and macOS (Node 24). It also fails if the committed bundle does not match the source.
+
+The Linux runner is set to Ubuntu 24.04, not `ubuntu-latest`. This stops a new Ubuntu version from changing CI without warning. To move to a new version, change `os` in `ci.yml` and check that CI passes.
 
 ## Make a release
 
