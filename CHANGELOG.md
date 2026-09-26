@@ -30,6 +30,7 @@ This file lists all notable changes to the project.
 - `a11y_audit` refuses a `stepId` when no run is going, or when the plan has no such step.
 - `a11y_audit` with a `ref` no longer fails on selectors that only Puppeteer can read.
 - Elements inside a shadow root show as `host >>> inner`.
+- When two runs start in the same second, Walkthrough finds the newer run. Before, it could open the older run for a report or a comparison. Run IDs now include milliseconds, such as `2026-09-26_003242-123-checkout-ab12`.
 
 ## 0.1.0 (2026-09-24)
 

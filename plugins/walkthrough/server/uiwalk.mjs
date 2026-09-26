@@ -108365,8 +108365,8 @@ import {
 } from "node:fs";
 import { join as join15, relative as relative3, sep as sep3 } from "node:path";
 function stamp2(date5 = /* @__PURE__ */ new Date()) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}`;
+  const pad = (n, size = 2) => String(n).padStart(size, "0");
+  return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}-${pad(date5.getMilliseconds(), 3)}`;
 }
 function needsConfirm(mode, checkpoint) {
   if (mode === "interactive") return true;

@@ -99,9 +99,11 @@ export interface A11yCheck {
   shots?: Array<{ rule: string; target: string; file: string }>;
 }
 
+// Run ids start with this, so the newest run sorts last. Milliseconds keep two runs
+// in the same second in order.
 function stamp(date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  const pad = (n: number, size = 2) => String(n).padStart(size, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}-${pad(date.getMilliseconds(), 3)}`;
 }
 
 // Should the developer confirm this step, in this mode?
