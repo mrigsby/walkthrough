@@ -123,7 +123,7 @@ describe('validatePlanText', () => {
 
 describe('sample plans and schema', () => {
   it('has valid sample plans in the demo project', () => {
-    for (const name of ['checkout', 'login', 'mobile', 'performance']) {
+    for (const name of ['checkout', 'checkout-demo', 'login', 'mobile', 'performance']) {
       const text = readFileSync(
         join(repoRoot, `examples/demo-app/.walkthrough/plans/${name}.yaml`),
         'utf8',

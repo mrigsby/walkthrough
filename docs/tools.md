@@ -319,13 +319,14 @@ Records the active tab as a video. The video follows the active tab to other tab
 
 | Parameter | What it does |
 | --- | --- |
-| `action` | `start` begins recording. `caption` sets the text at the bottom. `stop` saves the video. `status` shows what is recording. `slideshow` makes a video of the screenshots of a run. |
+| `action` | `start` begins recording. `caption` sets the text at the bottom. `stop` saves the video. `status` shows what is recording. `slideshow` makes a video of the screenshots of a run. `replay` records a finished run again. |
 | `name` | A name for the file, such as `checkout`. |
 | `text` | For `caption`: the text. An empty text removes the caption. |
 | `format` | For `stop` and `slideshow`: `mp4`, `webm`, or `gif`. The default comes from the `path`, then from `video.runFormat` in `config.yaml`. A slideshow is a GIF by default. |
 | `path` | For `stop` and `slideshow`: also save the video to this file, such as `docs/images/cart.gif`. The same rules as screenshot paths apply. |
 | `showPanel` | For `start`: show the Walkthrough panel in the video. |
-| `runId` | For `slideshow`: the run. The default is the run that is going, or the newest run. |
+| `runId` | For `slideshow` and `replay`: the run. The default is the run that is going, or the newest run. |
+| `pace`, `session`, `captions`, `pointer`, `titleCard`, `width` | For `replay`. See [Clean re-recordings](#clean-re-recordings). |
 
 - Walkthrough cuts each wait, such as the agent thinking, to `video.idleSeconds` (1 second). It cuts the time that a question waits in the panel.
 - The video draws the mouse pointer and marks each click. Captions show at the bottom. During a run, the captions are the step titles, or the step's `caption` key.
@@ -334,6 +335,19 @@ Records the active tab as a video. The video follows the active tab to other tab
 - A GIF can be up to `video.maxGifSeconds` long (60 seconds). For a longer one, `stop` refuses and keeps the recording, so you can call `stop` again with `mp4` or `webm`.
 - Without a run, videos go in `.walkthrough/runs/adhoc-<day>/video/`. During a run, they go in the `video/` folder of the run, and the report shows them.
 - A slideshow starts with a title card that shows the run name. Then it shows each screenshot of the run for 2 seconds, with the step title as the caption. It goes in `video/slideshow.<format>`.
+
+#### Clean re-recordings
+
+`video` with action `replay` records a finished run again, for a clean demo video. It does not make a new run.
+
+- It opens a new login in a new window, so it starts with no cookies and no storage. `session` loads a saved login first. The default is the saved login of the run.
+- It uses the run's screen and settings. Without a device, the page is `width` pixels wide (1280) at 16:10.
+- It types text one character at a time, moves the pointer to each element, and holds at the end of each step. `pace` is `slow`, `normal` (the default), or `fast`.
+- It makes a new `{{unique}}` value, answers dialogs like the run did, and hides typed secrets.
+- A title card with the run name comes first. `titleCard: false` leaves it out. `captions: false` and `pointer: false` leave those out.
+- `format` and `path` take a list, such as `format: [mp4, gif]`. The files go in the `video/` folder of the run as `<time>-replay.<format>`, and the report shows them.
+- When a step does not work, the replay stops. The reply names the step and has a screenshot. Walkthrough saves no video then.
+- Walkthrough cannot replay a run with an action that has no stable selector. Add an exact `action` to that plan step, and run the plan again.
 
 #### Bug clips
 
@@ -349,7 +363,7 @@ Records you as you use the app. `action` is `start` (with a `name`), `wait` (unt
 
 ### `export_script`
 
-Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId` picks the run. `installedChrome: true` uses `puppeteer-core` and the installed Chrome.
+Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId` picks the run. `installedChrome: true` uses `puppeteer-core` and the installed Chrome. `VIDEO=<file>` records a video when the script runs, and `PACE_MS` waits before each browser action. See [Make a video again](sharing.md#make-a-video-again).
 
 ### `issue_draft`
 

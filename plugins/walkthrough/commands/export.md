@@ -20,3 +20,4 @@ Run: $ARGUMENTS
    - the lines to fix by hand, and the steps that failed in the run
    - how to run it: `node <path>`, with `BASE_URL` for another address and `HEADFUL=1` to watch
    - if the script saves screenshots: the files it replaces, and `SHOT=<name>` to save only some of them
+   - `VIDEO=<file>.mp4` (or `.webm` or `.gif`) records the first tab as a video, and `PACE_MS=50` waits 50 milliseconds before each browser action. It needs ffmpeg: `FFMPEG_PATH`, the copy from `uiwalk setup ffmpeg`, or `ffmpeg` on the PATH.

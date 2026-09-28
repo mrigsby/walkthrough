@@ -391,6 +391,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
           emulation: { ...opened.tab.emulation },
           unique: ctx.unique,
+          session: plan?.session,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
           lighthouse: config.lighthouse,
           freshBrowser: lhSteps ? driver.mode === 'launched' : undefined,

@@ -165,7 +165,7 @@ export interface SavedVideo {
   store?: RunStore;
 }
 
-const size = (bytes: number) =>
+export const size = (bytes: number) =>
   bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
 
 // Stops the recording and saves the video. When this fails, the recording stays,

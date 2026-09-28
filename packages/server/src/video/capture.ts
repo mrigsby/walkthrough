@@ -174,9 +174,32 @@ export class VideoCapture {
     if (session) {
       await session.cdp.send('Page.stopScreencast').catch(() => undefined);
       await session.cdp.detach().catch(() => undefined);
+      // A page that never painted sent no picture. A screenshot stands for it.
+      if (this.frames.length === 0) await this.screenshotFrame(session.tabId);
     }
     for (const tabId of this.hiddenTabs) {
       await this.driver.panel?.suppress(tabId, false, 'video').catch(() => undefined);
+    }
+  }
+
+  private async screenshotFrame(tabId: string): Promise<void> {
+    const page = this.driver.tabs.get(tabId)?.page;
+    if (!page) return;
+    try {
+      const data = await page.screenshot({ type: 'jpeg', quality: 80 });
+      const size = await page.evaluate(() => [innerWidth, innerHeight]);
+      this.count += 1;
+      const file = `${String(this.count).padStart(6, '0')}.jpg`;
+      writeFileSync(join(this.dir, file), data);
+      this.frames.push({
+        file,
+        t: this.stoppedAt ?? Date.now(),
+        tabId,
+        width: size[0] ?? 0,
+        height: size[1] ?? 0,
+      });
+    } catch {
+      // The tab closed. The recording stays empty.
     }
   }
 

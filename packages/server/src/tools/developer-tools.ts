@@ -64,7 +64,11 @@ export async function bugHar(
 }
 
 // Sends "still waiting" progress, if the client asked for progress.
-function startProgress(extra: Extra): () => void {
+// Sends a progress note every 10 seconds, so the client keeps waiting.
+export function startProgress(
+  extra: Extra,
+  message = 'Walkthrough waits for the developer to answer in the browser.',
+): () => void {
   const token = extra._meta?.progressToken;
   if (token === undefined) return () => undefined;
   let count = 0;
@@ -76,7 +80,7 @@ function startProgress(extra: Extra): () => void {
         params: {
           progressToken: token,
           progress: count,
-          message: 'Walkthrough waits for the developer to answer in the browser.',
+          message,
         },
       })
       .catch(() => undefined);

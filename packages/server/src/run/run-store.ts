@@ -96,6 +96,8 @@ export interface Run {
   emulation?: Emulation;
   // The value that {{unique}} had in this run.
   unique?: string;
+  // The saved login that the run started with. A replay loads it too.
+  session?: string;
   steps: RunStep[];
   accessibility?: A11yCheck[];
   // Accessibility settings from the plan.
@@ -177,6 +179,7 @@ export class RunStore {
       setup?: string;
       emulation?: Run['emulation'];
       unique?: string;
+      session?: string;
       // The checks a plain "a11y: true" step runs when the plan names none.
       a11yChecks?: CheckName[];
       // Lighthouse settings from config.yaml, for a plan that names none.
@@ -233,6 +236,7 @@ export class RunStore {
       setup: input.setup,
       emulation: input.emulation,
       unique: input.unique,
+      ...(input.session ? { session: input.session } : {}),
       ...(input.freshBrowser !== undefined ? { freshBrowser: input.freshBrowser } : {}),
       steps,
       ...(settings || input.plan?.steps.some((s) => s.a11y)

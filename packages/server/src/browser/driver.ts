@@ -45,6 +45,8 @@ export interface Tab {
   // The session that sees each request first: the guard and the mocks.
   router?: FetchRouter;
   cdp?: CDPSession;
+  // Answers dialogs in this tab instead of the dialog policy, like a replay does.
+  answerDialog?: (dialog: Dialog) => Promise<void>;
 }
 
 const NAME = /^[a-z0-9][a-z0-9-]*$/;
@@ -357,6 +359,10 @@ export class Driver {
   }
 
   private async onDialog(tab: Tab, dialog: Dialog): Promise<void> {
+    if (tab.answerDialog) {
+      await tab.answerDialog(dialog).catch((error) => log.warn('could not answer a dialog', error));
+      return;
+    }
     const type = dialog.type();
     const message = dialog.message();
     const said = message ? ` It said: "${message}"` : '';

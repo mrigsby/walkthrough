@@ -211,6 +211,7 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
             ? [`Set these environment variables before a run: ${result.secrets.join(', ')}.`]
             : []),
           `To run it: npm install --save-dev ${pkg}, then node ${rel}`,
+          `To record the first tab as a video, set VIDEO to a file, like VIDEO=videos/${name}.mp4. It needs ffmpeg. PACE_MS=50 waits 50 milliseconds before each browser action, so viewers can follow.`,
         ].join('\n');
       }),
   );

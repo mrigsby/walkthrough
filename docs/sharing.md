@@ -169,3 +169,18 @@ SHOT=cart,settings node .walkthrough/exports/help-screenshots.mjs
 `SHOT` takes a list of names, with commas between them. A name can be the file name, with or without the extension, such as `cart` or `cart.png`. It can also be the end of the path, such as `help/cart.png`. If no screenshot matches, the script stops with the list of names.
 
 The script prints `shot` and the path for each file that it saves. It hides the text of fields that it filled from secrets, but check the images before you publish them.
+
+## Make a video again
+
+The exported script can record the first tab as a video. Use it to make a demo video again in CI, for example after the UI changes.
+
+```sh
+VIDEO=docs/videos/checkout.mp4 PACE_MS=50 node .walkthrough/exports/checkout-demo.mjs
+```
+
+- `VIDEO` is the file to write, from the folder you run the script in. The extension sets the format: `.mp4`, `.webm`, or `.gif`.
+- `PACE_MS` waits that many milliseconds before each browser action, so viewers can follow. 50 is a good start.
+- The script uses ffmpeg to make the file. It looks for `FFMPEG_PATH`, then the copy from `uiwalk setup ffmpeg`, then `ffmpeg` on the PATH. In CI, install ffmpeg first, for example with `sudo apt-get install -y ffmpeg`.
+- The script records only the first tab. For a video with other tabs, use `video` with action `replay` in Walkthrough.
+- The video has no captions, pointer, or title card. The `video` tool with action `replay` adds them.
+

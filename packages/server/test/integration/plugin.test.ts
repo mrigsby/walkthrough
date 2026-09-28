@@ -43,6 +43,7 @@ describe('plugin files', () => {
       'record.md',
       'report.md',
       'run.md',
+      'video.md',
     ]);
   });
 
@@ -109,10 +110,26 @@ describe('plugin files', () => {
       expect(audit.isError, audit.text).toBe(false);
       const scan = await copy.call('a11y_scan', { urls: ['about:blank'], checks: [] });
       expect(scan.isError, scan.text).toBe(false);
+      for (const [tool, args] of [
+        ['network', { action: 'list' }],
+        ['storage', { action: 'list', kind: 'local' }],
+      ] as const) {
+        const reply = await copy.call(tool, args);
+        expect(reply.text, tool).not.toMatch(/tool failed/);
+      }
+      // The video encoder is packed into the bundle as text.
+      expect((await copy.call('video', { action: 'start' })).isError).toBe(false);
+      const video = await copy.call(
+        'video',
+        { action: 'stop', format: 'webm' },
+        { timeoutMs: 60_000 },
+      );
+      expect(video.isError, video.text).toBe(false);
+      expect(video.text).toContain('Saved the video (WEBM');
     } finally {
       await copy.close();
     }
-  }, 60_000);
+  }, 90_000);
 
   it('passes claude plugin validate, when Claude Code is installed', () => {
     let claude = '';

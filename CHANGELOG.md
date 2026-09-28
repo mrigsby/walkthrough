@@ -25,6 +25,8 @@ This file lists all notable changes to the project.
 - Lighthouse user flows: Lighthouse measures each plan step that has `lighthouse: navigation`, `timespan`, or `snapshot`, in the test tab. The plan's `lighthouse` block sets the device, the categories, and the report. Such a run starts in a new browser, so earlier runs do not change the results. Walkthrough hides its panel while Lighthouse measures, and saves Lighthouse's flow report in the run folder. `/walkthrough:lighthouse` also takes a plan name. The demo has a `performance` plan.
 - Videos: the new `video` tool records the active tab and saves MP4, WebM, or GIF. It cuts wait time and question time, draws the pointer and clicks, shows captions at the bottom, and hides the panel and typed secrets. A plan with `video` records the whole run, with the step titles or `caption` keys as captions, and the report plays the video. A hidden Chrome encodes the video. When it cannot make MP4, ffmpeg converts WebM to MP4. The server has 36 tools.
 - Bug clips: during a run, Walkthrough keeps the last minutes of the tab. A failed step, and a bug from the panel, get a video of the last 15 seconds before it (`video.replaySeconds`). The report shows the clip, and `issue_draft` lists it.
+- Clean demo videos: `video` with action `replay` records a finished run again in a new login, at an even pace. The replay types the text and shows a pointer, captions, and a title card. It can make MP4 and GIF at once, and save them to exact files. `/walkthrough:video` writes a plan for a workflow, runs the plan, and records the replay. An agent can make the whole video from one request, like "create a recording demo of the checkout workflow". The demo has a `checkout-demo` plan.
+- Exported scripts record a video with `VIDEO=<file>`, and `PACE_MS` waits before each browser action.
 - `video` with action `slideshow` makes a GIF or video of the screenshots of a run, with the step titles as captions.
 - A failed step, and a bug from the panel, save a HAR file with the requests of the step. Reports link it, and `issue_draft` lists it.
 - `logs` shows Chrome issues, the same problems as the Issues panel in DevTools: blocked cookies, CSP and CORS blocks, mixed content, deprecated features, and form problems. `kinds` filters the entries.
@@ -32,6 +34,7 @@ This file lists all notable changes to the project.
 ### Changed
 
 - One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
+- `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
 
 - `emulate` changes only the active tab. Use `allTabs: true` to change every tab.
 - `session` saves the login of the active tab. A saved login loads into the tab that asks for it.
@@ -63,6 +66,7 @@ This file lists all notable changes to the project.
 ### Changed
 
 - One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
+- `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
 
 - Exported scripts use the screen size and the color scheme of the run. Without a device, the screen is 1280x800, not 800x600.
 - `a11y_audit` checks WCAG 2.2 AA and best practices by default, names the WCAG criteria, and saves more data: items that need review, rules that passed, and contrast ratios.
@@ -125,6 +129,7 @@ The first version.
 ### Changed
 
 - One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
+- `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
 
 - The bundle now includes every package it needs. Before, an installed plugin could not start, because Puppeteer loads `chromium-bidi` and the bundle did not include it. A test now runs the plugin from a folder outside the repo.
 - The planted coupon field problem in the demo shop is now a real missing label. A placeholder counts as a label for the accessibility checker.

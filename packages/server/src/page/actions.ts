@@ -136,7 +136,7 @@ export async function resolveTarget(
 }
 
 // Presses a key or a combination like "Control+A".
-async function pressKeys(tab: Tab, combo: string): Promise<void> {
+export async function pressKeys(tab: Tab, combo: string): Promise<void> {
   const keys = combo.split('+').map((k) => k.trim()) as KeyInput[];
   const main = keys.pop();
   if (!main)
@@ -149,7 +149,10 @@ async function pressKeys(tab: Tab, combo: string): Promise<void> {
   }
 }
 
-async function selectOption(handle: ElementHandle<Element>, wanted: string): Promise<string> {
+export async function selectOption(
+  handle: ElementHandle<Element>,
+  wanted: string,
+): Promise<string> {
   // Match the option by its value or by the text the user sees.
   const value = await handle.evaluate((el, text) => {
     if (!(el instanceof HTMLSelectElement)) return null;
@@ -354,8 +357,11 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
     await highlightTarget(ctx, tab, target, input.action);
   }
   if (ctx.video) {
-    // The video moves its pointer to the element. The action scrolls it into view anyway.
-    await target?.handle.scrollIntoView().catch(() => undefined);
+    // The video moves its pointer to the element. The middle of the page keeps it
+    // clear of the caption bar. The action scrolls it into view anyway.
+    await target?.handle
+      .evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }))
+      .catch(() => undefined);
     const rect = target ? await elementRect(target.handle) : undefined;
     ctx.video.action(tab.id, input.action, rect);
   }

@@ -1,6 +1,6 @@
 ---
 name: walkthrough
-description: Test a web app step by step in a visible browser with the developer. Use it when the developer asks to walk through, click through, or visually test a page or flow. Also use it to confirm UI behavior or report a UI bug.
+description: Test a web app step by step in a visible browser with the developer. Use it when the developer asks to walk through, click through, or visually test a page or flow. Also use it to confirm UI behavior, report a UI bug, or make a video, GIF, screen recording, or recording demo of a flow.
 ---
 
 # Walkthrough
@@ -73,7 +73,7 @@ When the developer asks for a new plan:
 - **Visual:** `visual_check` compares the page with a baseline. On `result: mismatch`, show the developer the diff image path. Ask whether the change is expected. If they say yes, call it again with `updateBaseline: true`. Otherwise, record the step as failed.
 - **Accessibility:** `a11y_audit` checks the current page with axe-core and names the WCAG criteria. It runs extra checks only when you ask: `keyboard` (press Tab through the page), `darkMode`, `reflow` (320px wide), `frames`, and `screenshots`. During a run, give `stepId`, and the results go into the report. For an "accessibility check" plan step, give `stepId`, and Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.
 - **Lighthouse report:** when the developer wants performance, best practices, or SEO scores, use `/walkthrough:lighthouse`, or do the same steps: `lighthouse` with `urls`, then `lighthouse_report` without items, then with a digest, a summary, and text for each issue. Follow `references/lighthouse-report.md`. If Lighthouse is not installed, show the developer the install command from the reply.
-- **Videos:** `video` with action `start` records the active tab. Use `caption` for text at the bottom, and `stop` with `format` and `path` to save an MP4, WebM, or GIF. A plan with `video: true` records the whole run, and the step titles or `caption` keys become captions. `video` with action `slideshow` makes a GIF of a run's screenshots. During a run, a failed step or a bug gets a short video of the seconds before it.
+- **Videos:** see "Make a video" below. A plan with `video: true` records the whole run, with the step titles or `caption` keys as captions. `video` with action `slideshow` makes a GIF of a run's screenshots. During a run, a failed step or a bug gets a short video of the seconds before it.
 - **Lighthouse flows:** to measure a flow, such as "how fast is checkout", write a plan with a `lighthouse` key on the steps to measure (see "Lighthouse flows" in `references/plan-format.md`). During the run, call `lighthouse` as `run_start` says for each Lighthouse step.
 - **Accessibility report:** when the developer wants a report for one or more pages, use `/walkthrough:a11y`, or do the same steps: `a11y_scan` with `urls`, then `a11y_report` without items, then `a11y_report` with a digest, a summary, and text for each issue. Follow `references/a11y-report.md`. Always show the developer the suggested prompt from the reply.
 - **Devices and settings:** `emulate` sets the active tab's screen (`mobile`, `tablet`, `desktop`), `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, and `permissions`. `allTabs: true` sets every tab. Take a new snapshot after it.
@@ -93,6 +93,13 @@ When the developer asks for a new plan:
 - If the browser was closed, call `browser_open` again.
 - If something does not work, call `doctor`. Show the result to the developer.
 
+## Make a video
+
+- **A demo video of a workflow**, such as "create a recording demo of the checkout workflow": use `/walkthrough:video`, or do the same steps. Write a plan with an exact `action` and a `caption` on each step (follow `references/video.md`). Run the plan. Then call `video` with action `replay` and the `runId`. The replay records the run again in a new login, at an even pace, with a title card. Make an MP4 and a GIF unless the developer asks for other formats.
+- **Part of this session:** `video` with action `start`, then `stop` with `format` and `path`.
+- **Again later:** `video` with action `replay` for the same run makes a new video without a new run. After the app changes, run the plan again first.
+- "Record me" or "record my clicks" means `record`: the developer uses the app, and you get a plan draft. "A recording of X" or "a video of X" means a video.
+
 ## Record, export, and report bugs
 
 - **Record:** when the developer wants to show a flow instead of describing it, use `record` (`start`, then `wait`). They use the app, and you get a YAML draft. Review it with them, then save it with `plan`.
@@ -106,3 +113,4 @@ When the developer asks for a new plan:
 - `references/bug-report.md`: how to describe a bug.
 - `references/a11y-report.md`: how to write the accessibility report text.
 - `references/lighthouse-report.md`: how to write the Lighthouse report text.
+- `references/video.md`: how to write a plan for a demo video.

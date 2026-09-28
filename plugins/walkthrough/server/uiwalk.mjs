@@ -7862,10 +7862,10 @@ var init_Frame = __esm({
             if (!parentFrame) {
               return null;
             }
-            const list = __addDisposableResource7(env_1, await parentFrame.isolatedRealm().evaluateHandle(() => {
+            const list2 = __addDisposableResource7(env_1, await parentFrame.isolatedRealm().evaluateHandle(() => {
               return document.querySelectorAll("iframe,frame");
             }), false);
-            for await (const iframe_1 of transposeIterableHandle(list)) {
+            for await (const iframe_1 of transposeIterableHandle(list2)) {
               const env_2 = { stack: [], error: void 0, hasError: false };
               try {
                 const iframe = __addDisposableResource7(env_2, iframe_1, false);
@@ -42684,13 +42684,13 @@ var require_buffer_util = __commonJS({
     "use strict";
     var { EMPTY_BUFFER } = require_constants();
     var FastBuffer = Buffer[Symbol.species];
-    function concat2(list, totalLength) {
-      if (list.length === 0) return EMPTY_BUFFER;
-      if (list.length === 1) return list[0];
+    function concat2(list2, totalLength) {
+      if (list2.length === 0) return EMPTY_BUFFER;
+      if (list2.length === 1) return list2[0];
       const target2 = Buffer.allocUnsafe(totalLength);
       let offset = 0;
-      for (let i = 0; i < list.length; i++) {
-        const buf = list[i];
+      for (let i = 0; i < list2.length; i++) {
+        const buf = list2[i];
         target2.set(buf, offset);
         offset += buf.length;
       }
@@ -44476,14 +44476,14 @@ var require_sender = __commonJS({
        * @param {Function} [cb] Callback
        * @private
        */
-      sendFrame(list, cb) {
-        if (list.length === 2) {
+      sendFrame(list2, cb) {
+        if (list2.length === 2) {
           this._socket.cork();
-          this._socket.write(list[0]);
-          this._socket.write(list[1], cb);
+          this._socket.write(list2[0]);
+          this._socket.write(list2[1], cb);
           this._socket.uncork();
         } else {
-          this._socket.write(list[0], cb);
+          this._socket.write(list2[0], cb);
         }
       }
     };
@@ -44741,7 +44741,7 @@ var require_extension = __commonJS({
       if (dest[name] === void 0) dest[name] = [elem];
       else dest[name].push(elem);
     }
-    function parse6(header) {
+    function parse7(header) {
       const offers = /* @__PURE__ */ Object.create(null);
       let params = /* @__PURE__ */ Object.create(null);
       let mustUnescape = false;
@@ -44881,7 +44881,7 @@ var require_extension = __commonJS({
         }).join(", ");
       }).join(", ");
     }
-    module.exports = { format: format3, parse: parse6 };
+    module.exports = { format: format3, parse: parse7 };
   }
 });
 
@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes12, createHash: createHash6 } = __require("crypto");
+    var { randomBytes: randomBytes13, createHash: createHash6 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -44915,7 +44915,7 @@ var require_websocket = __commonJS({
     var {
       EventTarget: { addEventListener, removeEventListener }
     } = require_event_target();
-    var { format: format3, parse: parse6 } = require_extension();
+    var { format: format3, parse: parse7 } = require_extension();
     var { toBuffer } = require_buffer_util();
     var kAborted = /* @__PURE__ */ Symbol("kAborted");
     var protocolVersions = [8, 13];
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key2 = randomBytes12(16).toString("base64");
+      const key2 = randomBytes13(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -45592,7 +45592,7 @@ var require_websocket = __commonJS({
           }
           let extensions;
           try {
-            extensions = parse6(secWebSocketExtensions);
+            extensions = parse7(secWebSocketExtensions);
           } catch (err) {
             const message = "Invalid Sec-WebSocket-Extensions header";
             abortHandshake(websocket, socket, message);
@@ -45884,7 +45884,7 @@ var require_subprotocol = __commonJS({
   "node_modules/ws/lib/subprotocol.js"(exports, module) {
     "use strict";
     var { tokenChars } = require_validation();
-    function parse6(header) {
+    function parse7(header) {
       const protocols = /* @__PURE__ */ new Set();
       let start = -1;
       let end = -1;
@@ -45920,7 +45920,7 @@ var require_subprotocol = __commonJS({
       protocols.add(protocol);
       return protocols;
     }
-    module.exports = { parse: parse6 };
+    module.exports = { parse: parse7 };
   }
 });
 
@@ -48937,11 +48937,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative17 = path14;
-  if (/^[a-zA-Z]:/.test(relative17)) relative17 = relative17.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative17.startsWith("/")) relative17 = relative17.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative17.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative17;
+  let relative18 = path14;
+  if (/^[a-zA-Z]:/.test(relative18)) relative18 = relative18.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative18.startsWith("/")) relative18 = relative18.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative18.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative18;
 }
 function packTar(sources, options = {}) {
   const results2 = /* @__PURE__ */ new Map();
@@ -54519,9 +54519,9 @@ var init_completion = __esm({
         if (isSyncCompletionFunction(this.customCompletionFunction)) {
           const result = this.customCompletionFunction(current, argv);
           if (isPromise2(result)) {
-            return result.then((list) => {
+            return result.then((list2) => {
               this.shim.process.nextTick(() => {
-                done(null, list);
+                done(null, list2);
               });
             }).catch((err) => {
               this.shim.process.nextTick(() => {
@@ -55419,9 +55419,9 @@ var init_yargs_factory = __esm({
         __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
         if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
           if (!this.parsed) {
-            const parse6 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
-            if (isPromise2(parse6)) {
-              return parse6.then(() => {
+            const parse7 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+            if (isPromise2(parse7)) {
+              return parse7.then(() => {
                 return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
               });
             }
@@ -55765,9 +55765,9 @@ var init_yargs_factory = __esm({
         __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
         if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
           if (!this.parsed) {
-            const parse6 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
-            if (isPromise2(parse6)) {
-              parse6.then(() => {
+            const parse7 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+            if (isPromise2(parse7)) {
+              parse7.then(() => {
                 __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level2);
               });
               return this;
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join41 } = await import("node:path");
+    const { join: join42 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join41(userDataDir, "DevToolsActivePort");
+    const portPath = join42(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -63497,15 +63497,15 @@ var require_parser = __commonJS({
     var node_process = __require("process");
     var cst = require_cst();
     var lexer = require_lexer();
-    function includesToken(list, type) {
-      for (let i = 0; i < list.length; ++i)
-        if (list[i].type === type)
+    function includesToken(list2, type) {
+      for (let i = 0; i < list2.length; ++i)
+        if (list2[i].type === type)
           return true;
       return false;
     }
-    function findNonEmptyIndex(list) {
-      for (let i = 0; i < list.length; ++i) {
-        switch (list[i].type) {
+    function findNonEmptyIndex(list2) {
+      for (let i = 0; i < list2.length; ++i) {
+        switch (list2[i].type) {
           case "space":
           case "comment":
           case "newline":
@@ -64413,7 +64413,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse6(src, reviver, options) {
+    function parse7(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -64454,7 +64454,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document3.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse6;
+    exports.parse = parse7;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument2;
     exports.stringify = stringify2;
@@ -68706,7 +68706,7 @@ var require_fast_uri = __commonJS({
         normalizeString(uri, options);
       } else if (typeof uri === "object") {
         uri = /** @type {T} */
-        parse6(serialize(uri, options), options);
+        parse7(serialize(uri, options), options);
       }
       return uri;
     }
@@ -68743,49 +68743,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative17, options, skipNormalization) {
+    function resolveComponent(base, relative18, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
-        base = parse6(serialize(base, options), options);
-        relative17 = parse6(serialize(relative17, options), options);
+        base = parse7(serialize(base, options), options);
+        relative18 = parse7(serialize(relative18, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative17.scheme) {
-        target2.scheme = relative17.scheme;
-        target2.userinfo = relative17.userinfo;
-        target2.host = relative17.host;
-        target2.port = relative17.port;
-        target2.path = removeDotSegments(relative17.path || "");
-        target2.query = relative17.query;
+      if (!options.tolerant && relative18.scheme) {
+        target2.scheme = relative18.scheme;
+        target2.userinfo = relative18.userinfo;
+        target2.host = relative18.host;
+        target2.port = relative18.port;
+        target2.path = removeDotSegments(relative18.path || "");
+        target2.query = relative18.query;
       } else {
-        if (relative17.userinfo !== void 0 || relative17.host !== void 0 || relative17.port !== void 0) {
-          target2.userinfo = relative17.userinfo;
-          target2.host = relative17.host;
-          target2.port = relative17.port;
-          target2.path = removeDotSegments(relative17.path || "");
-          target2.query = relative17.query;
+        if (relative18.userinfo !== void 0 || relative18.host !== void 0 || relative18.port !== void 0) {
+          target2.userinfo = relative18.userinfo;
+          target2.host = relative18.host;
+          target2.port = relative18.port;
+          target2.path = removeDotSegments(relative18.path || "");
+          target2.query = relative18.query;
         } else {
-          if (!relative17.path) {
+          if (!relative18.path) {
             target2.path = base.path;
-            if (relative17.query !== void 0) {
-              target2.query = relative17.query;
+            if (relative18.query !== void 0) {
+              target2.query = relative18.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative17.path[0] === "/") {
-              target2.path = removeDotSegments(relative17.path);
+            if (relative18.path[0] === "/") {
+              target2.path = removeDotSegments(relative18.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative17.path;
+                target2.path = "/" + relative18.path;
               } else if (!base.path) {
-                target2.path = relative17.path;
+                target2.path = relative18.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative17.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative18.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative17.query;
+            target2.query = relative18.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -68793,7 +68793,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative17.fragment;
+      target2.fragment = relative18.fragment;
       return target2;
     }
     function equal2(uriA, uriB, options) {
@@ -69046,7 +69046,7 @@ var require_fast_uri = __commonJS({
       }
       return { parsed, malformedAuthorityOrPort, malformedPercentEncoding, malformedSchemeSpecific, malformedHost, malformedScheme };
     }
-    function parse6(uri, opts) {
+    function parse7(uri, opts) {
       return parseWithStatus(uri, opts).parsed;
     }
     function normalizeString(uri, opts) {
@@ -69083,7 +69083,7 @@ var require_fast_uri = __commonJS({
       resolveComponent,
       equal: equal2,
       serialize,
-      parse: parse6
+      parse: parse7
     };
     module.exports = fastUri;
     module.exports.default = fastUri;
@@ -72042,8 +72042,8 @@ var require_dist3 = __commonJS({
         return ajv;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
-      const list = opts.formats || formats_1.formatNames;
-      addFormats(ajv, list, formats, exportName);
+      const list2 = opts.formats || formats_1.formatNames;
+      addFormats(ajv, list2, formats, exportName);
       if (opts.keywords)
         (0, limit_1.default)(ajv);
       return ajv;
@@ -72055,11 +72055,11 @@ var require_dist3 = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs8, exportName) {
+    function addFormats(ajv, list2, fs8, exportName) {
       var _a11;
       var _b2;
       (_a11 = (_b2 = ajv.opts.code).formats) !== null && _a11 !== void 0 ? _a11 : _b2.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
-      for (const f of list)
+      for (const f of list2)
         ajv.addFormat(f, fs8[f]);
     }
     module.exports = exports = formatsPlugin;
@@ -74008,10 +74008,10 @@ var require_packer_sync = __commonJS({
 var require_png_sync = __commonJS({
   "node_modules/pngjs/lib/png-sync.js"(exports) {
     "use strict";
-    var parse6 = require_parser_sync();
+    var parse7 = require_parser_sync();
     var pack = require_packer_sync();
     exports.read = function(buffer, options) {
-      return parse6(buffer, options || {});
+      return parse7(buffer, options || {});
     };
     exports.write = function(png, options) {
       return pack(png, options);
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname12, join as join40 } from "node:path";
+import { dirname as dirname13, join as join41 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -76007,18 +76007,18 @@ var validateAsync = async (schema, value, _ctx) => {
   return result.issues.length === 0;
 };
 var _encode = (_Err) => {
-  const parse6 = _parse(_Err);
+  const parse7 = _parse(_Err);
   const fn = (schema, value, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-    return parse6(schema, value, ctx, finalizeParams(fn, _params));
+    return parse7(schema, value, ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
 var encode = /* @__PURE__ */ _encode($ZodRealError);
 var _decode = (_Err) => {
-  const parse6 = _parse(_Err);
+  const parse7 = _parse(_Err);
   const fn = (schema, value, _ctx, _params) => {
-    return parse6(schema, value, _ctx, finalizeParams(fn, _params));
+    return parse7(schema, value, _ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
@@ -79738,7 +79738,7 @@ function az_default() {
 }
 
 // node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one, few, many) {
+function getBelarusianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -79746,7 +79746,7 @@ function getBelarusianPlural(count, one, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one;
+    return one2;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -82386,8 +82386,8 @@ function hu_default() {
 }
 
 // node_modules/zod/v4/locales/hy.js
-function getArmenianPlural(count, one, many) {
-  return Math.abs(count) === 1 ? one : many;
+function getArmenianPlural(count, one2, many) {
+  return Math.abs(count) === 1 ? one2 : many;
 }
 function withDefiniteArticle(word) {
   if (!word)
@@ -85125,7 +85125,7 @@ function ro_default() {
 }
 
 // node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one, few, many) {
+function getRussianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -85133,7 +85133,7 @@ function getRussianPlural(count, one, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one;
+    return one2;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -90318,8 +90318,8 @@ var contributors = {
 function aggregateChecks(schema) {
   const agg = {};
   const def = schema._zod.def;
-  const list = schema._zod.traits.has("$ZodCheck") ? [schema, ...def.checks ?? []] : def.checks ?? [];
-  for (const ch of list)
+  const list2 = schema._zod.traits.has("$ZodCheck") ? [schema, ...def.checks ?? []] : def.checks ?? [];
+  for (const ch of list2)
     contributors[ch._zod.def.check]?.(agg, ch._zod.def);
   const bag = schema._zod.bag;
   if (bag.minimum !== void 0)
@@ -108046,6 +108046,10 @@ var Driver = class _Driver {
     }
   }
   async onDialog(tab, dialog) {
+    if (tab.answerDialog) {
+      await tab.answerDialog(dialog).catch((error62) => log.warn("could not answer a dialog", error62));
+      return;
+    }
     const type = dialog.type();
     const message = dialog.message();
     const said = message ? ` It said: "${message}"` : "";
@@ -109579,19 +109583,19 @@ function formatAudit(audit) {
     lines.push(
       `Keyboard: ${k.stops.length} Tab stop(s). The walk ended because ${ends[k.endedBy]}.`
     );
-    const list = (title, nodes) => {
+    const list2 = (title, nodes) => {
       if (!nodes.length) return;
       lines.push(title);
       for (const n of nodes.slice(0, 5))
         lines.push(`  - ${n.frame ? `in frame ${n.frame.selector}: ` : ""}${n.target}: ${n.html}`);
       if (nodes.length > 5) lines.push(`  - and ${nodes.length - 5} more`);
     };
-    list("Keyboard trap (WCAG 2.1.2 (A)): Tab and Shift+Tab cannot leave:", k.trap ?? []);
-    list(
+    list2("Keyboard trap (WCAG 2.1.2 (A)): Tab and Shift+Tab cannot leave:", k.trap ?? []);
+    list2(
       `No visible focus (WCAG 2.4.7 (AA)), ${k.noVisibleFocus.length} element(s):`,
       k.noVisibleFocus
     );
-    list(
+    list2(
       `Cannot reach with Tab (WCAG 2.1.1 (A)), ${k.unreachable.length} element(s):`,
       k.unreachable
     );
@@ -109678,6 +109682,7 @@ var RunStore = class _RunStore {
       setup: input3.setup,
       emulation: input3.emulation,
       unique: input3.unique,
+      ...input3.session ? { session: input3.session } : {},
       ...input3.freshBrowser !== void 0 ? { freshBrowser: input3.freshBrowser } : {},
       steps,
       ...settings || input3.plan?.steps.some((s) => s.a11y) ? {
@@ -111391,9 +111396,29 @@ var VideoCapture = class {
     if (session) {
       await session.cdp.send("Page.stopScreencast").catch(() => void 0);
       await session.cdp.detach().catch(() => void 0);
+      if (this.frames.length === 0) await this.screenshotFrame(session.tabId);
     }
     for (const tabId of this.hiddenTabs) {
       await this.driver.panel?.suppress(tabId, false, "video").catch(() => void 0);
+    }
+  }
+  async screenshotFrame(tabId) {
+    const page = this.driver.tabs.get(tabId)?.page;
+    if (!page) return;
+    try {
+      const data = await page.screenshot({ type: "jpeg", quality: 80 });
+      const size2 = await page.evaluate(() => [innerWidth, innerHeight]);
+      this.count += 1;
+      const file2 = `${String(this.count).padStart(6, "0")}.jpg`;
+      writeFileSync8(join22(this.dir, file2), data);
+      this.frames.push({
+        file: file2,
+        t: this.stoppedAt ?? Date.now(),
+        tabId,
+        width: size2[0] ?? 0,
+        height: size2[1] ?? 0
+      });
+    } catch {
     }
   }
   discard() {
@@ -111701,9 +111726,10 @@ function buildSamples(frames, events, options) {
       );
       const before = [...onTab].reverse().find((a2) => a2.t <= t);
       const next = onTab.find((a2) => a2.t > t);
-      if (next && next.t - t <= GLIDE) {
+      const glide = options.glideMs ?? GLIDE;
+      if (next && next.t - t <= glide) {
         const from2 = before ?? next;
-        const k = 1 - (next.t - t) / GLIDE;
+        const k = 1 - (next.t - t) / glide;
         sample.pointer = {
           x: lerp(from2.x, next.x, k),
           y: lerp(from2.y, next.y, k)
@@ -113665,7 +113691,7 @@ async function bugHar(ctx, entries, stepLabel) {
   );
   return relative9(config3.projectDir, file2);
 }
-function startProgress(extra) {
+function startProgress(extra, message = "Walkthrough waits for the developer to answer in the browser.") {
   const token = extra._meta?.progressToken;
   if (token === void 0) return () => void 0;
   let count = 0;
@@ -113676,7 +113702,7 @@ function startProgress(extra) {
       params: {
         progressToken: token,
         progress: count,
-        message: "Walkthrough waits for the developer to answer in the browser."
+        message
       }
     }).catch(() => void 0);
   }, 1e4);
@@ -114184,6 +114210,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
         emulation: { ...opened.tab.emulation },
         unique: ctx.unique,
+        session: plan?.session,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c]),
         lighthouse: config3.lighthouse,
         freshBrowser: lhSteps ? driver.mode === "launched" : void 0
@@ -114571,9 +114598,9 @@ function registerA11yTools(server, ctx) {
             step.status = wcag.length ? "fail" : "pass";
             step.actual = all.length ? `${all.length} accessibility problem type(s): ${impactLine(all)}.` : void 0;
             if (audit.check.requestedUrl) step.notes = `The page went to ${audit.check.url}.`;
-            const one = computeScores([audit.check], buildFindings([audit.check]));
+            const one2 = computeScores([audit.check], buildFindings([audit.check]));
             lines.push(
-              `- ${path14}: ${all.length ? impactLine(all) : "no problems"}${one.overall !== null ? `, score ${one.overall}` : ""}`
+              `- ${path14}: ${all.length ? impactLine(all) : "no problems"}${one2.overall !== null ? `, score ${one2.overall}` : ""}`
             );
           } catch (error62) {
             step.status = "blocked";
@@ -115298,7 +115325,7 @@ Navigate back to an allowed page first.`,
     await highlightTarget(ctx, tab, target2, input3.action);
   }
   if (ctx.video) {
-    await target2?.handle.scrollIntoView().catch(() => void 0);
+    await target2?.handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
     const rect = target2 ? await elementRect(target2.handle) : void 0;
     ctx.video.action(tab.id, input3.action, rect);
   }
@@ -117422,13 +117449,66 @@ import { join as join39, relative as relative16 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
-var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
+
+// packages/server/src/replay/ops.ts
 function checkableText(expect) {
   const found = /* @__PURE__ */ new Set();
   for (const m of expect.matchAll(/"([^"]{1,80})"/g)) if (m[1]) found.add(m[1]);
   for (const m of expect.matchAll(/(?:\$|€|£)\d[\d,]*(?:\.\d+)?/g)) found.add(m[0]);
   return [...found];
 }
+function parseUrl(value) {
+  try {
+    const url2 = JSON.parse(value ?? "{}").url;
+    return typeof url2 === "string" ? url2 : void 0;
+  } catch {
+    return void 0;
+  }
+}
+function buildOps(run) {
+  const steps = [];
+  const missingSelectors = [];
+  let lastUrl = run.baseUrl ?? "";
+  for (const step of run.steps) {
+    const shots = step.captures ?? [];
+    if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
+    const ops = [];
+    for (const action2 of step.actions) {
+      if (action2.url && action2.url !== lastUrl) {
+        ops.push({ type: "reach", url: action2.url });
+        lastUrl = action2.url;
+      }
+      if (!action2.selector && ELEMENT_ACTIONS.includes(action2.action)) {
+        missingSelectors.push(`Step ${step.index}: ${action2.label}`);
+        ops.push({ type: "no-selector", label: action2.label });
+        continue;
+      }
+      ops.push({ type: "action", action: action2 });
+      if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
+      if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
+      if (action2.action === "tab-close") lastUrl = "";
+    }
+    for (const check2 of step.cookies ?? []) ops.push({ type: "cookie", check: check2 });
+    if (step.expect) {
+      const texts = checkableText(step.expect);
+      for (const text of texts) ops.push({ type: "expect", text });
+      if (texts.length === 0) ops.push({ type: "check-by-hand", text: step.expect });
+    }
+    for (const shot of shots) {
+      if (shot.element && !shot.selector) {
+        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
+        ops.push({ type: "capture-no-selector", shot });
+        continue;
+      }
+      ops.push({ type: "capture", shot });
+    }
+    steps.push({ step, ops });
+  }
+  return { steps, missingSelectors };
+}
+
+// packages/server/src/export/puppeteer-script.ts
+var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
 var js = (value) => JSON.stringify(value);
 var UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
 var UNIQUE_CODE = [
@@ -117913,6 +117993,31 @@ function setupCode(emulation, gen) {
   }
   return lines;
 }
+var VIDEO_HELPERS = `
+// VIDEO=<file> records the first tab. PACE_MS waits before each browser action.
+const VIDEO = process.env.VIDEO;
+const PACE_MS = Number(process.env.PACE_MS) || 0;
+
+// Finds ffmpeg: FFMPEG_PATH, then the copy from "uiwalk setup ffmpeg", then the PATH.
+function ffmpegPath() {
+  if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
+  const dir = join(process.env.UIWALK_CACHE_DIR ?? join(homedir(), '.cache', 'uiwalk'), 'ffmpeg');
+  for (const version of existsSync(dir) ? readdirSync(dir).sort().reverse() : []) {
+    for (const name of ['ffmpeg', 'ffmpeg.exe']) {
+      if (existsSync(join(dir, version, name))) return join(dir, version, name);
+    }
+  }
+  return 'ffmpeg';
+}
+
+async function startVideo(target) {
+  const file = resolve(VIDEO);
+  const format = extname(file).slice(1).toLowerCase();
+  if (!['mp4', 'webm', 'gif'].includes(format)) throw new Error('End VIDEO with .mp4, .webm, or .gif.');
+  mkdirSync(dirname(file), { recursive: true });
+  return target.screencast({ path: file, format, ffmpegPath: ffmpegPath() });
+}
+`;
 function captureHelpers(secretFields) {
   return `
 // SHOT=cart,settings saves only those screenshots. The steps still run.
@@ -117951,24 +118056,14 @@ async function capture(file, options = {}) {
 }
 `;
 }
-function parseUrl(value) {
-  try {
-    const url2 = JSON.parse(value ?? "{}").url;
-    return typeof url2 === "string" ? url2 : void 0;
-  } catch {
-    return void 0;
-  }
-}
 function exportScript(run, options = {}) {
   const secrets = /* @__PURE__ */ new Set();
   const secretFields = /* @__PURE__ */ new Set();
-  const missingSelectors = [];
   const captures = [];
   const failedSteps = run.steps.filter((s) => ["bug", "fail", "blocked"].includes(s.status)).map((s) => `${s.index}. ${s.title}`);
   let actions = 0;
   let checks = 0;
   let handChecks = 0;
-  let lastUrl = run.baseUrl ?? "";
   const body = [];
   const needs = {
     unique: false,
@@ -117989,59 +118084,57 @@ function exportScript(run, options = {}) {
     dialogs: []
   };
   const setup2 = setupCode(run.emulation, gen);
-  for (const step of run.steps) {
-    const shots = step.captures ?? [];
-    if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
+  const plan = buildOps(run);
+  for (const { step, ops } of plan.steps) {
     const lines = [];
-    for (const action2 of step.actions) {
-      if (action2.url && action2.url !== lastUrl) {
-        lines.push(`await reach(${urlCode(action2.url, needs, run.baseUrl)});`);
-        lastUrl = action2.url;
+    for (const op of ops) {
+      switch (op.type) {
+        case "reach":
+          lines.push(`await reach(${urlCode(op.url, needs, run.baseUrl)});`);
+          break;
+        case "no-selector":
+          lines.push(
+            `// Fix by hand: Walkthrough found no stable selector for ${op.label.replace(/\n/g, " ")}.`
+          );
+          break;
+        case "action":
+          lines.push(...actionCode(op.action, secretFields, gen));
+          actions += 1;
+          break;
+        case "cookie":
+          needs.cookies = true;
+          lines.push(cookieCheckCode(op.check, gen));
+          checks += 1;
+          break;
+        case "expect":
+          lines.push(`await expectText(${js(op.text)});`);
+          checks += 1;
+          break;
+        case "check-by-hand":
+          lines.push(`// Check by hand: ${op.text.replace(/\n/g, " ")}`);
+          handChecks += 1;
+          break;
+        case "capture-no-selector":
+          lines.push(
+            `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${(op.shot.element ?? "").replace(/\n/g, " ")} (${op.shot.path}).`
+          );
+          break;
+        case "capture": {
+          const shot = op.shot;
+          const where3 = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
+          if (isAbsolute8(shot.path))
+            lines.push("// This folder is outside the project. It only works on this computer.");
+          const options2 = [
+            shot.selector ? `selector: ${js(shot.selector)}` : "",
+            shot.fullPage ? "fullPage: true" : ""
+          ].filter(Boolean);
+          lines.push(
+            `await capture(${where3}${options2.length ? `, { ${options2.join(", ")} }` : ""});`
+          );
+          captures.push(shot.path);
+          break;
+        }
       }
-      if (!action2.selector && ELEMENT_ACTIONS.includes(action2.action)) {
-        missingSelectors.push(`Step ${step.index}: ${action2.label}`);
-        lines.push(
-          `// Fix by hand: Walkthrough found no stable selector for ${action2.label.replace(/\n/g, " ")}.`
-        );
-        continue;
-      }
-      lines.push(...actionCode(action2, secretFields, gen));
-      actions += 1;
-      if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
-      if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
-      if (action2.action === "tab-close") lastUrl = "";
-    }
-    for (const check2 of step.cookies ?? []) {
-      needs.cookies = true;
-      lines.push(cookieCheckCode(check2, gen));
-      checks += 1;
-    }
-    if (step.expect) {
-      const texts = checkableText(step.expect);
-      for (const text of texts) lines.push(`await expectText(${js(text)});`);
-      checks += texts.length;
-      if (texts.length === 0) {
-        lines.push(`// Check by hand: ${step.expect.replace(/\n/g, " ")}`);
-        handChecks += 1;
-      }
-    }
-    for (const shot of shots) {
-      if (shot.element && !shot.selector) {
-        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
-        lines.push(
-          `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${shot.element.replace(/\n/g, " ")} (${shot.path}).`
-        );
-        continue;
-      }
-      const where3 = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
-      if (isAbsolute8(shot.path))
-        lines.push("// This folder is outside the project. It only works on this computer.");
-      const options2 = [
-        shot.selector ? `selector: ${js(shot.selector)}` : "",
-        shot.fullPage ? "fullPage: true" : ""
-      ].filter(Boolean);
-      lines.push(`await capture(${where3}${options2.length ? `, { ${options2.join(", ")} }` : ""});`);
-      captures.push(shot.path);
     }
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
@@ -118052,9 +118145,10 @@ function exportScript(run, options = {}) {
       ""
     );
   }
+  const missingSelectors = plan.missingSelectors;
   const pkg = options.installedChrome ? "puppeteer-core" : "puppeteer";
   const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : "puppeteer";
-  const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL }" : "{ headless: !process.env.HEADFUL }";
+  const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS }" : "{ headless: !process.env.HEADFUL, slowMo: PACE_MS }";
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
   const code = `#!/usr/bin/env node
@@ -118063,9 +118157,13 @@ function exportScript(run, options = {}) {
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? " (and Google Chrome)" : ""}
 // Run:   node ${"<this file>"}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
+// Set VIDEO=<file>.mp4 (or .webm or .gif) to record the first tab. It needs ffmpeg.
+// Set PACE_MS to wait that many milliseconds before each browser action, like 50.
 ${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.
 ` : ""}${needs.unique ? "// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n" : ""}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(", ")}.
-` : ""}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
+` : ""}import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { ${hasShots ? "basename, dirname, extname, join, relative, resolve, sep" : "dirname, extname, join, resolve"} } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ${imports} from '${pkg}';
 
@@ -118075,12 +118173,13 @@ const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {
   if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
 }
-${needs.unique ? UNIQUE_CODE : ""}
+${needs.unique ? UNIQUE_CODE : ""}${VIDEO_HELPERS}
 const browser = await puppeteer.launch(${launch3});
 ${needs.tabs ? "let" : "const"} page = await browser.newPage();
 page.setDefaultTimeout(10_000);
 ${setup2.join("\n")}
 ${dialogCode(gen)}
+const recorder = VIDEO ? await startVideo(page) : undefined;
 ${needs.tabs ? TAB_HELPERS : ""}
 // Runs one step, and names the step if it fails.
 async function step(name, fn) {
@@ -118155,6 +118254,8 @@ ${body.join("\n")}${hasShots ? `  if (SHOT.length && shots === 0) {
   await page.screenshot({ path: resolve(PROJECT_DIR, 'walkthrough-export-failure.png') }).catch(() => {});
   process.exitCode = 1;
 } finally {
+  await recorder?.stop();
+  if (recorder) console.log(\`Saved the video: \${VIDEO}\`);
   await browser.close();
 }
 `;
@@ -118628,7 +118729,8 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
           "To save only some of them, set SHOT to their file names, like SHOT=cart,settings. The steps still all run."
         ] : [],
         ...result.secrets.length ? [`Set these environment variables before a run: ${result.secrets.join(", ")}.`] : [],
-        `To run it: npm install --save-dev ${pkg}, then node ${rel}`
+        `To run it: npm install --save-dev ${pkg}, then node ${rel}`,
+        `To record the first tab as a video, set VIDEO to a file, like VIDEO=videos/${name}.mp4. It needs ffmpeg. PACE_MS=50 waits 50 milliseconds before each browser action, so viewers can follow.`
       ].join("\n");
     })
   );
@@ -118681,7 +118783,530 @@ ${files.map((f) => `- ${join39(projectDir, f)}`).join("\n")}`] : [],
   );
 }
 
+// packages/server/src/replay/replayer.ts
+import { randomBytes as randomBytes12 } from "node:crypto";
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync22, writeFileSync as writeFileSync18 } from "node:fs";
+import { dirname as dirname12, join as join40, relative as relative17 } from "node:path";
+var PACES = {
+  slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
+  normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
+  fast: { typeMs: 20, glideMs: 200, holdMs: 700 }
+};
+var VIDEO_FPS2 = 15;
+var MAX_TYPE_MS = 3e3;
+var sleep = (ms) => new Promise((resolve12) => setTimeout(resolve12, ms));
+var parse6 = (value) => {
+  try {
+    return JSON.parse(value ?? "{}");
+  } catch {
+    return {};
+  }
+};
+async function centerInView(handle) {
+  await handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
+}
+var StepError = class extends Error {
+};
+var Replay = class {
+  constructor(driver, config3, secrets, unique2, pace, capture) {
+    this.driver = driver;
+    this.config = config3;
+    this.secrets = secrets;
+    this.unique = unique2;
+    this.pace = pace;
+    this.capture = capture;
+  }
+  driver;
+  config;
+  secrets;
+  unique;
+  pace;
+  capture;
+  // Tabs by their name in the run. The replay has its own tabs.
+  tabs = /* @__PURE__ */ new Map();
+  current = "main";
+  // Logins by their name in the run, and the new login that stands for each.
+  logins = /* @__PURE__ */ new Map();
+  // Dialog answers of the run, in order.
+  dialogs = [];
+  // Mock rules of the replay, by their id in the run.
+  mocks = /* @__PURE__ */ new Map();
+  restores = [];
+  key = randomBytes12(2).toString("hex");
+  get tab() {
+    const tab = this.tabs.get(this.current);
+    if (!tab || tab.closed) throw new StepError(`The tab "${this.current}" is not open.`);
+    return tab;
+  }
+  // The logins that the replay made. They all close at the end.
+  get loginNames() {
+    return new Set(this.logins.values());
+  }
+  login(runLogin) {
+    let name = this.logins.get(runLogin);
+    if (!name) {
+      name = `replay-${this.key}${runLogin === "main" ? "" : `-${runLogin}`}`.slice(0, 60);
+      this.logins.set(runLogin, name);
+    }
+    return name;
+  }
+  answer = async (dialog) => {
+    const type = dialog.type();
+    if (type === "alert" || type === "beforeunload") return dialog.accept();
+    const next = this.dialogs.shift() ?? { accept: true };
+    if (next.accept) await dialog.accept(next.text ?? dialog.defaultValue());
+    else await dialog.dismiss();
+  };
+  async openTab(name, runLogin) {
+    const tab = await this.driver.newTab({ isolated: this.login(runLogin) });
+    tab.answerDialog = this.answer;
+    this.tabs.set(name, tab);
+    this.current = name;
+    return tab;
+  }
+  use(name) {
+    this.current = name;
+    this.driver.switchTo(this.tab.id);
+  }
+  text(value) {
+    return this.secrets.resolve(withUnique(value, this.unique));
+  }
+  async frameOf(frameUrl2) {
+    const page = this.tab.page;
+    if (!frameUrl2) return page.mainFrame();
+    let part = frameUrl2;
+    try {
+      part = new URL(withUnique(frameUrl2, this.unique)).pathname;
+    } catch {
+    }
+    const end = Date.now() + this.config.actionTimeoutMs;
+    while (Date.now() < end) {
+      const found = page.frames().find((f) => f.url().includes(part));
+      if (found) return found;
+      await sleep(100);
+    }
+    throw new StepError(`There is no frame with the address ${part}.`);
+  }
+  async find(action2) {
+    const frame = await this.frameOf(action2.frameUrl);
+    const handle = await frame.waitForSelector(action2.selector, { timeout: this.config.actionTimeoutMs }).catch(() => null);
+    if (!handle)
+      throw new StepError(`Walkthrough did not find ${action2.label} (${action2.selector}).`);
+    return handle;
+  }
+  // Moves the video's pointer to the element before the action.
+  async point(handle, kind) {
+    await centerInView(handle);
+    await sleep(this.pace.glideMs);
+    this.capture()?.action(this.tab.id, kind, await elementRect(handle));
+  }
+  // Goes to the address, unless the last action already went there.
+  async reach(url2) {
+    let want;
+    try {
+      want = new URL(withUnique(url2, this.unique));
+    } catch {
+      return;
+    }
+    if (!/^https?:$/.test(want.protocol)) return;
+    const page = this.tab.page;
+    const here = new URL(page.url());
+    if (here.pathname === want.pathname && here.search === want.search) return;
+    try {
+      await page.waitForFunction(
+        (path14) => location.pathname + location.search === path14,
+        { timeout: 3e3 },
+        want.pathname + want.search
+      );
+    } catch {
+      await page.goto(want.href, { waitUntil: "load" });
+    }
+  }
+  async expectText(text) {
+    const found = await this.tab.page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 1e4 }, text).then(() => true).catch(() => false);
+    if (!found) throw new StepError(`The page does not show "${text}".`);
+  }
+  async act(action2) {
+    const page = () => this.tab.page;
+    const value = action2.value ?? "";
+    switch (action2.action) {
+      case "navigate":
+        await page().goto(withUnique(action2.value ?? action2.label, this.unique), {
+          waitUntil: "load"
+        });
+        return;
+      case "click":
+      case "dblclick": {
+        const handle = await this.find(action2);
+        await this.point(handle, action2.action);
+        await handle.click({ count: action2.action === "dblclick" ? 2 : 1 });
+        return;
+      }
+      case "hover": {
+        const handle = await this.find(action2);
+        await this.point(handle, "hover");
+        await handle.hover();
+        return;
+      }
+      case "fill": {
+        const handle = await this.find(action2);
+        await this.point(handle, "fill");
+        if (this.secrets.hasTokens(value)) this.restores.push(await maskSecretFields([handle]));
+        const text = this.text(value);
+        await handle.evaluate((el) => {
+          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+            el.value = "";
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+          } else if (el.isContentEditable) {
+            el.textContent = "";
+          }
+        });
+        await handle.focus();
+        const delay = Math.min(this.pace.typeMs, MAX_TYPE_MS / Math.max(1, text.length));
+        await page().keyboard.type(text, { delay });
+        return;
+      }
+      case "select": {
+        const handle = await this.find(action2);
+        await this.point(handle, "select");
+        await selectOption(handle, this.text(value));
+        return;
+      }
+      case "check":
+      case "uncheck": {
+        const handle = await this.find(action2);
+        await this.point(handle, action2.action);
+        const want = action2.action === "check";
+        if (await handle.evaluate((el) => el.checked) !== want)
+          await handle.click();
+        return;
+      }
+      case "press": {
+        if (action2.selector) await (await this.find(action2)).focus();
+        this.capture()?.action(this.tab.id, "press");
+        await pressKeys(this.tab, value);
+        return;
+      }
+      case "scroll": {
+        if (action2.selector) {
+          await (await this.find(action2)).scrollIntoView();
+          return;
+        }
+        await page().mouse.wheel({ deltaY: value === "up" ? -600 : Number(value) || 600 });
+        return;
+      }
+      case "upload": {
+        const handle = await this.find(action2);
+        await this.point(handle, "upload");
+        const paths = (action2.files ?? []).map(
+          (f) => checkUploadPath(f, this.config.uploadsRoot, this.config.projectDir)
+        );
+        await handle.uploadFile(...paths);
+        return;
+      }
+      case "dialog":
+        return;
+      case "tab-new": {
+        const detail = parse6(action2.value);
+        const tab = await this.openTab(
+          String(detail.name ?? `tab-${this.tabs.size + 1}`),
+          String(detail.login ?? "main")
+        );
+        if (typeof detail.url === "string")
+          await tab.page.goto(withUnique(detail.url, this.unique), { waitUntil: "load" });
+        return;
+      }
+      case "tab-switch": {
+        const detail = parse6(action2.value);
+        const name = String(detail.name ?? "");
+        if (this.tabs.has(name)) {
+          this.use(name);
+          return;
+        }
+        const opener = this.tabs.get(String(detail.opener ?? ""));
+        if (!opener) throw new StepError(`The replay does not know how the tab "${name}" opened.`);
+        const mine = new Set([...this.tabs.values()].map((t) => t.id));
+        const end = Date.now() + 1e4;
+        while (Date.now() < end) {
+          const popup = [...this.driver.tabs.values()].find(
+            (t) => t.openerId === opener.id && !mine.has(t.id)
+          );
+          if (popup) {
+            popup.answerDialog = this.answer;
+            this.tabs.set(name, popup);
+            this.use(name);
+            return;
+          }
+          await sleep(100);
+        }
+        throw new StepError(`The tab "${name}" did not open.`);
+      }
+      case "tab-close": {
+        const name = String(parse6(action2.value).name ?? "");
+        const tab = this.tabs.get(name);
+        this.tabs.delete(name);
+        await tab?.page.close().catch(() => void 0);
+        if (this.current === name) this.use([...this.tabs.keys()].at(-1) ?? "main");
+        return;
+      }
+      case "emulate": {
+        const { allTabs, ...change } = parse6(action2.value);
+        const targets = allTabs ? [...this.tabs.values()] : [this.tab];
+        for (const tab of targets) await this.driver.setEmulation(change, { tab, reload: false });
+        return;
+      }
+      case "mock": {
+        const { tab, id, ...rule } = parse6(action2.value);
+        const target2 = typeof tab === "string" ? this.tabs.get(tab) : void 0;
+        const tabIds = target2 ? [target2.id] : [...this.tabs.values()].map((t) => t.id);
+        for (const tabId of tabIds) {
+          const added = await this.driver.addMock({ ...rule, tab: tabId });
+          this.mocks.set(`${String(id ?? added.id)}:${tabId}`, added.id);
+        }
+        return;
+      }
+      case "mock-clear": {
+        const { id } = parse6(action2.value);
+        for (const [key2, driverId] of [...this.mocks]) {
+          if (id !== void 0 && !key2.startsWith(`${String(id)}:`)) continue;
+          await this.driver.removeMocks(driverId);
+          this.mocks.delete(key2);
+        }
+        return;
+      }
+      case "storage":
+        await this.storage(parse6(action2.value));
+        return;
+    }
+  }
+  async storage(detail) {
+    const tab = this.tab;
+    const op = String(detail.op ?? "");
+    const name = typeof detail.name === "string" ? detail.name : void 0;
+    const text = typeof detail.value === "string" ? this.text(detail.value) : "";
+    if (op === "clearSiteData") {
+      const cdp = await tab.page.createCDPSession();
+      await cdp.send("Storage.clearDataForOrigin", {
+        origin: new URL(tab.page.url()).origin,
+        storageTypes: "all"
+      });
+      await cdp.detach().catch(() => void 0);
+      return;
+    }
+    if (detail.kind === "local" || detail.kind === "session") {
+      if (op === "set" || op === "delete" || op === "clear")
+        await writeStorage(tab, detail.kind, op, name, text);
+      return;
+    }
+    const context2 = tab.page.browserContext();
+    if (op === "set" && name) {
+      await context2.setCookie({
+        name,
+        value: text,
+        domain: typeof detail.domain === "string" && detail.domain ? detail.domain : new URL(tab.page.url()).hostname,
+        path: typeof detail.path === "string" ? detail.path : "/",
+        ...typeof detail.httpOnly === "boolean" ? { httpOnly: detail.httpOnly } : {},
+        ...typeof detail.secure === "boolean" ? { secure: detail.secure } : {}
+      });
+      return;
+    }
+    if (op === "delete" || op === "clear") {
+      for (const cookie of await context2.cookies()) {
+        if (op === "delete" && cookie.name !== name) continue;
+        await context2.deleteCookie(cookie);
+      }
+    }
+  }
+};
+async function replayRun(ctx, input3) {
+  const config3 = await ctx.config();
+  if (ctx.run?.run.status === "running") {
+    throw new ToolError("A run is going. Call run_finish first, then replay it.", "run_active");
+  }
+  if (liveCaptures(ctx).length > 0) {
+    throw new ToolError("A video is recording. Call video with action stop first.", "video_active");
+  }
+  const id = input3.runId ?? latestRunId(config3.projectDir, { finishedOnly: true });
+  if (!id) throw new ToolError("There is no finished run to replay.", "no_run");
+  const store = RunStore.open(config3.projectDir, id);
+  const run = store.run;
+  const plan = buildOps(run);
+  if (plan.missingSelectors.length) {
+    throw new ToolError(
+      [
+        `Walkthrough cannot replay the run "${run.name}", because these actions have no stable selector:`,
+        ...plan.missingSelectors.map((m) => `- ${m}`),
+        "Add an exact action to these plan steps, and run the plan again."
+      ].join("\n"),
+      "replay_blocked"
+    );
+  }
+  if (!plan.steps.some((s) => s.ops.some((o) => o.type === "action"))) {
+    throw new ToolError(`The run "${run.name}" has no actions to replay.`, "nothing_to_do");
+  }
+  const targets = (input3.paths ?? []).map((p) => ({
+    format: chooseFormat(void 0, p, config3.video.runFormat),
+    ...checkMediaPath(p, config3.projectDir, config3.screenshotRoots)
+  }));
+  const formats = [.../* @__PURE__ */ new Set([...input3.formats ?? [], ...targets.map((t) => t.format)])];
+  if (formats.length === 0) formats.push(config3.video.runFormat);
+  if (!ctx.driver?.alive) await openBrowser(ctx, {});
+  const driver = ctx.requireDriver();
+  const before = driver.activeId;
+  const width = input3.width ?? config3.video.width;
+  const pace = PACES[input3.pace];
+  let capture;
+  const replay = new Replay(driver, config3, await ctx.secrets(), newUnique(), pace, () => capture);
+  for (const { ops } of plan.steps)
+    for (const op of ops) {
+      if (op.type !== "action" || op.action.action !== "dialog") continue;
+      const detail = parse6(op.action.value);
+      replay.dialogs.push({
+        accept: detail.accept !== false,
+        ...typeof detail.text === "string" ? { text: detail.text } : {}
+      });
+    }
+  const failure2 = async (stepTitle, error62) => {
+    const lines = [
+      `The replay stopped at step ${stepTitle}: ${error62.message}`,
+      "Walkthrough saved no video. Fix the step or the app, and replay again."
+    ];
+    let preview;
+    try {
+      const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
+      preview = Buffer.from(shot).toString("base64");
+      const file2 = join40(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      mkdirSync17(dirname12(file2), { recursive: true });
+      writeFileSync18(file2, shot);
+      lines.push(`Screenshot: ${relative17(config3.projectDir, file2)}`);
+    } catch {
+    }
+    return { ok: false, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
+  };
+  try {
+    const main2 = await replay.openTab("main", "main");
+    const { device, ...rest } = run.emulation ?? {};
+    await driver.setEmulation(device ? { ...rest, device } : rest, {
+      tab: main2,
+      reload: false
+    });
+    if (!device)
+      await main2.page.setViewport({
+        width,
+        height: Math.round(width * 10 / 16),
+        deviceScaleFactor: 1
+      });
+    const session = input3.session ?? run.session;
+    if (session) await restoreSession(main2, loadSession(config3.projectDir, session));
+    await main2.page.goto(run.baseUrl ?? config3.baseUrl ?? "about:blank", { waitUntil: "load" });
+    capture = new VideoCapture(driver, { maxWidth: width, showPanel: false });
+    await capture.start();
+    for (const { step, ops } of plan.steps) {
+      const title = `${step.index} "${step.title}"`;
+      input3.onStep?.(`Step ${step.index}: ${step.title}`);
+      if (input3.captions ?? config3.video.captions) capture.setCaption(step.caption ?? step.title);
+      try {
+        for (const op of ops) {
+          if (op.type === "reach") await replay.reach(op.url);
+          else if (op.type === "action") {
+            await replay.act(op.action);
+            await replay.tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 3e3 }).catch(() => void 0);
+          } else if (op.type === "expect") await replay.expectText(op.text);
+        }
+      } catch (error62) {
+        return await failure2(title, error62);
+      }
+      await sleep(pace.holdMs);
+    }
+    await capture.stop();
+    const events = [
+      ...capture.events,
+      { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
+    ];
+    const lines = [];
+    const videoDir = join40(store.dir, "video");
+    mkdirSync17(videoDir, { recursive: true });
+    const stamp3 = fileStamp("replay");
+    let preview;
+    for (const format3 of formats) {
+      const samples = buildSamples(capture.frames, events, {
+        start: capture.startedAt,
+        end: capture.stoppedAt ?? Date.now(),
+        fps: format3 === "gif" ? config3.video.gifFps : VIDEO_FPS2,
+        idleSeconds: config3.video.idleSeconds,
+        pointer: input3.pointer ?? config3.video.pointer,
+        captions: input3.captions ?? config3.video.captions,
+        glideMs: pace.glideMs
+      });
+      const seconds = samples.reduce((sum, s) => sum + s.duration, 0);
+      if (format3 === "gif" && seconds > config3.video.maxGifSeconds) {
+        lines.push(
+          `Walkthrough made no GIF, because the replay is ${Math.round(seconds)} seconds long. GIF files can be up to ${config3.video.maxGifSeconds} seconds (maxGifSeconds).`
+        );
+        continue;
+      }
+      const middle = samples[Math.floor(samples.length / 2)];
+      if (!preview && middle)
+        preview = readFileSync22(join40(capture.dir, middle.file)).toString("base64");
+      const out = await encodeVideo({
+        config: config3,
+        framesDir: capture.dir,
+        samples,
+        format: format3,
+        outFile: join40(videoDir, `${stamp3}.${format3}`),
+        title: input3.titleCard ?? true ? run.name : void 0,
+        width: format3 === "gif" ? config3.video.gifWidth : width
+      });
+      lines.push(
+        `Saved the replay (${out.format.toUpperCase()}, ${out.seconds.toFixed(1)} seconds, ${size(out.bytes)}, ${out.width}x${out.height}): ${relative17(config3.projectDir, out.file)}`
+      );
+      if (out.note) lines.push(out.note);
+      const copies = [];
+      for (const target2 of targets.filter((t) => t.format === out.format)) {
+        mkdirSync17(dirname12(target2.path), { recursive: true });
+        copyFileSync2(out.file, target2.path);
+        copies.push(target2.display);
+        lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
+      }
+      run.videos ??= [];
+      run.videos.push({
+        file: relative17(store.dir, out.file),
+        format: out.format,
+        seconds: Math.round(out.seconds * 10) / 10,
+        bytes: out.bytes,
+        name: "replay",
+        ...copies[0] ? { path: copies[0] } : {}
+      });
+    }
+    store.save();
+    lines.push(
+      `The replay used a new login and a new {{unique}} value (${replay.unique}), at the ${input3.pace} pace.`
+    );
+    return { ok: true, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
+  } catch (error62) {
+    if (error62 instanceof StepError) return failure2("(setup)", error62);
+    throw error62;
+  } finally {
+    await capture?.stop().catch(() => void 0);
+    capture?.discard();
+    for (const driverId of replay.mocks.values()) await driver.removeMocks(driverId).catch(() => 0);
+    for (const restore of replay.restores.reverse()) await restore().catch(() => void 0);
+    const logins = replay.loginNames;
+    for (const tab of [...driver.tabs.values()]) {
+      if (logins.has(tab.login)) await tab.page.close().catch(() => void 0);
+    }
+    if (before && driver.tabs.has(before)) driver.switchTo(before);
+  }
+}
+
 // packages/server/src/tools/video-tools.ts
+var list = (value) => value === void 0 ? [] : Array.isArray(value) ? value : [value];
+function one(value, what) {
+  if (!Array.isArray(value)) return value;
+  if (value.length > 1)
+    throw new ToolError(`Only replay takes more than one ${what}. Give one ${what}.`, "bad_input");
+  return value[0];
+}
 function registerVideoTools(server, ctx) {
   server.registerTool(
     "video",
@@ -118691,25 +119316,34 @@ function registerVideoTools(server, ctx) {
         "Record the active tab as a video: MP4, WebM, or GIF. Actions: start records, caption sets the text at the bottom, and stop saves the file.",
         "Walkthrough cuts wait time short, draws the pointer and clicks, and hides the panel and typed secrets.",
         "During a run, the video belongs to the run, and step titles become captions.",
-        "slideshow makes a video of the screenshots of a run, with the step titles as captions."
+        "slideshow makes a video of the screenshots of a run, with the step titles as captions.",
+        "replay records a finished run again for a clean demo: a new login, an even pace, typed text, and a title card."
       ].join(" "),
       inputSchema: {
-        action: external_exports.enum(["start", "stop", "status", "caption", "slideshow"]),
+        action: external_exports.enum(["start", "stop", "status", "caption", "slideshow", "replay"]),
         name: external_exports.string().max(60).optional().describe('A name for the file, like "checkout".'),
         text: external_exports.string().max(120).optional().describe("For caption: the text at the bottom. An empty text removes it."),
-        format: external_exports.enum(VIDEO_FORMATS).optional().describe(
-          "For stop and slideshow: mp4, webm, or gif. The default comes from path, then config.yaml. A slideshow is a GIF by default."
+        format: external_exports.union([external_exports.enum(VIDEO_FORMATS), external_exports.array(external_exports.enum(VIDEO_FORMATS)).min(1).max(3)]).optional().describe(
+          "mp4, webm, or gif. The default comes from path, then config.yaml. A slideshow is a GIF by default. replay takes a list, like [mp4, gif]."
         ),
-        path: external_exports.string().optional().describe(
-          'For stop and slideshow: also save the video to this file, from the project folder, like "docs/images/cart.gif".'
+        path: external_exports.union([external_exports.string(), external_exports.array(external_exports.string()).min(1).max(5)]).optional().describe(
+          'Also save the video to this file, from the project folder, like "docs/images/cart.gif". replay takes a list.'
         ),
         showPanel: external_exports.boolean().optional().describe("For start: show the Walkthrough panel in the video."),
         runId: external_exports.string().optional().describe(
-          "For slideshow: the run. The default is the run that is going, or the newest run."
-        )
+          "For slideshow and replay: the run. The default is the run that is going, or the newest run."
+        ),
+        pace: external_exports.enum(Object.keys(PACES)).default("normal").describe("For replay: slow, normal, or fast."),
+        session: external_exports.string().optional().describe(
+          "For replay: a saved login to start with. The default is the run's saved login."
+        ),
+        captions: external_exports.boolean().optional().describe("For replay: show step captions."),
+        pointer: external_exports.boolean().optional().describe("For replay: draw the pointer and clicks."),
+        titleCard: external_exports.boolean().optional().describe("For replay: start with a card that shows the run name. The default is yes."),
+        width: external_exports.number().int().min(320).max(3840).optional().describe("For replay: the width of the page and the video, in pixels.")
       }
     },
-    (input3) => runTool(ctx, "video", async () => {
+    (input3, extra) => runTool(ctx, "video", async () => {
       const video = ctx.video;
       if (input3.action === "status") {
         if (!video) return "No video is recording.";
@@ -118742,11 +119376,37 @@ function registerVideoTools(server, ctx) {
           "Call video with action stop to save it."
         ].join("\n");
       }
-      const saved = input3.action === "slideshow" ? await slideshow(ctx, { runId: input3.runId, format: input3.format, path: input3.path }) : await stopVideo(ctx, { format: input3.format, path: input3.path, name: input3.name });
+      if (input3.action === "replay") {
+        const stopProgress = startProgress(extra, "Walkthrough replays the run.");
+        try {
+          const result = await replayRun(ctx, {
+            runId: input3.runId,
+            formats: list(input3.format),
+            paths: list(input3.path),
+            pace: input3.pace,
+            session: input3.session,
+            captions: input3.captions,
+            pointer: input3.pointer,
+            titleCard: input3.titleCard,
+            width: input3.width
+          });
+          if (result.ok) writeReports(result.store, await ctx.secrets());
+          const reply = textResult(
+            result.lines.join("\n"),
+            result.preview && result.previewType ? [{ type: "image", data: result.preview, mimeType: result.previewType }] : []
+          );
+          return result.ok ? reply : { ...reply, isError: true };
+        } finally {
+          stopProgress();
+        }
+      }
+      const format3 = one(input3.format, "format");
+      const path14 = one(input3.path, "path");
+      const saved = input3.action === "slideshow" ? await slideshow(ctx, { runId: input3.runId, format: format3, path: path14 }) : await stopVideo(ctx, { format: format3, path: path14, name: input3.name });
       if (saved.store && saved.store.run.status !== "running")
         writeReports(saved.store, await ctx.secrets());
-      const extra = saved.preview && saved.previewType ? [{ type: "image", data: saved.preview, mimeType: saved.previewType }] : [];
-      return textResult(saved.lines.join("\n"), extra);
+      const extraContent = saved.preview && saved.previewType ? [{ type: "image", data: saved.preview, mimeType: saved.previewType }] : [];
+      return textResult(saved.lines.join("\n"), extraContent);
     })
   );
 }
@@ -118756,8 +119416,8 @@ function createServer2() {
   const server = new McpServer({ name: "uiwalk", version: VERSION });
   const roots = async () => {
     if (!server.server.getClientCapabilities()?.roots) return [];
-    const { roots: list } = await server.server.listRoots();
-    return list.map((root) => root.uri.startsWith("file:") ? fileURLToPath4(root.uri) : root.uri);
+    const { roots: list2 } = await server.server.listRoots();
+    return list2.map((root) => root.uri.startsWith("file:") ? fileURLToPath4(root.uri) : root.uri);
   };
   const ctx = new Context(roots, () => server.server.getClientVersion()?.name);
   registerBrowserTools(server, ctx);
@@ -118891,7 +119551,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join40(dirname12(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join41(dirname13(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

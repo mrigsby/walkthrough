@@ -1,11 +1,28 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
-import { VIDEO_FORMATS } from '../video/formats.js';
+import { PACES, type Pace, replayRun } from '../replay/replayer.js';
+import { VIDEO_FORMATS, type VideoFormat } from '../video/formats.js';
 import { slideshow, startVideo, stopVideo } from '../video/recording.js';
+import { startProgress } from './developer-tools.js';
 import { writeReports } from './run-tools.js';
 import { type Content, runTool, textResult } from './util.js';
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+const list = <T>(value: T | T[] | undefined): T[] =>
+  value === undefined ? [] : Array.isArray(value) ? value : [value];
+
+// One format or path. Only replay takes a list.
+function one<T>(value: T | T[] | undefined, what: string): T | undefined {
+  if (!Array.isArray(value)) return value;
+  if (value.length > 1)
+    throw new ToolError(`Only replay takes more than one ${what}. Give one ${what}.`, 'bad_input');
+  return value[0];
+}
 
 export function registerVideoTools(server: McpServer, ctx: Context): void {
   server.registerTool(
@@ -17,9 +34,10 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
         'Walkthrough cuts wait time short, draws the pointer and clicks, and hides the panel and typed secrets.',
         'During a run, the video belongs to the run, and step titles become captions.',
         'slideshow makes a video of the screenshots of a run, with the step titles as captions.',
+        'replay records a finished run again for a clean demo: a new login, an even pace, typed text, and a title card.',
       ].join(' '),
       inputSchema: {
-        action: z.enum(['start', 'stop', 'status', 'caption', 'slideshow']),
+        action: z.enum(['start', 'stop', 'status', 'caption', 'slideshow', 'replay']),
         name: z.string().max(60).optional().describe('A name for the file, like "checkout".'),
         text: z
           .string()
@@ -27,16 +45,16 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
           .optional()
           .describe('For caption: the text at the bottom. An empty text removes it.'),
         format: z
-          .enum(VIDEO_FORMATS)
+          .union([z.enum(VIDEO_FORMATS), z.array(z.enum(VIDEO_FORMATS)).min(1).max(3)])
           .optional()
           .describe(
-            'For stop and slideshow: mp4, webm, or gif. The default comes from path, then config.yaml. A slideshow is a GIF by default.',
+            'mp4, webm, or gif. The default comes from path, then config.yaml. A slideshow is a GIF by default. replay takes a list, like [mp4, gif].',
           ),
         path: z
-          .string()
+          .union([z.string(), z.array(z.string()).min(1).max(5)])
           .optional()
           .describe(
-            'For stop and slideshow: also save the video to this file, from the project folder, like "docs/images/cart.gif".',
+            'Also save the video to this file, from the project folder, like "docs/images/cart.gif". replay takes a list.',
           ),
         showPanel: z
           .boolean()
@@ -46,11 +64,34 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
           .string()
           .optional()
           .describe(
-            'For slideshow: the run. The default is the run that is going, or the newest run.',
+            'For slideshow and replay: the run. The default is the run that is going, or the newest run.',
           ),
+        pace: z
+          .enum(Object.keys(PACES) as [Pace, ...Pace[]])
+          .default('normal')
+          .describe('For replay: slow, normal, or fast.'),
+        session: z
+          .string()
+          .optional()
+          .describe(
+            "For replay: a saved login to start with. The default is the run's saved login.",
+          ),
+        captions: z.boolean().optional().describe('For replay: show step captions.'),
+        pointer: z.boolean().optional().describe('For replay: draw the pointer and clicks.'),
+        titleCard: z
+          .boolean()
+          .optional()
+          .describe('For replay: start with a card that shows the run name. The default is yes.'),
+        width: z
+          .number()
+          .int()
+          .min(320)
+          .max(3840)
+          .optional()
+          .describe('For replay: the width of the page and the video, in pixels.'),
       },
     },
-    (input) =>
+    (input, extra: Extra) =>
       runTool(ctx, 'video', async () => {
         const video = ctx.video;
         if (input.action === 'status') {
@@ -90,18 +131,46 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
             'Call video with action stop to save it.',
           ].join('\n');
         }
+        if (input.action === 'replay') {
+          const stopProgress = startProgress(extra, 'Walkthrough replays the run.');
+          try {
+            const result = await replayRun(ctx, {
+              runId: input.runId,
+              formats: list<VideoFormat>(input.format),
+              paths: list(input.path),
+              pace: input.pace,
+              session: input.session,
+              captions: input.captions,
+              pointer: input.pointer,
+              titleCard: input.titleCard,
+              width: input.width,
+            });
+            if (result.ok) writeReports(result.store, await ctx.secrets());
+            const reply = textResult(
+              result.lines.join('\n'),
+              result.preview && result.previewType
+                ? [{ type: 'image', data: result.preview, mimeType: result.previewType }]
+                : [],
+            );
+            return result.ok ? reply : { ...reply, isError: true };
+          } finally {
+            stopProgress();
+          }
+        }
+        const format = one<VideoFormat>(input.format, 'format');
+        const path = one(input.path, 'path');
         const saved =
           input.action === 'slideshow'
-            ? await slideshow(ctx, { runId: input.runId, format: input.format, path: input.path })
-            : await stopVideo(ctx, { format: input.format, path: input.path, name: input.name });
+            ? await slideshow(ctx, { runId: input.runId, format, path })
+            : await stopVideo(ctx, { format, path, name: input.name });
         // A run that already ended gets its reports again, with the video.
         if (saved.store && saved.store.run.status !== 'running')
           writeReports(saved.store, await ctx.secrets());
-        const extra: Content[] =
+        const extraContent: Content[] =
           saved.preview && saved.previewType
             ? [{ type: 'image', data: saved.preview, mimeType: saved.previewType }]
             : [];
-        return textResult(saved.lines.join('\n'), extra);
+        return textResult(saved.lines.join('\n'), extraContent);
       }),
   );
 }

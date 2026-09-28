@@ -2,8 +2,10 @@ import { isAbsolute } from 'node:path';
 import { mediaFeatures, NETWORK_PRESETS, resolveDevice } from '../browser/devices.js';
 import { type Emulation, mergeEmulation, permissionEntries } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
-import { ELEMENT_ACTIONS } from '../page/actions.js';
-import type { Run, RunStep } from '../run/run-store.js';
+import { buildOps, type RunAction } from '../replay/ops.js';
+import type { Run } from '../run/run-store.js';
+
+export { checkableText } from '../replay/ops.js';
 
 export interface ExportResult {
   code: string;
@@ -18,14 +20,6 @@ export interface ExportResult {
 }
 
 const SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
-
-// Text in an expectation that a script can check: quoted text and money amounts.
-export function checkableText(expect: string): string[] {
-  const found = new Set<string>();
-  for (const m of expect.matchAll(/"([^"]{1,80})"/g)) if (m[1]) found.add(m[1]);
-  for (const m of expect.matchAll(/(?:\$|€|£)\d[\d,]*(?:\.\d+)?/g)) found.add(m[0]);
-  return [...found];
-}
 
 const js = (value: string) => JSON.stringify(value);
 
@@ -168,7 +162,7 @@ function dialogCode(gen: Gen): string {
 }
 
 // Code for the tab, settings, and dialog records.
-function pageChangeCode(action: RunStep['actions'][number], gen: Gen): string[] {
+function pageChangeCode(action: RunAction, gen: Gen): string[] {
   const value = (() => {
     try {
       return JSON.parse(action.value ?? '{}') as Record<string, unknown>;
@@ -489,11 +483,7 @@ function frameCode(frameUrl?: string): string {
   return `frame(${js(part)})`;
 }
 
-function actionCode(
-  action: RunStep['actions'][number],
-  secretFields: Set<string>,
-  gen: Gen,
-): string[] {
+function actionCode(action: RunAction, secretFields: Set<string>, gen: Gen): string[] {
   const { needs, baseUrl } = gen;
   const where = frameCode(action.frameUrl);
   const sel = action.selector ? js(action.selector) : '';
@@ -582,6 +572,33 @@ function setupCode(emulation: Run['emulation'], gen: Gen): string[] {
   return lines;
 }
 
+// VIDEO= and PACE_MS. Every script gets them.
+const VIDEO_HELPERS = `
+// VIDEO=<file> records the first tab. PACE_MS waits before each browser action.
+const VIDEO = process.env.VIDEO;
+const PACE_MS = Number(process.env.PACE_MS) || 0;
+
+// Finds ffmpeg: FFMPEG_PATH, then the copy from "uiwalk setup ffmpeg", then the PATH.
+function ffmpegPath() {
+  if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
+  const dir = join(process.env.UIWALK_CACHE_DIR ?? join(homedir(), '.cache', 'uiwalk'), 'ffmpeg');
+  for (const version of existsSync(dir) ? readdirSync(dir).sort().reverse() : []) {
+    for (const name of ['ffmpeg', 'ffmpeg.exe']) {
+      if (existsSync(join(dir, version, name))) return join(dir, version, name);
+    }
+  }
+  return 'ffmpeg';
+}
+
+async function startVideo(target) {
+  const file = resolve(VIDEO);
+  const format = extname(file).slice(1).toLowerCase();
+  if (!['mp4', 'webm', 'gif'].includes(format)) throw new Error('End VIDEO with .mp4, .webm, or .gif.');
+  mkdirSync(dirname(file), { recursive: true });
+  return target.screencast({ path: file, format, ffmpegPath: ffmpegPath() });
+}
+`;
+
 // The screenshot helpers. Only scripts with screenshots get them.
 function captureHelpers(secretFields: string[]): string {
   return `
@@ -622,16 +639,6 @@ async function capture(file, options = {}) {
 `;
 }
 
-// The address in a new-tab record.
-function parseUrl(value?: string): string | undefined {
-  try {
-    const url = (JSON.parse(value ?? '{}') as { url?: unknown }).url;
-    return typeof url === 'string' ? url : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 // Writes a plain Puppeteer script that repeats a run, for CI or a quick check.
 export function exportScript(
   run: Run,
@@ -639,7 +646,6 @@ export function exportScript(
 ): ExportResult {
   const secrets = new Set<string>();
   const secretFields = new Set<string>();
-  const missingSelectors: string[] = [];
   const captures: string[] = [];
   const failedSteps = run.steps
     .filter((s) => ['bug', 'fail', 'blocked'].includes(s.status))
@@ -647,7 +653,6 @@ export function exportScript(
   let actions = 0;
   let checks = 0;
   let handChecks = 0;
-  let lastUrl = run.baseUrl ?? '';
   const body: string[] = [];
   const needs: Needs = {
     unique: false,
@@ -669,62 +674,59 @@ export function exportScript(
   };
   const setup = setupCode(run.emulation, gen);
 
-  for (const step of run.steps) {
-    const shots = step.captures ?? [];
-    if ((step.status === 'pending' || step.status === 'skip') && shots.length === 0) continue;
+  const plan = buildOps(run);
+  for (const { step, ops } of plan.steps) {
     const lines: string[] = [];
-    for (const action of step.actions) {
-      if (action.url && action.url !== lastUrl) {
-        lines.push(`await reach(${urlCode(action.url, needs, run.baseUrl)});`);
-        lastUrl = action.url;
+    for (const op of ops) {
+      switch (op.type) {
+        case 'reach':
+          lines.push(`await reach(${urlCode(op.url, needs, run.baseUrl)});`);
+          break;
+        case 'no-selector':
+          lines.push(
+            `// Fix by hand: Walkthrough found no stable selector for ${op.label.replace(/\n/g, ' ')}.`,
+          );
+          break;
+        case 'action':
+          lines.push(...actionCode(op.action, secretFields, gen));
+          actions += 1;
+          break;
+        case 'cookie':
+          needs.cookies = true;
+          lines.push(cookieCheckCode(op.check, gen));
+          checks += 1;
+          break;
+        case 'expect':
+          lines.push(`await expectText(${js(op.text)});`);
+          checks += 1;
+          break;
+        case 'check-by-hand':
+          lines.push(`// Check by hand: ${op.text.replace(/\n/g, ' ')}`);
+          handChecks += 1;
+          break;
+        case 'capture-no-selector':
+          lines.push(
+            `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${(op.shot.element ?? '').replace(/\n/g, ' ')} (${op.shot.path}).`,
+          );
+          break;
+        case 'capture': {
+          const shot = op.shot;
+          const where = isAbsolute(shot.path)
+            ? js(shot.path)
+            : `resolve(PROJECT_DIR, ${js(shot.path.split('\\').join('/'))})`;
+          if (isAbsolute(shot.path))
+            lines.push('// This folder is outside the project. It only works on this computer.');
+          const options = [
+            shot.selector ? `selector: ${js(shot.selector)}` : '',
+            shot.fullPage ? 'fullPage: true' : '',
+          ].filter(Boolean);
+          lines.push(
+            `await capture(${where}${options.length ? `, { ${options.join(', ')} }` : ''});`,
+          );
+          captures.push(shot.path);
+          break;
+        }
       }
-      if (!action.selector && ELEMENT_ACTIONS.includes(action.action)) {
-        missingSelectors.push(`Step ${step.index}: ${action.label}`);
-        lines.push(
-          `// Fix by hand: Walkthrough found no stable selector for ${action.label.replace(/\n/g, ' ')}.`,
-        );
-        continue;
-      }
-      lines.push(...actionCode(action, secretFields, gen));
-      actions += 1;
-      // After a page load, the next action starts at the new address.
-      if (action.action === 'navigate') lastUrl = action.value ?? lastUrl;
-      if (action.action === 'tab-new') lastUrl = parseUrl(action.value) ?? 'about:blank';
-      if (action.action === 'tab-close') lastUrl = '';
-    }
-    for (const check of step.cookies ?? []) {
-      needs.cookies = true;
-      lines.push(cookieCheckCode(check, gen));
-      checks += 1;
-    }
-    if (step.expect) {
-      const texts = checkableText(step.expect);
-      for (const text of texts) lines.push(`await expectText(${js(text)});`);
-      checks += texts.length;
-      if (texts.length === 0) {
-        lines.push(`// Check by hand: ${step.expect.replace(/\n/g, ' ')}`);
-        handChecks += 1;
-      }
-    }
-    for (const shot of shots) {
-      if (shot.element && !shot.selector) {
-        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
-        lines.push(
-          `// Fix by hand: Walkthrough found no stable selector for the screenshot of ${shot.element.replace(/\n/g, ' ')} (${shot.path}).`,
-        );
-        continue;
-      }
-      const where = isAbsolute(shot.path)
-        ? js(shot.path)
-        : `resolve(PROJECT_DIR, ${js(shot.path.split('\\').join('/'))})`;
-      if (isAbsolute(shot.path))
-        lines.push('// This folder is outside the project. It only works on this computer.');
-      const options = [
-        shot.selector ? `selector: ${js(shot.selector)}` : '',
-        shot.fullPage ? 'fullPage: true' : '',
-      ].filter(Boolean);
-      lines.push(`await capture(${where}${options.length ? `, { ${options.join(', ')} }` : ''});`);
-      captures.push(shot.path);
     }
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
@@ -735,12 +737,13 @@ export function exportScript(
       '',
     );
   }
+  const missingSelectors = plan.missingSelectors;
 
   const pkg = options.installedChrome ? 'puppeteer-core' : 'puppeteer';
   const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : 'puppeteer';
   const launch = options.installedChrome
-    ? "{ channel: 'chrome', headless: !process.env.HEADFUL }"
-    : '{ headless: !process.env.HEADFUL }';
+    ? "{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS }"
+    : '{ headless: !process.env.HEADFUL, slowMo: PACE_MS }';
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
   const code = `#!/usr/bin/env node
@@ -749,7 +752,11 @@ export function exportScript(
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? ' (and Google Chrome)' : ''}
 // Run:   node ${'<this file>'}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
-${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${needs.unique ? '// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n' : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
+// Set VIDEO=<file>.mp4 (or .webm or .gif) to record the first tab. It needs ffmpeg.
+// Set PACE_MS to wait that many milliseconds before each browser action, like 50.
+${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${needs.unique ? '// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n' : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { ${hasShots ? 'basename, dirname, extname, join, relative, resolve, sep' : 'dirname, extname, join, resolve'} } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ${imports} from '${pkg}';
 
@@ -759,12 +766,13 @@ const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {
   if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
 }
-${needs.unique ? UNIQUE_CODE : ''}
+${needs.unique ? UNIQUE_CODE : ''}${VIDEO_HELPERS}
 const browser = await puppeteer.launch(${launch});
 ${needs.tabs ? 'let' : 'const'} page = await browser.newPage();
 page.setDefaultTimeout(10_000);
 ${setup.join('\n')}
 ${dialogCode(gen)}
+const recorder = VIDEO ? await startVideo(page) : undefined;
 ${needs.tabs ? TAB_HELPERS : ''}
 // Runs one step, and names the step if it fails.
 async function step(name, fn) {
@@ -843,6 +851,8 @@ ${body.join('\n')}${
   await page.screenshot({ path: resolve(PROJECT_DIR, 'walkthrough-export-failure.png') }).catch(() => {});
   process.exitCode = 1;
 } finally {
+  await recorder?.stop();
+  if (recorder) console.log(\`Saved the video: \${VIDEO}\`);
   await browser.close();
 }
 `;

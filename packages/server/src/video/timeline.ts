@@ -27,6 +27,8 @@ export interface TimelineOptions {
   idleSeconds: number;
   pointer: boolean;
   captions: boolean;
+  // How long the pointer takes to reach an element. A replay sets it from its pace.
+  glideMs?: number;
 }
 
 // Real time around each action. The pointer moves before it, and the page reacts after it.
@@ -196,9 +198,10 @@ export function buildSamples(
       );
       const before = [...onTab].reverse().find((a) => a.t <= t);
       const next = onTab.find((a) => a.t > t);
-      if (next && next.t - t <= GLIDE) {
+      const glide = options.glideMs ?? GLIDE;
+      if (next && next.t - t <= glide) {
         const from = before ?? next;
-        const k = 1 - (next.t - t) / GLIDE;
+        const k = 1 - (next.t - t) / glide;
         sample.pointer = {
           x: lerp(from.x as number, next.x as number, k),
           y: lerp(from.y as number, next.y as number, k),

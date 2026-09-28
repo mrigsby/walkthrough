@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Checkout demo
+description: A short demo of the checkout, for a video. Make it with /walkthrough:video checkout-demo.
+mode: autonomous
+video: true
+steps:
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    caption: Open the shop
+    expect: The shop shows the "Coffee Mug".
+
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    action: { click: { selector: '[data-add="mug"]' } }
+    caption: Add the coffee mug to the cart
+    expect: The cart count in the header goes up by one.
+
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    caption: Open the cart
+    expect: The cart lists the "Coffee Mug".
+
+  - id: go-to-checkout
+    do: Click "Checkout"
+    action: { click: { role: button, name: Checkout } }
+    caption: Go to checkout
+    expect: The page shows name, email, and address fields, and a card form.
+
+  - id: enter-name
+    do: Type "Demo Shopper" in the Full name field
+    action: { fill: { role: textbox, name: Full name, value: Demo Shopper } }
+    caption: Enter your name
+
+  - id: enter-email
+    do: Type a new email address in the Email field
+    action: { fill: { role: textbox, name: Email, value: "demo+{{unique}}@example.com" } }
+    caption: Enter your email address
+
+  - id: enter-address
+    do: Type the address in the Address field
+    action: { fill: { role: textbox, name: Address, value: "1 Main Street, Springfield" } }
+    caption: Enter your address
+
+  - id: enter-card
+    do: Type the test card 4242 4242 4242 4242 in the Card number field of the payment form
+    action: { fill: { role: textbox, name: Card number, value: "4242 4242 4242 4242" } }
+    caption: Enter the card number
+
+  - id: save-card
+    do: Click "Save card" in the payment form
+    action: { click: { role: button, name: Save card } }
+    caption: Save the card
+    expect: The page says "Card ending in 4242 is ready."
+
+  - id: place-order
+    do: Click "Place order" and accept the confirm dialog
+    action: { click: { role: button, name: Place order } }
+    caption: Place the order
+    expect: The page says "Thank you".

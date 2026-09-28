@@ -72,6 +72,8 @@ The [getting started guide](docs/getting-started.md) has the details.
 | `/walkthrough:record [name]` | Records you as you use the app, and drafts a plan from it. |
 | `/walkthrough:report [run]` | Shows the result of a run and writes its reports again. |
 | `/walkthrough:a11y [pages or plan]` | Checks pages for accessibility problems and writes an accessibility report. |
+| `/walkthrough:lighthouse [pages or plan]` | Checks pages or a flow with Lighthouse and writes a report with fixes. |
+| `/walkthrough:video <workflow or plan>` | Makes a demo video of a workflow: it writes a plan, runs it, and records a clean replay. |
 | `/walkthrough:export [run]` | Turns a finished run into a Puppeteer script for CI. |
 | `/walkthrough:bug [run] [step]` | Drafts a GitHub issue for a bug and opens the issue page for you. |
 | `/walkthrough:doctor` | Checks the setup and explains how to fix problems. |
