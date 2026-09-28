@@ -38,6 +38,7 @@ steps:
 | `session` | No | A saved login, from the `session` tool. The run starts logged in. |
 | `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
 | `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
+| `lighthouse` | No | Settings for the Lighthouse steps: `device`, `categories`, and `report`. See [Lighthouse flows](#lighthouse-flows). |
 
 ## Step keys
 
@@ -54,6 +55,7 @@ steps:
 | `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
 | `cookies` | No | Cookie checks after the step, such as `[{ name: session, httpOnly: true }]`. See [Cookie checks](#cookie-checks). |
 | `mock` | No | Mock rules to add before the step, or `off` to remove all rules. See [Mocked requests](#mocked-requests). |
+| `lighthouse` | No | Measure the step with Lighthouse: `navigation`, `timespan`, or `snapshot`. See [Lighthouse flows](#lighthouse-flows). |
 
 ### Write a good `expect`
 
@@ -234,6 +236,44 @@ A step can check cookies after it runs. The agent calls the `storage` tool with 
 
 A check has a `name`, and any of these: `exists` (`false` means the cookie must be gone), `value`, `contains`, `httpOnly`, `secure`, and `sameSite` (`Strict`, `Lax`, or `None`). `value` and `contains` can use `{{secret:NAME}}` and `{{unique}}`. Exported scripts check the cookies too.
 
+## Lighthouse flows
+
+A plan can measure a user flow with Lighthouse, like the Lighthouse user flows in DevTools. Lighthouse must be installed. See [Lighthouse](tools.md#lighthouse).
+
+```yaml
+lighthouse:
+  device: desktop
+  report: true
+steps:
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    lighthouse: navigation
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug, then open the cart
+    lighthouse: timespan
+  - id: open-checkout
+    do: Click "Checkout"
+    action: { click: { role: button, name: Checkout } }
+    lighthouse: snapshot
+```
+
+Each step with a `lighthouse` key is one step of the flow:
+
+| Mode | What Lighthouse measures | Categories |
+| --- | --- | --- |
+| `navigation` | Lighthouse loads the page of the step's `navigate` action, and measures the load. The step needs a `navigate` action. | All |
+| `timespan` | What happens while the agent does the step, such as clicks and pages that open after a click. | Performance and Best Practices |
+| `snapshot` | The page as it is after the step, such as a form or a dialog. | All |
+
+- `device` is `desktop` or `mobile`, and `categories` lists the categories to check. The defaults come from `config.yaml`.
+- `report: true` asks the agent to write `lighthouse.html` when the run ends.
+- The run starts in a new browser with an empty profile, so earlier runs do not change the results. To start logged in, add `session` to the plan. When Walkthrough uses your own Chrome, it cannot start a new browser.
+- Lighthouse measures the test tab. The tab keeps its screen size, its settings, and its login. For a real mobile check, also set `device: mobile` on the plan, so the screen matches.
+- Walkthrough hides its panel while Lighthouse measures. The developer can still answer a question in the panel.
+- Lighthouse runs fewer audits for a timespan or a snapshot than for a page load. The reports show them as passed audits, such as `5/6`, and not as a score.
+- Walkthrough saves Lighthouse's own flow report as `lighthouse/flow.report.html` in the run folder, after each flow step.
+
 ## Saved logins
 
 To start runs logged in:
@@ -254,6 +294,8 @@ Each run gets a folder in `.walkthrough/runs/`. It holds:
 - `report.html`: one file with the screenshots inside. Open it in any browser.
 - `accessibility.html`, `accessibility.md`, `accessibility.json`: the accessibility report, when the agent writes one. See [Accessibility reports](accessibility.md).
 - `a11y/`: screenshots of accessibility problems.
+- `lighthouse.html`, `lighthouse.md`, `lighthouse.json`: the Lighthouse report, when the agent writes one.
+- `lighthouse/`: Lighthouse's own reports, including `flow.report.html` for a flow.
 
 If a run ends early, Walkthrough still writes the reports and marks the run "Incomplete".
 

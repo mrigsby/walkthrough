@@ -10,7 +10,7 @@ import { untrusted } from '../guards/untrusted.js';
 import { tokenizeUnique, withUnique } from '../page/unique.js';
 import { runTool } from './util.js';
 
-async function pageSummary(tab: Tab): Promise<string> {
+export async function pageSummary(tab: Tab): Promise<string> {
   const title = await tab.page.title().catch(() => '');
   return untrusted(`Tab: ${tab.id}\nTitle: ${title || '(no title)'}\nURL: ${tab.page.url()}`);
 }
@@ -62,12 +62,25 @@ export async function openBrowser(
     alwaysGo?: boolean;
     session?: string;
     emulation?: Emulation;
+    // Start a new browser with an empty profile, even if one is open.
+    fresh?: boolean;
   },
 ): Promise<{ text: string; tab: Tab }> {
   const config = await ctx.config();
   const guard = await ctx.guard();
   const lines: string[] = [];
 
+  if (options.fresh && ctx.driver?.alive) {
+    // Your own Chrome stays open. Walkthrough cannot start it again.
+    if (ctx.driver.mode === 'attached') {
+      lines.push(
+        'Walkthrough uses your own Chrome, so it cannot start a new browser. Chrome can keep a cache and other state from earlier pages.',
+      );
+    } else {
+      await ctx.driver.close();
+      lines.push('Closed the open browser, to start from an empty profile.');
+    }
+  }
   let driver = ctx.driver?.alive ? ctx.driver : undefined;
   const alreadyOpen = Boolean(driver);
   if (driver) {

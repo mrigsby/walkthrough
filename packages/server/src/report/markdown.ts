@@ -9,6 +9,7 @@ import {
   resultLine,
   STATUS_LABELS,
   stepAccessibility,
+  stepLighthouse,
 } from './common.js';
 
 function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
@@ -22,6 +23,8 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
     out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join('; ')}`);
   const a11y = stepAccessibility(run, step);
   if (a11y) out.push(`- **Accessibility:** ${a11y}`);
+  const lh = stepLighthouse(run, step);
+  if (lh) out.push(`- **Lighthouse:** ${lh}`);
   out.push('');
   if (withRepro) {
     out.push('**Steps to reproduce:**', '');
@@ -60,6 +63,9 @@ export function markdownReport(
       ? ['- **Accessibility report:** accessibility.html and accessibility.md']
       : []),
     ...(options.lhReport ? ['- **Lighthouse report:** lighthouse.html and lighthouse.md'] : []),
+    ...(run.lighthouse?.some((c) => c.flow)
+      ? ['- **Lighthouse flow report:** lighthouse/flow.report.html']
+      : []),
     '',
   ];
   if (run.summary) lines.push('## Summary', '', run.summary, '');

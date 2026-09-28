@@ -229,6 +229,40 @@
       },
       "additionalProperties": false
     },
+    "lighthouse": {
+      "description": "Settings for the Lighthouse steps in this plan.",
+      "type": "object",
+      "properties": {
+        "device": {
+          "description": "desktop or mobile scores. The default comes from config.yaml.",
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile"
+          ]
+        },
+        "categories": {
+          "description": "The categories to check. The default comes from config.yaml.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "performance",
+              "accessibility",
+              "best-practices",
+              "seo",
+              "agentic-browsing"
+            ]
+          }
+        },
+        "report": {
+          "description": "Write a Lighthouse report when the run ends.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -954,6 +988,15 @@
                 },
                 "additionalProperties": false
               }
+            ]
+          },
+          "lighthouse": {
+            "description": "Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.",
+            "type": "string",
+            "enum": [
+              "navigation",
+              "timespan",
+              "snapshot"
             ]
           }
         },

@@ -1,9 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findLighthouse } from '../../src/downloads/lighthouse.js';
-import { startDemoServer } from '../helpers/demo-server.js';
+import { freePort, repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
+import { panelHidden } from '../helpers/panel.js';
 import { serveFolder } from '../helpers/static-server.js';
 import { tempDir } from '../helpers/temp.js';
 
@@ -56,7 +58,7 @@ async function reportFor(runId: string): Promise<string> {
 describe.skipIf(!installed)('lighthouse', () => {
   let runId: string;
 
-  it('checks pages in a tab of the same login, and keeps the login', async () => {
+  it('checks each page in its own Chrome, with a copy of the login', async () => {
     await mcp.call('navigate', { url: '/login' });
     const outline = (await mcp.call('snapshot')).text;
     await mcp.call('act', {
@@ -82,6 +84,14 @@ describe.skipIf(!installed)('lighthouse', () => {
     runId = /runId "([^"]+)"/.exec(reply.text)?.[1] as string;
     expect(existsSync(join(runDir(runId), 'lighthouse', '01-home.report.html'))).toBe(true);
     expect(existsSync(join(runDir(runId), 'lighthouse', '02-help-html.report.json'))).toBe(true);
+    // The home page asks /api/me. A logged-in answer has the user's name.
+    const lhr = JSON.parse(
+      readFileSync(join(runDir(runId), 'lighthouse', '01-home.report.json'), 'utf8'),
+    );
+    const me = lhr.audits['network-requests'].details.items.find((i: { url: string }) =>
+      i.url.endsWith('/api/me'),
+    );
+    expect(me.resourceSize).toBeGreaterThan(10);
     const stillIn = await mcp.call('storage', { action: 'check', checks: [{ name: 'session' }] });
     expect(stillIn.text).toContain('result: pass');
     expect((await mcp.call('tabs')).text).not.toContain('t2');
@@ -97,6 +107,8 @@ describe.skipIf(!installed)('lighthouse', () => {
     expect(wrong.text).toMatch(/findings changed after the first call/);
     const first = await reportFor(runId);
     expect(first).toMatch(/LH-001 \[/);
+    // Each page has its own Chrome, so each one finds the missing favicon.
+    expect(first).toMatch(/errors-in-console: .* on 2 page\(s\)/);
     for (const file of ['lighthouse.html', 'lighthouse.md', 'lighthouse.json'])
       expect(existsSync(join(runDir(runId), file)), file).toBe(true);
     expect(readFileSync(join(runDir(runId), 'report.html'), 'utf8')).toContain(
@@ -126,6 +138,167 @@ describe.skipIf(!installed)('lighthouse', () => {
     try {
       await mcp.call('navigate', { url: `${files.base}/lighthouse.html` });
       const audit = await mcp.call('a11y_audit', { checks: ['darkMode'] });
+      expect(audit.text).toMatch(/: 0 problem type\(s\), 0 element\(s\)\./);
+      expect(audit.text).toContain('Dark mode: no contrast problems');
+    } finally {
+      files.stop();
+    }
+  }, 60_000);
+});
+
+describe.skipIf(!installed)('lighthouse flows in a run', () => {
+  let flowMcp: Awaited<ReturnType<typeof startClient>>;
+  let chrome: Browser;
+  let page: Page;
+  let runId: string;
+  let debugPort: number;
+
+  // The test connects to the same Chrome, to see the panel.
+  async function connect(): Promise<void> {
+    await chrome?.disconnect();
+    chrome = await puppeteer.connect({
+      browserURL: `http://127.0.0.1:${debugPort}`,
+      defaultViewport: null,
+    });
+    page = (await chrome.pages()).find((p) => p.url().startsWith(demo.base)) as Page;
+  }
+
+  beforeAll(async () => {
+    mkdirSync(join(project, '.walkthrough', 'plans'), { recursive: true });
+    copyFileSync(
+      join(repoRoot, 'examples/demo-app/.walkthrough/plans/performance.yaml'),
+      join(project, '.walkthrough', 'plans', 'performance.yaml'),
+    );
+    debugPort = await freePort();
+    flowMcp = await startClient({
+      UIWALK_PROJECT_DIR: project,
+      TMPDIR: tempDir('lighthouse-flow-tmp'),
+      UIWALK_FORCE_PANEL: '1',
+      UIWALK_DEBUG_PORT: String(debugPort),
+    });
+    expect((await flowMcp.call('browser_open')).isError).toBe(false);
+  }, 60_000);
+
+  afterAll(async () => {
+    await chrome?.disconnect();
+    await flowMcp?.close();
+  });
+
+  it('works only in a run, and a timespan needs its categories', async () => {
+    const none = await flowMcp.call('lighthouse', { action: 'snapshot' });
+    expect(none.isError).toBe(true);
+    expect(none.text).toContain('work only during a run');
+    await flowMcp.call('run_start', { name: 'Ad hoc flow', mode: 'autonomous' });
+    const span = await flowMcp.call('lighthouse', { action: 'start', categories: ['seo'] });
+    expect(span.isError).toBe(true);
+    expect(span.text).toMatch(/A timespan step measures only Performance and Best Practices/);
+    await flowMcp.call('run_finish');
+  }, 60_000);
+
+  it('runs the demo plan with a navigation, a timespan, and a snapshot', async () => {
+    const start = await flowMcp.call('run_start', { plan: 'performance' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain('(agent checks, Lighthouse navigation) Open the shop page');
+    expect(start.text).toContain(
+      'Lighthouse loads this page: call lighthouse with action navigate',
+    );
+    runId = /Run folder: \S+runs[/\\](\S+)/.exec(start.text)?.[1] as string;
+    // Earlier pages must not change the results, so the run has a new browser.
+    expect(start.text).toContain('Closed the open browser, to start from an empty profile.');
+    expect(start.text).toContain('The run started in a new browser');
+    await connect();
+
+    const nav = await flowMcp.call(
+      'lighthouse',
+      { action: 'navigate', stepId: 'open-shop' },
+      { timeoutMs: 90_000 },
+    );
+    expect(nav.isError, nav.text).toBe(false);
+    expect(nav.text).toMatch(/measured the step open-shop \(navigation\) on \//);
+    expect(nav.text).toMatch(/Performance \d+, Best Practices \d+, SEO \d+/);
+    expect(await panelHidden(page)).toBe(false);
+    await flowMcp.call('run_step', { stepId: 'open-shop', status: 'pass' });
+
+    const begin = await flowMcp.call('lighthouse', { action: 'start', stepId: 'add-mug' });
+    expect(begin.isError, begin.text).toBe(false);
+    expect(await panelHidden(page)).toBe(true);
+    await flowMcp.call('act', { action: 'click', selector: '[data-add="mug"]' });
+    await flowMcp.call('navigate', { url: '/cart' });
+    // A new page in the tab starts with the panel hidden.
+    expect(await panelHidden(page)).toBe(true);
+    const busy = await flowMcp.call('lighthouse', { action: 'snapshot' });
+    expect(busy.text).toContain('Call lighthouse with action end first');
+    const end = await flowMcp.call('lighthouse', { action: 'end' }, { timeoutMs: 90_000 });
+    expect(end.isError, end.text).toBe(false);
+    expect(end.text).toMatch(/measured the step add-mug \(timespan\) on \/cart/);
+    expect(end.text).toMatch(/Performance \d+ of \d+ audits passed/);
+    expect(await panelHidden(page)).toBe(false);
+    await flowMcp.call('run_step', { stepId: 'add-mug', status: 'pass' });
+
+    await flowMcp.call('act', { action: 'click', selector: '#checkout-button' });
+    await flowMcp.call('wait_for', { url: '/checkout' });
+    const snap = await flowMcp.call(
+      'lighthouse',
+      { action: 'snapshot', stepId: 'open-checkout' },
+      { timeoutMs: 60_000 },
+    );
+    expect(snap.isError, snap.text).toBe(false);
+    await flowMcp.call('run_step', { stepId: 'open-checkout', status: 'pass' });
+
+    const finish = await flowMcp.call('run_finish');
+    expect(finish.text).toContain('This plan asks for a Lighthouse report');
+    expect(finish.text).toContain('lighthouse/flow.report.html');
+    const flowHtml = readFileSync(join(runDir(runId), 'lighthouse', 'flow.report.html'), 'utf8');
+    for (const name of ['Open the shop page', 'Click \\"Checkout\\"'])
+      expect(flowHtml).toContain(name);
+    const run = JSON.parse(readFileSync(join(runDir(runId), 'run.json'), 'utf8'));
+    // Lighthouse loaded the first page, so the step keeps a navigate action for exports.
+    expect(run.steps[0].actions[0]).toMatchObject({ action: 'navigate' });
+    expect(run.lighthouse.map((c: { mode: string }) => c.mode)).toEqual([
+      'navigation',
+      'timespan',
+      'snapshot',
+    ]);
+    const report = readFileSync(join(runDir(runId), 'report.html'), 'utf8');
+    expect(report).toContain('href="lighthouse/flow.report.html"');
+    expect(report).toMatch(/<dt>Lighthouse<\/dt><dd>timespan: Performance \d+\/\d+ audits passed/);
+  }, 240_000);
+
+  it('finds the same issues when the plan runs again', async () => {
+    const start = await flowMcp.call('run_start', { plan: 'performance' });
+    const again = /Run folder: \S+runs[/\\](\S+)/.exec(start.text)?.[1] as string;
+    await flowMcp.call(
+      'lighthouse',
+      { action: 'navigate', stepId: 'open-shop' },
+      { timeoutMs: 90_000 },
+    );
+    await flowMcp.call('run_finish');
+    const audits = (id: string) =>
+      JSON.parse(readFileSync(join(runDir(id), 'run.json'), 'utf8')).lighthouse[0].audits.map(
+        (a: { id: string }) => a.id,
+      );
+    // Before, Chrome remembered the missing favicon, so the second run missed its error.
+    expect(audits(runId)).toContain('errors-in-console');
+    expect(audits(again)).toContain('errors-in-console');
+  }, 120_000);
+
+  it('writes the flow report, which asks to run the plan again', async () => {
+    const first = await flowMcp.call('lighthouse_report', { runId }, { timeoutMs: 60_000 });
+    expect(first.text).toMatch(/- add-mug: timespan \/cart: Performance \d+ of \d+ audits passed/);
+    const digest = /Digest: (\w+)/.exec(first.text)?.[1];
+    const second = await flowMcp.call('lighthouse_report', { runId, digest, items: [] });
+    expect(second.isError, second.text).toBe(false);
+    const md = readFileSync(join(runDir(runId), 'lighthouse.md'), 'utf8');
+    expect(md).toContain('/walkthrough:lighthouse performance again');
+    expect(md).toContain('Flow steps ran in the test tab');
+    expect(md).toMatch(/\| open-checkout: snapshot \/checkout \| \d+\/\d+ \|/);
+  }, 120_000);
+
+  it('makes a flow report page that passes axe in light and dark mode', async () => {
+    const files = await serveFolder(runDir(runId));
+    try {
+      await flowMcp.call('navigate', { url: `${files.base}/lighthouse.html` });
+      const audit = await flowMcp.call('a11y_audit', { checks: ['darkMode'] });
       expect(audit.text).toMatch(/: 0 problem type\(s\), 0 element\(s\)\./);
       expect(audit.text).toContain('Dark mode: no contrast problems');
     } finally {

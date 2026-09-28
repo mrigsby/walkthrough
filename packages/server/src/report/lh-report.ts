@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
+import { basename, extname } from 'node:path';
 import { escapeMarkers } from '../guards/untrusted.js';
+import { CATEGORY_LABELS } from '../lighthouse/categories.js';
 import type {
   LhComparison,
   LhFinding,
@@ -7,6 +9,7 @@ import type {
   LhPage,
   SavedLhReport,
 } from '../lighthouse/findings.js';
+import { FLOW_REPORT } from '../lighthouse/flow.js';
 import type { Run } from '../run/run-store.js';
 import { esc, safeHref } from './common.js';
 
@@ -27,6 +30,12 @@ export interface LhReportData {
   relativeDir: string;
   createdAt: string;
   baseUrl?: string;
+  // The plan file of the run. Flow reports compare only with runs of the same plan.
+  plan?: string;
+  // What the checks were: single pages in their own Chrome, and flow steps in the test tab.
+  kinds: { pages: boolean; flow: boolean };
+  // True when the flow run started in a new browser.
+  freshBrowser?: boolean;
   version: string;
   devices: string[];
   categories: string[];
@@ -41,27 +50,22 @@ export interface LhReportData {
   prompt: string;
 }
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  performance: 'Performance',
-  accessibility: 'Accessibility',
-  'best-practices': 'Best Practices',
-  seo: 'SEO',
-  'agentic-browsing': 'Agentic Browsing',
-};
+export { CATEGORY_LABELS };
 
 const label = (c: string) => CATEGORY_LABELS[c] ?? c;
 
+// "again" is what /walkthrough:lighthouse takes: the pages, or the plan of a flow.
 export function lhPrompt(
   relativeDir: string,
   app: string,
-  pages: string[],
+  again: string,
   firstId?: string,
 ): string {
   return [
     `Read ${relativeDir}/lighthouse.md. It is a Lighthouse report for ${app}.`,
     'Write a plan to fix the issues. Start with the lowest scores and the largest savings.',
     `Group the fixes by source file, and name the issue ID (like ${firstId ?? 'LH-001'}) for each fix.`,
-    `When the fixes are done, run /walkthrough:lighthouse ${pages.join(' ')} again.`,
+    `When the fixes are done, run /walkthrough:lighthouse ${again} again.`,
     'The issue IDs stay the same, so you can compare the scores.',
   ].join('\n');
 }
@@ -78,12 +82,23 @@ export function buildLhReportData(input: {
   const status: Record<string, 'new' | 'still'> = {};
   for (const f of findings.findings)
     status[f.id] = comparison?.keepIds.get(f.audit) === f.id ? 'still' : 'new';
+  const kinds = {
+    pages: findings.pages.some((p) => !p.flow),
+    flow: findings.pages.some((p) => p.flow),
+  };
+  const again =
+    kinds.flow && run.planFile
+      ? basename(run.planFile, extname(run.planFile))
+      : findings.pages.map((p) => p.page).join(' ');
   return {
     runId: run.id,
     runName: run.name,
     relativeDir: input.relativeDir,
     createdAt: new Date().toISOString(),
     baseUrl: run.baseUrl,
+    plan: run.planFile,
+    kinds,
+    freshBrowser: run.freshBrowser,
     version: findings.version,
     devices: [...new Set(findings.pages.map((p) => p.device))],
     categories: findings.categories,
@@ -95,12 +110,7 @@ export function buildLhReportData(input: {
     changes: comparison?.changes ?? [],
     previous: comparison ? { runId: comparison.previousRunId } : undefined,
     summary: input.summary,
-    prompt: lhPrompt(
-      input.relativeDir,
-      run.baseUrl ?? run.name,
-      findings.pages.map((p) => p.page),
-      findings.findings[0]?.id,
-    ),
+    prompt: lhPrompt(input.relativeDir, run.baseUrl ?? run.name, again, findings.findings[0]?.id),
   };
 }
 
@@ -110,9 +120,16 @@ export function lhJson(data: LhReportData): SavedLhReport & Record<string, unkno
     version: 1,
     runId: data.runId,
     createdAt: data.createdAt,
+    ...(data.plan && data.kinds.flow ? { plan: data.plan } : {}),
     lighthouse: data.version,
     devices: data.devices,
-    pages: data.pages.map((p) => ({ page: p.page, scores: p.scores, metrics: p.metrics })),
+    pages: data.pages.map((p) => ({
+      page: p.page,
+      mode: p.mode,
+      scores: p.scores,
+      ...(p.fractions ? { fractions: p.fractions } : {}),
+      metrics: p.metrics,
+    })),
     findings: data.findings.map((f) => ({
       id: f.id,
       audit: f.audit,
@@ -144,6 +161,43 @@ const scoreText = (s: number | null | undefined) =>
 const band = (s: number | null | undefined) =>
   s === null || s === undefined ? 'none' : s >= 90 ? 'good' : s >= 50 ? 'fair' : 'poor';
 
+// A page load shows its score. A timespan or a snapshot shows passed audits, like "5/6".
+function cellValue(p: LhPage, category: string): { text: string; band: string } {
+  const f = p.fractions?.[category];
+  if (p.fractions) {
+    if (!f || f.total === 0) return { text: 'n/a', band: 'none' };
+    const ratio = f.passed / f.total;
+    return {
+      text: `${f.passed}/${f.total}`,
+      band: ratio === 1 ? 'good' : ratio >= 0.5 ? 'fair' : 'poor',
+    };
+  }
+  return { text: scoreText(p.scores[category]), band: band(p.scores[category]) };
+}
+
+const SCORE_NOTE =
+  'Scores from 0 to 100. 90 and up is good, 50 to 89 needs work, and below 50 is poor.';
+const FRACTION_NOTE =
+  'Timespan and snapshot steps have fewer audits, so the report shows the audits that passed, like 5/6, not a score.';
+
+// How each kind of check ran. Reports show the lines that apply.
+function howLines(data: LhReportData): string[] {
+  const lines: string[] = [];
+  if (data.kinds.pages)
+    lines.push(
+      "Each page ran in its own hidden Chrome, with an empty profile and a copy of the test's login. Each check started from the same state. That Chrome had no Walkthrough panel and no screen or network settings from Walkthrough. Mock rules for all tabs still applied.",
+    );
+  if (data.kinds.flow)
+    lines.push(
+      `Flow steps ran in the test tab, with its screen size and settings. Walkthrough hid its panel while Lighthouse measured, but the panel stayed in the page. ${
+        data.freshBrowser
+          ? 'The run started in a new browser with an empty profile. Later steps used the cache and storage of the earlier steps.'
+          : 'The run used a browser that was already open, so the results can include state from earlier pages, such as a warm cache.'
+      }`,
+    );
+  return lines;
+}
+
 // A fence longer than any run of backticks in the text, so page text cannot close it.
 function fence(text: string, lang: string): string {
   const longest = Math.max(2, ...[...text.matchAll(/`+/g)].map((m) => m[0].length));
@@ -164,12 +218,13 @@ export function lhMarkdown(data: LhReportData): string {
     '',
     '## Scores',
     '',
-    `| Page | ${data.categories.map(label).join(' | ')} |`,
+    `| ${data.kinds.flow ? 'Page or step' : 'Page'} | ${data.categories.map(label).join(' | ')} |`,
     `| --- |${data.categories.map(() => ' --- |').join('')}`,
     ...data.pages.map(
-      (p) => `| ${p.page} | ${data.categories.map((c) => scoreText(p.scores[c])).join(' | ')} |`,
+      (p) => `| ${p.page} | ${data.categories.map((c) => cellValue(p, c).text).join(' | ')} |`,
     ),
     '',
+    ...(data.pages.some((p) => p.fractions) ? [FRACTION_NOTE, ''] : []),
   ];
   if (data.changes.length) {
     out.push(
@@ -218,7 +273,8 @@ export function lhMarkdown(data: LhReportData): string {
     '## Notes',
     '',
     '- Lighthouse ran on this computer. Scores change from run to run, and a local server is faster than a real one. Compare the changes between runs more than the numbers.',
-    '- The Lighthouse tab kept the login of the test, had no Walkthrough panel, and used the mock rules that were on.',
+    ...howLines(data).map((l) => `- ${l}`),
+    ...(data.kinds.flow ? ['- Lighthouse flow report: lighthouse/flow.report.html'] : []),
     '',
     '## Next step',
     '',
@@ -233,8 +289,9 @@ function copyButton(text: string, name: string): string {
   return `<button type="button" class="copy" data-copy="${esc(text)}" aria-label="${esc(name)}">Copy</button>`;
 }
 
-function scoreCell(s: number | null | undefined): string {
-  return `<td><span class="score ${band(s)}">${scoreText(s)}</span></td>`;
+function scoreCell(p: LhPage, category: string): string {
+  const v = cellValue(p, category);
+  return `<td><span class="score ${v.band}">${esc(v.text)}</span></td>`;
 }
 
 function issueCard(data: LhReportData, f: LhFinding): string {
@@ -322,7 +379,7 @@ export function lhHtml(data: LhReportData): string {
   const scoreRows = data.pages
     .map(
       (p) =>
-        `<tr><th scope="row">${esc(p.page)}${p.files?.html ? ` (<a href="${esc(p.files.html)}">full report</a>)` : ''}</th>${data.categories.map((c) => scoreCell(p.scores[c])).join('')}</tr>`,
+        `<tr><th scope="row">${esc(p.page)}${p.files?.html ? ` (<a href="${esc(p.files.html)}">${p.flow ? 'flow report' : 'full report'}</a>)` : ''}</th>${data.categories.map((c) => scoreCell(p, c)).join('')}</tr>`,
     )
     .join('\n');
   const metricIds = [...new Set(data.pages.flatMap((p) => p.metrics.map((m) => m.id)))];
@@ -356,8 +413,8 @@ export function lhHtml(data: LhReportData): string {
 <p class="muted">${esc(data.baseUrl ?? data.runName)}. ${data.pages.length} page(s). Lighthouse ${esc(data.version)}, ${esc(data.devices.join(', '))}. ${esc(new Date(data.createdAt).toLocaleString('en-US'))}. <a href="report.html">Run report</a></p>
 <p class="note">Lighthouse ran on this computer. Scores change from run to run, and a local server is faster than a real one. Compare the changes between runs more than the numbers.</p>
 <h2 id="scores">Scores</h2>
-<table><caption>Scores from 0 to 100. 90 and up is good, 50 to 89 needs work, and below 50 is poor.</caption>
-<thead><tr><th scope="col">Page</th>${head}</tr></thead>
+<table><caption>${SCORE_NOTE}${data.pages.some((p) => p.fractions) ? ` ${FRACTION_NOTE}` : ''}</caption>
+<thead><tr><th scope="col">${data.kinds.flow ? 'Page or step' : 'Page'}</th>${head}</tr></thead>
 <tbody>${scoreRows}</tbody></table>
 ${metricIds.length ? `<h2 id="metrics">Metrics</h2><table><caption>Performance metrics for each page</caption><thead><tr><th scope="col">Page</th>${metricIds.map((id) => `<th scope="col">${esc(metricTitle(id))}</th>`).join('')}</tr></thead><tbody>${metricRows}</tbody></table>` : ''}
 ${changes}
@@ -368,8 +425,11 @@ ${data.findings.map((f) => issueCard(data, f)).join('\n') || '<p>Lighthouse foun
 ${fixed}
 <h2 id="how">How Walkthrough checked</h2>
 <ul>
-<li>Lighthouse ${esc(data.version)} ran on each page in a new tab of the same login, so the pages stayed logged in.</li>
-<li>That tab had no Walkthrough panel and no screen or network settings from Walkthrough. Mock rules that were on still applied.</li>
+<li>Lighthouse ${esc(data.version)} ran on this computer.</li>
+${howLines(data)
+  .map((l) => `<li>${esc(l)}</li>`)
+  .join('\n')}
+${data.kinds.flow ? `<li><a href="${esc(FLOW_REPORT)}">Lighthouse flow report</a> with every step.</li>` : ''}
 <li>Categories: ${esc(data.categories.map(label).join(', '))}. Device: ${esc(data.devices.join(', '))}.</li>
 </ul>
 <h2 id="next">Next step</h2>

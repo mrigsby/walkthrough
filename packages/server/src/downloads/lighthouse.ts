@@ -14,6 +14,8 @@ export const LIGHTHOUSE_MISSING = `Lighthouse is not installed. To install it (a
 export interface LighthouseModule {
   default: (...args: unknown[]) => Promise<unknown>;
   startFlow: (...args: unknown[]) => Promise<unknown>;
+  auditFlowArtifacts: (...args: unknown[]) => Promise<unknown>;
+  generateReport: (result: unknown, format: string) => string;
   desktopConfig: unknown;
 }
 

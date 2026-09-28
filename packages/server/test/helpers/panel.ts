@@ -41,6 +41,32 @@ export async function panelText(page: Page): Promise<string> {
   }
 }
 
+// True when the panel card is hidden, as it is while Lighthouse measures.
+export async function panelHidden(page: Page, ms = 5000): Promise<boolean> {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    const cdp = await page.createCDPSession();
+    try {
+      const [card] = await findNodes(cdp, (n) => n.nodeName === 'SECTION' && hasClass(n, 'card'));
+      if (card) {
+        const { object } = await cdp.send('DOM.resolveNode', { backendNodeId: card.backendNodeId });
+        const { result } = await cdp.send('Runtime.callFunctionOn', {
+          objectId: object.objectId as string,
+          functionDeclaration: 'function () { return getComputedStyle(this).visibility; }',
+          returnByValue: true,
+        });
+        return result.value === 'hidden';
+      }
+    } catch {
+      // The page is loading. Try again.
+    } finally {
+      await cdp.detach().catch(() => undefined);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error('The panel did not show up.');
+}
+
 // Waits until the panel shows some text.
 export async function waitForPanel(page: Page, text: string, ms = 10_000): Promise<string> {
   const end = Date.now() + ms;

@@ -52,6 +52,10 @@ export class DeveloperPanel {
   private corner = 'bottom-right';
   private recorder?: Recorder;
   private recordStopped = false;
+  // Tabs where a screenshot or a check hides the panel for a moment.
+  private hiddenIn = new Set<string>();
+  // Tabs where Lighthouse measures. The panel stays hidden there, also on new pages.
+  private suppressed = new Set<string>();
   private recordWaiter?: (outcome: RecordOutcome) => void;
 
   async attach(page: Page, tabId: string): Promise<void> {
@@ -61,6 +65,8 @@ export class DeveloperPanel {
 
   detach(tabId: string): void {
     this.bridges.delete(tabId);
+    this.hiddenIn.delete(tabId);
+    this.suppressed.delete(tabId);
     if (this.question?.tabId === tabId) {
       this.question = undefined;
       this.finish({ kind: 'tab_closed' });
@@ -112,6 +118,14 @@ export class DeveloperPanel {
 
   private async push(tabId: string): Promise<void> {
     await this.bridges.get(tabId)?.send(this.stateFor(tabId));
+    if (this.suppressed.has(tabId)) await this.sendHidden(tabId);
+  }
+
+  // A question for the developer shows, even while Lighthouse measures.
+  private async sendHidden(tabId: string): Promise<void> {
+    const hidden =
+      this.hiddenIn.has(tabId) || (this.suppressed.has(tabId) && this.question?.tabId !== tabId);
+    await this.bridges.get(tabId)?.send({ type: 'hide', hidden });
   }
 
   private async onMessage(tabId: string, msg: PanelMessage): Promise<void> {
@@ -144,6 +158,7 @@ export class DeveloperPanel {
       };
       this.question = undefined;
       this.status = WORKING;
+      if (this.suppressed.has(tabId)) void this.sendHidden(tabId);
       if (this.waiter) this.finish({ kind: 'answer', answer, question: q });
       else this.stored = { answer, question: q };
     }
@@ -200,7 +215,17 @@ export class DeveloperPanel {
   }
 
   async hide(tabId: string, hidden: boolean): Promise<void> {
-    await this.bridges.get(tabId)?.send({ type: 'hide', hidden });
+    if (hidden) this.hiddenIn.add(tabId);
+    else this.hiddenIn.delete(tabId);
+    await this.sendHidden(tabId);
+  }
+
+  // Hides the panel in a tab while Lighthouse measures it.
+  async suppress(tabId: string, on: boolean): Promise<void> {
+    if (on) this.suppressed.add(tabId);
+    else this.suppressed.delete(tabId);
+    await this.bridges.get(tabId)?.hideOnLoad(on);
+    await this.sendHidden(tabId);
   }
 
   async highlight(tabId: string, rect: Rect, label: string, ms: number): Promise<void> {

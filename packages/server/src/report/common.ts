@@ -1,5 +1,6 @@
 import { IMPACT_ORDER } from '../audit/axe.js';
 import { customViolations } from '../audit/custom-rules.js';
+import { CATEGORY_LABELS } from '../lighthouse/categories.js';
 import type { Run, RunStep, StepStatus } from '../run/run-store.js';
 
 // Makes text safe to put in HTML, in text or in an attribute.
@@ -149,6 +150,22 @@ export function stepAccessibility(run: Run, step: RunStep): string | undefined {
   if (types === 0) return 'No accessibility problems found.';
   const parts = IMPACT_ORDER.filter((i) => byImpact.get(i)).map((i) => `${byImpact.get(i)} ${i}`);
   return `${types} accessibility problem type(s), ${elements} element(s): ${parts.join(', ')}.`;
+}
+
+// A short line about the Lighthouse flow checks of one step, or undefined.
+export function stepLighthouse(run: Run, step: RunStep): string | undefined {
+  const checks = (run.lighthouse ?? []).filter((c) => c.flow && c.stepId === step.id);
+  if (checks.length === 0) return undefined;
+  return checks
+    .map((c) => {
+      const values = c.fractions
+        ? Object.entries(c.fractions).map(
+            ([k, f]) => `${CATEGORY_LABELS[k] ?? k} ${f.passed}/${f.total} audits passed`,
+          )
+        : Object.entries(c.scores).map(([k, v]) => `${CATEGORY_LABELS[k] ?? k} ${v ?? 'n/a'}`);
+      return `${c.mode}: ${values.join(', ')}.`;
+    })
+    .join(' ');
 }
 
 export const RUN_STATUS_LABELS: Record<Run['status'], string> = {

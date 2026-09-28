@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { type LighthouseCheck, summarizeLhr } from '../../src/lighthouse/audit.js';
-import { buildLhFindings, compareLh, type SavedLhReport } from '../../src/lighthouse/findings.js';
+import {
+  buildLhFindings,
+  checkLabel,
+  compareLh,
+  type SavedLhReport,
+} from '../../src/lighthouse/findings.js';
 import { buildLhReportData, lhHtml, lhJson, lhMarkdown } from '../../src/report/lh-report.js';
 import type { Run } from '../../src/run/run-store.js';
 
@@ -173,5 +178,113 @@ describe('Lighthouse report files', () => {
       fix: 'Add alt text.',
     });
     expect(data.prompt).toContain('/walkthrough:lighthouse /');
+  });
+});
+
+// A timespan result: few audits, so the report counts passed audits.
+const TIMESPAN = {
+  ...LHR,
+  gatherMode: 'timespan',
+  finalDisplayedUrl: 'http://localhost:4321/cart',
+  categories: {
+    performance: {
+      title: 'Performance',
+      score: 1,
+      auditRefs: [
+        { id: 'fast-audit' },
+        { id: 'render-blocking-insight' },
+        { id: 'robots-txt' },
+        { id: 'total-blocking-time', group: 'metrics' },
+      ],
+    },
+  },
+  audits: {
+    ...LHR.audits,
+    'total-blocking-time': {
+      id: 'total-blocking-time',
+      title: 'Total Blocking Time',
+      score: 1,
+      scoreDisplayMode: 'numeric',
+      displayValue: '0 ms',
+      numericValue: 0,
+    },
+  },
+};
+
+describe('Lighthouse flows', () => {
+  const flowCheck = (lhr: typeof LHR | typeof TIMESPAN, stepId: string): LighthouseCheck => ({
+    ...summarizeLhr(lhr, (t) => t),
+    at: '2026-09-28T10:00:00.000Z',
+    stepId,
+    flow: true,
+    name: stepId,
+  });
+
+  it('counts passed audits for a timespan, and keeps scores for a page load', () => {
+    const span = flowCheck(TIMESPAN, 'add-mug');
+    // n/a audits do not count. The metric counts, like in the Lighthouse flow report.
+    expect(span.fractions).toEqual({ performance: { passed: 2, total: 3 } });
+    expect(flowCheck(LHR, 'open-shop').fractions).toBeUndefined();
+  });
+
+  it('names flow steps by step, mode, and page', () => {
+    expect(checkLabel(flowCheck(TIMESPAN, 'add-mug'))).toBe('add-mug: timespan /cart');
+    expect(checkLabel(check('http://localhost:4321/help'))).toBe('/help');
+    const findings = buildLhFindings([
+      check('http://localhost:4321/'),
+      flowCheck(LHR, 'open-shop'),
+      flowCheck(TIMESPAN, 'add-mug'),
+    ]);
+    expect(findings.pages.map((p) => [p.page, p.mode, Boolean(p.fractions)])).toEqual([
+      ['/', 'navigation', false],
+      ['open-shop: navigation /', 'navigation', false],
+      ['add-mug: timespan /cart', 'timespan', true],
+    ]);
+  });
+
+  it('compares only page load scores', () => {
+    const now = buildLhFindings([flowCheck(LHR, 'open-shop'), flowCheck(TIMESPAN, 'add-mug')]);
+    const previous: SavedLhReport = {
+      version: 1,
+      runId: 'old-run',
+      createdAt: '2026-09-27T10:00:00.000Z',
+      plan: '.walkthrough/plans/performance.yaml',
+      pages: [
+        {
+          page: 'open-shop: navigation /',
+          mode: 'navigation',
+          scores: { performance: 50, accessibility: 85, seo: 90 },
+        },
+        { page: 'add-mug: timespan /cart', mode: 'timespan', scores: { performance: 40 } },
+      ],
+      findings: [],
+    };
+    expect(compareLh(now, previous).changes).toEqual([
+      { page: 'open-shop: navigation /', category: 'performance', before: 50, after: 72 },
+    ]);
+  });
+
+  it('shows passed audits in the report, and asks to run the plan again', () => {
+    const run = {
+      id: 'run-2',
+      name: 'Performance flow',
+      baseUrl: 'http://localhost:4321',
+      planFile: '.walkthrough/plans/performance.yaml',
+    } as Run;
+    const data = buildLhReportData({
+      run,
+      relativeDir: '.walkthrough/runs/run-2',
+      findings: buildLhFindings([flowCheck(LHR, 'open-shop'), flowCheck(TIMESPAN, 'add-mug')]),
+      items: {},
+      summary: '',
+    });
+    expect(data.kinds).toEqual({ pages: false, flow: true });
+    expect(data.prompt).toContain('/walkthrough:lighthouse performance again');
+    expect(lhJson(data).plan).toBe('.walkthrough/plans/performance.yaml');
+    const md = lhMarkdown(data);
+    expect(md).toContain('| add-mug: timespan /cart | 2/3 |');
+    expect(md).toContain('Flow steps ran in the test tab');
+    expect(md).not.toContain('Each page ran in its own hidden Chrome');
+    expect(lhHtml(data)).toContain('<span class="score fair">2/3</span>');
   });
 });

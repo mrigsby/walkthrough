@@ -16,6 +16,7 @@ import type { Emulation } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ToolError } from '../errors.js';
 import type { LighthouseCheck } from '../lighthouse/audit.js';
+import type { LhMode } from '../lighthouse/categories.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
 import { slug } from '../text.js';
@@ -57,6 +58,8 @@ export interface RunStep {
   cookies?: CookieCheck[];
   // What mock rules did during the step, like "GET /api/stock -> 500 (mock m1)".
   mocked?: string[];
+  // How Lighthouse measures this step, from the plan. A navigation has the page to load.
+  lighthouse?: { mode: LhMode; url?: string };
 }
 
 export interface Run {
@@ -87,6 +90,10 @@ export interface Run {
   lighthouse?: LighthouseCheck[];
   // A Lighthouse check that stopped at its time limit.
   lhScan?: { pending: string[]; device: string; categories: string[] };
+  // Lighthouse settings for the flow steps of the plan.
+  lhPlan?: { device: string; categories: string[]; report: boolean };
+  // True when the run started in a new browser with an empty profile.
+  freshBrowser?: boolean;
 }
 
 // One accessibility check of one page. Fields after "violations" are optional,
@@ -153,12 +160,16 @@ export class RunStore {
       unique?: string;
       // The checks a plain "a11y: true" step runs when the plan names none.
       a11yChecks?: CheckName[];
+      // Lighthouse settings from config.yaml, for a plan that names none.
+      lighthouse?: { device: string; categories: string[] };
+      freshBrowser?: boolean;
     },
   ): RunStore {
     const id = `${stamp()}-${slug(input.name, 40, 'run')}-${randomBytes(2).toString('hex')}`;
     const dir = join(ensureWalkthroughDir(projectDir), 'runs', id);
     mkdirSync(join(dir, 'screenshots'), { recursive: true });
     const settings = input.plan?.accessibility;
+    const lhSettings = input.plan?.lighthouse;
     // Plan checks, like { keyboard: false }, change the defaults one by one.
     const planChecks = settings?.checks
       ? CHECKS.filter((c) => settings.checks?.[c] ?? input.a11yChecks?.includes(c))
@@ -173,6 +184,9 @@ export class RunStore {
       screenshots: [],
       actions: [],
       ...(step.cookies ? { cookies: step.cookies } : {}),
+      ...(step.lighthouse
+        ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } }
+        : {}),
       ...(step.a11y
         ? {
             a11y: {
@@ -199,6 +213,7 @@ export class RunStore {
       setup: input.setup,
       emulation: input.emulation,
       unique: input.unique,
+      ...(input.freshBrowser !== undefined ? { freshBrowser: input.freshBrowser } : {}),
       steps,
       ...(settings || input.plan?.steps.some((s) => s.a11y)
         ? {
@@ -206,6 +221,16 @@ export class RunStore {
               report: settings?.report ?? false,
               standard: settings?.standard,
               checks: planChecks,
+            },
+          }
+        : {}),
+      ...(lhSettings || input.plan?.steps.some((s) => s.lighthouse)
+        ? {
+            lhPlan: {
+              device: lhSettings?.device ?? input.lighthouse?.device ?? 'desktop',
+              categories: lhSettings?.categories ??
+                input.lighthouse?.categories ?? ['performance', 'best-practices', 'seo'],
+              report: lhSettings?.report ?? false,
             },
           }
         : {}),

@@ -52,3 +52,4 @@ If you cannot find it, omit `where`. A wrong file costs the developer more time 
 - Write text for every issue ID. If you leave one out, the report uses only the Lighthouse title.
 - If the second call says that the findings changed, write the text again for the new findings and the new digest.
 - Scores from a dev machine change from run to run. Say so when you talk about small score changes.
+- In a flow report, a name like `add-mug: timespan /cart` is a flow step. It has the step id, the mode, and the page. A timespan or a snapshot shows passed audits, such as `5/6`, not a score. Do not call them scores.

@@ -13,11 +13,15 @@ const BINDING = `__uiwalk_${TOKEN}`;
 // The selector helper goes in too, so the recorder picks targets like the rest of Walkthrough.
 const SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })}, ${pageCandidates.toString()});`;
 
+// Hides the panel on a new page before its first paint. It runs after the panel script.
+const HIDE_SOURCE = `window.__uiwalkPanel && window.__uiwalkPanel.receive({ type: 'hide', hidden: true });`;
+
 export type PanelMessage = Record<string, unknown> & { type: string };
 
 // Connects the server to the panel in one tab.
 export class PanelBridge {
   private contextId?: number;
+  private hideScript?: string;
 
   private constructor(
     private readonly cdp: CDPSession,
@@ -68,6 +72,25 @@ export class PanelBridge {
     // Remember where the panel lives now. It changes after each page load.
     this.contextId = event.executionContextId;
     this.onMessage(msg);
+  }
+
+  // Starts or stops hiding the panel on each new page in this tab.
+  async hideOnLoad(on: boolean): Promise<void> {
+    try {
+      if (on && !this.hideScript) {
+        const { identifier } = await this.cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+          source: HIDE_SOURCE,
+          worldName: WORLD_NAME,
+        });
+        this.hideScript = identifier;
+      } else if (!on && this.hideScript) {
+        const identifier = this.hideScript;
+        this.hideScript = undefined;
+        await this.cdp.send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+      }
+    } catch {
+      // The tab closed.
+    }
   }
 
   get ready(): boolean {

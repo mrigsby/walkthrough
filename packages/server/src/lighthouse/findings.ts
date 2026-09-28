@@ -23,7 +23,10 @@ export interface LhPage {
   page: string;
   url: string;
   device: string;
+  mode: LighthouseCheck['mode'];
+  flow?: boolean;
   scores: Record<string, number | null>;
+  fractions?: LighthouseCheck['fractions'];
   metrics: LhMetric[];
   files?: LighthouseCheck['files'];
 }
@@ -38,10 +41,19 @@ export interface LhFindings {
 
 const ORDER = new Map<string, number>(LH_CATEGORIES.map((c, i) => [c, i]));
 
-// The newest check of each page. A later check of the same page replaces the earlier one.
+// The name of a check in reports. A flow step also has its step and mode,
+// like "add-mug: timespan /cart".
+export function checkLabel(
+  check: Pick<LighthouseCheck, 'url' | 'mode' | 'flow' | 'stepId' | 'name'>,
+): string {
+  const page = pageKey(check.url);
+  return check.flow ? `${check.stepId ?? check.name ?? 'step'}: ${check.mode} ${page}` : page;
+}
+
+// The newest check of each page or flow step. A later check replaces an earlier one.
 function latest(checks: LighthouseCheck[]): LighthouseCheck[] {
   const byPage = new Map<string, LighthouseCheck>();
-  for (const check of checks) byPage.set(`${pageKey(check.url)}|${check.mode}`, check);
+  for (const check of checks) byPage.set(`${checkLabel(check)}|${check.mode}`, check);
   return [...byPage.values()];
 }
 
@@ -53,7 +65,7 @@ export function buildLhFindings(
   const current = latest(checks);
   const byAudit = new Map<string, LhFinding>();
   for (const check of current) {
-    const page = pageKey(check.url);
+    const page = checkLabel(check);
     for (const audit of check.audits) {
       let finding = byAudit.get(audit.id);
       if (!finding) {
@@ -92,11 +104,14 @@ export function buildLhFindings(
     f.id = lhId(next);
     used.add(f.id);
   }
-  const pages = current.map((c) => ({
-    page: pageKey(c.url),
+  const pages: LhPage[] = current.map((c) => ({
+    page: checkLabel(c),
     url: c.url,
     device: c.device,
+    mode: c.mode,
+    ...(c.flow ? { flow: true } : {}),
     scores: c.scores,
+    ...(c.fractions ? { fractions: c.fractions } : {}),
     metrics: c.metrics,
     files: c.files,
   }));
@@ -121,7 +136,9 @@ export interface SavedLhReport {
   version: 1;
   runId: string;
   createdAt: string;
-  pages: Array<{ page: string; scores: Record<string, number | null> }>;
+  // The plan file of a flow run. Reports compare only with reports of the same plan.
+  plan?: string;
+  pages: Array<{ page: string; mode?: string; scores: Record<string, number | null> }>;
   findings: Array<{ id: string; audit: string; title: string; pages: string[] }>;
 }
 
@@ -133,12 +150,14 @@ export interface LhComparison {
   changes: Array<{ page: string; category: string; before: number | null; after: number | null }>;
 }
 
-// The newest earlier report of at least one of the same pages, or the one asked for.
+// The newest earlier report of the same plan (or of no plan) with at least one of the
+// same pages, or the one asked for.
 export function findPreviousLh(
   projectDir: string,
   runId: string,
   pages: string[],
   compareTo?: string,
+  plan?: string,
 ): SavedLhReport | undefined {
   const runs = join(projectDir, '.walkthrough', 'runs');
   const read = (id: string): SavedLhReport | undefined => {
@@ -158,7 +177,8 @@ export function findPreviousLh(
   for (const id of readdirSync(runs).sort().reverse()) {
     if (id >= runId) continue;
     const saved = read(id);
-    if (saved?.pages.some((p) => pages.includes(p.page))) return saved;
+    if (!saved || saved.plan !== plan) continue;
+    if (saved.pages.some((p) => pages.includes(p.page))) return saved;
   }
   return undefined;
 }
@@ -174,7 +194,9 @@ export function compareLh(current: LhFindings, previous: SavedLhReport): LhCompa
   const changes: LhComparison['changes'] = [];
   for (const page of current.pages) {
     const before = previous.pages.find((p) => p.page === page.page);
-    if (!before) continue;
+    // Timespan and snapshot scores count few audits, so only page loads compare.
+    if (!before || page.mode !== 'navigation' || (before.mode ?? 'navigation') !== 'navigation')
+      continue;
     for (const [category, after] of Object.entries(page.scores)) {
       const was = before.scores[category] ?? null;
       if (was !== after) changes.push({ page: page.page, category, before: was, after });

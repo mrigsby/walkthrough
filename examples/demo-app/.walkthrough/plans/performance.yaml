@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Performance flow
+description: Measure the shop with Lighthouse while a shopper adds the mug to the cart and opens checkout.
+mode: autonomous
+lighthouse:
+  device: desktop
+  report: true
+steps:
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    lighthouse: navigation
+    expect: The shop shows three products.
+
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug, then open the cart
+    lighthouse: timespan
+    expect: The cart lists the Coffee Mug.
+
+  - id: open-checkout
+    do: Click "Checkout"
+    action: { click: { role: button, name: Checkout } }
+    lighthouse: snapshot
+    expect: The checkout page shows name, email, and address fields.

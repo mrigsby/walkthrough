@@ -7,13 +7,16 @@ import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { describeRule } from '../devtools/mock-schema.js';
+import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
 import { ToolError } from '../errors.js';
+import { scrubText } from '../evidence/scrub.js';
 import { checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { newUnique } from '../page/unique.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
+import { CATEGORY_LABELS } from '../report/lh-report.js';
 import { markdownReport } from '../report/markdown.js';
 import { MODES, type Mode, type Plan, type PlanStep, stepCapture } from '../run/plan-schema.js';
 import {
@@ -46,6 +49,26 @@ export function writeReports(
   // No second pass on the HTML: it holds images, and a pass could change their data.
   writeFileSync(html, htmlReport(run, store.dir));
   return { markdown: relative(store.projectDir, markdown), html: relative(store.projectDir, html) };
+}
+
+// Ends a Lighthouse timespan that is still going, so its result is kept.
+async function closeFlow(ctx: Context, store: RunStore): Promise<string[]> {
+  const flow = ctx.lhFlow;
+  ctx.lhFlow = undefined;
+  if (flow?.runId !== store.run.id || !flow.timespan || !ctx.driver?.alive) return [];
+  try {
+    const secrets = await ctx.secrets();
+    const ended = await flow.end(ctx.driver);
+    const check = flow.check(ended.lhr, ended, (t) => scrubText(secrets.redact(t)));
+    await flow.write(store.dir, secrets);
+    store.run.lighthouse ??= [];
+    store.run.lighthouse.push(check);
+    return [`A Lighthouse timespan was still going. Walkthrough ended it and kept its result.`];
+  } catch (error) {
+    return [
+      `A Lighthouse timespan was still going, and Walkthrough could not end it: ${(error as Error).message}`,
+    ];
+  }
 }
 
 function describeAction(step: PlanStep): string | undefined {
@@ -144,6 +167,7 @@ function stepList(plan: Plan, mode: Mode): string {
         step.a11y ? describeA11y(step) : '',
         step.cookies ? 'cookie check' : '',
         step.mock ? 'mock' : '',
+        step.lighthouse ? `Lighthouse ${step.lighthouse}` : '',
       ]
         .filter(Boolean)
         .join(', ');
@@ -157,7 +181,10 @@ function stepList(plan: Plan, mode: Mode): string {
           `   Mock: ${step.mock === 'off' ? 'off (remove all mocks)' : step.mock.map(describeRule).join('; ')}`,
         );
       const hint = describeAction(step);
-      if (hint) lines.push(`   Action: ${hint}`);
+      if (hint)
+        lines.push(
+          `   Action: ${hint}${step.lighthouse === 'navigation' ? '. Lighthouse loads this page: call lighthouse with action navigate.' : ''}`,
+        );
       return lines.join('\n');
     })
     .join('\n');
@@ -288,11 +315,19 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             );
           }
         }
+        const lhSteps = plan?.steps.some((s) => s.lighthouse) ?? false;
+        if (lhSteps && !findLighthouse()) {
+          throw new ToolError(
+            `This plan has Lighthouse steps. ${LIGHTHOUSE_MISSING}`,
+            'lighthouse_missing',
+          );
+        }
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
         const baseUrl = plan?.baseUrl ?? config.baseUrl;
 
-        // A new {{unique}} value for each run.
+        // A new {{unique}} value and a new Lighthouse flow for each run.
         ctx.unique = newUnique();
+        ctx.lhFlow = undefined;
         const emulation: Emulation = { ...plan?.emulate };
         if (plan?.device) emulation.device = plan.device;
         if (plan?.colorScheme) emulation.colorScheme = plan.colorScheme;
@@ -302,6 +337,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           alwaysGo: true,
           session: plan?.session,
           emulation,
+          // Lighthouse results must not depend on earlier runs, like a warm cache.
+          fresh: lhSteps,
         });
         const driver = ctx.requireDriver();
         // Start clean: earlier actions and page errors are not part of this run.
@@ -319,7 +356,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           emulation: { ...opened.tab.emulation },
           unique: ctx.unique,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
+          lighthouse: config.lighthouse,
+          freshBrowser: lhSteps ? driver.mode === 'launched' : undefined,
         });
+        const lh = ctx.run.run.lhPlan;
 
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
@@ -333,9 +373,24 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
           '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail. For a "mock" step, call intercept with action add for each rule before the step. For "Mock: off", call intercept with action clear.',
-          '6. When every step has a result, or the developer says stop, call run_finish.',
+          ...(lhSteps
+            ? [
+                '6. For a "Lighthouse navigation" step, call lighthouse with action navigate and the stepId. Lighthouse loads the page, so do not navigate yourself. For a "Lighthouse timespan" step, call lighthouse with action start and the stepId. Then do the step, and call lighthouse with action end. For a "Lighthouse snapshot" step, do the step, then call lighthouse with action snapshot and the stepId. Then check the step as usual.',
+              ]
+            : []),
+          `${lhSteps ? 7 : 6}. When every step has a result, or the developer says stop, call run_finish.`,
           '',
         ];
+        if (lh && lhSteps) {
+          lines.push(
+            `Lighthouse: ${lh.device}, ${lh.categories.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')}. A timespan measures only Performance and Best Practices.`,
+          );
+          if (ctx.run.run.freshBrowser)
+            lines.push(
+              "The run started in a new browser, so earlier runs do not change the results. For a login, use the plan's session key.",
+            );
+          lines.push('');
+        }
         if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
         else
           lines.push(
@@ -446,7 +501,9 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             'No run is going. Give a runId to write the reports for an older run.',
             'no_run',
           );
+        const notes: string[] = [];
         if (store === ctx.run) {
+          notes.push(...(await closeFlow(ctx, store)));
           store.finish(summary);
           ctx.run = undefined;
         } else if (summary) {
@@ -466,9 +523,18 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
                 ),
               ]
             : []),
+          ...notes,
+          ...(store.run.lighthouse?.some((c) => c.flow)
+            ? [`Lighthouse flow report: ${store.relativeDir}/lighthouse/flow.report.html`]
+            : []),
           ...(store.run.a11yPlan?.report && store.run.accessibility?.length
             ? [
                 `This plan asks for an accessibility report. Call a11y_report with runId "${store.run.id}" and no items. Write the text it asks for, then call it again with the items.`,
+              ]
+            : []),
+          ...(store.run.lhPlan?.report && store.run.lighthouse?.length
+            ? [
+                `This plan asks for a Lighthouse report. Call lighthouse_report with runId "${store.run.id}" and no items. Write the text it asks for, then call it again with the items.`,
               ]
             : []),
           'Tell the developer the result and where the HTML report is.',

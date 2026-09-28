@@ -81,7 +81,7 @@ These settings are for videos and GIFs.
 
 ### Lighthouse
 
-These settings are for Lighthouse reports.
+These settings are for Lighthouse reports and for plans with Lighthouse steps. A plan's `lighthouse` block wins over them.
 
 | Setting | Default | What it does |
 | --- | --- | --- |

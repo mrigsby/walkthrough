@@ -12,6 +12,7 @@ import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/proto
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { pageKey } from '../audit/findings.js';
+import { captureSession, loadSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
 import { ToolError } from '../errors.js';
@@ -31,7 +32,9 @@ import {
   type LhFinding,
   type LhFindings,
 } from '../lighthouse/findings.js';
+import { LhFlow } from '../lighthouse/flow.js';
 import { auditPage } from '../lighthouse/run.js';
+import { tokenizeUnique, withUnique } from '../page/unique.js';
 import {
   buildLhReportData,
   CATEGORY_LABELS,
@@ -42,7 +45,7 @@ import {
 } from '../report/lh-report.js';
 import { type Run, RunStore } from '../run/run-store.js';
 import { slug } from '../text.js';
-import { fullUrl, openBrowser } from './browser-tools.js';
+import { fullUrl, pageSummary } from './browser-tools.js';
 import { writeReports } from './run-tools.js';
 import { runTool } from './util.js';
 
@@ -115,17 +118,141 @@ const WRITING_GUIDE = [
 function prepare(projectDir: string, store: RunStore, compareTo?: string) {
   const checks = store.run.lighthouse ?? [];
   const first = buildLhFindings(checks);
+  // A flow compares only with earlier runs of the same plan.
+  const plan = checks.some((c) => c.flow) ? store.run.planFile : undefined;
   const previous = findPreviousLh(
     projectDir,
     store.run.id,
     first.pages.map((p) => p.page),
     compareTo,
+    plan,
   );
   const comparison = previous ? compareLh(first, previous) : undefined;
   const findings = comparison
     ? buildLhFindings(checks, { keepIds: comparison.keepIds, startAfter: comparison.startAfter })
     : first;
   return { findings, comparison };
+}
+
+// One line about a check: scores for a page load, passed audits for the other modes.
+function checkLine(check: {
+  scores: Record<string, number | null>;
+  fractions?: Record<string, { passed: number; total: number }>;
+}): string {
+  if (!check.fractions) return scoresLine(check.scores);
+  return Object.entries(check.fractions)
+    .map(([c, f]) => `${CATEGORY_LABELS[c] ?? c} ${f.passed} of ${f.total} audits passed`)
+    .join(', ');
+}
+
+type FlowAction = 'navigate' | 'start' | 'end' | 'snapshot';
+
+// One step of the run's Lighthouse user flow.
+async function flowStep(
+  ctx: Context,
+  input: {
+    action: FlowAction;
+    stepId?: string;
+    urls?: string[];
+    device?: LhDevice;
+    categories?: LhCategory[];
+  },
+): Promise<string> {
+  const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+  if (!store) {
+    throw new ToolError(
+      'Lighthouse flow steps work only during a run. Call run_start first, or use action audit for single pages.',
+      'no_run',
+    );
+  }
+  const config = await ctx.config();
+  const secrets = await ctx.secrets();
+  const driver = ctx.requireDriver();
+  if (ctx.lhFlow?.runId !== store.run.id) {
+    const settings = store.run.lhPlan;
+    ctx.lhFlow = new LhFlow(
+      store.run.id,
+      store.run.name,
+      (settings?.device as LhDevice | undefined) ?? input.device ?? config.lighthouse.device,
+      (settings?.categories as LhCategory[] | undefined) ??
+        input.categories ??
+        config.lighthouse.categories,
+    );
+  }
+  const flow = ctx.lhFlow;
+  const step = input.stepId ? store.run.steps.find((s) => s.id === input.stepId) : undefined;
+  if (input.stepId && !step) {
+    throw new ToolError(`There is no step "${input.stepId}" in this run.`, 'bad_input');
+  }
+  const clean = (text: string) => scrubText(secrets.redact(text));
+  const setup = `Lighthouse flow: ${flow.device}, ${flow.categories.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')}.`;
+
+  if (input.action === 'start') {
+    const tab = driver.activeTab();
+    const name = step?.title ?? 'Timespan';
+    await flow.start(driver, tab, name, input.stepId);
+    return [
+      `Lighthouse measures the tab "${tab.name}" now. Walkthrough hides the panel until the end call.`,
+      setup,
+      `Do the step, then call lighthouse with action end${input.stepId ? ` and stepId "${input.stepId}"` : ''}.`,
+    ].join('\n');
+  }
+
+  let lhr: Parameters<LhFlow['check']>[0];
+  let name: string;
+  let stepId = input.stepId;
+  let loaded = '';
+  if (input.action === 'end') {
+    const ended = await flow.end(driver);
+    lhr = ended.lhr;
+    name = ended.name;
+    stepId ??= ended.stepId;
+  } else if (input.action === 'navigate') {
+    const tab = driver.activeTab();
+    const raw = step?.lighthouse?.url ?? input.urls?.[0];
+    if (!raw) {
+      throw new ToolError(
+        'Give the page to load in urls, or the stepId of a step with a navigate action.',
+        'bad_input',
+      );
+    }
+    const from = tab.page.url();
+    const url = fullUrl(withUnique(raw, ctx.unique), from, config.baseUrl);
+    (await ctx.guard()).check(url);
+    name = step?.title ?? `Load ${pageKey(url)}`;
+    lhr = await flow.navigate(driver, tab, url, name);
+    // Keep it with the actions, so reports and exports load the page too.
+    ctx.actionLog.push({
+      at: new Date().toISOString(),
+      tabId: tab.id,
+      tab: tab.name,
+      action: 'navigate',
+      label: url,
+      value: tokenizeUnique(url, ctx.unique),
+      url: tokenizeUnique(from, ctx.unique),
+    });
+    loaded = await pageSummary(tab);
+  } else {
+    const tab = driver.activeTab();
+    name = step?.title ?? `Snapshot of ${pageKey(tab.page.url())}`;
+    lhr = await flow.snapshot(driver, tab, name);
+  }
+  const check = flow.check(lhr, { stepId, name }, clean);
+  await flow.write(store.dir, secrets);
+  store.run.lighthouse ??= [];
+  store.run.lighthouse.push(check);
+  store.save();
+  return [
+    `Lighthouse measured ${stepId ? `the step ${stepId}` : `"${name}"`} (${check.mode}) on ${pageKey(check.url)}.`,
+    untrusted(checkLine(check)),
+    check.audits.length ? `${check.audits.length} audit(s) did not pass.` : '',
+    setup,
+    `Flow report: ${store.relativeDir}/lighthouse/flow.report.html`,
+    loaded,
+    stepId ? 'Now check the step as usual, and record its result.' : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function registerLighthouseTools(server: McpServer, ctx: Context): void {
@@ -135,22 +262,34 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
       title: 'Lighthouse',
       description: [
         'Check pages with Lighthouse, like the Lighthouse panel in DevTools: performance, best practices, SEO, and more.',
-        'Each page runs in a new tab of the same login, so it stays logged in. Without a run, it makes a run with one step per page.',
+        'action "audit" checks each page in its own hidden Chrome with a copy of the active tab\'s login, so each check starts from the same state. Without a run, it makes a run with one step per page.',
+        'During a run, the actions navigate, start, end, and snapshot measure the steps of a user flow in the active tab.',
         'Then call lighthouse_report. action "status" shows whether Lighthouse is installed.',
       ].join(' '),
       inputSchema: {
-        action: z.enum(['audit', 'status']).default('audit'),
+        action: z
+          .enum(['audit', 'navigate', 'start', 'end', 'snapshot', 'status'])
+          .default('audit')
+          .describe(
+            'audit: check pages. navigate: Lighthouse loads a page in the active tab. start and end: measure what happens between them. snapshot: check the page as it is.',
+          ),
+        stepId: z
+          .string()
+          .optional()
+          .describe('For flow actions: the plan step that Lighthouse measures.'),
         urls: z
           .array(z.string().min(1))
           .max(30)
           .optional()
-          .describe('Pages like "/" or full URLs. The default is the current page.'),
+          .describe(
+            'Pages like "/" or full URLs. The default is the current page. For navigate: the page to load, when the step has no navigate action.',
+          ),
         runId: z.string().optional().describe('Continue a check that stopped at its time limit.'),
         name: z.string().optional().describe('A name for the new run.'),
         session: z
           .string()
           .optional()
-          .describe('A saved login to load first. Only when no run is going.'),
+          .describe("A saved login for the checks, instead of a copy of the active tab's login."),
         device: z
           .enum(LH_DEVICES)
           .optional()
@@ -172,16 +311,16 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
             : LIGHTHOUSE_MISSING;
         }
         if (!findLighthouse()) throw new ToolError(LIGHTHOUSE_MISSING, 'lighthouse_missing');
+        if (input.action !== 'audit') return flowStep(ctx, { ...input, action: input.action });
         const guard = await ctx.guard();
         const secrets = await ctx.secrets();
         const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
-        if (input.session && live) {
+        if (live && ctx.lhFlow?.runId === live.run.id && ctx.lhFlow.timespan) {
           throw new ToolError(
-            'A run is going. A saved login would change it. Call run_finish first, or leave out session.',
-            'run_active',
+            'A Lighthouse timespan is going. Call lighthouse with action end first.',
+            'timespan_active',
           );
         }
-
         let store: RunStore | undefined = live;
         let owned: boolean;
         let pending: string[];
@@ -204,12 +343,12 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
           pending = [];
         }
 
-        if (!ctx.driver?.alive || input.session) await openBrowser(ctx, { session: input.session });
-        const driver = ctx.requireDriver();
-        const tab = driver.activeTab();
+        // The checks run in their own Chrome, so the test browser does not have to be open.
+        const driver = ctx.driver?.alive && ctx.driver.hasActiveTab ? ctx.driver : undefined;
+        const tabUrl = driver?.activeTab().page.url() ?? '';
+        const current = /^https?:/.test(tabUrl) ? tabUrl : '';
 
         if (!input.runId) {
-          const current = /^https?:/.test(tab.page.url()) ? tab.page.url() : '';
           pending = (input.urls?.length ? input.urls : [current]).map((u) => {
             if (!u) throw new ToolError('Give the pages to check in urls.', 'bad_input');
             return fullUrl(u, current, config.baseUrl);
@@ -219,7 +358,7 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
             name: input.name ?? 'Lighthouse check',
             mode: 'autonomous',
             baseUrl: config.baseUrl,
-            chrome: driver.chromeVersion,
+            chrome: driver?.chromeVersion,
           });
         }
         if (!store) throw new ToolError('Walkthrough could not start the check.', 'error');
@@ -228,6 +367,19 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
         if (owned) scan.run.status = 'running';
         scan.save();
 
+        // A saved login, or a copy of the active tab's login. It stays in memory.
+        const login = input.session
+          ? loadSession(config.projectDir, input.session)
+          : driver
+            ? await captureSession(
+                driver,
+                guard,
+                'lighthouse',
+                pending.map((u) => new URL(u).hostname),
+              )
+            : undefined;
+        // Rules for one tab stay with that tab.
+        const rules = driver?.mocks.filter((r) => !r.tab) ?? [];
         const clean = (text: string) => scrubText(secrets.redact(text));
         const started = Date.now();
         const total = pending.length;
@@ -268,7 +420,11 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
             step.checkedBy = 'agent';
             step.at = new Date().toISOString();
             try {
-              const check = await auditPage(driver, tab, url, {
+              const check = await auditPage(url, {
+                config,
+                login,
+                isAllowed: (u) => guard.isAllowed(u),
+                rules,
                 device,
                 categories,
                 runDir: scan.dir,
@@ -290,7 +446,8 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
               step.actual = (error as Error).message;
               lines.push(`- ${path}: could not check it. ${(error as Error).message}`);
               const code = (error as ToolError).code;
-              if (code === 'lighthouse_missing' || code === 'connection_refused') throw error;
+              if (['lighthouse_missing', 'chrome_missing', 'launch_failed'].includes(code))
+                throw error;
             } finally {
               pending.shift();
               done += 1;
@@ -396,9 +553,7 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
           );
         }
         const { findings, comparison } = prepare(projectDir, store, compareTo);
-        const scoreLines = findings.pages
-          .map((p) => `- ${p.page}: ${scoresLine(p.scores)}`)
-          .join('\n');
+        const scoreLines = findings.pages.map((p) => `- ${p.page}: ${checkLine(p)}`).join('\n');
         const compareLine = comparison
           ? `Compared with the report of run ${comparison.previousRunId}: issues that are still there keep their IDs. Fixed since then: ${comparison.fixed.length}. Score changes: ${comparison.changes.map((c) => `${c.page} ${CATEGORY_LABELS[c.category] ?? c.category} ${c.before ?? 'n/a'} to ${c.after ?? 'n/a'}`).join('; ') || 'none'}.`
           : '';

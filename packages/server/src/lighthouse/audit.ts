@@ -36,6 +36,12 @@ export interface LighthouseCheck {
   // Lighthouse's own report files, from the run folder.
   files?: { html?: string; json?: string };
   warnings?: string[];
+  // True for a step of a user flow in a run. "name" is the step title.
+  flow?: boolean;
+  name?: string;
+  // Timespan and snapshot checks run few audits, so Lighthouse counts passed audits
+  // instead of giving a score.
+  fractions?: Record<string, { passed: number; total: number }>;
 }
 
 // The parts of a Lighthouse result (LHR) that Walkthrough reads.
@@ -49,7 +55,11 @@ interface Lhr {
   configSettings?: { formFactor?: string };
   categories: Record<
     string,
-    { title: string; score: number | null; auditRefs: Array<{ id: string; group?: string }> }
+    {
+      title: string;
+      score: number | null;
+      auditRefs: Array<{ id: string; group?: string; weight?: number }>;
+    }
   >;
   audits: Record<
     string,
@@ -128,15 +138,32 @@ function detailLines(details: unknown, clean: (t: string) => string): string[] {
   return lines.slice(0, MAX_ITEMS);
 }
 
+// Passed and total audits in a category, counted like the Lighthouse flow report does.
+function fraction(lhr: Lhr, category: Lhr['categories'][string]) {
+  let passed = 0;
+  let total = 0;
+  for (const ref of category.auditRefs) {
+    const a = lhr.audits[ref.id];
+    if (!a || ref.group === 'hidden') continue;
+    if (['notApplicable', 'manual', 'informative'].includes(a.scoreDisplayMode)) continue;
+    total += 1;
+    if (a.scoreDisplayMode !== 'error' && Number(a.score) >= 0.9) passed += 1;
+  }
+  return { passed, total };
+}
+
 // Scores, metrics, and the audits that did not pass.
 export function summarizeLhr(
   lhr: Lhr,
   clean: (t: string) => string,
 ): Omit<LighthouseCheck, 'at' | 'stepId' | 'files' | 'requestedUrl'> {
   const scores: Record<string, number | null> = {};
+  const fractions: Record<string, { passed: number; total: number }> = {};
   const audits = new Map<string, LhAudit>();
+  const mode = (lhr.gatherMode as LighthouseCheck['mode']) ?? 'navigation';
   for (const [categoryId, category] of Object.entries(lhr.categories)) {
     scores[categoryId] = category.score === null ? null : Math.round(category.score * 100);
+    if (mode !== 'navigation') fractions[categoryId] = fraction(lhr, category);
     for (const ref of category.auditRefs) {
       if (ref.group === 'metrics' || ref.group === 'hidden') continue;
       const a = lhr.audits[ref.id];
@@ -171,12 +198,13 @@ export function summarizeLhr(
     }));
   return {
     url: clean(lhr.finalDisplayedUrl ?? lhr.requestedUrl ?? ''),
-    mode: (lhr.gatherMode as LighthouseCheck['mode']) ?? 'navigation',
+    mode,
     device: lhr.configSettings?.formFactor === 'mobile' ? 'mobile' : 'desktop',
     version: lhr.lighthouseVersion,
     scores,
     metrics,
     audits: [...audits.values()],
     warnings: lhr.runWarnings?.length ? lhr.runWarnings.map(clean) : undefined,
+    ...(mode === 'navigation' ? {} : { fractions }),
   };
 }

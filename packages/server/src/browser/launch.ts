@@ -13,18 +13,22 @@ export interface Launched {
 }
 
 // Starts a new Chrome with a fresh, temporary profile.
-export async function launchChrome(config: Config): Promise<Launched> {
+// "background" is a hidden Chrome for work the developer does not watch, like Lighthouse checks.
+export async function launchChrome(
+  config: Config,
+  options: { background?: boolean } = {},
+): Promise<Launched> {
   const chrome = await findChrome(config.browser.executablePath);
   if (!chrome) throw new ToolError(NO_CHROME_MESSAGE, 'chrome_missing');
 
   // A new profile each time, so two sessions never lock each other.
   const profileDir = mkdtempSync(join(tmpdir(), 'uiwalk-profile-'));
-  const headless = config.browser.headless;
+  const headless = options.background || config.browser.headless;
   try {
     const browser = await puppeteer.launch({
       executablePath: chrome.path,
       headless,
-      slowMo: config.browser.slowMo,
+      slowMo: options.background ? 0 : config.browser.slowMo,
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
       defaultViewport: headless ? { width: 1280, height: 800 } : null,
@@ -33,7 +37,7 @@ export async function launchChrome(config: Config): Promise<Launched> {
         '--no-default-browser-check',
         '--window-size=1280,900',
         // For tests only: a fixed port lets a test connect to this Chrome.
-        ...(process.env.UIWALK_DEBUG_PORT
+        ...(process.env.UIWALK_DEBUG_PORT && !options.background
           ? [`--remote-debugging-port=${process.env.UIWALK_DEBUG_PORT}`]
           : []),
       ],

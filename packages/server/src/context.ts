@@ -3,6 +3,7 @@ import { type Config, loadConfig, resolveProjectDir } from './config.js';
 import { ToolError } from './errors.js';
 import { OriginGuard } from './guards/origins.js';
 import { SecretStore } from './guards/secrets.js';
+import type { LhFlow } from './lighthouse/flow.js';
 import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
 import { newUnique } from './page/unique.js';
@@ -22,6 +23,8 @@ export class Context {
   actionCursor = 0;
   // The value of {{unique}}. Each run gets a new one.
   unique = newUnique();
+  // The Lighthouse user flow of the run, after its first flow step.
+  lhFlow?: LhFlow;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
   constructor(

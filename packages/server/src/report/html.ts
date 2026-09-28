@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { imageType } from '../evidence/screenshot.js';
+import { FLOW_REPORT } from '../lighthouse/flow.js';
 import type { Run, RunStep } from '../run/run-store.js';
 import {
   accessibilityRows,
@@ -13,6 +14,7 @@ import {
   STATUS_LABELS,
   safeHref,
   stepAccessibility,
+  stepLighthouse,
 } from './common.js';
 
 // Puts the image inside the file, so the report works on its own.
@@ -45,6 +47,8 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
   }
   const a11y = stepAccessibility(run, step);
   if (a11y) parts.push(`<dt>Accessibility</dt><dd>${esc(a11y)}</dd>`);
+  const lh = stepLighthouse(run, step);
+  if (lh) parts.push(`<dt>Lighthouse</dt><dd>${esc(lh)}</dd>`);
   parts.push('</dl>');
   if (isProblem(step)) {
     parts.push(
@@ -150,7 +154,7 @@ export function htmlReport(run: Run, runDir: string): string {
 <body>
 <main>
 <h1>${esc(run.name)}</h1>
-<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.${existsSync(join(runDir, 'accessibility.html')) ? ' <a href="accessibility.html">Accessibility report</a>' : ''}${existsSync(join(runDir, 'lighthouse.html')) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ''}</p>
+<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.${existsSync(join(runDir, 'accessibility.html')) ? ' <a href="accessibility.html">Accessibility report</a>' : ''}${existsSync(join(runDir, 'lighthouse.html')) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ''}${existsSync(join(runDir, FLOW_REPORT)) ? ` <a href="${FLOW_REPORT}">Lighthouse flow report</a>` : ''}</p>
 <div class="meta">${meta.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc(STATUS_LABELS[status as RunStep['status']])}</span>`).join('')}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}

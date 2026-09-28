@@ -123,7 +123,7 @@ describe('validatePlanText', () => {
 
 describe('sample plans and schema', () => {
   it('has valid sample plans in the demo project', () => {
-    for (const name of ['checkout', 'login', 'mobile']) {
+    for (const name of ['checkout', 'login', 'mobile', 'performance']) {
       const text = readFileSync(
         join(repoRoot, `examples/demo-app/.walkthrough/plans/${name}.yaml`),
         'utf8',
@@ -186,5 +186,34 @@ steps:
       'name: x\nsteps:\n  - do: a\n    emulate: { colorScheme: purple }\n',
     );
     expect(setting.ok).toBe(false);
+  });
+});
+
+describe('Lighthouse keys', () => {
+  it('accepts flow steps and the plan settings', () => {
+    const result = validatePlanText(`name: Speed
+lighthouse: { device: mobile, categories: [performance, seo], report: true }
+steps:
+  - do: Open the shop
+    action: { navigate: / }
+    lighthouse: navigation
+  - do: Add the mug
+    lighthouse: timespan
+  - do: Look at the cart
+    lighthouse: snapshot
+`);
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+  });
+
+  it('needs a navigate action for a navigation step', () => {
+    const found = problems('name: x\nsteps:\n  - do: Click Checkout\n    lighthouse: navigation\n');
+    expect(found[0]?.path).toBe('steps[0].lighthouse');
+    expect(found[0]?.line).toBe(4);
+    expect(found[0]?.message).toMatch(/needs a page to load.*use timespan/);
+  });
+
+  it('explains a bad mode or setting', () => {
+    expect(problems('name: x\nsteps:\n  - do: a\n    lighthouse: trace\n')).not.toEqual([]);
+    expect(problems('name: x\nlighthouse: { device: tv }\nsteps:\n  - do: a\n')).not.toEqual([]);
   });
 });

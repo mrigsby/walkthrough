@@ -4,6 +4,7 @@ import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
 import { emulationSchema } from '../browser/emulation-schema.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
+import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -164,8 +165,19 @@ export const stepSchema = z
       ])
       .optional()
       .describe('Check accessibility after this step.'),
+    lighthouse: z
+      .enum(LH_MODES)
+      .optional()
+      .describe(
+        'Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.',
+      ),
   })
-  .strict();
+  .strict()
+  .refine((step) => step.lighthouse !== 'navigation' || Boolean(step.action?.navigate), {
+    message:
+      'A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.',
+    path: ['lighthouse'],
+  });
 
 export const planSchema = z
   .object({
@@ -212,6 +224,22 @@ export const planSchema = z
       .strict()
       .optional()
       .describe('Settings for accessibility checks in this plan.'),
+    lighthouse: z
+      .object({
+        device: z
+          .enum(LH_DEVICES)
+          .optional()
+          .describe('desktop or mobile scores. The default comes from config.yaml.'),
+        categories: z
+          .array(z.enum(LH_CATEGORIES))
+          .min(1)
+          .optional()
+          .describe('The categories to check. The default comes from config.yaml.'),
+        report: z.boolean().optional().describe('Write a Lighthouse report when the run ends.'),
+      })
+      .strict()
+      .optional()
+      .describe('Settings for the Lighthouse steps in this plan.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict();

@@ -8,10 +8,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import type { Cookie, CookieData } from 'puppeteer-core';
+import type { Cookie, CookieData, Page } from 'puppeteer-core';
 import { ToolError } from '../errors.js';
 import type { OriginGuard } from '../guards/origins.js';
-import type { Driver, Tab } from './driver.js';
+import type { Driver } from './driver.js';
 
 // A saved login: cookies, plus localStorage and sessionStorage for each site.
 // This does not save IndexedDB, so apps that keep their login there need a new login.
@@ -44,28 +44,22 @@ export function cookieMatches(cookie: Cookie, hosts: string[]): boolean {
   return hosts.some((host) => host === domain || host.endsWith(`.${domain}`));
 }
 
-// Saves the login state for the allowed sites that are open in the browser.
-export async function saveSession(
+// Reads the login state of the active tab's login, for the allowed sites that are open.
+// "hosts" adds cookies of more sites, such as pages that Lighthouse checks.
+export async function captureSession(
   driver: Driver,
   guard: OriginGuard,
-  projectDir: string,
   name: string,
+  hosts: string[] = [],
 ): Promise<SavedSession> {
-  const file = sessionFile(projectDir, name);
   // Only the login of the active tab. Other logins are other users.
   const active = driver.activeTab();
   const tabs = [...driver.tabs.values()].filter(
     (t) =>
       t.login === active.login && guard.isAllowed(t.page.url()) && /^https?:/.test(t.page.url()),
   );
-  if (tabs.length === 0) {
-    throw new ToolError(
-      'No tab is on an allowed site. Open the app and log in. Then save the session.',
-      'no_tab',
-    );
-  }
   const origins = [...new Set(tabs.map((t) => new URL(t.page.url()).origin))];
-  const hosts = origins.map((o) => new URL(o).hostname);
+  hosts = [...new Set([...origins.map((o) => new URL(o).hostname), ...hosts])];
 
   // Only cookies for the sites under test. In attach mode, the rest of the browser stays private.
   const cookies = (await active.page.browserContext().cookies()).filter((c) =>
@@ -89,14 +83,24 @@ export async function saveSession(
     });
   }
 
-  const session: SavedSession = {
-    version: 1,
-    name,
-    savedAt: new Date().toISOString(),
-    origins,
-    cookies,
-    storage,
-  };
+  return { version: 1, name, savedAt: new Date().toISOString(), origins, cookies, storage };
+}
+
+// Saves the login state for the allowed sites that are open in the browser.
+export async function saveSession(
+  driver: Driver,
+  guard: OriginGuard,
+  projectDir: string,
+  name: string,
+): Promise<SavedSession> {
+  const file = sessionFile(projectDir, name);
+  const session = await captureSession(driver, guard, name);
+  if (session.origins.length === 0) {
+    throw new ToolError(
+      'No tab is on an allowed site. Open the app and log in. Then save the session.',
+      'no_tab',
+    );
+  }
   mkdirSync(sessionsDir(projectDir), { recursive: true, mode: 0o700 });
   // Only the developer's user account can read this file.
   writeFileSync(file, `${JSON.stringify(session, null, 2)}\n`, { mode: 0o600 });
@@ -139,7 +143,12 @@ export function deleteSession(projectDir: string, name: string): void {
 
 // Puts a saved login back. Cookies go in now. Storage is written by a script
 // that runs before the app's own scripts on the next page load, then stops.
-export async function restoreSession(tab: Tab, session: SavedSession): Promise<void> {
+// "everyLoad" keeps the script, for a page that loads about:blank first, like Lighthouse.
+export async function restoreSession(
+  tab: { page: Page },
+  session: SavedSession,
+  options: { everyLoad?: boolean } = {},
+): Promise<void> {
   if (session.cookies.length > 0) {
     const cookies: CookieData[] = session.cookies.map((c) => ({
       name: c.name,
@@ -161,6 +170,7 @@ export async function restoreSession(tab: Tab, session: SavedSession): Promise<v
     for (const [key, value] of Object.entries(saved.local)) localStorage.setItem(key, value);
     for (const [key, value] of Object.entries(saved.session)) sessionStorage.setItem(key, value);
   }, session.storage);
+  if (options.everyLoad) return;
   // Only for the next page load. Later loads must not undo a logout.
   tab.page.once(
     'load',

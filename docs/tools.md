@@ -281,17 +281,26 @@ Lighthouse is an optional download. Install it with `npx -y walkthrough-ui setup
 
 ### `lighthouse`
 
-Checks pages with Lighthouse, like the Lighthouse panel in DevTools. Each page runs in a new tab of the same login, so the page stays logged in. That tab has no Walkthrough panel and no screen or network settings from Walkthrough.
+Checks pages with Lighthouse, like the Lighthouse panel in DevTools. During a run, it also measures the steps of a user flow.
 
 | Parameter | What it does |
 | --- | --- |
-| `action` | `audit` (the default) checks pages. `status` shows whether Lighthouse is installed. |
-| `urls` | The pages to check. The default is the current page. |
+| `action` | `audit` (the default) checks pages. `navigate`, `start`, `end`, and `snapshot` measure flow steps. `status` shows whether Lighthouse is installed. |
+| `urls` | The pages to check. The default is the current page. For `navigate`, the page to load when the step has no `navigate` action. |
+| `stepId` | For flow actions: the plan step that Lighthouse measures. |
 | `device` | `desktop` or `mobile`. The default comes from `config.yaml`. |
 | `categories` | `performance`, `accessibility`, `best-practices`, `seo`, and `agentic-browsing`. The default comes from `config.yaml`. |
-| `runId`, `name`, `session` | Continue a check that stopped, name the new run, or load a saved login first. |
+| `runId`, `name`, `session` | Continue a check that stopped, name the new run, or use a saved login for the checks. |
 
-Without a run, it makes a run with one step per page. Lighthouse's own reports go in the `lighthouse/` folder of the run. A call stops after about 45 seconds, and the reply says to call it again with `runId`.
+With `audit`, each page runs in its own hidden Chrome with an empty profile. Walkthrough copies the login of the active tab into it, so the page stays logged in. Chrome remembers things between pages, such as its cache and failed favicons. A new Chrome for each page gives each check the same start. That Chrome has no Walkthrough panel and no screen or network settings from Walkthrough. Mock rules for all tabs still apply. The test browser does not have to be open. Without a run, it makes a run with one step per page. Lighthouse's own reports go in the `lighthouse/` folder of the run. A call stops after about 45 seconds, and the reply says to call it again with `runId`.
+
+The flow actions work only during a run, in the active tab:
+
+- `navigate`: Lighthouse loads the page of the step's `navigate` action, and measures the load.
+- `start` and `end`: Lighthouse measures what happens between the two calls.
+- `snapshot`: Lighthouse checks the page as it is.
+
+The tab keeps its screen size and settings, and Walkthrough hides its panel while Lighthouse measures. The settings come from the plan's `lighthouse` block, or from `config.yaml`. After each step, Walkthrough writes Lighthouse's flow report to `lighthouse/flow.report.html`. See [Lighthouse flows](plan-format.md#lighthouse-flows).
 
 ### `lighthouse_report`
 
@@ -300,7 +309,7 @@ Writes the Lighthouse report of a run in two calls, like `a11y_report`:
 1. Without `items`, it returns the scores, the findings with IDs such as `LH-001`, a `digest`, and how to write the text.
 2. With `digest`, `summary`, and `items`, it writes `lighthouse.html`, `lighthouse.md`, and `lighthouse.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`.
 
-A new report compares itself with the last report of the same pages. Issues keep their IDs, and the report shows the score changes. `compareTo` picks the report to compare with.
+A new report compares itself with the last report of the same pages. A flow report compares itself with the last report of the same plan. Issues keep their IDs, and the report shows the changes in page load scores. `compareTo` picks the report to compare with.
 
 ## Record and share
 
