@@ -42,6 +42,16 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Lighthouse is an optional download. The Lighthouse tests need it.
+      - name: Cache the Lighthouse download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uiwalk/lighthouse
+          key: lighthouse-${{ runner.os }}-${{ hashFiles('packages/server/src/downloads/lighthouse.ts') }}
+
+      - name: Install Lighthouse
+        run: npm run build:plugin && node plugins/walkthrough/server/uiwalk.mjs setup lighthouse
+
       - name: Lint
         run: npm run lint
 

@@ -150,7 +150,7 @@ export function htmlReport(run: Run, runDir: string): string {
 <body>
 <main>
 <h1>${esc(run.name)}</h1>
-<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.${existsSync(join(runDir, 'accessibility.html')) ? ' <a href="accessibility.html">Accessibility report</a>' : ''}</p>
+<p class="muted">Walkthrough report. Result: ${esc(resultLine(run) || 'no steps')}.${existsSync(join(runDir, 'accessibility.html')) ? ' <a href="accessibility.html">Accessibility report</a>' : ''}${existsSync(join(runDir, 'lighthouse.html')) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ''}</p>
 <div class="meta">${meta.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc(STATUS_LABELS[status as RunStep['status']])}</span>`).join('')}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}

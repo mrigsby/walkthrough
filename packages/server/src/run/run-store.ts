@@ -15,6 +15,7 @@ import { CHECKS, type CheckName } from '../audit/standards.js';
 import type { Emulation } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ToolError } from '../errors.js';
+import type { LighthouseCheck } from '../lighthouse/audit.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
 import { slug } from '../text.js';
@@ -82,6 +83,10 @@ export interface Run {
   a11yPlan?: { report: boolean; standard?: string; checks?: CheckName[] };
   // A scan that stopped at its time limit, with the pages still to check.
   a11yScan?: { pending: string[]; standard: string; tags: string[]; checks: string[] };
+  // Lighthouse results, one for each page or flow step.
+  lighthouse?: LighthouseCheck[];
+  // A Lighthouse check that stopped at its time limit.
+  lhScan?: { pending: string[]; device: string; categories: string[] };
 }
 
 // One accessibility check of one page. Fields after "violations" are optional,

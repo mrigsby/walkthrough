@@ -38,6 +38,7 @@ describe('plugin files', () => {
       'doctor.md',
       'export.md',
       'init.md',
+      'lighthouse.md',
       'plan.md',
       'record.md',
       'report.md',

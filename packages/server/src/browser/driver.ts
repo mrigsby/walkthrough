@@ -245,7 +245,7 @@ export class Driver {
   async addTab(
     page: Page,
     openerId?: string,
-    options: { login?: string; name?: string; emulation?: Emulation } = {},
+    options: { login?: string; name?: string; emulation?: Emulation; panel?: boolean } = {},
   ): Promise<Tab> {
     this.tabCounter += 1;
     const id = `t${this.tabCounter}`;
@@ -280,7 +280,7 @@ export class Driver {
     page.on('dialog', (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
     this.network.attach(page, tab.id);
-    await this.panel?.attach(page, tab.id);
+    if (options.panel !== false) await this.panel?.attach(page, tab.id);
 
     tab.router = await FetchRouter.install(page, {
       isAllowed: (url) => this.options.isAllowed(url),
@@ -434,7 +434,10 @@ export class Driver {
   }
 
   // Opens a new tab. isolated: true makes a one-off login. A string names a login that tabs share.
-  async newTab(options: { name?: string; isolated?: true | string } = {}): Promise<Tab> {
+  // A bare tab has no panel and no settings, and does not become the active tab.
+  async newTab(
+    options: { name?: string; isolated?: true | string; bare?: boolean } = {},
+  ): Promise<Tab> {
     this.assertAlive();
     if (options.name !== undefined) this.checkTabName(options.name);
     const login =
@@ -454,12 +457,16 @@ export class Driver {
         this.logins.set(login, context);
       }
       const page = await context.newPage();
-      return this.addTab(page, undefined, { login, name: options.name });
+      return this.addTab(page, undefined, {
+        login,
+        name: options.name,
+        ...(options.bare ? { emulation: {}, panel: false } : {}),
+      });
     })();
     this.newTabWork = work;
     try {
       const tab = await work;
-      this.switchTo(tab.id);
+      if (!options.bare) this.switchTo(tab.id);
       return tab;
     } finally {
       if (this.newTabWork === work) this.newTabWork = undefined;

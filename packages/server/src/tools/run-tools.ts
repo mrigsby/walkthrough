@@ -40,7 +40,8 @@ export function writeReports(
   // Hide secrets in the data first. Escaping would change how they look.
   const run = redactDeep(store.run, secrets);
   const a11yReport = existsSync(join(store.dir, 'accessibility.html'));
-  const md = markdownReport(run, { a11yReport });
+  const lhReport = existsSync(join(store.dir, 'lighthouse.html'));
+  const md = markdownReport(run, { a11yReport, lhReport });
   writeFileSync(markdown, secrets ? secrets.redact(md) : md);
   // No second pass on the HTML: it holds images, and a pass could change their data.
   writeFileSync(html, htmlReport(run, store.dir));

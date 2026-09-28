@@ -72,6 +72,7 @@ When the developer asks for a new plan:
 
 - **Visual:** `visual_check` compares the page with a baseline. On `result: mismatch`, show the developer the diff image path. Ask whether the change is expected. If they say yes, call it again with `updateBaseline: true`. Otherwise, record the step as failed.
 - **Accessibility:** `a11y_audit` checks the current page with axe-core and names the WCAG criteria. It runs extra checks only when you ask: `keyboard` (press Tab through the page), `darkMode`, `reflow` (320px wide), `frames`, and `screenshots`. During a run, give `stepId`, and the results go into the report. For an "accessibility check" plan step, give `stepId`, and Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.
+- **Lighthouse report:** when the developer wants performance, best practices, or SEO scores, use `/walkthrough:lighthouse`, or do the same steps: `lighthouse` with `urls`, then `lighthouse_report` without items, then with a digest, a summary, and text for each issue. Follow `references/lighthouse-report.md`. If Lighthouse is not installed, show the developer the install command from the reply.
 - **Accessibility report:** when the developer wants a report for one or more pages, use `/walkthrough:a11y`, or do the same steps: `a11y_scan` with `urls`, then `a11y_report` without items, then `a11y_report` with a digest, a summary, and text for each issue. Follow `references/a11y-report.md`. Always show the developer the suggested prompt from the reply.
 - **Devices and settings:** `emulate` sets the active tab's screen (`mobile`, `tablet`, `desktop`), `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, and `permissions`. `allTabs: true` sets every tab. Take a new snapshot after it.
 - **Tabs and second users:** `tabs` with action `new` opens a tab. `isolated: true` gives it its own login, so you can test as a second user. `isolated: "admin"` gives it a login that tabs share. Plan steps can use `newTab`, `switchTab`, and `closeTab`.
@@ -102,3 +103,4 @@ When the developer asks for a new plan:
 - `references/tools.md`: what each tool does.
 - `references/bug-report.md`: how to describe a bug.
 - `references/a11y-report.md`: how to write the accessibility report text.
+- `references/lighthouse-report.md`: how to write the Lighthouse report text.

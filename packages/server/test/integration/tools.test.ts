@@ -64,6 +64,8 @@ describe('uiwalk tools', () => {
         'inspect',
         'intercept',
         'issue_draft',
+        'lighthouse',
+        'lighthouse_report',
         'logs',
         'navigate',
         'network',

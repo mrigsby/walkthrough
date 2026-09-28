@@ -20,7 +20,8 @@ This file lists all notable changes to the project.
 - Plan steps can check cookies with `cookies`, such as `{ name: session, exists: false }`. Exported scripts check them too, and repeat storage changes.
 - The new `network` tool lists requests, shows one with its headers and body, and saves HAR files. Login headers and secret body fields show as a fingerprint, and HAR files always remove them.
 - The new `inspect` tool shows an element's computed styles, box, CSS rules with file and line, and event listeners with file and line.
-- The new `intercept` tool answers requests with your own data, blocks them, or delays them, for every tab or for one tab. Plan steps can add rules with `mock`, and `mock: off` removes them. Reports mark steps that used a rule as **Mocked**, and exported scripts repeat the rules. The server has 33 tools.
+- The new `intercept` tool answers requests with your own data, blocks them, or delays them, for every tab or for one tab. Plan steps can add rules with `mock`, and `mock: off` removes them. Reports mark steps that used a rule as **Mocked**, and exported scripts repeat the rules.
+- Lighthouse reports: `/walkthrough:lighthouse` checks pages with Lighthouse. It writes `lighthouse.html`, `lighthouse.md`, and `lighthouse.json` with scores, metrics, and an explanation and a fix for each issue. Issue IDs stay the same from one report to the next, and the report shows the score changes. New tools `lighthouse` and `lighthouse_report`. The server has 35 tools.
 - A failed step, and a bug from the panel, save a HAR file with the requests of the step. Reports link it, and `issue_draft` lists it.
 - `logs` shows Chrome issues, the same problems as the Issues panel in DevTools: blocked cookies, CSP and CORS blocks, mixed content, deprecated features, and form problems. `kinds` filters the entries.
 

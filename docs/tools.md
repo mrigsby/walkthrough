@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 33 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 35 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -274,6 +274,33 @@ Writes the accessibility report of a run. It has two calls:
 2. With `digest`, `summary`, and `items`, it writes `accessibility.html`, `accessibility.md`, and `accessibility.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`. The reply has a prompt for the next session.
 
 `runId` picks the run. The default is the run that is going, or the newest run with accessibility results. `compareTo` picks the report to compare with.
+
+## Lighthouse
+
+Lighthouse is an optional download. Install it with `npx -y walkthrough-ui setup lighthouse`. See [Setup](#setup).
+
+### `lighthouse`
+
+Checks pages with Lighthouse, like the Lighthouse panel in DevTools. Each page runs in a new tab of the same login, so the page stays logged in. That tab has no Walkthrough panel and no screen or network settings from Walkthrough.
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `audit` (the default) checks pages. `status` shows whether Lighthouse is installed. |
+| `urls` | The pages to check. The default is the current page. |
+| `device` | `desktop` or `mobile`. The default comes from `config.yaml`. |
+| `categories` | `performance`, `accessibility`, `best-practices`, `seo`, and `agentic-browsing`. The default comes from `config.yaml`. |
+| `runId`, `name`, `session` | Continue a check that stopped, name the new run, or load a saved login first. |
+
+Without a run, it makes a run with one step per page. Lighthouse's own reports go in the `lighthouse/` folder of the run. A call stops after about 45 seconds, and the reply says to call it again with `runId`.
+
+### `lighthouse_report`
+
+Writes the Lighthouse report of a run in two calls, like `a11y_report`:
+
+1. Without `items`, it returns the scores, the findings with IDs such as `LH-001`, a `digest`, and how to write the text.
+2. With `digest`, `summary`, and `items`, it writes `lighthouse.html`, `lighthouse.md`, and `lighthouse.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`.
+
+A new report compares itself with the last report of the same pages. Issues keep their IDs, and the report shows the score changes. `compareTo` picks the report to compare with.
 
 ## Record and share
 
