@@ -10,6 +10,21 @@ const outFile = join(root, 'plugins/walkthrough/server/uiwalk.mjs');
 const pkg = JSON.parse(await readFile(join(root, 'packages/server/package.json'), 'utf8'));
 const watch = process.argv.includes('--watch');
 
+// The video encoder runs in a hidden Chrome, so it goes in as text, like axe-core.
+const encoder = await esbuild.build({
+  absWorkingDir: root,
+  entryPoints: [join(root, 'packages/server/src/video/encoder-page/main.ts')],
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'chrome120',
+  minify: true,
+  write: false,
+  legalComments: 'none',
+  metafile: true,
+  logLevel: 'warning',
+});
+
 // Some dependencies use require(). This lets them work in an ES module file.
 const banner = [
   '#!/usr/bin/env node',
@@ -34,10 +49,12 @@ const options = {
     __UIWALK_AXE_SOURCE__: JSON.stringify(
       await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8'),
     ),
+    __UIWALK_ENCODER_SOURCE__: JSON.stringify(encoder.outputFiles[0].text),
   },
   // Optional speed-ups for ws. The ws package loads them only if they exist.
   // Everything else must be inside the bundle: an installed plugin has no node_modules.
-  external: ['bufferutil', 'utf-8-validate'],
+  // esbuild only builds the encoder when running from source.
+  external: ['bufferutil', 'utf-8-validate', 'esbuild'],
   legalComments: 'none',
   metafile: true,
   logLevel: 'warning',
@@ -47,7 +64,8 @@ const options = {
 async function writeLicenses(metafile) {
   // axe-core goes in as text, so esbuild does not list it. Add it here.
   const packages = new Map([['axe-core', 'node_modules/axe-core']]);
-  for (const input of Object.keys(metafile.inputs)) {
+  // The encoder page goes in as text too.
+  for (const input of [...Object.keys(metafile.inputs), ...Object.keys(encoder.metafile.inputs)]) {
     const match = input.match(/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
     if (match?.[1])
       packages.set(match[1], input.slice(0, input.indexOf(match[1]) + match[1].length));

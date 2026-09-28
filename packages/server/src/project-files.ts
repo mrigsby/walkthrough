@@ -32,6 +32,13 @@ export function adhocEvidenceDir(projectDir: string): string {
   return dir;
 }
 
+// Folder for videos made outside a test run.
+export function adhocVideoDir(projectDir: string): string {
+  const dir = join(ensureWalkthroughDir(projectDir), 'runs', `adhoc-${stamp().day}`, 'video');
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export function fileStamp(label?: string): string {
   const safe = (label ?? 'screenshot')
     .toLowerCase()

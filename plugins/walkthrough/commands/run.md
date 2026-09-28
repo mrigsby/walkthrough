@@ -17,6 +17,6 @@ Arguments: $ARGUMENTS
    - For an "accessibility check" step, call `a11y_audit` with the `stepId`.
    - For a Lighthouse step, call `lighthouse` as `run_start` says.
 5. When every step has a result, or the developer says stop, call `run_finish` with a short summary.
-6. Tell the developer the result, the bugs and failures, and the path to `report.html`.
+6. Tell the developer the result, the bugs and failures, and the path to `report.html`. If `run_finish` saved a video, also give its path.
 7. If `run_finish` says that the plan asks for an accessibility report, write it like `/walkthrough:a11y` does, from step 3.
 8. If `run_finish` says that the plan asks for a Lighthouse report, write it like `/walkthrough:lighthouse` does, from step 4.

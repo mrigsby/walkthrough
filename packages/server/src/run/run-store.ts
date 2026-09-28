@@ -60,6 +60,22 @@ export interface RunStep {
   mocked?: string[];
   // How Lighthouse measures this step, from the plan. A navigation has the page to load.
   lighthouse?: { mode: LhMode; url?: string };
+  // The text that viewers see in videos. Without it, videos show the title.
+  caption?: string;
+}
+
+// A video of the run, or of part of it.
+export interface RunVideo {
+  // From the run folder, like "video/run.mp4".
+  file: string;
+  format: string;
+  seconds: number;
+  bytes: number;
+  name: string;
+  // True for the video of the whole run.
+  whole?: boolean;
+  // The exact file it was also saved to, from the project folder.
+  path?: string;
 }
 
 export interface Run {
@@ -94,6 +110,9 @@ export interface Run {
   lhPlan?: { device: string; categories: string[]; report: boolean };
   // True when the run started in a new browser with an empty profile.
   freshBrowser?: boolean;
+  videos?: RunVideo[];
+  // Why a video of the run is missing.
+  videoNote?: string;
 }
 
 // One accessibility check of one page. Fields after "violations" are optional,
@@ -184,6 +203,7 @@ export class RunStore {
       screenshots: [],
       actions: [],
       ...(step.cookies ? { cookies: step.cookies } : {}),
+      ...(step.caption ? { caption: step.caption } : {}),
       ...(step.lighthouse
         ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } }
         : {}),

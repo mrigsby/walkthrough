@@ -2,6 +2,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import type { Context } from '../context.js';
 import type { LogEntry } from '../evidence/logs.js';
 import { formatLogs } from '../evidence/logs.js';
+import { stepCaption } from '../video/recording.js';
 import type { RunStep, StepStatus } from './run-store.js';
 
 export interface StepRef {
@@ -65,6 +66,10 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
   ctx.actionCursor = ctx.actionLog.length;
   step.at = new Date().toISOString();
   store.save();
+  // A video of the run shows the next step's caption.
+  const video = ctx.video;
+  if (video?.capture.recording && video.runId === store.run.id && video.captions)
+    video.capture.setCaption(stepCaption(store));
   return step;
 }
 

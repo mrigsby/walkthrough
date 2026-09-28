@@ -217,3 +217,21 @@ steps:
     expect(problems('name: x\nlighthouse: { device: tv }\nsteps:\n  - do: a\n')).not.toEqual([]);
   });
 });
+
+describe('video keys', () => {
+  it('accepts video on a plan and caption on a step', () => {
+    for (const video of ['true', '{ format: gif, path: docs/cart.gif, captions: false }']) {
+      const result = validatePlanText(
+        `name: x\nvideo: ${video}\nsteps:\n  - do: Add the mug\n    caption: Add the coffee mug\n`,
+      );
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+    }
+  });
+
+  it('explains a bad video path or format', () => {
+    expect(
+      problems('name: x\nvideo: { path: docs/cart.mov }\nsteps:\n  - do: a\n')[0]?.message,
+    ).toMatch(/End the path with \.mp4, \.webm, or \.gif/);
+    expect(problems('name: x\nvideo: { format: avi }\nsteps:\n  - do: a\n')).not.toEqual([]);
+  });
+});

@@ -10,6 +10,7 @@ import { newUnique } from './page/unique.js';
 import { adhocEvidenceDir } from './project-files.js';
 import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
+import type { VideoRecording } from './video/recording.js';
 
 // Shared state for all tools in one server.
 export class Context {
@@ -25,6 +26,8 @@ export class Context {
   unique = newUnique();
   // The Lighthouse user flow of the run, after its first flow step.
   lhFlow?: LhFlow;
+  // The video that is recording, or one that stopped but is not saved yet.
+  video?: VideoRecording;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
   constructor(

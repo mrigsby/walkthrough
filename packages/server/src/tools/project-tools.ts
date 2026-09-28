@@ -74,7 +74,7 @@ export function registerProjectTools(server: McpServer, ctx: Context): void {
           try {
             const run = JSON.parse(readFileSync(file, 'utf8')) as Run;
             const report = existsSync(join(dir, id, 'report.html'))
-              ? `report written${existsSync(join(dir, id, 'accessibility.html')) ? ', accessibility report written' : ''}${existsSync(join(dir, id, 'lighthouse.html')) ? ', Lighthouse report written' : ''}`
+              ? `report written${existsSync(join(dir, id, 'accessibility.html')) ? ', accessibility report written' : ''}${existsSync(join(dir, id, 'lighthouse.html')) ? ', Lighthouse report written' : ''}${run.videos?.length ? `, video: ${run.videos.map((v) => v.file).join(', ')}` : ''}`
               : 'no report yet';
             rows.push(
               `- ${id}: "${run.name}", ${run.status}, ${resultLine(run) || 'no steps'} (${report})`,

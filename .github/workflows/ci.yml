@@ -52,6 +52,16 @@ jobs:
       - name: Install Lighthouse
         run: npm run build:plugin && node plugins/walkthrough/server/uiwalk.mjs setup lighthouse
 
+      # ffmpeg is an optional download. It makes MP4 when Chrome cannot.
+      - name: Cache the ffmpeg download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uiwalk/ffmpeg
+          key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/server/src/downloads/ffmpeg.ts') }}
+
+      - name: Install ffmpeg
+        run: node plugins/walkthrough/server/uiwalk.mjs setup ffmpeg
+
       - name: Lint
         run: npm run lint
 

@@ -54,8 +54,9 @@ export class DeveloperPanel {
   private recordStopped = false;
   // Tabs where a screenshot or a check hides the panel for a moment.
   private hiddenIn = new Set<string>();
-  // Tabs where Lighthouse measures. The panel stays hidden there, also on new pages.
-  private suppressed = new Set<string>();
+  // Tabs where the panel stays hidden, also on new pages, and why:
+  // "lighthouse" while Lighthouse measures, "video" while Walkthrough records.
+  private suppressed = new Map<string, Set<string>>();
   private recordWaiter?: (outcome: RecordOutcome) => void;
 
   async attach(page: Page, tabId: string): Promise<void> {
@@ -220,11 +221,15 @@ export class DeveloperPanel {
     await this.sendHidden(tabId);
   }
 
-  // Hides the panel in a tab while Lighthouse measures it.
-  async suppress(tabId: string, on: boolean): Promise<void> {
-    if (on) this.suppressed.add(tabId);
+  // Hides the panel in a tab while Lighthouse measures it or a video records it.
+  // It shows again when no reason is left.
+  async suppress(tabId: string, on: boolean, reason = 'lighthouse'): Promise<void> {
+    const reasons = this.suppressed.get(tabId) ?? new Set<string>();
+    if (on) reasons.add(reason);
+    else reasons.delete(reason);
+    if (reasons.size) this.suppressed.set(tabId, reasons);
     else this.suppressed.delete(tabId);
-    await this.bridges.get(tabId)?.hideOnLoad(on);
+    await this.bridges.get(tabId)?.hideOnLoad(reasons.size > 0);
     await this.sendHidden(tabId);
   }
 

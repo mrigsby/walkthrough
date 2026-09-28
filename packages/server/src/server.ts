@@ -13,6 +13,7 @@ import { registerProjectTools } from './tools/project-tools.js';
 import { registerQualityTools } from './tools/quality-tools.js';
 import { registerRunTools, writeReports } from './tools/run-tools.js';
 import { registerShareTools } from './tools/share-tools.js';
+import { registerVideoTools } from './tools/video-tools.js';
 import { VERSION } from './version.js';
 
 // Builds the MCP server and adds its tools.
@@ -37,6 +38,7 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerDevtoolsTools(server, ctx);
   registerLighthouseTools(server, ctx);
   registerShareTools(server, ctx);
+  registerVideoTools(server, ctx);
 
   // If the server stops during a run, keep what we have and write the reports.
   onShutdown(async () => {

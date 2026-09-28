@@ -89,7 +89,7 @@ export class Driver {
   // What the mocks did in the current step.
   private mockHits = new Set<string>();
   private userAgent = '';
-  activeId?: string;
+  private active?: string;
   dialogPolicy: DialogPolicy;
   closedReason?: 'browser_closed' | 'closed_by_agent';
 
@@ -130,6 +130,17 @@ export class Driver {
     }
     driver.watchBrowser();
     return driver;
+  }
+
+  // The tab that tools act on. A change sends "active-changed", so a video can follow it.
+  get activeId(): string | undefined {
+    return this.active;
+  }
+
+  set activeId(id: string | undefined) {
+    if (id === this.active) return;
+    this.active = id;
+    this.emitter.emit('active-changed', id);
   }
 
   get alive(): boolean {

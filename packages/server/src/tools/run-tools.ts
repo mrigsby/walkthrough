@@ -10,7 +10,7 @@ import { describeRule } from '../devtools/mock-schema.js';
 import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
 import { ToolError } from '../errors.js';
 import { scrubText } from '../evidence/scrub.js';
-import { checkScreenshotPath } from '../guards/paths.js';
+import { checkMediaPath, checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { newUnique } from '../page/unique.js';
@@ -29,6 +29,8 @@ import {
 } from '../run/plans.js';
 import { nextStepHint, recordResult } from '../run/record.js';
 import { needsConfirm, RunStore } from '../run/run-store.js';
+import { chooseFormat } from '../video/formats.js';
+import { startVideo, stopVideo } from '../video/recording.js';
 import { openBrowser } from './browser-tools.js';
 import { bugHar, bugScreenshot } from './developer-tools.js';
 import { type Content, runTool, textResult } from './util.js';
@@ -122,9 +124,18 @@ function describeCookieCheck(check: CookieCheck): string {
   return `${check.name} is set${parts.length ? `, ${parts.join(', ')}` : ''}`;
 }
 
-// Checks every exact screenshot path in a plan. Returns the problems.
+// Checks every exact screenshot path in a plan, and the video path. Returns the problems.
 function screenshotProblems(plan: Plan, projectDir: string, extraRoots: string[]): string[] {
   const problems: string[] = [];
+  const video = typeof plan.video === 'object' ? plan.video : undefined;
+  if (video?.path) {
+    try {
+      chooseFormat(video.format, video.path, 'mp4');
+      checkMediaPath(video.path, projectDir, extraRoots);
+    } catch (error) {
+      problems.push(`video: ${(error as Error).message}`);
+    }
+  }
   plan.steps.forEach((step, i) => {
     const capture = stepCapture(plan, step);
     if (!capture) return;
@@ -173,6 +184,7 @@ function stepList(plan: Plan, mode: Mode): string {
         .join(', ');
       const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
       if (step.expect) lines.push(`   Expect: ${step.expect}`);
+      if (step.caption) lines.push(`   Caption: ${step.caption}`);
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       if (step.cookies)
         lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join('; ')}`);
@@ -251,7 +263,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           const shots = screenshotProblems(plan, projectDir, screenshotRoots);
           if (shots.length) {
             return [
-              `The plan ${relative(projectDir, file)} has screenshot paths that Walkthrough cannot use:`,
+              `The plan ${relative(projectDir, file)} has file paths that Walkthrough cannot use:`,
               ...shots.map((p) => `- ${p}`),
             ].join('\n');
           }
@@ -284,9 +296,13 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           .enum(MODES)
           .optional()
           .describe('Overrides the mode in the plan. The default is checkpoints.'),
+        video: z
+          .boolean()
+          .optional()
+          .describe("Record the whole run as a video. The plan's video key does the same."),
       },
     },
-    ({ plan: planName, name, mode: modeArg }) =>
+    ({ plan: planName, name, mode: modeArg, video: videoArg }) =>
       runTool(ctx, 'run_start', async () => {
         const config = await ctx.refresh();
         if (ctx.run?.run.status === 'running') {
@@ -310,10 +326,30 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           const shots = screenshotProblems(plan, config.projectDir, config.screenshotRoots);
           if (shots.length) {
             throw new ToolError(
-              `This plan has screenshot paths that Walkthrough cannot use:\n${shots.map((p) => `- ${p}`).join('\n')}`,
+              `This plan has file paths that Walkthrough cannot use:\n${shots.map((p) => `- ${p}`).join('\n')}`,
               'screenshot_blocked',
             );
           }
+        }
+        // A video of the whole run. Its settings are checked before the browser opens.
+        const videoPlan =
+          plan?.video === false
+            ? undefined
+            : typeof plan?.video === 'object'
+              ? plan.video
+              : plan?.video || videoArg
+                ? {}
+                : undefined;
+        if (videoPlan) {
+          if (ctx.video?.capture.recording) {
+            throw new ToolError(
+              'A video is recording already. Call video with action stop first.',
+              'video_active',
+            );
+          }
+          chooseFormat(videoPlan.format, videoPlan.path, config.video.runFormat);
+          if (videoPlan.path)
+            checkMediaPath(videoPlan.path, config.projectDir, config.screenshotRoots);
         }
         const lhSteps = plan?.steps.some((s) => s.lighthouse) ?? false;
         if (lhSteps && !findLighthouse()) {
@@ -361,8 +397,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         });
         const lh = ctx.run.run.lhPlan;
 
+        if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+          ...(videoPlan ? ['Walkthrough records this run as a video. run_finish saves it.'] : []),
           `Run folder: ${ctx.run.relativeDir}`,
           `{{unique}} in this run: ${ctx.unique}`,
           HOW_TO[mode],
@@ -504,6 +542,14 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const notes: string[] = [];
         if (store === ctx.run) {
           notes.push(...(await closeFlow(ctx, store)));
+          // The video goes in before the reports, so they can show it.
+          if (ctx.video?.runId === store.run.id) {
+            try {
+              notes.push(...(await stopVideo(ctx)).lines);
+            } catch (error) {
+              notes.push(`Walkthrough did not save the video: ${(error as Error).message}`);
+            }
+          }
           store.finish(summary);
           ctx.run = undefined;
         } else if (summary) {

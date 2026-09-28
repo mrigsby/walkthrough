@@ -39,6 +39,7 @@ All tools come from the `uiwalk` MCP server.
 | `a11y_scan` | Check one page or a list of pages, and save the results in a run with `report.html`. |
 | `a11y_report` | Get the findings of a run, then write `accessibility.html`, `.md`, and `.json` from your text. |
 | `lighthouse` | Check pages with Lighthouse (performance, best practices, SEO), each in its own hidden Chrome with a copy of the login. During a run, `navigate`, `start` and `end`, and `snapshot` measure flow steps in the active tab. `status` shows whether it is installed. |
+| `video` | `start` records the active tab, `caption` sets the text at the bottom, and `stop` saves an MP4, WebM, or GIF (with `format` and `path`). Wait time is cut, and the panel and typed secrets are hidden. |
 | `lighthouse_report` | Get the Lighthouse findings of a run, then write `lighthouse.html`, `.md`, and `.json` from your text. |
 
 ## Developer and runs

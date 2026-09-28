@@ -2,6 +2,7 @@ import { existsSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { ToolError } from '../errors.js';
 import { IMAGE_EXTENSIONS } from '../run/plan-schema.js';
+import { VIDEO_EXTENSIONS } from '../video/formats.js';
 
 const BLOCKED_NAMES = new Set(['config.local.yaml', 'config.local.yml']);
 
@@ -57,24 +58,40 @@ const inside = (root: string, path: string) => {
   return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel);
 };
 
-// Checks where the agent wants to save a screenshot. Returns the full, real path,
+// What kind of file an output path is for.
+interface OutputKind {
+  // "screenshot" or "video", in messages.
+  noun: string;
+  extensions: readonly string[];
+  code: string;
+}
+
+const SCREENSHOT: OutputKind = {
+  noun: 'screenshot',
+  extensions: IMAGE_EXTENSIONS,
+  code: 'screenshot_blocked',
+};
+const VIDEO: OutputKind = { noun: 'video', extensions: VIDEO_EXTENSIONS, code: 'video_blocked' };
+
+// Checks where the agent wants to save a file. Returns the full, real path,
 // and a short path to show: from the project folder when it is inside it.
-export function checkScreenshotPath(
+function checkOutputPath(
   file: string,
   projectDir: string,
-  extraRoots: string[] = [],
+  extraRoots: string[],
+  kind: OutputKind,
 ): { path: string; display: string } {
   const full = isAbsolute(file) ? resolve(file) : resolve(projectDir, file);
   const ext = extname(full).toLowerCase();
-  if (!(IMAGE_EXTENSIONS as readonly string[]).includes(ext)) {
+  if (!kind.extensions.includes(ext)) {
     throw new ToolError(
-      `End the screenshot path with ${IMAGE_EXTENSIONS.join(', ')}. ${file} does not.`,
-      'screenshot_blocked',
+      `End the ${kind.noun} path with ${kind.extensions.join(', ')}. ${file} does not.`,
+      kind.code,
     );
   }
   const real = realTarget(full);
   if (existsSync(real) && !statSync(real).isFile()) {
-    throw new ToolError(`${file} is a folder, not a file.`, 'screenshot_blocked');
+    throw new ToolError(`${file} is a folder, not a file.`, kind.code);
   }
 
   const project = realTarget(projectDir);
@@ -83,8 +100,8 @@ export function checkScreenshotPath(
   if (!root) {
     const extra = extraRoots.length ? ` or in ${extraRoots.join(', ')}` : '';
     throw new ToolError(
-      `Walkthrough saves screenshots only in the project folder${extra}. ${file} is outside. To allow another folder, add it to screenshotRoots in .walkthrough/config.local.yaml.`,
-      'screenshot_blocked',
+      `Walkthrough saves ${kind.noun}s only in the project folder${extra}. ${file} is outside. To allow another folder, add it to screenshotRoots in .walkthrough/config.local.yaml.`,
+      kind.code,
     );
   }
 
@@ -95,9 +112,26 @@ export function checkScreenshotPath(
       .some((part) => part.startsWith('.'))
   ) {
     throw new ToolError(
-      `Walkthrough does not save screenshots in hidden files or folders, such as .git. ${file} is blocked.`,
-      'screenshot_blocked',
+      `Walkthrough does not save ${kind.noun}s in hidden files or folders, such as .git. ${file} is blocked.`,
+      kind.code,
     );
   }
   return { path: real, display: inside(project, real) ? relative(project, real) : real };
+}
+
+export function checkScreenshotPath(
+  file: string,
+  projectDir: string,
+  extraRoots: string[] = [],
+): { path: string; display: string } {
+  return checkOutputPath(file, projectDir, extraRoots, SCREENSHOT);
+}
+
+// Videos follow the same rules as screenshots. screenshotRoots applies to both.
+export function checkMediaPath(
+  file: string,
+  projectDir: string,
+  extraRoots: string[] = [],
+): { path: string; display: string } {
+  return checkOutputPath(file, projectDir, extraRoots, VIDEO);
 }

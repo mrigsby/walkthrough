@@ -8,6 +8,7 @@ import type { OriginGuard } from '../guards/origins.js';
 import { checkUploadPath } from '../guards/paths.js';
 import { MASK, type SecretStore } from '../guards/secrets.js';
 import { trace } from '../log.js';
+import type { VideoCapture } from '../video/capture.js';
 import { stableSelector } from './selectors.js';
 import { tokenizeUnique, withUnique } from './unique.js';
 
@@ -102,6 +103,8 @@ export interface ActContext {
   log: ActionRecord[];
   // The value of {{unique}} for this run.
   unique: string;
+  // The video that is recording, if any.
+  video?: VideoCapture;
 }
 
 // Finds the element from a ref (preferred) or a selector.
@@ -221,6 +224,8 @@ async function perform(
       const hasSecret = ctx.secrets.hasTokens(input.value);
       const shown = withUnique(input.value, ctx.unique);
       const real = ctx.secrets.resolve(shown);
+      // A video must never show the secret, so the field is hidden before it goes in.
+      if (hasSecret && ctx.video) await ctx.video.maskSecret(t.handle);
       await t.handle.asLocator().setTimeout(timeout).fill(real);
       if (hasSecret) ctx.driver.secretFields.push(t.handle);
       return `Filled ${t.label} with "${hasSecret ? MASK : shown}".`;
@@ -347,6 +352,12 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
   if (target) {
     ctx.driver.lastTarget = { tabId: tab.id, handle: target.handle, label: target.label };
     await highlightTarget(ctx, tab, target, input.action);
+  }
+  if (ctx.video) {
+    // The video moves its pointer to the element. The action scrolls it into view anyway.
+    await target?.handle.scrollIntoView().catch(() => undefined);
+    const rect = target ? await elementRect(target.handle) : undefined;
+    ctx.video.action(tab.id, input.action, rect);
   }
 
   // Watch for a dialog that the action opens. It would block the action.

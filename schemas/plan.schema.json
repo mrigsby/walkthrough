@@ -263,6 +263,43 @@
       },
       "additionalProperties": false
     },
+    "video": {
+      "description": "Record the whole run as a video. The report shows it.",
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "format": {
+              "description": "mp4, webm, or gif.",
+              "type": "string",
+              "enum": [
+                "mp4",
+                "webm",
+                "gif"
+              ]
+            },
+            "path": {
+              "description": "Also save the video to this file, from the project folder.",
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\.(mp4|webm|gif)$"
+            },
+            "showPanel": {
+              "description": "Show the Walkthrough panel in the video.",
+              "type": "boolean"
+            },
+            "captions": {
+              "description": "Show step captions at the bottom.",
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -989,6 +1026,12 @@
                 "additionalProperties": false
               }
             ]
+          },
+          "caption": {
+            "description": "The text viewers see in a video of this step. Without it, videos show \"do\".",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
           },
           "lighthouse": {
             "description": "Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.",

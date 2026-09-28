@@ -5,6 +5,7 @@ import { emulationSchema } from '../browser/emulation-schema.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
 import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
+import { VIDEO_FORMATS } from '../video/formats.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -165,6 +166,12 @@ export const stepSchema = z
       ])
       .optional()
       .describe('Check accessibility after this step.'),
+    caption: z
+      .string()
+      .min(1)
+      .max(120)
+      .optional()
+      .describe('The text viewers see in a video of this step. Without it, videos show "do".'),
     lighthouse: z
       .enum(LH_MODES)
       .optional()
@@ -240,6 +247,25 @@ export const planSchema = z
       .strict()
       .optional()
       .describe('Settings for the Lighthouse steps in this plan.'),
+    video: z
+      .union([
+        z.boolean(),
+        z
+          .object({
+            format: z.enum(VIDEO_FORMATS).optional().describe('mp4, webm, or gif.'),
+            path: z
+              .string()
+              .min(1)
+              .regex(/\.(mp4|webm|gif)$/i, 'End the path with .mp4, .webm, or .gif.')
+              .optional()
+              .describe('Also save the video to this file, from the project folder.'),
+            showPanel: z.boolean().optional().describe('Show the Walkthrough panel in the video.'),
+            captions: z.boolean().optional().describe('Show step captions at the bottom.'),
+          })
+          .strict(),
+      ])
+      .optional()
+      .describe('Record the whole run as a video. The report shows it.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict();

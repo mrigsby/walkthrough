@@ -100,12 +100,28 @@ a { color: var(--link); text-decoration: underline; }
 summary { cursor: pointer; font-weight: 600; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 12px 0; }
 dt { color: var(--muted); } dd { margin: 0; white-space: pre-wrap; }
-img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
+img, video { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
+figure { margin: 12px 0; } figcaption { color: var(--muted); font-size: 13px; }
 pre { overflow-x: auto; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
 table { width: 100%; border-collapse: collapse; background: var(--card); }
 caption { text-align: left; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 `;
+
+// Videos of the run. The files stay next to the report. They are never put inside it.
+function videoSection(run: Run): string {
+  if (!run.videos?.length && !run.videoNote) return '';
+  const items = (run.videos ?? []).map((v) => {
+    const about = `${v.whole ? 'The whole run' : esc(v.name)}: ${v.format.toUpperCase()}, ${v.seconds} seconds.`;
+    const media =
+      v.format === 'gif'
+        ? `<img src="${esc(v.file)}" alt="Video of the run: ${esc(run.name)}">`
+        : `<video controls preload="metadata" src="${esc(v.file)}" aria-label="Video of the run: ${esc(run.name)}"></video>`;
+    return `<figure>${media}<figcaption>${about} <a href="${esc(v.file)}">${esc(v.file)}</a></figcaption></figure>`;
+  });
+  const note = run.videoNote ? `<p class="muted">${esc(run.videoNote)}</p>` : '';
+  return `<h2>Video</h2>\n${items.join('\n')}${note}`;
+}
 
 function accessibilitySection(run: Run): string {
   if (!run.accessibility?.length) return '';
@@ -158,6 +174,7 @@ export function htmlReport(run: Run, runDir: string): string {
 <div class="meta">${meta.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc(STATUS_LABELS[status as RunStep['status']])}</span>`).join('')}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}
+${videoSection(run)}
 ${problems.length ? `<h2>Bugs and failures</h2>\n${problems.map((s) => stepCard(run, runDir, s, true)).join('\n')}` : ''}
 <h2>All steps</h2>
 <table>

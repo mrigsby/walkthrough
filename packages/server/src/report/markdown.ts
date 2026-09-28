@@ -69,6 +69,17 @@ export function markdownReport(
     '',
   ];
   if (run.summary) lines.push('## Summary', '', run.summary, '');
+  if (run.videos?.length || run.videoNote) {
+    lines.push('## Video', '');
+    for (const v of run.videos ?? []) {
+      const about = `${v.whole ? 'The whole run' : v.name}: ${v.format.toUpperCase()}, ${v.seconds} seconds`;
+      lines.push(
+        v.format === 'gif' ? `![${about}](${v.file})` : `- [${v.file}](${v.file}) (${about})`,
+        '',
+      );
+    }
+    if (run.videoNote) lines.push(run.videoNote, '');
+  }
 
   if (problems.length > 0) {
     lines.push('## Bugs and failures', '');

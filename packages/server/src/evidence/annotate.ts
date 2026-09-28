@@ -3,7 +3,7 @@ import type { Driver, Tab } from '../browser/driver.js';
 import type { Rect } from '../panel/controller.js';
 
 // Hides typed secrets on screen. Password fields already show dots.
-async function maskSecretFields(fields: ElementHandle[]): Promise<() => Promise<void>> {
+export async function maskSecretFields(fields: ElementHandle[]): Promise<() => Promise<void>> {
   const masked: Array<{ handle: ElementHandle; previous: string }> = [];
   for (const handle of fields) {
     const previous = await handle

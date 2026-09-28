@@ -41,6 +41,7 @@ steps:
 | `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
 | `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
 | `lighthouse` | No | Settings for the Lighthouse steps: `device`, `categories`, and `report`. See [Lighthouse flows](#lighthouse-flows). |
+| `video` | No | Record the whole run as a video: `true`, or `{ format, path, showPanel, captions }`. See [Videos](#videos). |
 
 ## Step keys
 
@@ -58,6 +59,7 @@ steps:
 | `cookies` | No | Cookie checks after the step, such as `[{ name: session, httpOnly: true }]`. See [Cookie checks](#cookie-checks). |
 | `mock` | No | Mock rules to add before the step, or `off` to remove all rules. See [Mocked requests](#mocked-requests). |
 | `lighthouse` | No | Measure the step with Lighthouse: `navigation`, `timespan`, or `snapshot`. See [Lighthouse flows](#lighthouse-flows). |
+| `caption` | No | The text that viewers see at the bottom of a video during this step. Without it, the video shows `do`. See [Videos](#videos). |
 
 ### Write a good `expect`
 
@@ -276,6 +278,23 @@ Each step with a `lighthouse` key is one step of the flow:
 - Lighthouse runs fewer audits for a timespan or a snapshot than for a page load. The reports show them as passed audits, such as `5/6`, and not as a score.
 - Walkthrough saves Lighthouse's own flow report as `lighthouse/flow.report.html` in the run folder, after each flow step.
 
+## Videos
+
+A plan can record the whole run as a video. The report plays it.
+
+```yaml
+video: { format: mp4, path: docs/videos/checkout.mp4 }
+steps:
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    caption: Add the coffee mug to the cart
+```
+
+- `video: true` uses the format from `config.yaml`. The object form takes `format` (`mp4`, `webm`, or `gif`), `path` (also save the video to this file), `showPanel`, and `captions`.
+- Each step shows its `caption` at the bottom of the video, or its `do` text. Write captions for viewers: short, and about what happens on the screen.
+- Walkthrough cuts wait time and question time, hides the panel, and hides typed secrets.
+- `run_finish` saves the video as `video/run.<format>` in the run folder.
+
 ## Saved logins
 
 To start runs logged in:
@@ -298,6 +317,7 @@ Each run gets a folder in `.walkthrough/runs/`. It holds:
 - `a11y/`: screenshots of accessibility problems.
 - `lighthouse.html`, `lighthouse.md`, `lighthouse.json`: the Lighthouse report, when the agent writes one.
 - `lighthouse/`: Lighthouse's own reports, including `flow.report.html` for a flow.
+- `video/`: videos of the run, such as `run.mp4`.
 
 If a run ends early, Walkthrough still writes the reports and marks the run "Incomplete".
 

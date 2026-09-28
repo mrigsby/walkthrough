@@ -81,6 +81,7 @@ describe('uiwalk tools', () => {
         'snapshot',
         'storage',
         'tabs',
+        'video',
         'visual_check',
         'wait_for',
       ].sort(),

@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 35 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 36 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -171,7 +171,7 @@ With `action`: `list` the plans, `show` one, `validate` one by `name` or by `con
 
 ### `run_start`
 
-Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interactive`, `checkpoints`, or `autonomous`. It opens the browser at the start page and lists the steps.
+Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interactive`, `checkpoints`, or `autonomous`. It opens the browser at the start page and lists the steps. `video: true` records the whole run as a video, like the plan's `video` key.
 
 ### `run_step`
 
@@ -179,7 +179,7 @@ Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `b
 
 ### `run_finish`
 
-Finishes the run and writes `report.md` and `report.html`. `summary` goes at the top of the report. With `runId`, it writes an older run's reports again.
+Finishes the run and writes `report.md` and `report.html`. `summary` goes at the top of the report. With `runId`, it writes an older run's reports again. When the run records a video, `run_finish` saves it first as `video/run.<format>` in the run folder, and the report plays it.
 
 ### `runs`
 
@@ -312,6 +312,26 @@ Writes the Lighthouse report of a run in two calls, like `a11y_report`:
 A new report compares itself with the last report of the same pages. A flow report compares itself with the last report of the same plan. Issues keep their IDs, and the report shows the changes in page load scores. `compareTo` picks the report to compare with.
 
 ## Record and share
+
+### `video`
+
+Records the active tab as a video. The video follows the active tab to other tabs.
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `start` begins recording. `caption` sets the text at the bottom. `stop` saves the video. `status` shows what is recording. |
+| `name` | A name for the file, such as `checkout`. |
+| `text` | For `caption`: the text. An empty text removes the caption. |
+| `format` | For `stop`: `mp4`, `webm`, or `gif`. The default comes from the `path`, then from `video.runFormat` in `config.yaml`. |
+| `path` | For `stop`: also save the video to this file, such as `docs/images/cart.gif`. The same rules as screenshot paths apply. |
+| `showPanel` | For `start`: show the Walkthrough panel in the video. |
+
+- Walkthrough cuts each wait, such as the agent thinking, to `video.idleSeconds` (1 second). It cuts the time that a question waits in the panel.
+- The video draws the mouse pointer and marks each click. Captions show at the bottom. During a run, the captions are the step titles, or the step's `caption` key.
+- Walkthrough hides the panel while it records. It hides a field before the agent types a secret into it.
+- A hidden Chrome encodes the video. MP4 needs a Chrome that can make H.264. Without it, Walkthrough makes WebM and converts it with ffmpeg. When ffmpeg is missing, the video stays WebM, and the reply gives the install command.
+- A GIF can be up to `video.maxGifSeconds` long (60 seconds). For a longer one, `stop` refuses and keeps the recording, so you can call `stop` again with `mp4` or `webm`.
+- Without a run, videos go in `.walkthrough/runs/adhoc-<day>/video/`. During a run, they go in the `video/` folder of the run, and the report shows them.
 
 ### `record`
 

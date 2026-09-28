@@ -167,11 +167,16 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
 
         const timeoutSec = config.askTimeoutSec ?? defaultAskTimeoutSec(ctx.clientName());
         const stopProgress = startProgress(extra);
-        let outcome: Awaited<ReturnType<typeof panel.waitForAnswer>>;
+        // A video leaves out the time that the question is open.
+        // After a timeout the question stays in the panel, so it is still open.
+        const video = ctx.video?.capture.recording ? ctx.video.capture : undefined;
+        video?.question(true);
+        let outcome: Awaited<ReturnType<typeof panel.waitForAnswer>> | undefined;
         try {
           outcome = await panel.waitForAnswer(timeoutSec * 1000, extra.signal);
         } finally {
           stopProgress();
+          if (outcome?.kind !== 'timeout') video?.question(false);
         }
 
         switch (outcome.kind) {

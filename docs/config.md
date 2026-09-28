@@ -65,7 +65,7 @@ These settings are for videos and GIFs.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `video.runFormat` | `mp4` | The format for whole runs and replays: `mp4`, `webm`, or `gif`. |
+| `video.runFormat` | `mp4` | The default video format: `mp4`, `webm`, or `gif`. It applies to whole runs, the `video` tool, and replays. |
 | `video.bugFormat` | `gif` | The format for the short clips saved with bugs. |
 | `video.width` | `1280` | The width of MP4 and WebM videos, in pixels. From 320 to 3840. |
 | `video.gifWidth` | `800` | The width of GIFs, in pixels. From 200 to 1920. |

@@ -6,6 +6,9 @@ import { log } from '../log.js';
 
 export type Content = CallToolResult['content'][number];
 
+// Tools that change the page. While a video records, their time plays at normal speed.
+const PAGE_TOOLS = new Set(['act', 'navigate', 'tabs', 'dialog', 'wait_for', 'emulate']);
+
 export function textResult(text: string, extra: Content[] = []): CallToolResult {
   return { content: [{ type: 'text', text }, ...extra] };
 }
@@ -18,6 +21,7 @@ export async function runTool(
 ): Promise<CallToolResult> {
   return ctx.lock.run(async () => {
     let result: CallToolResult;
+    const began = Date.now();
     try {
       const out = await fn();
       result = typeof out === 'string' ? textResult(out) : out;
@@ -29,6 +33,8 @@ export async function runTool(
       if (!(error instanceof ToolError)) log.error(`${name} failed`, error);
       result = { content: [{ type: 'text', text: message }], isError: true };
     }
+
+    if (PAGE_TOOLS.has(name) && ctx.video?.capture.recording) ctx.video.capture.activity(began);
 
     // Add things that happened in the browser, like dialogs and new tabs.
     const notes = ctx.driver?.drainNotes() ?? [];
