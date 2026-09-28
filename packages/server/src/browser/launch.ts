@@ -1,10 +1,23 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import puppeteer, { type Browser } from 'puppeteer-core';
 import type { Config } from '../config.js';
 import { ToolError } from '../errors.js';
 import { findChrome, NO_CHROME_MESSAGE } from './chrome.js';
+
+// Chrome settings for the new profile. Chrome must not offer to save passwords or check
+// them for leaks. Its "Change your password" dialog blocks all clicks in the tab, and
+// test passwords are often in leak lists.
+export const PROFILE_PREFS = {
+  credentials_enable_service: false,
+  profile: { password_manager_enabled: false, password_manager_leak_detection: false },
+};
+
+export function writeProfilePrefs(profileDir: string): void {
+  mkdirSync(join(profileDir, 'Default'), { recursive: true });
+  writeFileSync(join(profileDir, 'Default', 'Preferences'), JSON.stringify(PROFILE_PREFS));
+}
 
 export interface Launched {
   browser: Browser;
@@ -23,6 +36,7 @@ export async function launchChrome(
 
   // A new profile each time, so two sessions never lock each other.
   const profileDir = mkdtempSync(join(tmpdir(), 'uiwalk-profile-'));
+  writeProfilePrefs(profileDir);
   const headless = options.background || config.browser.headless;
   try {
     const browser = await puppeteer.launch({

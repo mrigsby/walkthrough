@@ -30,7 +30,7 @@ beforeAll(async () => {
   mkdirSync(join(project, '.walkthrough', 'plans'), { recursive: true });
   writeFileSync(
     join(project, '.walkthrough', 'config.yaml'),
-    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\nhighlightMs: 0\nvideo:\n  maxGifSeconds: 5\n`,
+    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\nhighlightMs: 0\n`,
   );
   writeFileSync(join(project, '.walkthrough', '.env'), 'DEMO_PASSWORD=demo123\n');
   writeFileSync(
@@ -121,24 +121,39 @@ describe('video', () => {
   }, 90_000);
 
   it('refuses a long GIF, and keeps the recording for another format', async () => {
-    await mcp.call('navigate', { url: '/' });
-    await mcp.call('video', { action: 'start' });
-    for (const item of ['mug', 'shirt', 'cap']) {
-      await mcp.call('act', { action: 'click', selector: `[data-add="${item}"]` });
-      await pause(1200);
-    }
-    const gif = await mcp.call('video', { action: 'stop', format: 'gif' });
-    expect(gif.isError).toBe(true);
-    expect(gif.text).toMatch(/GIF files of up to 5 seconds \(maxGifSeconds\)/);
-    const status = await mcp.call('video', { action: 'status' });
-    expect(status.text).toContain('stopped, but Walkthrough has not saved it');
-    const webm = await mcp.call(
-      'video',
-      { action: 'stop', format: 'webm' },
-      { timeoutMs: 120_000 },
+    // Its own server, with a low GIF limit that the other tests must not hit.
+    const short = tempDir('video-short');
+    mkdirSync(join(short, '.walkthrough'), { recursive: true });
+    writeFileSync(
+      join(short, '.walkthrough', 'config.yaml'),
+      `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\nhighlightMs: 0\nvideo:\n  maxGifSeconds: 5\n`,
     );
-    expect(webm.isError, webm.text).toBe(false);
-    expect((await mcp.call('video', { action: 'status' })).text).toBe('No video is recording.');
+    const other = await startClient({
+      UIWALK_PROJECT_DIR: short,
+      TMPDIR: tempDir('video-short-tmp'),
+    });
+    try {
+      await other.call('browser_open');
+      await other.call('video', { action: 'start' });
+      for (const item of ['mug', 'shirt', 'cap']) {
+        await other.call('act', { action: 'click', selector: `[data-add="${item}"]` });
+        await pause(1200);
+      }
+      const gif = await other.call('video', { action: 'stop', format: 'gif' });
+      expect(gif.isError).toBe(true);
+      expect(gif.text).toMatch(/GIF files of up to 5 seconds \(maxGifSeconds\)/);
+      const status = await other.call('video', { action: 'status' });
+      expect(status.text).toContain('stopped, but Walkthrough has not saved it');
+      const webm = await other.call(
+        'video',
+        { action: 'stop', format: 'webm' },
+        { timeoutMs: 120_000 },
+      );
+      expect(webm.isError, webm.text).toBe(false);
+      expect((await other.call('video', { action: 'status' })).text).toBe('No video is recording.');
+    } finally {
+      await other.close();
+    }
   }, 90_000);
 
   it('records a whole run with step captions, and the report plays it', async () => {

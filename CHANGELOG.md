@@ -38,6 +38,7 @@ This file lists all notable changes to the project.
 
 - When Chrome runs with no tab, for example after you close its window, `browser_open` and `navigate` with a url open a new tab. Before, both failed, and the error named the same two tools.
 - `snapshot` with `ref` outlines that part of the page. Before, it always failed with a Chrome error, because the new snapshot released the element it started from. A ref that is out of date now gets the normal "take a new snapshot" message.
+- The Chrome that Walkthrough starts does not offer to save passwords or check them for leaks. Before, a login with a test password from a leak list could open Chrome's "Change your password" dialog, and the tab then ignored every click.
 
 - Run records keep the tab name of each action and the answers to dialogs.
 

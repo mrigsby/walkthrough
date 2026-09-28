@@ -107745,13 +107745,22 @@ var FetchRouter = class _FetchRouter {
 };
 
 // packages/server/src/browser/launch.ts
-import { mkdtempSync, rmSync as rmSync4 } from "node:fs";
+import { mkdirSync as mkdirSync4, mkdtempSync, rmSync as rmSync4, writeFileSync as writeFileSync3 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
 import { join as join14 } from "node:path";
+var PROFILE_PREFS = {
+  credentials_enable_service: false,
+  profile: { password_manager_enabled: false, password_manager_leak_detection: false }
+};
+function writeProfilePrefs(profileDir) {
+  mkdirSync4(join14(profileDir, "Default"), { recursive: true });
+  writeFileSync3(join14(profileDir, "Default", "Preferences"), JSON.stringify(PROFILE_PREFS));
+}
 async function launchChrome(config3, options = {}) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
   const profileDir = mkdtempSync(join14(tmpdir2(), "uiwalk-profile-"));
+  writeProfilePrefs(profileDir);
   const headless = options.background || config3.browser.headless;
   try {
     const browser = await puppeteer_core_default.launch({
@@ -108330,7 +108339,7 @@ function tokenizeUnique(text, unique2) {
 }
 
 // packages/server/src/project-files.ts
-import { existsSync as existsSync10, mkdirSync as mkdirSync4, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync10, mkdirSync as mkdirSync5, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join15 } from "node:path";
 var GITIGNORE2 = `# Created by Walkthrough. These files stay on this computer.
 .env
@@ -108340,9 +108349,9 @@ config.local.yaml
 `;
 function ensureWalkthroughDir(projectDir) {
   const dir = join15(projectDir, ".walkthrough");
-  mkdirSync4(dir, { recursive: true });
+  mkdirSync5(dir, { recursive: true });
   const ignore = join15(dir, ".gitignore");
-  if (!existsSync10(ignore)) writeFileSync3(ignore, GITIGNORE2);
+  if (!existsSync10(ignore)) writeFileSync4(ignore, GITIGNORE2);
   return dir;
 }
 function stamp(date5 = /* @__PURE__ */ new Date()) {
@@ -108354,12 +108363,12 @@ function stamp(date5 = /* @__PURE__ */ new Date()) {
 }
 function adhocEvidenceDir(projectDir) {
   const dir = join15(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
-  mkdirSync4(dir, { recursive: true });
+  mkdirSync5(dir, { recursive: true });
   return dir;
 }
 function adhocVideoDir(projectDir) {
   const dir = join15(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "video");
-  mkdirSync4(dir, { recursive: true });
+  mkdirSync5(dir, { recursive: true });
   return dir;
 }
 function fileStamp(label2) {
@@ -108447,7 +108456,7 @@ import {
   readFileSync as readFileSync17,
   realpathSync as realpathSync3,
   statSync as statSync7,
-  writeFileSync as writeFileSync12
+  writeFileSync as writeFileSync13
 } from "node:fs";
 import { join as join33, relative as relative11, resolve as resolve10, sep as sep5 } from "node:path";
 
@@ -108900,7 +108909,7 @@ function customPasses(check2) {
 }
 
 // packages/server/src/audit/element-shots.ts
-import { mkdirSync as mkdirSync5, readdirSync as readdirSync3, writeFileSync as writeFileSync4 } from "node:fs";
+import { mkdirSync as mkdirSync6, readdirSync as readdirSync3, writeFileSync as writeFileSync5 } from "node:fs";
 import { join as join16 } from "node:path";
 
 // packages/server/src/evidence/annotate.ts
@@ -108972,7 +108981,7 @@ async function findElement(tab, node3) {
 }
 async function shootElements(driver, tab, items, folder5, max) {
   const dir = join16(folder5.root, folder5.sub);
-  mkdirSync5(dir, { recursive: true });
+  mkdirSync6(dir, { recursive: true });
   let number4 = nextNumber(dir);
   const shots = [];
   const page = tab.page;
@@ -109027,7 +109036,7 @@ async function shootElements(driver, tab, items, folder5, max) {
             captureBeyondViewport: false
           });
           const name = `${String(number4).padStart(3, "0")}-${slug(rule, 40, "rule")}.jpg`;
-          writeFileSync4(join16(dir, name), jpg);
+          writeFileSync5(join16(dir, name), jpg);
           shots.push({ rule, target: node3.target, file: `${folder5.sub}/${name}` });
           number4 += 1;
         } finally {
@@ -109599,12 +109608,12 @@ import { join as join18 } from "node:path";
 import { randomBytes as randomBytes6 } from "node:crypto";
 import {
   existsSync as existsSync11,
-  mkdirSync as mkdirSync6,
+  mkdirSync as mkdirSync7,
   readdirSync as readdirSync4,
   readFileSync as readFileSync10,
   realpathSync,
   renameSync,
-  writeFileSync as writeFileSync5
+  writeFileSync as writeFileSync6
 } from "node:fs";
 import { join as join17, relative as relative3, sep as sep3 } from "node:path";
 function stamp2(date5 = /* @__PURE__ */ new Date()) {
@@ -109628,7 +109637,7 @@ var RunStore = class _RunStore {
   static create(projectDir, input3) {
     const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes6(2).toString("hex")}`;
     const dir = join17(ensureWalkthroughDir(projectDir), "runs", id);
-    mkdirSync6(join17(dir, "screenshots"), { recursive: true });
+    mkdirSync7(join17(dir, "screenshots"), { recursive: true });
     const settings = input3.plan?.accessibility;
     const lhSettings = input3.plan?.lighthouse;
     const planChecks = settings?.checks ? CHECKS.filter((c) => settings.checks?.[c] ?? input3.a11yChecks?.includes(c)) : void 0;
@@ -109703,7 +109712,7 @@ var RunStore = class _RunStore {
   // Writes run.json safely: a crash never leaves a half-written file.
   save() {
     const file2 = join17(this.dir, "run.json");
-    writeFileSync5(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
+    writeFileSync6(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
 `);
     renameSync(`${file2}.tmp`, file2);
   }
@@ -111010,11 +111019,11 @@ function a11yMarkdownReport(data) {
 import {
   chmodSync as chmodSync2,
   existsSync as existsSync13,
-  mkdirSync as mkdirSync7,
+  mkdirSync as mkdirSync8,
   readdirSync as readdirSync6,
   readFileSync as readFileSync13,
   rmSync as rmSync5,
-  writeFileSync as writeFileSync6
+  writeFileSync as writeFileSync7
 } from "node:fs";
 import { join as join20 } from "node:path";
 function sessionsDir(projectDir) {
@@ -111070,8 +111079,8 @@ async function saveSession(driver, guard, projectDir, name) {
       "no_tab"
     );
   }
-  mkdirSync7(sessionsDir(projectDir), { recursive: true, mode: 448 });
-  writeFileSync6(file2, `${JSON.stringify(session, null, 2)}
+  mkdirSync8(sessionsDir(projectDir), { recursive: true, mode: 448 });
+  writeFileSync7(file2, `${JSON.stringify(session, null, 2)}
 `, { mode: 384 });
   chmodSync2(file2, 384);
   return session;
@@ -111529,7 +111538,7 @@ function reloadableTab(driver) {
 }
 
 // packages/server/src/tools/run-tools.ts
-import { existsSync as existsSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync18, writeFileSync as writeFileSync12 } from "node:fs";
 import { join as join32, relative as relative10 } from "node:path";
 
 // packages/server/src/guards/paths.ts
@@ -111629,7 +111638,7 @@ import { existsSync as existsSync15, readFileSync as readFileSync14 } from "node
 import { join as join24 } from "node:path";
 
 // packages/server/src/evidence/screenshot.ts
-import { mkdirSync as mkdirSync8 } from "node:fs";
+import { mkdirSync as mkdirSync9 } from "node:fs";
 import { dirname as dirname7, extname as extname4, join as join22, relative as relative5 } from "node:path";
 function imageType(path14) {
   const ext = extname4(path14).toLowerCase();
@@ -111640,7 +111649,7 @@ async function takeScreenshot(tab, dir, projectDir, options) {
   const { handle, fullPage = false } = options;
   const type = imageType(path14);
   if (options.path) {
-    mkdirSync8(dirname7(path14), { recursive: true });
+    mkdirSync9(dirname7(path14), { recursive: true });
     await tab.page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => void 0);
   }
   if (handle) {
@@ -111654,7 +111663,7 @@ async function takeScreenshot(tab, dir, projectDir, options) {
 }
 
 // packages/server/src/lighthouse/flow.ts
-import { mkdirSync as mkdirSync9, writeFileSync as writeFileSync7 } from "node:fs";
+import { mkdirSync as mkdirSync10, writeFileSync as writeFileSync8 } from "node:fs";
 import { join as join23 } from "node:path";
 
 // packages/server/src/lighthouse/audit.ts
@@ -111927,12 +111936,12 @@ var LhFlow = class {
     if (!this.results.length) return;
     const lighthouse = await loadLighthouse();
     const result = { steps: this.results, name: this.name };
-    mkdirSync9(join23(runDir, "lighthouse"), { recursive: true });
-    writeFileSync7(
+    mkdirSync10(join23(runDir, "lighthouse"), { recursive: true });
+    writeFileSync8(
       join23(runDir, FLOW_REPORT),
       secrets.redact(lighthouse.generateReport(result, "html"))
     );
-    writeFileSync7(join23(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
+    writeFileSync8(join23(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
   }
 };
 
@@ -112539,7 +112548,7 @@ function markdownReport(run, options = {}) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync16, mkdirSync as mkdirSync10, readdirSync as readdirSync7, readFileSync as readFileSync15, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync16, mkdirSync as mkdirSync11, readdirSync as readdirSync7, readFileSync as readFileSync15, writeFileSync as writeFileSync9 } from "node:fs";
 import { basename as basename6, extname as extname6, isAbsolute as isAbsolute6, join as join25, relative as relative6, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
   return join25(projectDir, ".walkthrough", "plans");
@@ -112644,7 +112653,7 @@ function savePlan(projectDir, name, text, overwrite = false) {
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
   const dir = plansDir(projectDir);
-  mkdirSync10(dir, { recursive: true });
+  mkdirSync11(dir, { recursive: true });
   const file2 = join25(dir, `${name}.yaml`);
   if (existsSync16(file2) && !overwrite) {
     throw new ToolError(
@@ -112653,7 +112662,7 @@ function savePlan(projectDir, name, text, overwrite = false) {
     );
   }
   const header = "# yaml-language-server: $schema=../plan.schema.json\n";
-  writeFileSync8(file2, text.startsWith("# yaml-language-server") ? text : header + text);
+  writeFileSync9(file2, text.startsWith("# yaml-language-server") ? text : header + text);
   return file2;
 }
 
@@ -112661,11 +112670,11 @@ function savePlan(projectDir, name, text, overwrite = false) {
 import { isAbsolute as isAbsolute7, join as join30, relative as relative8 } from "node:path";
 
 // packages/server/src/video/recording.ts
-import { copyFileSync, mkdirSync as mkdirSync11, readFileSync as readFileSync16 } from "node:fs";
+import { copyFileSync, mkdirSync as mkdirSync12, readFileSync as readFileSync16 } from "node:fs";
 import { dirname as dirname9, join as join29, relative as relative7 } from "node:path";
 
 // packages/server/src/video/capture.ts
-import { mkdtempSync as mkdtempSync2, rmSync as rmSync6, writeFileSync as writeFileSync9 } from "node:fs";
+import { mkdtempSync as mkdtempSync2, rmSync as rmSync6, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { join as join26 } from "node:path";
 var MIN_GAP_MS = 33;
@@ -112738,11 +112747,11 @@ var VideoCapture = class {
     const last2 = this.frames.at(-1);
     const data = Buffer.from(event.data, "base64");
     if (last2 && last2.tabId === tabId && now - last2.t < MIN_GAP_MS) {
-      writeFileSync9(join26(this.dir, last2.file), data);
+      writeFileSync10(join26(this.dir, last2.file), data);
       return;
     }
     const file2 = `${String(this.frames.length).padStart(6, "0")}.jpg`;
-    writeFileSync9(join26(this.dir, file2), data);
+    writeFileSync10(join26(this.dir, file2), data);
     this.frames.push({
       file: file2,
       t: now,
@@ -113222,7 +113231,7 @@ async function stopVideo(ctx, options = {}) {
   }
   const store = recording.runId === void 0 ? void 0 : ctx.run?.run.id === recording.runId ? ctx.run : RunStore.open(config3.projectDir, recording.runId);
   const dir = store ? join29(store.dir, "video") : adhocVideoDir(config3.projectDir);
-  mkdirSync11(dir, { recursive: true });
+  mkdirSync12(dir, { recursive: true });
   const base = recording.whole ? "run" : fileStamp(options.name ?? recording.name);
   const middle = samples[Math.floor(samples.length / 2)];
   const preview = middle ? readFileSync16(join29(capture.dir, middle.file)).toString("base64") : void 0;
@@ -113242,7 +113251,7 @@ async function stopVideo(ctx, options = {}) {
   ];
   let copied;
   if (target2 && out.format === format3) {
-    mkdirSync11(dirname9(target2.path), { recursive: true });
+    mkdirSync12(dirname9(target2.path), { recursive: true });
     copyFileSync(out.file, target2.path);
     copied = target2.display;
     lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -113322,7 +113331,7 @@ function nextStepHint(ctx) {
 import { relative as relative9 } from "node:path";
 
 // packages/server/src/evidence/har.ts
-import { mkdirSync as mkdirSync12, writeFileSync as writeFileSync10 } from "node:fs";
+import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
 import { dirname as dirname10, join as join31 } from "node:path";
 function headers(values, clean) {
   return Object.entries(values ?? {}).map(([name, value]) => ({
@@ -113406,9 +113415,9 @@ function networkDir(ctx, projectDir) {
   return join31(dirname10(ctx.evidenceDir(projectDir)), "network");
 }
 function writeHar(dir, label2, entries, secrets) {
-  mkdirSync12(dir, { recursive: true });
+  mkdirSync13(dir, { recursive: true });
   const file2 = join31(dir, `${fileStamp(label2)}.har`);
-  writeFileSync10(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
+  writeFileSync11(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
 `);
   return file2;
 }
@@ -113663,8 +113672,8 @@ function writeReports(store, secrets) {
   const a11yReport = existsSync18(join32(store.dir, "accessibility.html"));
   const lhReport = existsSync18(join32(store.dir, "lighthouse.html"));
   const md = markdownReport(run, { a11yReport, lhReport });
-  writeFileSync11(markdown, secrets ? secrets.redact(md) : md);
-  writeFileSync11(html, htmlReport(run, store.dir));
+  writeFileSync12(markdown, secrets ? secrets.redact(md) : md);
+  writeFileSync12(html, htmlReport(run, store.dir));
   return { markdown: relative10(store.projectDir, markdown), html: relative10(store.projectDir, html) };
 }
 async function closeFlow(ctx, store) {
@@ -114493,9 +114502,9 @@ function registerA11yTools(server, ctx) {
         md: join33(store.dir, "accessibility.md"),
         json: join33(store.dir, "accessibility.json")
       };
-      writeFileSync12(files.html, a11yHtmlReport(data));
-      writeFileSync12(files.md, secrets.redact(a11yMarkdownReport(data)));
-      writeFileSync12(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
+      writeFileSync13(files.html, a11yHtmlReport(data));
+      writeFileSync13(files.md, secrets.redact(a11yMarkdownReport(data)));
+      writeFileSync13(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
 `);
       writeReports(store, secrets);
       return [
@@ -115532,7 +115541,7 @@ import {
   readFileSync as readFileSync19,
   realpathSync as realpathSync4,
   statSync as statSync8,
-  writeFileSync as writeFileSync14
+  writeFileSync as writeFileSync15
 } from "node:fs";
 import { join as join36, relative as relative13, resolve as resolve11, sep as sep6 } from "node:path";
 
@@ -115660,7 +115669,7 @@ function compareLh(current, previous) {
 }
 
 // packages/server/src/lighthouse/run.ts
-import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync13 } from "node:fs";
+import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync14 } from "node:fs";
 import { join as join35 } from "node:path";
 async function auditPage2(url2, options) {
   const lighthouse = await loadLighthouse();
@@ -115700,7 +115709,7 @@ async function auditPage2(url2, options) {
   }
   const [html, json2] = Array.isArray(result.report) ? result.report : [result.report];
   const dir = join35(options.runDir, "lighthouse");
-  mkdirSync13(dir, { recursive: true });
+  mkdirSync14(dir, { recursive: true });
   let path14 = "/";
   try {
     path14 = new URL(url2).pathname;
@@ -115709,11 +115718,11 @@ async function auditPage2(url2, options) {
   const base = `${String(options.index).padStart(2, "0")}-${slug(path14, 40, "home")}`;
   const files = {};
   if (html) {
-    writeFileSync13(join35(dir, `${base}.report.html`), options.secrets.redact(html));
+    writeFileSync14(join35(dir, `${base}.report.html`), options.secrets.redact(html));
     files.html = `lighthouse/${base}.report.html`;
   }
   if (json2) {
-    writeFileSync13(join35(dir, `${base}.report.json`), options.secrets.redact(json2));
+    writeFileSync14(join35(dir, `${base}.report.json`), options.secrets.redact(json2));
     files.json = `lighthouse/${base}.report.json`;
   }
   return {
@@ -116199,9 +116208,9 @@ function registerLighthouseTools(server, ctx) {
         md: join36(store.dir, "lighthouse.md"),
         json: join36(store.dir, "lighthouse.json")
       };
-      writeFileSync14(files.html, secrets.redact(lhHtml(data)));
-      writeFileSync14(files.md, secrets.redact(lhMarkdown(data)));
-      writeFileSync14(files.json, `${secrets.redact(JSON.stringify(lhJson(data), null, 2))}
+      writeFileSync15(files.html, secrets.redact(lhHtml(data)));
+      writeFileSync15(files.md, secrets.redact(lhMarkdown(data)));
+      writeFileSync15(files.json, `${secrets.redact(JSON.stringify(lhJson(data), null, 2))}
 `);
       writeReports(store, secrets);
       return [
@@ -116637,7 +116646,7 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes11 } from "node:crypto";
-import { existsSync as existsSync23, mkdirSync as mkdirSync14, readFileSync as readFileSync21, writeFileSync as writeFileSync15 } from "node:fs";
+import { existsSync as existsSync23, mkdirSync as mkdirSync15, readFileSync as readFileSync21, writeFileSync as writeFileSync16 } from "node:fs";
 import { basename as basename7, dirname as dirname11, extname as extname7, join as join38, relative as relative15 } from "node:path";
 
 // node_modules/pixelmatch/index.js
@@ -117005,8 +117014,8 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync23(baselinePath) || input3.updateBaseline) {
         const existed = existsSync23(baselinePath);
-        mkdirSync14(dirname11(baselinePath), { recursive: true });
-        writeFileSync15(baselinePath, capture.png);
+        mkdirSync15(dirname11(baselinePath), { recursive: true });
+        writeFileSync16(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -117029,7 +117038,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync15(actualPath, capture.png);
+        writeFileSync16(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -117043,7 +117052,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         }
         if (comparison.diffPng) {
           const diffPath = join38(dir, `${stamp3}-diff.png`);
-          writeFileSync15(diffPath, comparison.diffPng);
+          writeFileSync16(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
             `Diff image (changed pixels in red): ${relative15(config3.projectDir, diffPath)}`
@@ -117164,7 +117173,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync24, mkdirSync as mkdirSync15, writeFileSync as writeFileSync16 } from "node:fs";
+import { existsSync as existsSync24, mkdirSync as mkdirSync16, writeFileSync as writeFileSync17 } from "node:fs";
 import { join as join39, relative as relative16 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
@@ -118354,12 +118363,12 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         "run"
       );
       const dir = join39(projectDir, ".walkthrough", "exports");
-      mkdirSync15(dir, { recursive: true });
+      mkdirSync16(dir, { recursive: true });
       const file2 = join39(dir, `${name}.mjs`);
       const existed = existsSync24(file2);
       const result = exportScript(store.run, { installedChrome });
       const rel = relative16(projectDir, file2);
-      writeFileSync16(file2, result.code.replace("<this file>", rel));
+      writeFileSync17(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
         `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
@@ -118412,7 +118421,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         files
       });
       const bodyFile = join39(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
-      writeFileSync16(bodyFile, draft.body);
+      writeFileSync17(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
         `Body file: ${relative16(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
