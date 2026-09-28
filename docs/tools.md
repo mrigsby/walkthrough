@@ -46,7 +46,7 @@ Does one action on an element, by `ref` or by `selector`.
 | `action` | Uses |
 | --- | --- |
 | `click`, `dblclick`, `hover` | the element |
-| `fill` | `value`, the text to type. Use `{{secret:NAME}}` for secrets. |
+| `fill` | `value`, the text to type. Use `{{secret:NAME}}` for secrets, and `{{unique}}` for a value that is new in each run. |
 | `select` | `value`, the option text or value |
 | `check`, `uncheck` | the check box or radio button |
 | `press` | `value`, a key such as `Enter` or `Control+A`. The element is optional. |
@@ -200,4 +200,13 @@ Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan sche
 
 ### `doctor`
 
-Checks Node, Chrome, the project folder, the settings, and the secrets. Each line starts with `OK`, `INFO`, or `FIX`.
+Checks Node, Chrome, the project folder, the settings, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`.
+
+Lighthouse and ffmpeg are optional downloads. Install them from a terminal:
+
+```sh
+npx -y walkthrough-ui setup lighthouse   # about 170 MB, installed with npm
+npx -y walkthrough-ui setup ffmpeg       # checks the SHA-256 hash of the download
+```
+
+Both go in `~/.cache/uiwalk`. When Walkthrough runs from the plugin, the reply of a tool that needs one of them shows the exact command.

@@ -23,6 +23,12 @@ browser:
 accessibility:
   standard: wcag22aa
   checks: { keyboard: true, darkMode: true, reflow: true, frames: true, screenshots: true }
+video:
+  runFormat: mp4
+  bugFormat: gif
+lighthouse:
+  device: desktop
+  categories: [performance, best-practices, seo]
 ```
 
 ## Settings for `config.yaml`
@@ -53,6 +59,35 @@ These settings are for accessibility checks and reports. See [Accessibility repo
 
 `config.local.yaml` can change one check, such as `accessibility: { checks: { screenshots: false } }`. The other checks keep their values.
 
+### Video
+
+These settings are for videos and GIFs.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `video.runFormat` | `mp4` | The format for whole runs and replays: `mp4`, `webm`, or `gif`. |
+| `video.bugFormat` | `gif` | The format for the short clips saved with bugs. |
+| `video.width` | `1280` | The width of MP4 and WebM videos, in pixels. From 320 to 3840. |
+| `video.gifWidth` | `800` | The width of GIFs, in pixels. From 200 to 1920. |
+| `video.gifFps` | `10` | Frames per second in GIFs. From 1 to 30. |
+| `video.maxGifSeconds` | `60` | The longest GIF, in seconds. Use MP4 or WebM for longer videos. |
+| `video.idleSeconds` | `1` | Walkthrough shortens each wait, such as the agent thinking, to this many seconds. |
+| `video.replaySeconds` | `15` | How many seconds a bug clip shows. `0` turns bug clips off. |
+| `video.showPanel` | `false` | Show the Walkthrough panel in videos. |
+| `video.pointer` | `true` | Draw the mouse pointer and a mark for each click. |
+| `video.captions` | `true` | Show step titles at the bottom of the video. |
+
+`config.local.yaml` can change one video setting. The others keep their values.
+
+### Lighthouse
+
+These settings are for Lighthouse reports.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `lighthouse.device` | `desktop` | Test as a `desktop` or a `mobile` device. |
+| `lighthouse.categories` | `[performance, best-practices, seo]` | The report categories. You can also add `accessibility` and `agentic-browsing`. |
+
 ## Settings only for `config.local.yaml`
 
 These settings can harm your data or your secrets. Walkthrough ignores them in `config.yaml`, so a change that someone else commits cannot turn them on for you. `/walkthrough:doctor` warns you if they are in the wrong file.
@@ -61,7 +96,9 @@ These settings can harm your data or your secrets. Walkthrough ignores them in `
 | --- | --- | --- |
 | `allowEvaluate` | `false` | Turn on the `evaluate` tool, which runs JavaScript in the page. |
 | `uploadsRoot` | the project folder | The folder that uploads can come from. Walkthrough never uploads hidden files, `.env`, or saved logins. |
-| `screenshotRoots` | none | A list of folders outside the project where the `screenshot` tool can save files with `path`. Example: `[../website/static/images]`. |
+| `screenshotRoots` | none | A list of folders outside the project where screenshots and videos can go with `path`. Example: `[../website/static/images]`. |
+| `allowSecretValues` | `false` | Show the values of cookies, storage items, and login headers in tool replies. When it is off, replies show a short fingerprint instead of the value. |
+| `ffmpegPath` | none | The ffmpeg program to use for videos. Without it, Walkthrough uses `UIWALK_FFMPEG`, then an ffmpeg on the `PATH`, then the copy from `uiwalk setup ffmpeg`. |
 
 ## Secrets
 
@@ -83,7 +120,8 @@ Walkthrough also hides these values if they appear on a page, in a log, or in a 
 | `UIWALK_PROJECT_DIR` | The project folder. Use it when a client does not tell the server which folder is open. |
 | `UIWALK_HEADLESS` | `1` hides the browser. `0` shows it. It replaces `browser.headless`. |
 | `UIWALK_LOG_LEVEL` | `debug`, `info` (default), `warn`, or `error`. The server writes logs to stderr. |
-| `UIWALK_CACHE_DIR` | Where `uiwalk setup` saves Chrome for Testing. The default is `~/.cache/uiwalk`. |
+| `UIWALK_CACHE_DIR` | Where `uiwalk setup` saves Chrome for Testing, Lighthouse, and ffmpeg. The default is `~/.cache/uiwalk`. |
+| `UIWALK_FFMPEG` | The ffmpeg program to use, when `ffmpegPath` is not set. |
 | `UIWALK_TRACE_FILE` | A file path. The server writes one JSON line for each action, for debugging. |
 
 The tests use three more variables: `UIWALK_FORCE_PANEL` shows the panel in a hidden browser, `UIWALK_DEBUG_PORT` sets the Chrome debug port, and `UIWALK_SCAN_LIMIT_MS` sets the time limit of one `a11y_scan` call. Do not use them for normal testing.

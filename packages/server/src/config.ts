@@ -12,6 +12,13 @@ import {
 } from './audit/standards.js';
 import { ToolError } from './errors.js';
 import { DEFAULT_ORIGINS } from './guards/origins.js';
+import {
+  LH_CATEGORIES,
+  LH_DEVICES,
+  type LhCategory,
+  type LhDevice,
+} from './lighthouse/categories.js';
+import { VIDEO_FORMATS, type VideoFormat } from './video/formats.js';
 
 export type DialogPolicy = 'ask' | 'accept' | 'dismiss';
 
@@ -34,10 +41,37 @@ export interface Config {
   // Only read from config.local.yaml.
   allowEvaluate: boolean;
   uploadsRoot: string;
-  // Folders outside the project where screenshots may go.
+  // Folders outside the project where screenshots and videos may go.
   screenshotRoots: string[];
+  // Show cookie, storage, and header values in tool replies. Only from config.local.yaml.
+  allowSecretValues: boolean;
+  // Only from config.local.yaml.
+  ffmpegPath?: string;
   accessibility: AccessibilityConfig;
+  video: VideoConfig;
+  lighthouse: LighthouseConfig;
   warnings: string[];
+}
+
+export interface VideoConfig {
+  runFormat: VideoFormat;
+  bugFormat: VideoFormat;
+  width: number;
+  gifWidth: number;
+  gifFps: number;
+  maxGifSeconds: number;
+  // Wait time longer than this is cut down to this.
+  idleSeconds: number;
+  // Seconds kept for bug clips. 0 turns them off.
+  replaySeconds: number;
+  showPanel: boolean;
+  pointer: boolean;
+  captions: boolean;
+}
+
+export interface LighthouseConfig {
+  device: LhDevice;
+  categories: LhCategory[];
 }
 
 export interface AccessibilityConfig {
@@ -74,15 +108,47 @@ const sharedSchema = z
       })
       .strict()
       .optional(),
+    video: z
+      .object({
+        runFormat: z.enum(VIDEO_FORMATS).optional(),
+        bugFormat: z.enum(VIDEO_FORMATS).optional(),
+        width: z.number().int().min(320).max(3840).optional(),
+        gifWidth: z.number().int().min(200).max(1920).optional(),
+        gifFps: z.number().int().min(1).max(30).optional(),
+        maxGifSeconds: z.number().int().min(5).max(600).optional(),
+        idleSeconds: z.number().min(0.2).max(10).optional(),
+        replaySeconds: z.number().int().min(0).max(120).optional(),
+        showPanel: z.boolean().optional(),
+        pointer: z.boolean().optional(),
+        captions: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    lighthouse: z
+      .object({
+        device: z.enum(LH_DEVICES).optional(),
+        categories: z.array(z.enum(LH_CATEGORIES)).min(1).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .loose();
 
 // Risky settings. Only the local, uncommitted file may turn these on.
-const LOCAL_ONLY = ['allowEvaluate', 'uploadsRoot', 'screenshotRoots'] as const;
+const LOCAL_ONLY = [
+  'allowEvaluate',
+  'uploadsRoot',
+  'screenshotRoots',
+  'allowSecretValues',
+  'ffmpegPath',
+] as const;
 const localSchema = sharedSchema.extend({
   allowEvaluate: z.boolean().optional(),
   uploadsRoot: z.string().optional(),
   screenshotRoots: z.array(z.string().min(1)).optional(),
+  allowSecretValues: z.boolean().optional(),
+  // A program path in a shared file could run any program, so it is local only.
+  ffmpegPath: z.string().min(1).optional(),
 });
 
 type LocalFile = z.infer<typeof localSchema>;
@@ -158,6 +224,8 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
     ...local.accessibility,
     checks: { ...shared.accessibility?.checks, ...local.accessibility?.checks },
   };
+  const video = { ...shared.video, ...local.video };
+  const lighthouse = { ...shared.lighthouse, ...local.lighthouse };
 
   const fromProject = (dir: string) => (isAbsolute(dir) ? dir : resolve(projectDir, dir));
   const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
@@ -187,6 +255,8 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
     screenshotRoots,
+    allowSecretValues: local.allowSecretValues ?? false,
+    ffmpegPath: local.ffmpegPath ? fromProject(local.ffmpegPath) : undefined,
     accessibility: {
       standard: a11y.standard ?? 'wcag22aa',
       bestPractices: a11y.bestPractices ?? true,
@@ -194,6 +264,23 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
         CHECKS.map((c) => [c, (a11y.checks as Record<string, boolean | undefined>)[c] ?? true]),
       ) as Record<CheckName, boolean>,
       maxScreenshots: a11y.maxScreenshots ?? 25,
+    },
+    video: {
+      runFormat: video.runFormat ?? 'mp4',
+      bugFormat: video.bugFormat ?? 'gif',
+      width: video.width ?? 1280,
+      gifWidth: video.gifWidth ?? 800,
+      gifFps: video.gifFps ?? 10,
+      maxGifSeconds: video.maxGifSeconds ?? 60,
+      idleSeconds: video.idleSeconds ?? 1,
+      replaySeconds: video.replaySeconds ?? 15,
+      showPanel: video.showPanel ?? false,
+      pointer: video.pointer ?? true,
+      captions: video.captions ?? true,
+    },
+    lighthouse: {
+      device: lighthouse.device ?? 'desktop',
+      categories: lighthouse.categories ?? ['performance', 'best-practices', 'seo'],
     },
     warnings,
   };

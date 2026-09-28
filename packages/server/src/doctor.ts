@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { findChrome, NO_CHROME_MESSAGE } from './browser/chrome.js';
 import type { Driver } from './browser/driver.js';
 import type { Config } from './config.js';
+import { SELF } from './downloads/cache.js';
+import { findFfmpeg } from './downloads/ffmpeg.js';
+import { findLighthouse } from './downloads/lighthouse.js';
 import type { SecretStore } from './guards/secrets.js';
 import { MIN_NODE, nodeVersionOk, VERSION } from './version.js';
 
@@ -50,6 +53,11 @@ export async function doctorReport(
   );
   lines.push(info(`Dialogs: ${config.dialogs}`));
   lines.push(info(`Page JavaScript (evaluate tool): ${config.allowEvaluate ? 'ON' : 'off'}`));
+  lines.push(
+    info(
+      `Cookie, storage, and header values in replies: ${config.allowSecretValues ? 'SHOWN' : 'masked'}`,
+    ),
+  );
   if (config.screenshotRoots.length)
     lines.push(
       info(`Screenshot folders outside the project: ${config.screenshotRoots.join(', ')}`),
@@ -59,6 +67,25 @@ export async function doctorReport(
       ? ok(`Secrets in .walkthrough/.env: ${secrets.names.join(', ')}`)
       : info('No secrets in .walkthrough/.env.'),
   );
+
+  const lighthouse = findLighthouse();
+  lines.push(
+    lighthouse
+      ? ok(`Lighthouse ${lighthouse.version}: ${lighthouse.dir}`)
+      : info(`Lighthouse is not installed. For performance reports, run: ${SELF} setup lighthouse`),
+  );
+  try {
+    const ffmpeg = findFfmpeg({ configPath: config.ffmpegPath });
+    lines.push(
+      ffmpeg
+        ? ok(`ffmpeg (${ffmpeg.source}): ${ffmpeg.path}`)
+        : info(
+            `Walkthrough did not find ffmpeg. Videos still work as GIF and WebM, and as MP4 when Chrome can make it. For exported videos and the MP4 fallback, run: ${SELF} setup ffmpeg`,
+          ),
+    );
+  } catch (error) {
+    lines.push(fix((error as Error).message));
+  }
 
   if (driver) {
     lines.push(

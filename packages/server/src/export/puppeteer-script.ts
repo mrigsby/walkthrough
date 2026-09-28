@@ -1,5 +1,6 @@
 import { isAbsolute } from 'node:path';
 import { resolveDevice } from '../browser/devices.js';
+import { ELEMENT_ACTIONS } from '../page/actions.js';
 import type { Run, RunStep } from '../run/run-store.js';
 
 export interface ExportResult {
@@ -26,15 +27,42 @@ export function checkableText(expect: string): string[] {
 
 const js = (value: string) => JSON.stringify(value);
 
+// {{unique}} in a value, also after URL encoding.
+const UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
+
+// The UNIQUE constant, for scripts that use {{unique}}.
+const UNIQUE_CODE = [
+  '// The value for {{unique}} in this run.',
+  "const UNIQUE = process.env.UNIQUE ?? 'u' + Date.now().toString(36).slice(-5);",
+  '',
+].join('\n');
+
+// Things the script needs because of what the run did.
+interface Needs {
+  unique: boolean;
+}
+
+// A string literal, with {{unique}} turned into the UNIQUE constant.
+function literal(value: string, needs: Needs): string {
+  const code = js(value);
+  if (!UNIQUE_IN.test(code)) return code;
+  UNIQUE_IN.lastIndex = 0;
+  needs.unique = true;
+  return code
+    .replace(UNIQUE_IN, '" + UNIQUE + "')
+    .replace(/^"" \+ /, '')
+    .replace(/ \+ ""$/, '');
+}
+
 // The address of an action as code, relative to BASE_URL when it can be.
-function urlCode(url: string, baseUrl?: string): string {
+function urlCode(url: string, needs: Needs, baseUrl?: string): string {
   try {
     const parsed = new URL(url);
     if (baseUrl && parsed.origin === new URL(baseUrl).origin) {
-      return `new URL(${js(parsed.pathname + parsed.search + parsed.hash)}, BASE_URL).href`;
+      return `new URL(${literal(parsed.pathname + parsed.search + parsed.hash, needs)}, BASE_URL).href`;
     }
   } catch {}
-  return js(url);
+  return literal(url, needs);
 }
 
 function frameCode(frameUrl?: string): string {
@@ -50,6 +78,7 @@ function actionCode(
   action: RunStep['actions'][number],
   secrets: Set<string>,
   secretFields: Set<string>,
+  needs: Needs,
   baseUrl?: string,
 ): string[] {
   const where = frameCode(action.frameUrl);
@@ -63,12 +92,12 @@ function actionCode(
       if (action.selector && !action.frameUrl) secretFields.add(action.selector);
       return `process.env.${secret[1]}`;
     }
-    return js(v);
+    return literal(v, needs);
   })();
   switch (action.action) {
     case 'navigate':
       return [
-        `await page.goto(${urlCode(action.value ?? action.label, baseUrl)}, { waitUntil: 'load' });`,
+        `await page.goto(${urlCode(action.value ?? action.label, needs, baseUrl)}, { waitUntil: 'load' });`,
       ];
     case 'click':
       return [`await ${where}.locator(${sel}).click();`];
@@ -94,6 +123,19 @@ function actionCode(
     case 'upload':
       return [
         `await (await ${where}.$(${sel}))?.uploadFile(${(action.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(', ')});`,
+      ];
+    // The script accepts dialogs on its own.
+    case 'dialog':
+      return [];
+    case 'tab-new':
+    case 'tab-switch':
+    case 'tab-close':
+    case 'emulate':
+    case 'mock':
+    case 'mock-clear':
+    case 'storage':
+      return [
+        `// Fix by hand: the script cannot repeat this yet: ${action.label.replace(/\n/g, ' ')}.`,
       ];
   }
 }
@@ -186,6 +228,7 @@ export function exportScript(
   let handChecks = 0;
   let lastUrl = run.baseUrl ?? '';
   const body: string[] = [];
+  const needs: Needs = { unique: false };
 
   for (const step of run.steps) {
     const shots = step.captures ?? [];
@@ -193,18 +236,17 @@ export function exportScript(
     const lines: string[] = [];
     for (const action of step.actions) {
       if (action.url && action.url !== lastUrl) {
-        lines.push(`await reach(${urlCode(action.url, run.baseUrl)});`);
+        lines.push(`await reach(${urlCode(action.url, needs, run.baseUrl)});`);
         lastUrl = action.url;
       }
-      const needsSelector = !['scroll', 'navigate', 'press'].includes(action.action);
-      if (!action.selector && needsSelector) {
+      if (!action.selector && ELEMENT_ACTIONS.includes(action.action)) {
         missingSelectors.push(`Step ${step.index}: ${action.label}`);
         lines.push(
           `// Fix by hand: Walkthrough found no stable selector for ${action.label.replace(/\n/g, ' ')}.`,
         );
         continue;
       }
-      lines.push(...actionCode(action, secrets, secretFields, run.baseUrl));
+      lines.push(...actionCode(action, secrets, secretFields, needs, run.baseUrl));
       actions += 1;
       // After a page load, the next action starts at the new address.
       if (action.action === 'navigate') lastUrl = action.value ?? lastUrl;
@@ -260,7 +302,7 @@ export function exportScript(
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? ' (and Google Chrome)' : ''}
 // Run:   node ${'<this file>'}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
-${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
+${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${needs.unique ? '// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n' : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
 import { fileURLToPath } from 'node:url';
 import puppeteer from '${pkg}';
 
@@ -270,7 +312,7 @@ const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {
   if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
 }
-
+${needs.unique ? UNIQUE_CODE : ''}
 const browser = await puppeteer.launch(${launch});
 const page = await browser.newPage();
 page.setDefaultTimeout(10_000);

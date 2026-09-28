@@ -6,7 +6,7 @@ This guide takes you from install to your first test run and your first bug repo
 
 You need:
 
-- Node.js 22.12 or later. Run `node --version` to check.
+- Node.js 22.19 or later. Run `node --version` to check.
 - Google Chrome.
 - Claude Code.
 - A web app that runs on your computer, such as `http://localhost:3000`.

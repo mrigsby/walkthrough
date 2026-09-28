@@ -69,6 +69,8 @@ Use one key in `action`:
 
 For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthrough/.env`, and the agent never sees it.
 
+For data that must be new each time, put `{{unique}}` in a value or a path, such as `value: "demo+{{unique}}@example.com"`. It becomes a short value, such as `k3x9p2`, that stays the same for the whole run. Each run gets a new value, so a flow that makes an account or an order can run again. `run_start` shows the value, and exported scripts make a new one each time.
+
 ## Run modes
 
 | Mode | Who checks each step |

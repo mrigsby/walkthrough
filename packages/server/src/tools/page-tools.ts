@@ -54,6 +54,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
         'Do one action in the active tab, on an element from the last snapshot (ref) or a selector.',
         'Actions: click, dblclick, hover, fill (value), select (value is the option text or value), check, uncheck, press (value is a key like "Enter" or "Control+A", and the element is optional), scroll (element, or value "up", "down", or pixels), upload (files).',
         'For passwords and other secrets, write the value as {{secret:NAME}}. Walkthrough puts the real value from .walkthrough/.env into the field. You never see it.',
+        'For data that must be new each run, like an email address, put {{unique}} in the value. It becomes a short value that stays the same for the whole run.',
       ].join(' '),
       inputSchema: {
         action: z.enum(ACTIONS),
@@ -79,6 +80,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
             guard: await ctx.guard(),
             secrets: await ctx.secrets(),
             log: ctx.actionLog,
+            unique: ctx.unique,
           },
           input,
         );

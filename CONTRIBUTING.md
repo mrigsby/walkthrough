@@ -4,7 +4,7 @@ Thank you for your help. This page explains how the project works and how to cha
 
 ## Set up
 
-You need Node.js 22.12 or later and Google Chrome.
+You need Node.js 22.19 or later and Google Chrome.
 
 ```sh
 npm install

@@ -40,7 +40,10 @@ export interface RunStep {
   logs?: string;
   errorCount?: number;
   actions: Array<
-    Pick<ActionRecord, 'action' | 'label' | 'selector' | 'value' | 'files' | 'frameUrl' | 'url'>
+    Pick<
+      ActionRecord,
+      'tab' | 'action' | 'label' | 'selector' | 'value' | 'files' | 'frameUrl' | 'url'
+    >
   >;
   at?: string;
   // The accessibility check this step asks for, from the plan.
@@ -63,6 +66,8 @@ export interface Run {
   setup?: string;
   // The screen and color scheme, for exported scripts.
   emulation?: { device?: string; colorScheme?: string };
+  // The value that {{unique}} had in this run.
+  unique?: string;
   steps: RunStep[];
   accessibility?: A11yCheck[];
   // Accessibility settings from the plan.
@@ -132,6 +137,7 @@ export class RunStore {
       chrome?: string;
       setup?: string;
       emulation?: Run['emulation'];
+      unique?: string;
       // The checks a plain "a11y: true" step runs when the plan names none.
       a11yChecks?: CheckName[];
     },
@@ -178,6 +184,7 @@ export class RunStore {
       chrome: input.chrome,
       setup: input.setup,
       emulation: input.emulation,
+      unique: input.unique,
       steps,
       ...(settings || input.plan?.steps.some((s) => s.a11y)
         ? {

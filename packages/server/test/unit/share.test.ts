@@ -175,6 +175,61 @@ describe('exportScript', () => {
     }
   });
 
+  it('turns {{unique}} into a new value on each run', () => {
+    const uniqueRun: Run = {
+      ...run,
+      steps: [
+        {
+          id: 'sign-up',
+          index: 1,
+          title: 'Sign up',
+          confirm: false,
+          status: 'pass',
+          screenshots: [],
+          actions: [
+            {
+              tab: 'main',
+              action: 'fill',
+              label: 'textbox "Email"',
+              selector: '#email',
+              value: 'demo+{{unique}}@example.com',
+              url: 'http://localhost:4321/signup',
+            },
+            {
+              tab: 'main',
+              action: 'navigate',
+              label: 'http://localhost:4321/users/abc',
+              value: 'http://localhost:4321/users/{{unique}}',
+              url: 'http://localhost:4321/signup',
+            },
+            {
+              tab: 'main',
+              action: 'dialog',
+              label: 'Accept the confirm dialog',
+              value: '{"accept":true}',
+              url: 'http://localhost:4321/users/{{unique}}',
+            },
+          ],
+        },
+      ],
+    };
+    const result = exportScript(uniqueRun);
+    expect(result.code).toContain(
+      "const UNIQUE = process.env.UNIQUE ?? 'u' + Date.now().toString(36).slice(-5);",
+    );
+    expect(result.code).toContain('.fill("demo+" + UNIQUE + "@example.com");');
+    expect(result.code).toContain('new URL("/users/" + UNIQUE, BASE_URL).href');
+    // Only comments still name the token.
+    const code = result.code.split('\n').filter((line) => !line.trim().startsWith('//'));
+    expect(code.join('\n')).not.toContain('{{unique}}');
+    expect(result.missingSelectors).toEqual([]);
+    const file = join(tempDir('export-unique'), 'unique.mjs');
+    writeFileSync(file, result.code);
+    expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
+    // A run without {{unique}} gets no UNIQUE constant.
+    expect(exportScript(run).code).not.toContain('UNIQUE');
+  });
+
   it('uses the viewport of a named device', () => {
     const result = exportScript({ ...run, emulation: { device: 'mobile' } });
     expect(result.code).toContain('// Screen: mobile.');

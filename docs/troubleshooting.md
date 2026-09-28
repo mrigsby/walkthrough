@@ -6,7 +6,7 @@ Start with `/walkthrough:doctor`. It checks Node, Chrome, the project folder, th
 
 In Claude Code, run `/mcp`. If `uiwalk` shows as failed:
 
-1. Run `node --version`. Walkthrough needs Node 22.12 or later. Install it from [nodejs.org](https://nodejs.org).
+1. Run `node --version`. Walkthrough needs Node 22.19 or later. Install it from [nodejs.org](https://nodejs.org).
 2. Run `/walkthrough:doctor`. If the server does not start, the command runs the server file directly and shows the error.
 3. After a fix, run `/mcp` and reconnect `uiwalk`, or restart Claude Code.
 

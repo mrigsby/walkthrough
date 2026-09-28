@@ -2,6 +2,22 @@
 
 This file lists all notable changes to the project.
 
+## Unreleased
+
+### Breaking
+
+- Walkthrough needs Node.js 22.19 or later. Lighthouse reports need this version.
+
+### Added
+
+- `{{unique}}` in a value, such as `demo+{{unique}}@example.com`, becomes a short value that is the same for the whole run. Each run gets a new one, so a flow that makes new data can run again. Exported scripts make a new value each time, or use `UNIQUE`.
+- `uiwalk setup lighthouse` installs the tested Lighthouse version, and `uiwalk setup ffmpeg` downloads ffmpeg and checks its SHA-256 hash. `doctor` shows both.
+- `config.yaml` has `video` and `lighthouse` settings. `config.local.yaml` has `allowSecretValues` and `ffmpegPath`.
+
+### Changed
+
+- Run records keep the tab name of each action and the answers to dialogs.
+
 ## 0.2.0 (2026-09-25)
 
 ### Added

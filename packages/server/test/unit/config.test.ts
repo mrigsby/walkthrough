@@ -75,6 +75,56 @@ describe('loadConfig', () => {
     ]);
   });
 
+  it('has video and lighthouse defaults, and merges them key by key', () => {
+    const plain = loadConfig(project());
+    expect(plain.video).toEqual({
+      runFormat: 'mp4',
+      bugFormat: 'gif',
+      width: 1280,
+      gifWidth: 800,
+      gifFps: 10,
+      maxGifSeconds: 60,
+      idleSeconds: 1,
+      replaySeconds: 15,
+      showPanel: false,
+      pointer: true,
+      captions: true,
+    });
+    expect(plain.lighthouse).toEqual({
+      device: 'desktop',
+      categories: ['performance', 'best-practices', 'seo'],
+    });
+    const config = loadConfig(
+      project(
+        'video:\n  runFormat: webm\n  gifWidth: 640\nlighthouse:\n  device: mobile\n',
+        'video:\n  gifWidth: 500\nlighthouse:\n  categories: [performance, agentic-browsing]\n',
+      ),
+    );
+    expect(config.video.runFormat).toBe('webm');
+    expect(config.video.gifWidth).toBe(500);
+    expect(config.lighthouse).toEqual({
+      device: 'mobile',
+      categories: ['performance', 'agentic-browsing'],
+    });
+  });
+
+  it('refuses unknown video and lighthouse values', () => {
+    expect(() => loadConfig(project('video:\n  runFormat: avi\n'))).toThrow(/video/);
+    expect(() => loadConfig(project('lighthouse:\n  categories: [speed]\n'))).toThrow(/lighthouse/);
+  });
+
+  it('reads allowSecretValues and ffmpegPath only from the local file', () => {
+    const shared = loadConfig(project('allowSecretValues: true\nffmpegPath: /bin/sh\n'));
+    expect(shared.allowSecretValues).toBe(false);
+    expect(shared.ffmpegPath).toBeUndefined();
+    expect(shared.warnings.join(' ')).toMatch(/allowSecretValues/);
+    expect(shared.warnings.join(' ')).toMatch(/ffmpegPath/);
+    const dir = project(undefined, 'allowSecretValues: true\nffmpegPath: tools/ffmpeg\n');
+    const local = loadConfig(dir);
+    expect(local.allowSecretValues).toBe(true);
+    expect(local.ffmpegPath).toBe(join(dir, 'tools', 'ffmpeg'));
+  });
+
   it('explains bad settings', () => {
     expect(() => loadConfig(project('dialogs: maybe\n'))).toThrow(/not valid.*dialogs/);
   });

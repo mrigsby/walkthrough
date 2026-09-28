@@ -14,6 +14,8 @@ import { guardNavigation } from './navigation-guard.js';
 
 export interface Tab {
   id: string;
+  // "main" for the first tab. Plans and exports use the name.
+  name: string;
   page: Page;
   openerId?: string;
   nav: number;
@@ -163,8 +165,10 @@ export class Driver {
 
   async addTab(page: Page, openerId?: string): Promise<Tab> {
     this.tabCounter += 1;
+    const id = `t${this.tabCounter}`;
     const tab: Tab = {
-      id: `t${this.tabCounter}`,
+      id,
+      name: this.tabCounter === 1 ? 'main' : id,
       page,
       openerId,
       nav: 0,

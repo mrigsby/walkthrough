@@ -41,7 +41,7 @@ When a teammate trusts the project folder, Claude Code asks them to install the 
 
 The `uiwalk` server works with any MCP client that can start a local (stdio) server. The skill and the slash commands work only in Claude Code. In other clients, the tool descriptions guide the agent.
 
-The server is on npm as `walkthrough-ui`. The client starts it with `npx -y walkthrough-ui`, so you do not install it first. You need Node.js 22.12 or later.
+The server is on npm as `walkthrough-ui`. The client starts it with `npx -y walkthrough-ui`, so you do not install it first. You need Node.js 22.19 or later.
 
 You can also run the server from a clone of the repository. The server is one file, and it needs no `npm install`. Use `"command": "node"` and `"args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"]`.
 

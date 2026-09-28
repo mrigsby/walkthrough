@@ -12,6 +12,6 @@ Check the Walkthrough setup for the developer.
 
 If the uiwalk tools are not available, the server did not start. Then do these checks:
 
-1. Run `node --version`. Walkthrough needs Node 22.12 or later. If Node is missing or older, tell the developer to install it from https://nodejs.org.
+1. Run `node --version`. Walkthrough needs Node 22.19 or later. If Node is missing or older, tell the developer to install it from https://nodejs.org.
 2. Run `node "${CLAUDE_PLUGIN_ROOT}/server/uiwalk.mjs" doctor` and show the output.
 3. After a fix, tell the developer to run `/mcp` and reconnect `uiwalk`, or to restart Claude Code.

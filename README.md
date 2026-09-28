@@ -33,7 +33,7 @@ Read more in [Safety](docs/safety.md).
 
 ## Requirements
 
-- Node.js 22.12 or later
+- Node.js 22.19 or later
 - Google Chrome. If it is missing, `/walkthrough:doctor` can download Chrome for Testing.
 - Claude Code, for the plugin. Other MCP clients can use the server alone.
 

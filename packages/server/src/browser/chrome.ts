@@ -1,6 +1,4 @@
 import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import {
   Browser,
   ChromeReleaseChannel,
@@ -10,10 +8,8 @@ import {
   install,
   resolveBuildId,
 } from '@puppeteer/browsers';
+import { CACHE_DIR, SELF } from '../downloads/cache.js';
 import { ToolError } from '../errors.js';
-
-// Where "uiwalk setup" saves its own copy of Chrome.
-export const CACHE_DIR = process.env.UIWALK_CACHE_DIR ?? join(homedir(), '.cache', 'uiwalk');
 
 export interface ChromeInfo {
   path: string;
@@ -60,9 +56,6 @@ export async function findChrome(configPath?: string): Promise<ChromeInfo | unde
   if (downloaded) return { path: downloaded, source: 'downloaded' };
   return undefined;
 }
-
-// The command that runs this server file, so the message works with or without npm.
-const SELF = process.argv[1] ? `node "${process.argv[1]}"` : 'npx -y walkthrough-ui';
 
 export const NO_CHROME_MESSAGE = `Walkthrough did not find Google Chrome. Install Chrome from https://www.google.com/chrome. Or, to download a copy for testing (about 170 MB), run: ${SELF} setup`;
 

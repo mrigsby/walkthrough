@@ -40,10 +40,24 @@ browser:
 #   standard: wcag22aa
 #   checks: { keyboard: true, darkMode: true, reflow: true, frames: true, screenshots: true }
 
+# Videos and GIFs.
+# video:
+#   runFormat: mp4        # mp4, webm, or gif, for whole runs and replays
+#   bugFormat: gif        # for the short clips saved with bugs
+#   gifWidth: 800
+#   replaySeconds: 15     # how much a bug clip shows. 0 turns bug clips off.
+
+# Lighthouse reports.
+# lighthouse:
+#   device: desktop       # desktop or mobile
+#   categories: [performance, best-practices, seo]
+
 # Put personal settings in config.local.yaml. Git does not track that file.
-# Only that file can turn on the evaluate tool (allowEvaluate: true)
-# or change the upload folder (uploadsRoot), or let screenshots go to
-# folders outside the project (screenshotRoots).
+# Only that file can turn on the evaluate tool (allowEvaluate: true),
+# change the upload folder (uploadsRoot), let screenshots and videos go to
+# folders outside the project (screenshotRoots), show cookie and header
+# values in replies (allowSecretValues: true), or set the ffmpeg program
+# (ffmpegPath).
 `;
 }
 

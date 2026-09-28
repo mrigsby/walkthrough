@@ -9,6 +9,7 @@ import { ToolError } from '../errors.js';
 import { checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
+import { newUnique } from '../page/unique.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
 import { markdownReport } from '../report/markdown.js';
@@ -247,6 +248,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
         const baseUrl = plan?.baseUrl ?? config.baseUrl;
 
+        // A new {{unique}} value for each run.
+        ctx.unique = newUnique();
         const emulation: Emulation = {};
         if (plan?.device) emulation.device = plan.device;
         if (plan?.colorScheme) emulation.colorScheme = plan.colorScheme;
@@ -274,12 +277,14 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             device: driver.emulation.device,
             colorScheme: driver.emulation.colorScheme,
           },
+          unique: ctx.unique,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
         });
 
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
           `Run folder: ${ctx.run.relativeDir}`,
+          `{{unique}} in this run: ${ctx.unique}`,
           HOW_TO[mode],
           '',
           'For each step:',

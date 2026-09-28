@@ -5,6 +5,7 @@ import { OriginGuard } from './guards/origins.js';
 import { SecretStore } from './guards/secrets.js';
 import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
+import { newUnique } from './page/unique.js';
 import { adhocEvidenceDir } from './project-files.js';
 import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
@@ -19,6 +20,8 @@ export class Context {
   run?: RunStore;
   // Actions before this index already belong to a recorded step.
   actionCursor = 0;
+  // The value of {{unique}}. Each run gets a new one.
+  unique = newUnique();
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
   constructor(

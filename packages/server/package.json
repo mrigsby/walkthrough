@@ -29,7 +29,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.19.0"
   },
   "scripts": {
     "prepack": "node ../../scripts/build-plugin.mjs"

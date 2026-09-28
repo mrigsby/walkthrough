@@ -37,6 +37,6 @@ To use these commands, install the package with `npm install -g walkthrough-ui`.
 | `uiwalk setup` | Download Chrome for Testing, if Chrome is not installed. |
 | `uiwalk schema` | Print the JSON Schema for test plans. |
 
-Walkthrough needs Node.js 22.12 or later and Google Chrome.
+Walkthrough needs Node.js 22.19 or later and Google Chrome.
 
 See the [documentation](https://github.com/mrigsby/walkthrough#documentation) for the guides. MIT license.

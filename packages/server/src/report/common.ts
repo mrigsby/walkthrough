@@ -51,6 +51,18 @@ const ACTION_WORDS: Record<string, string> = {
   navigate: 'Go to',
 };
 
+// Actions whose label already says what happened, such as "Accept the confirm dialog".
+const SELF_DESCRIBED = new Set([
+  'tab-new',
+  'tab-switch',
+  'tab-close',
+  'emulate',
+  'mock',
+  'mock-clear',
+  'dialog',
+  'storage',
+]);
+
 // Steps to reproduce a problem: the steps before it, then its own actions.
 export function reproSteps(run: Run, step: RunStep): string[] {
   const before = run.steps
@@ -65,6 +77,7 @@ export function reproSteps(run: Run, step: RunStep): string[] {
               ? ` (${a.value})`
               : '';
         if (a.action === 'navigate') return `Go to ${a.value ?? a.label}`;
+        if (SELF_DESCRIBED.has(a.action)) return a.label;
         return `${ACTION_WORDS[a.action] ?? a.action} ${a.label}${a.action === 'fill' ? ` the text${value}` : value}`;
       })
     : [step.title];

@@ -9,6 +9,7 @@ import { checkUploadPath } from '../guards/paths.js';
 import { MASK, type SecretStore } from '../guards/secrets.js';
 import { trace } from '../log.js';
 import { stableSelector } from './selectors.js';
+import { tokenizeUnique, withUnique } from './unique.js';
 
 export const ACTIONS = [
   'click',
@@ -52,11 +53,37 @@ export interface Target {
   name?: string;
 }
 
+// Things that change the page other than element actions. Export and replay repeat them.
+export type PageChange =
+  | 'navigate'
+  | 'tab-new'
+  | 'tab-switch'
+  | 'tab-close'
+  | 'emulate'
+  | 'mock'
+  | 'mock-clear'
+  | 'dialog'
+  | 'storage';
+
+// Actions that need an element.
+export const ELEMENT_ACTIONS: readonly string[] = [
+  'click',
+  'dblclick',
+  'hover',
+  'fill',
+  'select',
+  'check',
+  'uncheck',
+  'upload',
+];
+
 // A record of each action, for reports and script export later.
 export interface ActionRecord {
   at: string;
   tabId: string;
-  action: Action | 'navigate';
+  // The tab's name, like "main". Plans and exports use it.
+  tab?: string;
+  action: Action | PageChange;
   selector?: string;
   label: string;
   value?: string;
@@ -73,6 +100,8 @@ export interface ActContext {
   guard: OriginGuard;
   secrets: SecretStore;
   log: ActionRecord[];
+  // The value of {{unique}} for this run.
+  unique: string;
 }
 
 // Finds the element from a ref (preferred) or a selector.
@@ -190,10 +219,11 @@ async function perform(
       if (input.value === undefined)
         throw new ToolError('The fill action needs a "value".', 'bad_input');
       const hasSecret = ctx.secrets.hasTokens(input.value);
-      const real = ctx.secrets.resolve(input.value);
+      const shown = withUnique(input.value, ctx.unique);
+      const real = ctx.secrets.resolve(shown);
       await t.handle.asLocator().setTimeout(timeout).fill(real);
       if (hasSecret) ctx.driver.secretFields.push(t.handle);
-      return `Filled ${t.label} with "${hasSecret ? MASK : input.value}".`;
+      return `Filled ${t.label} with "${hasSecret ? MASK : shown}".`;
     }
     case 'select': {
       const t = need();
@@ -202,8 +232,9 @@ async function perform(
           'The select action needs a "value" (the option value or text).',
           'bad_input',
         );
-      const chosen = await selectOption(t.handle, input.value);
-      return `Selected "${input.value}" in ${t.label}${chosen !== input.value ? ` (value "${chosen}")` : ''}.`;
+      const wanted = withUnique(input.value, ctx.unique);
+      const chosen = await selectOption(t.handle, wanted);
+      return `Selected "${wanted}" in ${t.label}${chosen !== wanted ? ` (value "${chosen}")` : ''}.`;
     }
     case 'check':
     case 'uncheck': {
@@ -334,6 +365,7 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
   ctx.log.push({
     at: new Date().toISOString(),
     tabId: tab.id,
+    tab: tab.name,
     action: input.action,
     selector,
     label: target?.label ?? '(page)',
@@ -347,7 +379,8 @@ export async function act(ctx: ActContext, input: ActInput): Promise<string> {
       target && target.handle.frame !== tab.page.mainFrame()
         ? target.handle.frame.url()
         : undefined,
-    url: startUrl,
+    // {{unique}} stays a token, so an export or replay makes a new value.
+    url: tokenizeUnique(startUrl, ctx.unique),
   });
 
   const lines: string[] = [];

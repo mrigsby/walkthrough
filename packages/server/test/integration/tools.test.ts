@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
@@ -87,6 +87,9 @@ describe('uiwalk tools', () => {
     expect(reply.text).toContain('UIWALK_PROJECT_DIR');
     expect(reply.text).toContain('DEMO_PASSWORD');
     expect(reply.text).not.toContain('demo123');
+    expect(reply.text).toMatch(/Lighthouse/);
+    expect(reply.text).toMatch(/ffmpeg/);
+    expect(reply.text).toMatch(/header values in replies: masked/);
   });
 
   it('asks for browser_open first', async () => {
@@ -247,6 +250,65 @@ describe('uiwalk tools', () => {
     await mcp.call('wait_for', { url: '/order/' });
     expect(await snap()).toContain('Thank you');
   });
+
+  it('records {{unique}}, tab names, and dialog answers in a run', async () => {
+    const start = await mcp.call('run_start', { name: 'Unique values' });
+    expect(start.isError, start.text).toBe(false);
+    const unique = /\{\{unique\}\} in this run: ([a-z0-9]{6})/.exec(start.text)?.[1] as string;
+    expect(unique).toBeDefined();
+
+    const go = await mcp.call('navigate', { url: '/?ref={{unique}}' });
+    expect(go.text).toContain(`ref=${unique}`);
+    await mcp.call('navigate', { url: '/' });
+    let outline = await snap();
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Add to cart') });
+    await mcp.call('navigate', { url: '/checkout' });
+    outline = await snap();
+    const email = await mcp.call('act', {
+      action: 'fill',
+      ref: refFor(outline, 'textbox', 'Email'),
+      value: 'demo+{{unique}}@example.com',
+    });
+    expect(email.text).toContain(`"demo+${unique}@example.com"`);
+    const read = await mcp.call('read', { ref: refFor(outline, 'textbox', 'Email') });
+    expect(read.text).toContain(`demo+${unique}@example.com`);
+    for (const [name, value] of [
+      ['Full name', 'Test Person'],
+      ['Address', '1 Main St'],
+      ['Card number', '4242424242424242'],
+    ] as const) {
+      await mcp.call('act', { action: 'fill', ref: refFor(outline, 'textbox', name), value });
+    }
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Save card') });
+    await mcp.call('wait_for', { text: 'Card ending in 4242 is ready' });
+    outline = await snap();
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Place order') });
+    await mcp.call('dialog', { action: 'accept' });
+    await mcp.call('wait_for', { url: '/order/' });
+    await mcp.call('run_step', { title: 'Check out', status: 'pass' });
+    const finish = await mcp.call('run_finish');
+    expect(finish.isError, finish.text).toBe(false);
+
+    const runId = /Run folder: \S*runs\/(\S+)/.exec(start.text)?.[1] as string;
+    const run = JSON.parse(
+      readFileSync(join(project, '.walkthrough', 'runs', runId, 'run.json'), 'utf8'),
+    );
+    expect(run.unique).toBe(unique);
+    const actions = run.steps[0].actions as Array<Record<string, string>>;
+    expect(actions.every((a) => a.tab === 'main')).toBe(true);
+    expect(actions[0]?.value).toBe(`${demo.base}/?ref={{unique}}`);
+    expect(actions.find((a) => a.label?.includes('Email'))?.value).toBe(
+      'demo+{{unique}}@example.com',
+    );
+    const dialog = actions.find((a) => a.action === 'dialog');
+    expect(dialog?.label).toBe('Accept the confirm dialog');
+    expect(JSON.parse(dialog?.value ?? '{}')).toEqual({ accept: true });
+    // The typed value is not stored. Only the token is.
+    expect(JSON.stringify(run.steps)).not.toContain(`demo+${unique}`);
+
+    const exported = await mcp.call('export_script', { runId });
+    expect(exported.isError, exported.text).toBe(false);
+  }, 90_000);
 
   it('uploads a project file but not a secret file', async () => {
     await mcp.call('navigate', { url: '/account' });

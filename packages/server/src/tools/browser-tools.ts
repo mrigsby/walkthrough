@@ -7,6 +7,7 @@ import type { Context } from '../context.js';
 import { doctorReport } from '../doctor.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
+import { tokenizeUnique, withUnique } from '../page/unique.js';
 import { runTool } from './util.js';
 
 async function pageSummary(tab: Tab): Promise<string> {
@@ -97,7 +98,7 @@ export async function openBrowser(
     options.url ??
     (goAgain ? (config.baseUrl ?? (options.session ? tab.page.url() : undefined)) : undefined);
   if (target) {
-    const full = fullUrl(target, tab.page.url(), config.baseUrl);
+    const full = fullUrl(withUnique(target, ctx.unique), tab.page.url(), config.baseUrl);
     guard.check(full);
     const problem = await goTo(tab, full);
     if (problem) lines.push(problem);
@@ -198,7 +199,7 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
         const tab = action === 'reload' ? reloadableTab(driver) : driver.activeTab();
         let problem: string | undefined;
         if (url) {
-          const full = fullUrl(url, tab.page.url(), config.baseUrl);
+          const full = fullUrl(withUnique(url, ctx.unique), tab.page.url(), config.baseUrl);
           guard.check(full);
           const from = tab.page.url();
           problem = await goTo(tab, full);
@@ -206,10 +207,11 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
           ctx.actionLog.push({
             at: new Date().toISOString(),
             tabId: tab.id,
+            tab: tab.name,
             action: 'navigate',
             label: full,
-            value: full,
-            url: from,
+            value: tokenizeUnique(full, ctx.unique),
+            url: tokenizeUnique(from, ctx.unique),
           });
         } else if (action === 'back') {
           await tab.page.goBack({ waitUntil: 'load' });
@@ -295,6 +297,20 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
         }
         const answered = await driver.answerDialog(action === 'accept', text);
         const tab = driver.activeTab();
+        // Keep the answer, so an export or replay answers the same way.
+        ctx.actionLog.push({
+          at: new Date().toISOString(),
+          tabId: answered.tabId,
+          tab: driver.tabs.get(answered.tabId)?.name,
+          action: 'dialog',
+          label: `${action === 'accept' ? 'Accept' : 'Dismiss'} the ${answered.type} dialog`,
+          value: JSON.stringify(
+            text === undefined
+              ? { accept: action === 'accept' }
+              : { accept: action === 'accept', text },
+          ),
+          url: tokenizeUnique(tab.page.url(), ctx.unique),
+        });
         return [
           `${action === 'accept' ? 'Accepted' : 'Dismissed'} the ${answered.type} dialog.`,
           await pageSummary(tab),
