@@ -157,6 +157,17 @@ steps:
     expect(result.ok, JSON.stringify(result)).toBe(true);
   });
 
+  it('accepts cookie checks on a step', () => {
+    const result = validatePlanText(
+      'name: x\nsteps:\n  - do: Log out\n    cookies:\n      - { name: session, exists: false }\n      - { name: theme, value: dark, sameSite: Lax }\n',
+    );
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+    const bad = validatePlanText(
+      'name: x\nsteps:\n  - do: a\n    cookies:\n      - { name: session, sameSite: lax }\n',
+    );
+    expect(bad.ok).toBe(false);
+  });
+
   it('explains a bad tab name or setting', () => {
     const name = validatePlanText(
       'name: x\nsteps:\n  - do: a\n    action: { newTab: { name: Guest Tab } }\n',

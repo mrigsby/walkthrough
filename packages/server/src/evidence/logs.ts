@@ -2,7 +2,8 @@ import type { ConsoleMessage, HTTPRequest, HTTPResponse, Page } from 'puppeteer-
 import { scrubText, scrubUrl } from './scrub.js';
 
 export type LogLevel = 'error' | 'warning' | 'info';
-export type LogKind = 'console' | 'page-error' | 'network';
+export const LOG_KINDS = ['console', 'page-error', 'network', 'issue'] as const;
+export type LogKind = (typeof LOG_KINDS)[number];
 
 export interface LogEntry {
   seq: number;
@@ -28,6 +29,8 @@ export class LogBook {
   private entries: LogEntry[] = [];
   private seq = 0;
   private stepStart = 0;
+  // Chrome repeats issues on each page load. Keep one of each per step.
+  private issueKeys = new Set<string>();
 
   get marker(): number {
     return this.seq;
@@ -82,14 +85,24 @@ export class LogBook {
     });
   }
 
-  // Entries after a marker, filtered by level.
-  since(marker: number, levels: LogLevel[] = ['error', 'warning']): LogEntry[] {
-    return this.entries.filter((e) => e.seq > marker && levels.includes(e.level));
+  // An entry from Chrome's Issues panel.
+  addIssue(tabId: string, level: LogLevel, text: string): void {
+    const key = `${tabId}|${text}`;
+    if (this.issueKeys.has(key)) return;
+    this.issueKeys.add(key);
+    this.add({ tabId, kind: 'issue', level, text });
+  }
+
+  // Entries after a marker, filtered by level and kind.
+  since(marker: number, levels: LogLevel[] = ['error', 'warning'], kinds?: LogKind[]): LogEntry[] {
+    return this.entries.filter(
+      (e) => e.seq > marker && levels.includes(e.level) && (!kinds || kinds.includes(e.kind)),
+    );
   }
 
   // Entries since the current step started.
-  currentStep(levels?: LogLevel[]): LogEntry[] {
-    return this.since(this.stepStart, levels);
+  currentStep(levels?: LogLevel[], kinds?: LogKind[]): LogEntry[] {
+    return this.since(this.stepStart, levels, kinds);
   }
 
   // Ends the current step: tags its entries and starts the next step.
@@ -98,6 +111,7 @@ export class LogBook {
       if (entry.seq > this.stepStart && !entry.step) entry.step = label;
     }
     this.stepStart = this.seq;
+    this.issueKeys.clear();
   }
 }
 

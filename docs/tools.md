@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 29 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 30 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -95,7 +95,9 @@ Saves a PNG and returns a small preview. By default, the file goes in the run fo
 
 ### `logs`
 
-Shows console messages, page errors, and failed requests. By default, it shows errors and warnings since the current step started. `since` shows the entries after a marker number, and `levels` picks `error`, `warning`, or `info`.
+Shows console messages, page errors, failed requests, and Chrome issues. By default, it shows errors and warnings since the current step started. `since` shows the entries after a marker number, `levels` picks `error`, `warning`, or `info`, and `kinds` picks `console`, `page-error`, `network`, or `issue`.
+
+Chrome issues are the problems that the Issues panel in DevTools shows. They include cookies that Chrome blocked, Content Security Policy and CORS blocks, and mixed content. They also include deprecated features and form problems, such as a label that points to a missing id. Anything that Chrome blocked is an error. Each issue shows once in each step.
 
 ### `evaluate`
 
@@ -164,6 +166,24 @@ Permissions belong to a login, so they apply to every tab of the same login.
 ### `session`
 
 With `action`: `save` the login of the active tab with a `name`, `list` the saved logins, or `delete` one. `browser_open`, `tabs` (action `new`), and plans can load a saved login.
+
+### `storage`
+
+Reads and changes cookies, `localStorage`, and `sessionStorage` of the sites under test, in the login of the active tab. It never touches other sites.
+
+| `action` | What it does |
+| --- | --- |
+| `list` | Lists the cookies (or the storage items) with their flags. |
+| `get` | Shows one cookie or item, by `name`. |
+| `set` | Sets a cookie or item: `name` and `value`. For cookies, also `domain`, `path`, `expires` (Unix seconds), `httpOnly`, `secure`, and `sameSite`. |
+| `delete` | Deletes one cookie or item, by `name`. |
+| `clear` | Deletes all cookies of the sites under test, or all items. |
+| `check` | Checks cookies: `checks`, such as `[{ name: session, httpOnly: true }]`, or the `stepId` of a plan step with `cookies`. The reply starts with `result: pass` or `result: fail`. |
+| `clearSiteData` | Clears the cookies, storage, cache, IndexedDB, and service workers of the active tab's site. |
+
+`kind` is `cookies` (the default), `local`, or `session`. A check can have `name`, `exists`, `value`, `contains`, `httpOnly`, `secure`, and `sameSite`.
+
+Values often hold logins, so the reply shows a fingerprint such as `**** (36 characters, id 3f2a)`. The same value always has the same id. To see the values, set `allowSecretValues: true` in `config.local.yaml`. Checks compare the values without showing them.
 
 ### `visual_check`
 

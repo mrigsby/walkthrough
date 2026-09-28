@@ -2,6 +2,7 @@ import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
 import { emulationSchema } from '../browser/emulation-schema.js';
+import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -136,6 +137,11 @@ export const stepSchema = z
       .describe(
         'Settings for the tab of this step, like { device: mobile }. They apply before the step.',
       ),
+    cookies: z
+      .array(cookieCheckSchema)
+      .min(1)
+      .optional()
+      .describe('Cookie checks after this step, like [{ name: session, httpOnly: true }].'),
     a11y: z
       .union([
         z.literal(true),

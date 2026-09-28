@@ -13,6 +13,7 @@ import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
 import type { KeyboardResult } from '../audit/keyboard.js';
 import { CHECKS, type CheckName } from '../audit/standards.js';
 import type { Emulation } from '../browser/emulation-schema.js';
+import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -49,6 +50,8 @@ export interface RunStep {
   at?: string;
   // The accessibility check this step asks for, from the plan.
   a11y?: { selector?: string; checks: CheckName[] };
+  // Cookie checks from the plan.
+  cookies?: CookieCheck[];
 }
 
 export interface Run {
@@ -160,6 +163,7 @@ export class RunStore {
       status: 'pending',
       screenshots: [],
       actions: [],
+      ...(step.cookies ? { cookies: step.cookies } : {}),
       ...(step.a11y
         ? {
             a11y: {

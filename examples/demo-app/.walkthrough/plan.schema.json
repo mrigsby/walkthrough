@@ -793,6 +793,51 @@
             },
             "additionalProperties": false
           },
+          "cookies": {
+            "description": "Cookie checks after this step, like [{ name: session, httpOnly: true }].",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The cookie name, like \"session\"."
+                },
+                "exists": {
+                  "description": "false checks that the cookie is gone. The default is true.",
+                  "type": "boolean"
+                },
+                "value": {
+                  "description": "The exact value. {{secret:NAME}} and {{unique}} work here.",
+                  "type": "string"
+                },
+                "contains": {
+                  "description": "Text that the value has in it.",
+                  "type": "string"
+                },
+                "httpOnly": {
+                  "type": "boolean"
+                },
+                "secure": {
+                  "type": "boolean"
+                },
+                "sameSite": {
+                  "type": "string",
+                  "enum": [
+                    "Strict",
+                    "Lax",
+                    "None"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          },
           "a11y": {
             "description": "Check accessibility after this step.",
             "anyOf": [

@@ -1,6 +1,7 @@
 import { isAbsolute } from 'node:path';
 import { mediaFeatures, NETWORK_PRESETS, resolveDevice } from '../browser/devices.js';
 import { type Emulation, mergeEmulation, permissionEntries } from '../browser/emulation-schema.js';
+import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ELEMENT_ACTIONS } from '../page/actions.js';
 import type { Run, RunStep } from '../run/run-store.js';
 
@@ -43,11 +44,14 @@ interface Needs {
   unique: boolean;
   emulate: boolean;
   tabs: boolean;
+  cookies: boolean;
+  siteData: boolean;
 }
 
 // What the script knows while it is written: open tabs, their settings, and dialog answers.
 interface Gen {
   needs: Needs;
+  secrets: Set<string>;
   baseUrl?: string;
   known: Set<string>;
   current: string;
@@ -235,6 +239,8 @@ function pageChangeCode(action: RunStep['actions'][number], gen: Gen): string[] 
       }
       return lines;
     }
+    case 'storage':
+      return storageCode(value, gen);
     case 'emulate': {
       const { allTabs, ...change } = value as Emulation & { allTabs?: boolean };
       gen.needs.emulate = true;
@@ -268,6 +274,114 @@ function literal(value: string, needs: Needs): string {
     .replace(/ \+ ""$/, '');
 }
 
+// A value as code: a secret becomes its environment variable, {{unique}} the UNIQUE constant.
+function valueCode(value: string, gen: Gen): string {
+  const secret = SECRET.exec(value);
+  if (secret?.[1]) {
+    gen.secrets.add(secret[1]);
+    return `process.env.${secret[1]}`;
+  }
+  return literal(value, gen.needs);
+}
+
+// The cookie and site data helpers. Only scripts that use them get them.
+const COOKIE_HELPERS = `
+// Checks a cookie of the active tab's login.
+async function expectCookie(check) {
+  const found = (await page.browserContext().cookies()).find((c) => c.name === check.name);
+  if (check.exists === false) {
+    if (found) throw new Error(\`The cookie "\${check.name}" is still set.\`);
+    return;
+  }
+  if (!found) throw new Error(\`The cookie "\${check.name}" is not set.\`);
+  if (check.value !== undefined && found.value !== check.value)
+    throw new Error(\`The cookie "\${check.name}" has another value.\`);
+  if (check.contains !== undefined && !found.value.includes(check.contains))
+    throw new Error(\`The value of the cookie "\${check.name}" does not have the text.\`);
+  for (const flag of ['httpOnly', 'secure', 'sameSite']) {
+    if (check[flag] !== undefined && found[flag] !== check[flag])
+      throw new Error(\`The cookie "\${check.name}" has \${flag} \${found[flag]}, not \${check[flag]}.\`);
+  }
+}
+
+// Deletes the cookies that match, in the active tab's login.
+async function deleteCookies(match = {}) {
+  const context = page.browserContext();
+  for (const cookie of await context.cookies()) {
+    if (match.name && cookie.name !== match.name) continue;
+    if (match.path && cookie.path !== match.path) continue;
+    await context.deleteCookie(cookie);
+  }
+}
+`;
+
+const SITE_DATA_HELPER = `
+// Clears cookies, storage, cache, IndexedDB, and service workers of the active tab's site.
+async function clearSiteData() {
+  const client = await page.createCDPSession();
+  await client.send('Storage.clearDataForOrigin', { origin: new URL(page.url()).origin, storageTypes: 'all' });
+  await client.detach();
+}
+`;
+
+// A cookie check as code.
+function cookieCheckCode(check: CookieCheck, gen: Gen): string {
+  const parts = [`name: ${js(check.name)}`];
+  if (check.exists !== undefined) parts.push(`exists: ${check.exists}`);
+  if (check.value !== undefined) parts.push(`value: ${valueCode(check.value, gen)}`);
+  if (check.contains !== undefined) parts.push(`contains: ${valueCode(check.contains, gen)}`);
+  if (check.httpOnly !== undefined) parts.push(`httpOnly: ${check.httpOnly}`);
+  if (check.secure !== undefined) parts.push(`secure: ${check.secure}`);
+  if (check.sameSite !== undefined) parts.push(`sameSite: ${js(check.sameSite)}`);
+  return `await expectCookie({ ${parts.join(', ')} });`;
+}
+
+// A storage record as code.
+function storageCode(value: Record<string, unknown>, gen: Gen): string[] {
+  const op = String(value.op ?? '');
+  const name = typeof value.name === 'string' ? value.name : undefined;
+  const text = typeof value.value === 'string' ? value.value : '';
+  if (op === 'clearSiteData') {
+    gen.needs.siteData = true;
+    return ['await clearSiteData();'];
+  }
+  if (value.kind === 'local' || value.kind === 'session') {
+    const store = value.kind === 'local' ? 'localStorage' : 'sessionStorage';
+    if (op === 'set' && name)
+      return [
+        `await page.evaluate((k, v) => ${store}.setItem(k, v), ${js(name)}, ${valueCode(text, gen)});`,
+      ];
+    if (op === 'delete' && name)
+      return [`await page.evaluate((k) => ${store}.removeItem(k), ${js(name)});`];
+    if (op === 'clear') return [`await page.evaluate(() => ${store}.clear());`];
+    return [];
+  }
+  gen.needs.cookies = true;
+  if (op === 'set' && name) {
+    const domain = typeof value.domain === 'string' ? value.domain : '';
+    let base = '';
+    try {
+      base = gen.baseUrl ? new URL(gen.baseUrl).hostname : '';
+    } catch {}
+    const fields = [
+      `name: ${js(name)}`,
+      `value: ${valueCode(text, gen)}`,
+      `domain: ${domain && domain !== base ? js(domain) : 'new URL(BASE_URL).hostname'}`,
+      `path: ${js(typeof value.path === 'string' ? value.path : '/')}`,
+    ];
+    for (const key of ['expires', 'httpOnly', 'secure'] as const)
+      if (value[key] !== undefined) fields.push(`${key}: ${JSON.stringify(value[key])}`);
+    if (typeof value.sameSite === 'string') fields.push(`sameSite: ${js(value.sameSite)}`);
+    return [`await page.browserContext().setCookie({ ${fields.join(', ')} });`];
+  }
+  if (op === 'delete' && name) {
+    const path = typeof value.path === 'string' ? `, path: ${js(value.path)}` : '';
+    return [`await deleteCookies({ name: ${js(name)}${path} });`];
+  }
+  if (op === 'clear') return ['await deleteCookies();'];
+  return [];
+}
+
 // The address of an action as code, relative to BASE_URL when it can be.
 function urlCode(url: string, needs: Needs, baseUrl?: string): string {
   try {
@@ -290,7 +404,6 @@ function frameCode(frameUrl?: string): string {
 
 function actionCode(
   action: RunStep['actions'][number],
-  secrets: Set<string>,
   secretFields: Set<string>,
   gen: Gen,
 ): string[] {
@@ -299,14 +412,9 @@ function actionCode(
   const sel = action.selector ? js(action.selector) : '';
   const value = (() => {
     const v = action.value ?? '';
-    const secret = SECRET.exec(v);
-    if (secret?.[1]) {
-      secrets.add(secret[1]);
-      // Screenshots hide the text of these fields.
-      if (action.selector && !action.frameUrl) secretFields.add(action.selector);
-      return `process.env.${secret[1]}`;
-    }
-    return literal(v, needs);
+    // Screenshots hide the text of fields filled from secrets.
+    if (SECRET.test(v) && action.selector && !action.frameUrl) secretFields.add(action.selector);
+    return valueCode(v, gen);
   })();
   switch (action.action) {
     case 'navigate':
@@ -454,9 +562,16 @@ export function exportScript(
   let handChecks = 0;
   let lastUrl = run.baseUrl ?? '';
   const body: string[] = [];
-  const needs: Needs = { unique: false, emulate: false, tabs: false };
+  const needs: Needs = {
+    unique: false,
+    emulate: false,
+    tabs: false,
+    cookies: false,
+    siteData: false,
+  };
   const gen: Gen = {
     needs,
+    secrets,
     baseUrl: run.baseUrl,
     known: new Set(['main']),
     current: 'main',
@@ -482,12 +597,17 @@ export function exportScript(
         );
         continue;
       }
-      lines.push(...actionCode(action, secrets, secretFields, gen));
+      lines.push(...actionCode(action, secretFields, gen));
       actions += 1;
       // After a page load, the next action starts at the new address.
       if (action.action === 'navigate') lastUrl = action.value ?? lastUrl;
       if (action.action === 'tab-new') lastUrl = parseUrl(action.value) ?? 'about:blank';
       if (action.action === 'tab-close') lastUrl = '';
+    }
+    for (const check of step.cookies ?? []) {
+      needs.cookies = true;
+      lines.push(cookieCheckCode(check, gen));
+      checks += 1;
     }
     if (step.expect) {
       const texts = checkableText(step.expect);
@@ -617,7 +737,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${needs.emulate ? EMULATE_HELPER : ''}${hasShots ? captureHelpers([...secretFields]) : ''}
+${needs.emulate ? EMULATE_HELPER : ''}${needs.cookies ? COOKIE_HELPERS : ''}${needs.siteData ? SITE_DATA_HELPER : ''}${hasShots ? captureHelpers([...secretFields]) : ''}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 

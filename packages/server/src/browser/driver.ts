@@ -7,9 +7,11 @@ import type {
   Dialog,
   ElementHandle,
   Page,
+  Protocol,
   Target,
 } from 'puppeteer-core';
 import type { Config, DialogPolicy } from '../config.js';
+import { describeIssue } from '../devtools/issues.js';
 import { ToolError } from '../errors.js';
 import { LogBook } from '../evidence/logs.js';
 import { onShutdown } from '../lifecycle.js';
@@ -276,6 +278,15 @@ export class Driver {
           `Walkthrough blocked the tab from opening ${url}, because that site is not allowed.`,
         ),
     );
+
+    // Chrome's Issues panel: blocked cookies, CSP, CORS, and more.
+    if (tab.cdp) {
+      tab.cdp.on('Audits.issueAdded', ({ issue }: Protocol.Audits.IssueAddedEvent) => {
+        const found = describeIssue(issue);
+        if (found) this.logs.addIssue(tab.id, found.level, found.text);
+      });
+      await tab.cdp.send('Audits.enable').catch(() => undefined);
+    }
 
     // Settings need tab.cdp, so they come after the guard.
     if (Object.keys(tab.emulation).length > 0)

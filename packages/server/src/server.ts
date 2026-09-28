@@ -6,6 +6,7 @@ import { log } from './log.js';
 import { registerA11yTools } from './tools/a11y-tools.js';
 import { registerBrowserTools } from './tools/browser-tools.js';
 import { registerDeveloperTools } from './tools/developer-tools.js';
+import { registerDevtoolsTools } from './tools/devtools-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
 import { registerProjectTools } from './tools/project-tools.js';
 import { registerQualityTools } from './tools/quality-tools.js';
@@ -32,6 +33,7 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerProjectTools(server, ctx);
   registerQualityTools(server, ctx);
   registerA11yTools(server, ctx);
+  registerDevtoolsTools(server, ctx);
   registerShareTools(server, ctx);
 
   // If the server stops during a run, keep what we have and write the reports.

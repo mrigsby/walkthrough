@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes9, createHash: createHash4 } = __require("crypto");
+    var { randomBytes: randomBytes9, createHash: createHash5 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45562,7 +45562,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash4("sha1").update(key2 + GUID).digest("base64");
+        const digest = createHash5("sha1").update(key2 + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -45931,7 +45931,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter5 = __require("events");
     var http2 = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash4 } = __require("crypto");
+    var { createHash: createHash5 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -46238,7 +46238,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash4("sha1").update(key2 + GUID).digest("base64");
+        const digest = createHash5("sha1").update(key2 + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -65171,7 +65171,7 @@ var require_scope = __commonJS({
           return name.value.code;
         }, usedValues, getCode);
       }
-      _reduceValues(values, valueCode, usedValues = {}, getCode) {
+      _reduceValues(values, valueCode2, usedValues = {}, getCode) {
         let code = code_1.nil;
         for (const prefix in values) {
           const vs = values[prefix];
@@ -65182,7 +65182,7 @@ var require_scope = __commonJS({
             if (nameSet.has(name))
               return;
             nameSet.set(name, UsedValueState.Started);
-            let c = valueCode(name);
+            let c = valueCode2(name);
             if (c) {
               const def = this.opts.es5 ? exports.varKinds.var : exports.varKinds.const;
               code = (0, code_1._)`${code}${def} ${name} = ${c};${this.opts._n}`;
@@ -97766,6 +97766,17 @@ function permissionEntries(change) {
   );
 }
 
+// packages/server/src/devtools/cookie-schema.ts
+var cookieCheckSchema = external_exports.object({
+  name: external_exports.string().min(1).describe('The cookie name, like "session".'),
+  exists: external_exports.boolean().optional().describe("false checks that the cookie is gone. The default is true."),
+  value: external_exports.string().optional().describe("The exact value. {{secret:NAME}} and {{unique}} work here."),
+  contains: external_exports.string().optional().describe("Text that the value has in it."),
+  httpOnly: external_exports.boolean().optional(),
+  secure: external_exports.boolean().optional(),
+  sameSite: external_exports.enum(["Strict", "Lax", "None"]).optional()
+}).strict();
+
 // packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
 var target = external_exports.object({
@@ -97841,6 +97852,7 @@ var stepSchema = external_exports.object({
   emulate: emulationSchema.optional().describe(
     "Settings for the tab of this step, like { device: mobile }. They apply before the step."
   ),
+  cookies: external_exports.array(cookieCheckSchema).min(1).optional().describe("Cookie checks after this step, like [{ name: session, httpOnly: true }]."),
   a11y: external_exports.union([
     external_exports.literal(true),
     external_exports.object({
@@ -106039,6 +106051,110 @@ var EMPTY_COMPLETION_RESULT = {
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { EventEmitter as EventEmitter4 } from "node:events";
 
+// packages/server/src/devtools/issues.ts
+function where(location2) {
+  if (!location2?.url) return "";
+  return ` (${location2.url}:${location2.lineNumber + 1})`;
+}
+var COOKIE_REASONS = {
+  ExcludeSameSiteNoneInsecure: "SameSite=None needs the Secure flag",
+  WarnSameSiteNoneInsecure: "SameSite=None needs the Secure flag",
+  ExcludeSameSiteLax: "SameSite=Lax does not allow it here",
+  ExcludeSameSiteStrict: "SameSite=Strict does not allow it here",
+  ExcludeSameSiteUnspecifiedTreatedAsLax: "it has no SameSite, so Chrome treats it as Lax",
+  WarnSameSiteUnspecifiedCrossSiteContext: "it has no SameSite, and the request is cross-site",
+  ExcludeThirdPartyPhaseout: "Chrome blocks third-party cookies",
+  WarnThirdPartyPhaseout: "Chrome will block third-party cookies",
+  ExcludeDomainNonASCII: "the domain has characters that are not ASCII",
+  ExcludeThirdPartyCookieBlockedInFirstPartySet: "Chrome blocks this third-party cookie"
+};
+var FORM_PROBLEMS = {
+  FormLabelForMatchesNonExistingIdError: 'A label "for" attribute points to an id that does not exist',
+  FormEmptyIdAndNameAttributesForInputError: "A form field has no id and no name",
+  FormInputWithNoLabelError: "A form field has no label",
+  FormAutocompleteAttributeEmptyError: "A form field has an empty autocomplete attribute",
+  FormDuplicateIdForInputError: "Two form fields have the same id",
+  FormInputAssignedAutocompleteValueToIdOrNameAttributeError: "A form field uses an autocomplete value as its id or name",
+  FormInputHasWrongButWellIntendedAutocompleteValueError: "A form field has an autocomplete value that is almost right",
+  FormAriaLabelledByToNonExistingId: "aria-labelledby points to an id that does not exist",
+  FormInputWithNoLabelErrorMultiple: "Form fields have no label",
+  FormLabelHasNeitherForNorNestedInput: 'A label has no "for" attribute and no field inside it',
+  FormLabelForNameError: 'A label "for" attribute uses a field name, not an id'
+};
+function describeIssue(issue3) {
+  const d = issue3.details;
+  switch (issue3.code) {
+    case "CookieIssue": {
+      const c = d.cookieIssueDetails;
+      if (!c) return void 0;
+      const name = c.cookie?.name ?? c.rawCookieLine?.split("=")[0] ?? "a cookie";
+      const blocked = (c.cookieExclusionReasons ?? []).length > 0;
+      const reasons = blocked ? c.cookieExclusionReasons : c.cookieWarningReasons;
+      const why = [...new Set((reasons ?? []).map((r) => COOKIE_REASONS[r] ?? r))].join(", ");
+      const url2 = c.cookieUrl ?? c.request?.url;
+      return {
+        level: blocked ? "error" : "warning",
+        text: `Chrome ${blocked ? "blocked" : "warns about"} the cookie "${name}" when the page ${c.operation === "SetCookie" ? "set" : "read"} it${url2 ? ` for ${url2}` : ""}: ${why}`
+      };
+    }
+    case "MixedContentIssue": {
+      const m = d.mixedContentIssueDetails;
+      if (!m) return void 0;
+      const blocked = m.resolutionStatus === "MixedContentBlocked";
+      return {
+        level: blocked ? "error" : "warning",
+        text: `${blocked ? "Chrome blocked" : "Chrome warns about"} insecure content ${m.insecureURL} on the secure page ${m.mainResourceURL}`
+      };
+    }
+    case "ContentSecurityPolicyIssue": {
+      const p = d.contentSecurityPolicyIssueDetails;
+      if (!p) return void 0;
+      const what = p.blockedURL ?? "an inline script or style";
+      return p.isReportOnly ? {
+        level: "warning",
+        text: `The Content Security Policy (${p.violatedDirective}) would block ${what}${where(p.sourceCodeLocation)}. The policy is in report-only mode, so it did not block it.`
+      } : {
+        level: "error",
+        text: `The Content Security Policy (${p.violatedDirective}) blocked ${what}${where(p.sourceCodeLocation)}`
+      };
+    }
+    case "CorsIssue": {
+      const x2 = d.corsIssueDetails;
+      if (!x2) return void 0;
+      return {
+        level: x2.isWarning ? "warning" : "error",
+        text: `CORS ${x2.isWarning ? "warns about" : "blocked"} the request to ${x2.request.url}: ${x2.corsErrorStatus.corsError}`
+      };
+    }
+    case "DeprecationIssue": {
+      const x2 = d.deprecationIssueDetails;
+      if (!x2) return void 0;
+      return {
+        level: "warning",
+        text: `The page uses a deprecated feature: ${x2.type}${where(x2.sourceCodeLocation)}`
+      };
+    }
+    case "GenericIssue": {
+      const g = d.genericIssueDetails;
+      if (!g) return void 0;
+      if (g.errorType === "NavigationEntryMarkedSkippable")
+        return {
+          level: "info",
+          text: "The page added a history entry without a click or a key press, so the Back button can skip it"
+        };
+      const text = FORM_PROBLEMS[g.errorType] ?? `Chrome reports a page problem: ${g.errorType}`;
+      return { level: "warning", text };
+    }
+    case "HeavyAdIssue":
+      return {
+        level: "warning",
+        text: "Chrome removed an ad because it used too much CPU or network"
+      };
+    default:
+      return { level: "warning", text: `Chrome reports an issue: ${issue3.code}` };
+  }
+}
+
 // packages/server/src/evidence/scrub.ts
 var SENSITIVE_KEYS = /^(token|access_token|id_token|refresh_token|auth|authorization|key|api_key|apikey|secret|client_secret|password|pass|pwd|session|sessionid|sid|code|signature|sig|jwt)$/i;
 function scrubUrl(url2) {
@@ -106062,6 +106178,7 @@ function scrubText(text) {
 }
 
 // packages/server/src/evidence/logs.ts
+var LOG_KINDS = ["console", "page-error", "network", "issue"];
 var MAX_ENTRIES = 1e3;
 function consoleLevel(message) {
   const type = message.type();
@@ -106073,6 +106190,8 @@ var LogBook = class {
   entries = [];
   seq = 0;
   stepStart = 0;
+  // Chrome repeats issues on each page load. Keep one of each per step.
+  issueKeys = /* @__PURE__ */ new Set();
   get marker() {
     return this.seq;
   }
@@ -106088,8 +106207,8 @@ var LogBook = class {
   }
   attach(page, tabId) {
     page.on("console", (message) => {
-      const where2 = message.location()?.url;
-      const text = message.text() + (where2 && consoleLevel(message) !== "info" ? ` (${scrubUrl(where2)})` : "");
+      const where3 = message.location()?.url;
+      const text = message.text() + (where3 && consoleLevel(message) !== "info" ? ` (${scrubUrl(where3)})` : "");
       this.add({ tabId, kind: "console", level: consoleLevel(message), text });
     });
     page.on("pageerror", (error62) => {
@@ -106121,13 +106240,22 @@ var LogBook = class {
       });
     });
   }
-  // Entries after a marker, filtered by level.
-  since(marker, levels = ["error", "warning"]) {
-    return this.entries.filter((e) => e.seq > marker && levels.includes(e.level));
+  // An entry from Chrome's Issues panel.
+  addIssue(tabId, level2, text) {
+    const key2 = `${tabId}|${text}`;
+    if (this.issueKeys.has(key2)) return;
+    this.issueKeys.add(key2);
+    this.add({ tabId, kind: "issue", level: level2, text });
+  }
+  // Entries after a marker, filtered by level and kind.
+  since(marker, levels = ["error", "warning"], kinds) {
+    return this.entries.filter(
+      (e) => e.seq > marker && levels.includes(e.level) && (!kinds || kinds.includes(e.kind))
+    );
   }
   // Entries since the current step started.
-  currentStep(levels) {
-    return this.since(this.stepStart, levels);
+  currentStep(levels, kinds) {
+    return this.since(this.stepStart, levels, kinds);
   }
   // Ends the current step: tags its entries and starts the next step.
   endStep(label) {
@@ -106135,6 +106263,7 @@ var LogBook = class {
       if (entry.seq > this.stepStart && !entry.step) entry.step = label;
     }
     this.stepStart = this.seq;
+    this.issueKeys.clear();
   }
 };
 function formatLogs(entries) {
@@ -107474,6 +107603,13 @@ var Driver = class _Driver {
         `Walkthrough blocked the tab from opening ${url3}, because that site is not allowed.`
       )
     );
+    if (tab.cdp) {
+      tab.cdp.on("Audits.issueAdded", ({ issue: issue3 }) => {
+        const found = describeIssue(issue3);
+        if (found) this.logs.addIssue(tab.id, found.level, found.text);
+      });
+      await tab.cdp.send("Audits.enable").catch(() => void 0);
+    }
     if (Object.keys(tab.emulation).length > 0)
       await this.emulateTab(tab, tab.emulation).catch(() => void 0);
     const url2 = page.url();
@@ -108215,7 +108351,7 @@ async function runAxe(page, options = {}) {
     await cdp.detach().catch(() => void 0);
   }
 }
-function where(node3) {
+function where2(node3) {
   return node3.frame ? `in frame ${node3.frame.selector}: ${node3.target}` : node3.target;
 }
 function formatViolations(violations) {
@@ -108231,7 +108367,7 @@ function formatViolations(violations) {
       lines.push(
         `- ${v2.id}: ${v2.help} (${count} element${count === 1 ? "" : "s"})${wcag ? ` ${wcag}` : ""} ${v2.helpUrl}`
       );
-      for (const node3 of v2.nodes.slice(0, 3)) lines.push(`  - ${where(node3)}: ${node3.html}`);
+      for (const node3 of v2.nodes.slice(0, 3)) lines.push(`  - ${where2(node3)}: ${node3.html}`);
       if (count > 3) lines.push(`  - and ${count - 3} more`);
     }
   }
@@ -109054,6 +109190,7 @@ var RunStore = class _RunStore {
       status: "pending",
       screenshots: [],
       actions: [],
+      ...step.cookies ? { cookies: step.cookies } : {},
       ...step.a11y ? {
         a11y: {
           selector: step.a11y === true ? void 0 : step.a11y.selector,
@@ -109687,13 +109824,13 @@ function resultLine(run) {
 function accessibilityRows(run) {
   const rows = [];
   for (const check2 of run.accessibility ?? []) {
-    const where2 = `${check2.stepId ? `Step ${check2.stepId}, ` : ""}${check2.url}${check2.scope ? ` (${check2.scope})` : ""}`;
+    const where3 = `${check2.stepId ? `Step ${check2.stepId}, ` : ""}${check2.url}${check2.scope ? ` (${check2.scope})` : ""}`;
     const sorted = [...check2.violations].sort(
       (a2, b2) => IMPACT_ORDER.indexOf(a2.impact) - IMPACT_ORDER.indexOf(b2.impact)
     );
     for (const v2 of sorted) {
       rows.push({
-        where: where2,
+        where: where3,
         impact: v2.impact,
         rule: v2.id,
         help: v2.help,
@@ -110294,13 +110431,13 @@ function issue2(data, f) {
     ""
   );
   for (const e of f.elements.slice(0, 10)) {
-    const where2 = e.frame ? ` in frame \`${e.frame.selector}\`` : "";
+    const where3 = e.frame ? ` in frame \`${e.frame.selector}\`` : "";
     const notes = [
       e.contrast ? `Contrast ${e.contrast.ratio}:1, needs ${e.contrast.expected}:1.` : "",
       e.failureSummary ?? ""
     ].filter(Boolean).join("\n");
     out.push(
-      `- Page ${line(e.page)}${where2}:`,
+      `- Page ${line(e.page)}${where3}:`,
       "",
       pageData(`selector: ${e.target}
 ${e.html}${notes ? `
@@ -111272,8 +111409,8 @@ function validatePlanText(text) {
       const range = node3?.range;
       if (range) line2 = lineCounter.linePos(range[0]).line;
     }
-    const where2 = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
-    return { line: line2, path: where2, message: issue3.message };
+    const where3 = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
+    return { line: line2, path: where3, message: issue3.message };
   });
   return { ok: false, problems };
 }
@@ -111602,16 +111739,17 @@ function registerDeveloperTools(server, ctx) {
     "logs",
     {
       title: "Page logs",
-      description: "Show console messages, page errors, and failed requests from the browser. By default it shows errors and warnings since the current step started.",
+      description: "Show console messages, page errors, failed requests, and Chrome issues (the DevTools Issues panel: blocked cookies, CSP, CORS, mixed content, deprecated features, form problems). By default it shows errors and warnings since the current step started.",
       inputSchema: {
         since: external_exports.number().int().min(0).optional().describe("Show entries after this marker number. Use 0 for all."),
-        levels: external_exports.array(external_exports.enum(["error", "warning", "info"])).optional().describe("Default: error and warning.")
+        levels: external_exports.array(external_exports.enum(["error", "warning", "info"])).optional().describe("Default: error and warning."),
+        kinds: external_exports.array(external_exports.enum(LOG_KINDS)).optional().describe("Only these kinds: console, page-error, network, issue. Default: all.")
       }
     },
-    ({ since, levels }) => runTool(ctx, "logs", async () => {
+    ({ since, levels, kinds }) => runTool(ctx, "logs", async () => {
       const driver = ctx.requireDriver();
       const wanted = levels ?? ["error", "warning"];
-      const entries = since === void 0 ? driver.logs.currentStep(wanted) : driver.logs.since(since, wanted);
+      const entries = since === void 0 ? driver.logs.currentStep(wanted, kinds) : driver.logs.since(since, wanted, kinds);
       return [
         `${entries.length} entr${entries.length === 1 ? "y" : "ies"}${since === void 0 ? " since the current step started" : ` after marker ${since}`}:`,
         untrusted(formatLogs(entries)),
@@ -111652,9 +111790,20 @@ function describeAction(step) {
     return `newTab${parts.length ? ` ${parts.join(", ")}` : ""}`;
   }
   const t = value;
-  const where2 = t.selector ? `selector ${t.selector}` : `${t.role ?? "element"}${t.name ? ` "${t.name}"` : ""}`;
+  const where3 = t.selector ? `selector ${t.selector}` : `${t.role ?? "element"}${t.name ? ` "${t.name}"` : ""}`;
   const extra = t.value !== void 0 ? ` with "${t.value}"` : t.files ? ` with ${t.files.join(", ")}` : "";
-  return `${kind} ${where2}${extra}`;
+  return `${kind} ${where3}${extra}`;
+}
+function describeCookieCheck(check2) {
+  if (check2.exists === false) return `${check2.name} is not set`;
+  const parts = [
+    check2.value !== void 0 ? "has the given value" : "",
+    check2.contains !== void 0 ? `contains "${check2.contains}"` : "",
+    check2.httpOnly !== void 0 ? `HttpOnly ${check2.httpOnly}` : "",
+    check2.secure !== void 0 ? `Secure ${check2.secure}` : "",
+    check2.sameSite ? `SameSite ${check2.sameSite}` : ""
+  ].filter(Boolean);
+  return `${check2.name} is set${parts.length ? `, ${parts.join(", ")}` : ""}`;
 }
 function screenshotProblems(plan, projectDir, extraRoots) {
   const problems = [];
@@ -111693,11 +111842,14 @@ function stepList(plan, mode) {
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
       describeCapture(plan, step),
       step.visual ? "visual check" : "",
-      step.a11y ? describeA11y(step) : ""
+      step.a11y ? describeA11y(step) : "",
+      step.cookies ? "cookie check" : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
     if (step.expect) lines.push(`   Expect: ${step.expect}`);
     if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
+    if (step.cookies)
+      lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join("; ")}`);
     const hint = describeAction(step);
     if (hint) lines.push(`   Action: ${hint}`);
     return lines.join("\n");
@@ -111843,7 +111995,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-        '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.',
+        '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail.',
         "6. When every step has a result, or the developer says stop, call run_finish.",
         ""
       ];
@@ -111987,9 +112139,9 @@ function scoreLine(scores) {
   return `Score: ${scores.overall} of 100 (${scores.band}). Best practices: ${scores.bestPractices ?? "n/a"}. ${scores.areas.filter((a2) => a2.score !== null).map((a2) => `${a2.area} ${a2.score}`).join(", ")}.`;
 }
 function findingText(f, detail) {
-  const where2 = `${f.elementCount} element(s) on ${f.pages.length} page(s)`;
+  const where3 = `${f.elementCount} element(s) on ${f.pages.length} page(s)`;
   const wcag = criteriaLabel(f.tags) || "best practice";
-  const head = `${f.id} [${f.impact}] ${f.rule}: ${f.help}. ${wcag}. Area: ${f.area}. ${where2}.`;
+  const head = `${f.id} [${f.impact}] ${f.rule}: ${f.help}. ${wcag}. Area: ${f.area}. ${where3}.`;
   if (!detail) return head;
   const lines = [head];
   if (f.description) lines.push(`  About the rule: ${f.description}`);
@@ -112295,7 +112447,7 @@ function registerA11yTools(server, ctx) {
       const warnings = [];
       const texts = {};
       for (const item of items) {
-        const where2 = (item.where ?? []).filter((w2) => {
+        const where3 = (item.where ?? []).filter((w2) => {
           const ok = projectFile(projectDir, w2.file);
           if (!ok)
             warnings.push(`${item.id}: left out "${w2.file}". It is not a file in the project.`);
@@ -112305,7 +112457,7 @@ function registerA11yTools(server, ctx) {
           explain: item.explain,
           fix: item.fix,
           code: item.code,
-          where: where2.length ? where2 : void 0
+          where: where3.length ? where3 : void 0
         };
       }
       const missing = findings.findings.filter((f) => !texts[f.id]);
@@ -112356,6 +112508,337 @@ function registerA11yTools(server, ctx) {
       ].filter(Boolean).join("\n");
     })
   );
+}
+
+// packages/server/src/devtools/storage.ts
+import { createHash as createHash4 } from "node:crypto";
+function maskValue(value, show) {
+  if (value === "") return "(empty)";
+  if (show) return JSON.stringify(value.length > 500 ? `${value.slice(0, 500)}...` : value);
+  const id = createHash4("sha256").update(value).digest("hex").slice(0, 4);
+  return `**** (${value.length} characters, id ${id})`;
+}
+function loginHosts(driver, tab, guard) {
+  const hosts = /* @__PURE__ */ new Set();
+  for (const t of driver.tabs.values()) {
+    const url2 = t.page.url();
+    if (t.login === tab.login && /^https?:/.test(url2) && guard.isAllowed(url2))
+      hosts.add(new URL(url2).hostname);
+  }
+  if (hosts.size === 0) {
+    throw new ToolError(
+      "No tab of this login is on an allowed site. Open the app first. Walkthrough only reads and changes cookies of the sites under test.",
+      "no_tab"
+    );
+  }
+  return [...hosts];
+}
+async function siteCookies(tab, hosts) {
+  return (await tab.page.browserContext().cookies()).filter((c) => cookieMatches(c, hosts));
+}
+function describeCookie(cookie, show) {
+  const flags = [
+    `domain ${cookie.domain}`,
+    `path ${cookie.path}`,
+    cookie.session || cookie.expires < 0 ? "ends with the session" : `ends ${new Date(cookie.expires * 1e3).toISOString()}`,
+    `${cookie.size} bytes`,
+    cookie.httpOnly ? "HttpOnly" : "",
+    cookie.secure ? "Secure" : "",
+    cookie.sameSite ? `SameSite ${cookie.sameSite}` : "no SameSite",
+    cookie.partitionKey ? "Partitioned" : ""
+  ].filter(Boolean);
+  return `- ${cookie.name}: ${maskValue(cookie.value, show)}. ${flags.join(", ")}.`;
+}
+function checkCookies(cookies, checks, resolve11) {
+  const lines = [];
+  let ok = true;
+  const say = (pass, text) => {
+    if (!pass) ok = false;
+    lines.push(`${pass ? "pass" : "fail"}: ${text}`);
+  };
+  for (const check2 of checks) {
+    const found = cookies.filter((c) => c.name === check2.name);
+    const cookie = found[0];
+    if (check2.exists === false) {
+      say(!cookie, cookie ? `"${check2.name}" is still set` : `"${check2.name}" is not set`);
+      continue;
+    }
+    if (!cookie) {
+      say(false, `"${check2.name}" is not set`);
+      continue;
+    }
+    const facts = [];
+    let pass = true;
+    if (check2.value !== void 0) {
+      const same = cookie.value === resolve11(check2.value);
+      pass &&= same;
+      facts.push(
+        same ? "the value matches" : `the value does not match (it has ${cookie.value.length} characters)`
+      );
+    }
+    if (check2.contains !== void 0) {
+      const has = cookie.value.includes(resolve11(check2.contains));
+      pass &&= has;
+      facts.push(has ? "the value has the text" : "the value does not have the text");
+    }
+    for (const flag of ["httpOnly", "secure"]) {
+      if (check2[flag] === void 0) continue;
+      const same = cookie[flag] === check2[flag];
+      pass &&= same;
+      const label = flag === "httpOnly" ? "HttpOnly" : "Secure";
+      facts.push(
+        same ? `${label} is ${cookie[flag]}` : `${label} is ${cookie[flag]}, not ${check2[flag]}`
+      );
+    }
+    if (check2.sameSite !== void 0) {
+      const same = cookie.sameSite === check2.sameSite;
+      pass &&= same;
+      facts.push(
+        same ? `SameSite is ${check2.sameSite}` : `SameSite is ${cookie.sameSite ?? "not set (Chrome then uses Lax)"}, not ${check2.sameSite}`
+      );
+    }
+    const more = found.length > 1 ? ` There are ${found.length} cookies with this name. Walkthrough checked the first.` : "";
+    say(pass, `"${check2.name}" is set${facts.length ? `, ${facts.join(", ")}` : ""}.${more}`);
+  }
+  return { ok, lines };
+}
+async function readStorage(tab, kind) {
+  return tab.page.evaluate((which) => {
+    const store = which === "local" ? localStorage : sessionStorage;
+    const out = [];
+    for (let i = 0; i < store.length && i < 500; i++) {
+      const key2 = store.key(i);
+      if (key2 !== null) out.push([key2, store.getItem(key2) ?? ""]);
+    }
+    return out;
+  }, kind);
+}
+async function writeStorage(tab, kind, op, key2, value) {
+  await tab.page.evaluate(
+    (which, what, k, v2) => {
+      const store = which === "local" ? localStorage : sessionStorage;
+      if (what === "clear") store.clear();
+      else if (what === "delete" && k !== null) store.removeItem(k);
+      else if (what === "set" && k !== null) store.setItem(k, v2 ?? "");
+    },
+    kind,
+    op,
+    key2 ?? null,
+    value ?? null
+  );
+}
+
+// packages/server/src/tools/devtools-tools.ts
+var KINDS = ["cookies", "local", "session"];
+var STORAGE_NAMES = { local: "localStorage", session: "sessionStorage" };
+function registerDevtoolsTools(server, ctx) {
+  server.registerTool(
+    "storage",
+    {
+      title: "Cookies and storage",
+      description: [
+        "List, get, set, delete, or clear cookies, localStorage, or sessionStorage. It works on the sites under test, in the login of the active tab.",
+        `check compares cookies with checks, like { name: "session", httpOnly: true }. clearSiteData clears cookies, storage, cache, IndexedDB, and service workers of the active tab's site.`,
+        "Values show as a fingerprint unless the developer allows them in config.local.yaml. Walkthrough never touches other sites."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["list", "get", "set", "delete", "clear", "check", "clearSiteData"]),
+        kind: external_exports.enum(KINDS).default("cookies").describe("cookies (default), local, or session."),
+        name: external_exports.string().min(1).optional().describe("The cookie name or the storage key."),
+        value: external_exports.string().optional().describe("For set. {{secret:NAME}} and {{unique}} work here."),
+        domain: external_exports.string().optional().describe("For cookies: the domain. Default: the active tab."),
+        path: external_exports.string().optional().describe('For cookies: the path. Default: "/".'),
+        expires: external_exports.number().optional().describe("For set cookie: when it ends, in Unix seconds. Default: with the session."),
+        httpOnly: external_exports.boolean().optional().describe("For set cookie."),
+        secure: external_exports.boolean().optional().describe("For set cookie."),
+        sameSite: external_exports.enum(["Strict", "Lax", "None"]).optional().describe("For set cookie."),
+        checks: external_exports.array(cookieCheckSchema).optional().describe("For check: the cookie checks. With stepId, the checks come from the plan."),
+        stepId: external_exports.string().optional().describe('For check: a plan step with "cookies" checks.')
+      }
+    },
+    (input3) => runTool(ctx, "storage", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const config3 = await ctx.config();
+      const guard = await ctx.guard();
+      const secrets = await ctx.secrets();
+      const show = config3.allowSecretValues;
+      const resolve11 = (text) => secrets.resolve(withUnique(text, ctx.unique));
+      const keep = (label, detail) => ctx.actionLog.push({
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        tabId: tab.id,
+        tab: tab.name,
+        action: "storage",
+        label,
+        value: JSON.stringify({ kind: input3.kind, op: input3.action, ...detail }),
+        url: tokenizeUnique(tab.page.url(), ctx.unique)
+      });
+      if (input3.action === "clearSiteData") {
+        const origin = pageOrigin(tab, guard.isAllowed.bind(guard));
+        if (!tab.cdp)
+          throw new ToolError("Walkthrough cannot reach this tab to clear its data.", "no_tab");
+        await tab.cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
+        keep(`Clear the site data of ${origin}`, {});
+        return `Cleared the cookies, storage, cache, IndexedDB, and service workers of ${origin} in the login "${tab.login}". Reload the page to see the effect.`;
+      }
+      if (input3.kind !== "cookies") {
+        return storageAction(
+          tab,
+          { ...input3, kind: input3.kind },
+          show,
+          resolve11,
+          keep,
+          guard.isAllowed.bind(guard)
+        );
+      }
+      const hosts = loginHosts(driver, tab, guard);
+      const cookies = await siteCookies(tab, hosts);
+      const context2 = tab.page.browserContext();
+      const named = () => {
+        if (!input3.name)
+          throw new ToolError(`Give the cookie "name" for ${input3.action}.`, "bad_input");
+        return cookies.filter(
+          (c) => c.name === input3.name && (!input3.domain || c.domain.replace(/^\./, "") === input3.domain.replace(/^\./, "")) && (!input3.path || c.path === input3.path)
+        );
+      };
+      switch (input3.action) {
+        case "list":
+          return cookies.length ? untrusted(
+            [
+              `${cookies.length} cookie(s) for ${hosts.join(", ")}:`,
+              ...cookies.map((c) => describeCookie(c, show))
+            ].join("\n")
+          ) : `There are no cookies for ${hosts.join(", ")} in the login "${tab.login}".`;
+        case "get": {
+          const found = named();
+          if (found.length === 0)
+            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
+          return untrusted(found.map((c) => describeCookie(c, show)).join("\n"));
+        }
+        case "set": {
+          if (!input3.name || input3.value === void 0)
+            throw new ToolError('Give the cookie "name" and "value" to set.', "bad_input");
+          const domain2 = input3.domain ?? new URL(tab.page.url()).hostname;
+          if (!hosts.some(
+            (h) => h === domain2.replace(/^\./, "") || h.endsWith(`.${domain2.replace(/^\./, "")}`)
+          )) {
+            throw new ToolError(
+              `Walkthrough only sets cookies for the sites under test (${hosts.join(", ")}), not for "${domain2}".`,
+              "origin_blocked"
+            );
+          }
+          const cookie = {
+            name: input3.name,
+            value: resolve11(input3.value),
+            domain: domain2,
+            path: input3.path ?? "/",
+            ...input3.expires !== void 0 ? { expires: input3.expires } : {},
+            ...input3.httpOnly !== void 0 ? { httpOnly: input3.httpOnly } : {},
+            ...input3.secure !== void 0 ? { secure: input3.secure } : {},
+            ...input3.sameSite ? { sameSite: input3.sameSite } : {}
+          };
+          await context2.setCookie(cookie);
+          keep(`Set the cookie "${input3.name}"`, {
+            name: input3.name,
+            value: input3.value,
+            domain: domain2,
+            path: cookie.path,
+            expires: input3.expires,
+            httpOnly: input3.httpOnly,
+            secure: input3.secure,
+            sameSite: input3.sameSite
+          });
+          return `Set the cookie "${input3.name}" for ${domain2}${cookie.path === "/" ? "" : ` at ${cookie.path}`} in the login "${tab.login}". Reload the page if the app reads it on load.`;
+        }
+        case "delete": {
+          const found = named();
+          if (found.length === 0)
+            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
+          await context2.deleteCookie(...found);
+          keep(`Delete the cookie "${input3.name}"`, {
+            name: input3.name,
+            domain: input3.domain,
+            path: input3.path
+          });
+          return `Deleted ${found.length} cookie(s) named "${input3.name}".`;
+        }
+        case "clear": {
+          if (cookies.length) await context2.deleteCookie(...cookies);
+          keep(`Clear the cookies of ${hosts.join(", ")}`, {});
+          return `Deleted ${cookies.length} cookie(s) for ${hosts.join(", ")} in the login "${tab.login}". Other sites keep their cookies.`;
+        }
+        case "check": {
+          const checks = input3.checks ?? stepChecks(ctx, input3.stepId);
+          const result = checkCookies(cookies, checks, resolve11);
+          return [
+            `result: ${result.ok ? "pass" : "fail"}`,
+            untrusted(result.lines.join("\n"))
+          ].join("\n");
+        }
+      }
+    })
+  );
+}
+function pageOrigin(tab, isAllowed) {
+  const url2 = tab.page.url();
+  if (!/^https?:/.test(url2) || !isAllowed(url2)) {
+    throw new ToolError(
+      "The active tab is not on an allowed site. Walkthrough only reads and changes the data of the sites under test.",
+      "origin_blocked"
+    );
+  }
+  return new URL(url2).origin;
+}
+function stepChecks(ctx, stepId) {
+  if (!stepId)
+    throw new ToolError(
+      'Give "checks", or the "stepId" of a plan step with cookie checks.',
+      "bad_input"
+    );
+  const run = ctx.run?.run;
+  if (run?.status !== "running")
+    throw new ToolError("No run is going, so there is no plan step to read.", "no_run");
+  const step = run.steps.find((s) => s.id === stepId);
+  if (!step) throw new ToolError(`The run has no step "${stepId}".`, "bad_step");
+  if (!step.cookies?.length)
+    throw new ToolError(`Step "${stepId}" has no cookie checks.`, "bad_step");
+  return step.cookies;
+}
+async function storageAction(tab, input3, show, resolve11, keep, isAllowed) {
+  const origin = pageOrigin(tab, isAllowed);
+  const store = STORAGE_NAMES[input3.kind];
+  const entries = await readStorage(tab, input3.kind);
+  const line2 = ([key2, value]) => `- ${key2}: ${maskValue(value, show)}`;
+  switch (input3.action) {
+    case "list":
+      return entries.length ? untrusted(
+        [`${entries.length} item(s) in ${store} of ${origin}:`, ...entries.map(line2)].join(
+          "\n"
+        )
+      ) : `${store} of ${origin} is empty.`;
+    case "get": {
+      if (!input3.name) throw new ToolError('Give the key "name" to get.', "bad_input");
+      const found = entries.find(([key2]) => key2 === input3.name);
+      return found ? untrusted(line2(found)) : `${store} of ${origin} has no key "${input3.name}".`;
+    }
+    case "set":
+      if (!input3.name || input3.value === void 0)
+        throw new ToolError('Give the key "name" and the "value" to set.', "bad_input");
+      await writeStorage(tab, input3.kind, "set", input3.name, resolve11(input3.value));
+      keep(`Set "${input3.name}" in ${store}`, { name: input3.name, value: input3.value });
+      return `Set "${input3.name}" in ${store} of ${origin}.`;
+    case "delete":
+      if (!input3.name) throw new ToolError('Give the key "name" to delete.', "bad_input");
+      await writeStorage(tab, input3.kind, "delete", input3.name);
+      keep(`Delete "${input3.name}" from ${store}`, { name: input3.name });
+      return `Deleted "${input3.name}" from ${store} of ${origin}.`;
+    case "clear":
+      await writeStorage(tab, input3.kind, "clear");
+      keep(`Clear ${store}`, {});
+      return `Cleared ${store} of ${origin}.`;
+    default:
+      throw new ToolError(`The ${input3.action} action works only for cookies.`, "bad_input");
+  }
 }
 
 // packages/server/src/tools/page-tools.ts
@@ -113766,6 +114249,8 @@ function pageChangeCode(action2, gen) {
       }
       return lines;
     }
+    case "storage":
+      return storageCode(value, gen);
     case "emulate": {
       const { allTabs, ...change } = value;
       gen.needs.emulate = true;
@@ -113793,6 +114278,106 @@ function literal2(value, needs) {
   needs.unique = true;
   return code.replace(UNIQUE_IN, '" + UNIQUE + "').replace(/^"" \+ /, "").replace(/ \+ ""$/, "");
 }
+function valueCode(value, gen) {
+  const secret = SECRET.exec(value);
+  if (secret?.[1]) {
+    gen.secrets.add(secret[1]);
+    return `process.env.${secret[1]}`;
+  }
+  return literal2(value, gen.needs);
+}
+var COOKIE_HELPERS = `
+// Checks a cookie of the active tab's login.
+async function expectCookie(check) {
+  const found = (await page.browserContext().cookies()).find((c) => c.name === check.name);
+  if (check.exists === false) {
+    if (found) throw new Error(\`The cookie "\${check.name}" is still set.\`);
+    return;
+  }
+  if (!found) throw new Error(\`The cookie "\${check.name}" is not set.\`);
+  if (check.value !== undefined && found.value !== check.value)
+    throw new Error(\`The cookie "\${check.name}" has another value.\`);
+  if (check.contains !== undefined && !found.value.includes(check.contains))
+    throw new Error(\`The value of the cookie "\${check.name}" does not have the text.\`);
+  for (const flag of ['httpOnly', 'secure', 'sameSite']) {
+    if (check[flag] !== undefined && found[flag] !== check[flag])
+      throw new Error(\`The cookie "\${check.name}" has \${flag} \${found[flag]}, not \${check[flag]}.\`);
+  }
+}
+
+// Deletes the cookies that match, in the active tab's login.
+async function deleteCookies(match = {}) {
+  const context = page.browserContext();
+  for (const cookie of await context.cookies()) {
+    if (match.name && cookie.name !== match.name) continue;
+    if (match.path && cookie.path !== match.path) continue;
+    await context.deleteCookie(cookie);
+  }
+}
+`;
+var SITE_DATA_HELPER = `
+// Clears cookies, storage, cache, IndexedDB, and service workers of the active tab's site.
+async function clearSiteData() {
+  const client = await page.createCDPSession();
+  await client.send('Storage.clearDataForOrigin', { origin: new URL(page.url()).origin, storageTypes: 'all' });
+  await client.detach();
+}
+`;
+function cookieCheckCode(check2, gen) {
+  const parts = [`name: ${js(check2.name)}`];
+  if (check2.exists !== void 0) parts.push(`exists: ${check2.exists}`);
+  if (check2.value !== void 0) parts.push(`value: ${valueCode(check2.value, gen)}`);
+  if (check2.contains !== void 0) parts.push(`contains: ${valueCode(check2.contains, gen)}`);
+  if (check2.httpOnly !== void 0) parts.push(`httpOnly: ${check2.httpOnly}`);
+  if (check2.secure !== void 0) parts.push(`secure: ${check2.secure}`);
+  if (check2.sameSite !== void 0) parts.push(`sameSite: ${js(check2.sameSite)}`);
+  return `await expectCookie({ ${parts.join(", ")} });`;
+}
+function storageCode(value, gen) {
+  const op = String(value.op ?? "");
+  const name = typeof value.name === "string" ? value.name : void 0;
+  const text = typeof value.value === "string" ? value.value : "";
+  if (op === "clearSiteData") {
+    gen.needs.siteData = true;
+    return ["await clearSiteData();"];
+  }
+  if (value.kind === "local" || value.kind === "session") {
+    const store = value.kind === "local" ? "localStorage" : "sessionStorage";
+    if (op === "set" && name)
+      return [
+        `await page.evaluate((k, v) => ${store}.setItem(k, v), ${js(name)}, ${valueCode(text, gen)});`
+      ];
+    if (op === "delete" && name)
+      return [`await page.evaluate((k) => ${store}.removeItem(k), ${js(name)});`];
+    if (op === "clear") return [`await page.evaluate(() => ${store}.clear());`];
+    return [];
+  }
+  gen.needs.cookies = true;
+  if (op === "set" && name) {
+    const domain2 = typeof value.domain === "string" ? value.domain : "";
+    let base = "";
+    try {
+      base = gen.baseUrl ? new URL(gen.baseUrl).hostname : "";
+    } catch {
+    }
+    const fields = [
+      `name: ${js(name)}`,
+      `value: ${valueCode(text, gen)}`,
+      `domain: ${domain2 && domain2 !== base ? js(domain2) : "new URL(BASE_URL).hostname"}`,
+      `path: ${js(typeof value.path === "string" ? value.path : "/")}`
+    ];
+    for (const key2 of ["expires", "httpOnly", "secure"])
+      if (value[key2] !== void 0) fields.push(`${key2}: ${JSON.stringify(value[key2])}`);
+    if (typeof value.sameSite === "string") fields.push(`sameSite: ${js(value.sameSite)}`);
+    return [`await page.browserContext().setCookie({ ${fields.join(", ")} });`];
+  }
+  if (op === "delete" && name) {
+    const path14 = typeof value.path === "string" ? `, path: ${js(value.path)}` : "";
+    return [`await deleteCookies({ name: ${js(name)}${path14} });`];
+  }
+  if (op === "clear") return ["await deleteCookies();"];
+  return [];
+}
 function urlCode(url2, needs, baseUrl) {
   try {
     const parsed = new URL(url2);
@@ -113812,19 +114397,14 @@ function frameCode(frameUrl2) {
   }
   return `frame(${js(part)})`;
 }
-function actionCode(action2, secrets, secretFields, gen) {
+function actionCode(action2, secretFields, gen) {
   const { needs, baseUrl } = gen;
-  const where2 = frameCode(action2.frameUrl);
+  const where3 = frameCode(action2.frameUrl);
   const sel = action2.selector ? js(action2.selector) : "";
   const value = (() => {
     const v2 = action2.value ?? "";
-    const secret = SECRET.exec(v2);
-    if (secret?.[1]) {
-      secrets.add(secret[1]);
-      if (action2.selector && !action2.frameUrl) secretFields.add(action2.selector);
-      return `process.env.${secret[1]}`;
-    }
-    return literal2(v2, needs);
+    if (SECRET.test(v2) && action2.selector && !action2.frameUrl) secretFields.add(action2.selector);
+    return valueCode(v2, gen);
   })();
   switch (action2.action) {
     case "navigate":
@@ -113832,27 +114412,27 @@ function actionCode(action2, secrets, secretFields, gen) {
         `await page.goto(${urlCode(action2.value ?? action2.label, needs, baseUrl)}, { waitUntil: 'load' });`
       ];
     case "click":
-      return [`await ${where2}.locator(${sel}).click();`];
+      return [`await ${where3}.locator(${sel}).click();`];
     case "dblclick":
-      return [`await ${where2}.locator(${sel}).click({ count: 2 });`];
+      return [`await ${where3}.locator(${sel}).click({ count: 2 });`];
     case "hover":
-      return [`await ${where2}.locator(${sel}).hover();`];
+      return [`await ${where3}.locator(${sel}).hover();`];
     case "fill":
-      return [`await ${where2}.locator(${sel}).fill(${value});`];
+      return [`await ${where3}.locator(${sel}).fill(${value});`];
     case "select":
-      return [`await selectOption(${where2}, ${sel}, ${value});`];
+      return [`await selectOption(${where3}, ${sel}, ${value});`];
     case "check":
     case "uncheck":
-      return [`await setChecked(${where2}, ${sel}, ${action2.action === "check"});`];
+      return [`await setChecked(${where3}, ${sel}, ${action2.action === "check"});`];
     case "press":
-      return [...sel ? [`await ${where2}.focus(${sel});`] : [], `await pressKeys(${value});`];
+      return [...sel ? [`await ${where3}.focus(${sel});`] : [], `await pressKeys(${value});`];
     case "scroll":
-      return sel ? [`await (await ${where2}.$(${sel}))?.scrollIntoView();`] : [
+      return sel ? [`await (await ${where3}.$(${sel}))?.scrollIntoView();`] : [
         `await page.mouse.wheel({ deltaY: ${action2.value === "up" ? -600 : Number(action2.value) || 600} });`
       ];
     case "upload":
       return [
-        `await (await ${where2}.$(${sel}))?.uploadFile(${(action2.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(", ")});`
+        `await (await ${where3}.$(${sel}))?.uploadFile(${(action2.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(", ")});`
       ];
     case "dialog":
     case "tab-new":
@@ -113956,9 +114536,16 @@ function exportScript(run, options = {}) {
   let handChecks = 0;
   let lastUrl = run.baseUrl ?? "";
   const body = [];
-  const needs = { unique: false, emulate: false, tabs: false };
+  const needs = {
+    unique: false,
+    emulate: false,
+    tabs: false,
+    cookies: false,
+    siteData: false
+  };
   const gen = {
     needs,
+    secrets,
     baseUrl: run.baseUrl,
     known: /* @__PURE__ */ new Set(["main"]),
     current: "main",
@@ -113983,11 +114570,16 @@ function exportScript(run, options = {}) {
         );
         continue;
       }
-      lines.push(...actionCode(action2, secrets, secretFields, gen));
+      lines.push(...actionCode(action2, secretFields, gen));
       actions += 1;
       if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
       if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
       if (action2.action === "tab-close") lastUrl = "";
+    }
+    for (const check2 of step.cookies ?? []) {
+      needs.cookies = true;
+      lines.push(cookieCheckCode(check2, gen));
+      checks += 1;
     }
     if (step.expect) {
       const texts = checkableText(step.expect);
@@ -114006,14 +114598,14 @@ function exportScript(run, options = {}) {
         );
         continue;
       }
-      const where2 = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
+      const where3 = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
       if (isAbsolute8(shot.path))
         lines.push("// This folder is outside the project. It only works on this computer.");
       const options2 = [
         shot.selector ? `selector: ${js(shot.selector)}` : "",
         shot.fullPage ? "fullPage: true" : ""
       ].filter(Boolean);
-      lines.push(`await capture(${where2}${options2.length ? `, { ${options2.join(", ")} }` : ""});`);
+      lines.push(`await capture(${where3}${options2.length ? `, { ${options2.join(", ")} }` : ""});`);
       captures.push(shot.path);
     }
     if (lines.length === 0) continue;
@@ -114114,7 +114706,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${needs.emulate ? EMULATE_HELPER : ""}${hasShots ? captureHelpers([...secretFields]) : ""}
+${needs.emulate ? EMULATE_HELPER : ""}${needs.cookies ? COOKIE_HELPERS : ""}${needs.siteData ? SITE_DATA_HELPER : ""}${hasShots ? captureHelpers([...secretFields]) : ""}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 
@@ -114654,6 +115246,7 @@ function createServer() {
   registerProjectTools(server, ctx);
   registerQualityTools(server, ctx);
   registerA11yTools(server, ctx);
+  registerDevtoolsTools(server, ctx);
   registerShareTools(server, ctx);
   onShutdown(async () => {
     if (ctx.run?.run.status !== "running") return;

@@ -52,6 +52,7 @@ steps:
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
 | `a11y` | No | Check accessibility after the step. `true`, or `{ selector, checks }`. See [Accessibility checks](#accessibility-checks). |
 | `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
+| `cookies` | No | Cookie checks after the step, such as `[{ name: session, httpOnly: true }]`. See [Cookie checks](#cookie-checks). |
 
 ### Write a good `expect`
 
@@ -195,6 +196,23 @@ steps:
 - Set `device` and `colorScheme`, so the screenshots have the same size and colors each time.
 
 To make the screenshots again without an agent, export the run as a script. `SHOT=cart` makes only one of them again. See [Make screenshots again](sharing.md#make-screenshots-again).
+
+## Cookie checks
+
+A step can check cookies after it runs. The agent calls the `storage` tool with the step id, and Walkthrough compares the cookies. It never shows their values.
+
+```yaml
+  - id: log-in
+    do: Log in as demo
+    cookies:
+      - { name: session, httpOnly: true, sameSite: Lax }
+  - id: log-out
+    do: Click "Log out"
+    cookies:
+      - { name: session, exists: false }
+```
+
+A check has a `name`, and any of these: `exists` (`false` means the cookie must be gone), `value`, `contains`, `httpOnly`, `secure`, and `sameSite` (`Strict`, `Lax`, or `None`). `value` and `contains` can use `{{secret:NAME}}` and `{{unique}}`. Exported scripts check the cookies too.
 
 ## Saved logins
 

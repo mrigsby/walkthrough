@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { CHECKS } from '../audit/standards.js';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
+import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ToolError } from '../errors.js';
 import { checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
@@ -83,6 +84,19 @@ function describeAction(step: PlanStep): string | undefined {
   return `${kind} ${where}${extra}`;
 }
 
+// A cookie check in plain words, like: session is set, HttpOnly true.
+function describeCookieCheck(check: CookieCheck): string {
+  if (check.exists === false) return `${check.name} is not set`;
+  const parts = [
+    check.value !== undefined ? 'has the given value' : '',
+    check.contains !== undefined ? `contains "${check.contains}"` : '',
+    check.httpOnly !== undefined ? `HttpOnly ${check.httpOnly}` : '',
+    check.secure !== undefined ? `Secure ${check.secure}` : '',
+    check.sameSite ? `SameSite ${check.sameSite}` : '',
+  ].filter(Boolean);
+  return `${check.name} is set${parts.length ? `, ${parts.join(', ')}` : ''}`;
+}
+
 // Checks every exact screenshot path in a plan. Returns the problems.
 function screenshotProblems(plan: Plan, projectDir: string, extraRoots: string[]): string[] {
   const problems: string[] = [];
@@ -126,12 +140,15 @@ function stepList(plan: Plan, mode: Mode): string {
         describeCapture(plan, step),
         step.visual ? 'visual check' : '',
         step.a11y ? describeA11y(step) : '',
+        step.cookies ? 'cookie check' : '',
       ]
         .filter(Boolean)
         .join(', ');
       const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
       if (step.expect) lines.push(`   Expect: ${step.expect}`);
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
+      if (step.cookies)
+        lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join('; ')}`);
       const hint = describeAction(step);
       if (hint) lines.push(`   Action: ${hint}`);
       return lines.join('\n');
@@ -308,7 +325,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-          '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems.',
+          '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail.',
           '6. When every step has a result, or the developer says stop, call run_finish.',
           '',
         ];

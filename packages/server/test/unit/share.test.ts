@@ -336,6 +336,76 @@ describe('exportScript', () => {
     expect(plain).not.toContain('async function emulate(');
   });
 
+  it('repeats storage changes and checks cookies', () => {
+    const at = 'http://localhost:4321/';
+    const store = (op: string, detail: object, label: string) => ({
+      tab: 'main',
+      action: 'storage' as const,
+      label,
+      value: JSON.stringify({ op, ...detail }),
+      url: at,
+    });
+    const storageRun: Run = {
+      ...run,
+      steps: [
+        {
+          id: 'cookies',
+          index: 1,
+          title: 'Set and check cookies',
+          confirm: false,
+          status: 'pass',
+          screenshots: [],
+          cookies: [
+            { name: 'theme', value: 'dark-{{unique}}' },
+            { name: 'session', exists: false },
+            { name: 'token', value: '{{secret:API_TOKEN}}', httpOnly: true },
+          ],
+          actions: [
+            store(
+              'set',
+              {
+                kind: 'cookies',
+                name: 'theme',
+                value: 'dark-{{unique}}',
+                domain: 'localhost',
+                path: '/',
+              },
+              'Set the cookie "theme"',
+            ),
+            store('delete', { kind: 'cookies', name: 'session' }, 'Delete the cookie "session"'),
+            store(
+              'set',
+              { kind: 'local', name: 'cart', value: '[]' },
+              'Set "cart" in localStorage',
+            ),
+            store('clear', { kind: 'session' }, 'Clear sessionStorage'),
+            store('clearSiteData', { kind: 'cookies' }, 'Clear the site data'),
+          ],
+        },
+      ],
+    };
+    const result = exportScript(storageRun);
+    const code = result.code;
+    expect(code).toContain(
+      'await page.browserContext().setCookie({ name: "theme", value: "dark-" + UNIQUE, domain: new URL(BASE_URL).hostname, path: "/" });',
+    );
+    expect(code).toContain('await deleteCookies({ name: "session" });');
+    expect(code).toContain(
+      'await page.evaluate((k, v) => localStorage.setItem(k, v), "cart", "[]");',
+    );
+    expect(code).toContain('await page.evaluate(() => sessionStorage.clear());');
+    expect(code).toContain('await clearSiteData();');
+    expect(code).toContain('await expectCookie({ name: "theme", value: "dark-" + UNIQUE });');
+    expect(code).toContain('await expectCookie({ name: "session", exists: false });');
+    expect(code).toContain(
+      'await expectCookie({ name: "token", value: process.env.API_TOKEN, httpOnly: true });',
+    );
+    expect(result.secrets).toEqual(['API_TOKEN']);
+    const file = join(tempDir('export-storage'), 'storage.mjs');
+    writeFileSync(file, code);
+    expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
+  });
+
   it('uses the viewport of a named device', () => {
     const result = exportScript({ ...run, emulation: { device: 'mobile' } });
     expect(result.code).toContain('// Screen: mobile.');

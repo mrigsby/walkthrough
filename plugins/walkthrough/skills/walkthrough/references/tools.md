@@ -21,7 +21,7 @@ All tools come from the `uiwalk` MCP server.
 | `wait_for` | Wait for `text`, `textGone`, a `selector`, a `url`, `networkIdle`, or `ms`. |
 | `read` | Read the text, value, and state of one element. |
 | `screenshot` | Save a screenshot. With a ref and `annotate: true`, draw a red box around the element. With `path`, save to that exact file. With `stepId`, add it to a run step. |
-| `logs` | See console errors, page errors, and failed requests. |
+| `logs` | See console errors, page errors, failed requests, and Chrome issues (blocked cookies, CSP, CORS, form problems). `kinds` filters them. |
 | `evaluate` | Run page JavaScript. It is off unless the developer turns it on in `config.local.yaml`. |
 
 ## More checks
@@ -30,6 +30,7 @@ All tools come from the `uiwalk` MCP server.
 | --- | --- |
 | `emulate` | Set the active tab's `device`, `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, or `permissions`. `allTabs: true` sets every tab. |
 | `session` | `save`, `list`, or `delete` saved logins. |
+| `storage` | `list`, `get`, `set`, `delete`, or `clear` cookies (or `kind: local` or `session` storage) of the sites under test. `check` checks cookies. `clearSiteData` clears the site's data. Values show as a fingerprint. |
 | `visual_check` | Compare the page or one element with a baseline screenshot. |
 | `a11y_audit` | Check the current page with axe-core. With `checks`, also run keyboard, dark mode, reflow, frame, and screenshot checks. |
 | `a11y_scan` | Check one page or a list of pages, and save the results in a run with `report.html`. |

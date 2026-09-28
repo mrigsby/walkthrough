@@ -6,7 +6,7 @@ import type { Driver, Tab } from '../browser/driver.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { elementRect, withCleanPage } from '../evidence/annotate.js';
-import { formatLogs, type LogLevel } from '../evidence/logs.js';
+import { formatLogs, LOG_KINDS, type LogLevel } from '../evidence/logs.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
@@ -246,7 +246,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
     {
       title: 'Page logs',
       description:
-        'Show console messages, page errors, and failed requests from the browser. By default it shows errors and warnings since the current step started.',
+        'Show console messages, page errors, failed requests, and Chrome issues (the DevTools Issues panel: blocked cookies, CSP, CORS, mixed content, deprecated features, form problems). By default it shows errors and warnings since the current step started.',
       inputSchema: {
         since: z
           .number()
@@ -258,14 +258,20 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           .array(z.enum(['error', 'warning', 'info']))
           .optional()
           .describe('Default: error and warning.'),
+        kinds: z
+          .array(z.enum(LOG_KINDS))
+          .optional()
+          .describe('Only these kinds: console, page-error, network, issue. Default: all.'),
       },
     },
-    ({ since, levels }) =>
+    ({ since, levels, kinds }) =>
       runTool(ctx, 'logs', async () => {
         const driver = ctx.requireDriver();
         const wanted = (levels ?? ['error', 'warning']) as LogLevel[];
         const entries =
-          since === undefined ? driver.logs.currentStep(wanted) : driver.logs.since(since, wanted);
+          since === undefined
+            ? driver.logs.currentStep(wanted, kinds)
+            : driver.logs.since(since, wanted, kinds);
         return [
           `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}${since === undefined ? ' since the current step started' : ` after marker ${since}`}:`,
           untrusted(formatLogs(entries)),

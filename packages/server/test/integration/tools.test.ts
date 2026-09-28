@@ -74,6 +74,7 @@ describe('uiwalk tools', () => {
         'screenshot',
         'session',
         'snapshot',
+        'storage',
         'tabs',
         'visual_check',
         'wait_for',
