@@ -1,9 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findFfmpeg } from '../../src/downloads/ffmpeg.js';
-import { freePort, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { startDemoServer } from '../helpers/demo-server.js';
 import { startClient } from '../helpers/mcp.js';
 import { clickPanel, panelHidden, typeNotes, waitForPanel } from '../helpers/panel.js';
 import { tempDir } from '../helpers/temp.js';
@@ -50,19 +51,16 @@ beforeAll(async () => {
       '',
     ].join('\n'),
   );
-  const debugPort = await freePort();
+  const chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('video-tmp'),
     UIWALK_FORCE_PANEL: '1',
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   expect((await mcp.call('browser_open')).isError).toBe(false);
   // The test connects to the same Chrome, to check the page while it records.
-  chrome = await puppeteer.connect({
-    browserURL: `http://127.0.0.1:${debugPort}`,
-    defaultViewport: null,
-  });
+  chrome = await connectChrome(chromeFile, { defaultViewport: null });
   page = (await chrome.pages()).find((p) => p.url().startsWith(demo.base)) as Page;
 }, 60_000);
 

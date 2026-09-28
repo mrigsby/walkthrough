@@ -48,7 +48,7 @@ Use a separate login to test two users at the same time, such as an admin and a 
 
 ### `dialog`
 
-Answers an alert, confirm, or prompt dialog with `accept` or `dismiss`. Give `text` for a prompt. With `action: policy`, it sets how to answer the next dialogs: `ask`, `accept`, or `dismiss`.
+Answers an alert, confirm, or prompt dialog with `accept` or `dismiss`. Give `text` for a prompt. With `action: policy`, `policy` sets how to answer the next dialogs: `ask`, `accept`, or `dismiss`.
 
 ## Page
 
@@ -145,7 +145,7 @@ It works on the page and on frames from the same site. The files and lines are t
 
 ### `evaluate`
 
-Runs a JavaScript expression in the page. It is off unless `allowEvaluate: true` is in `config.local.yaml`.
+Runs a JavaScript expression (`script`) in the page, such as `document.title`. It is off unless `allowEvaluate: true` is in `config.local.yaml`.
 
 ## You and the agent
 
@@ -175,7 +175,7 @@ Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interacti
 
 ### `run_step`
 
-Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), and `actual` for a failure. On a failure, it saves a screenshot, the errors, a HAR file with the network requests of the step, and a video of the last seconds. See [Bug clips](#bug-clips).
+Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), `actual` for a failure, and `notes` for anything else. `screenshot` saves a screenshot. It is on by default for `fail` and `blocked`. On a failure, it saves a screenshot, the errors, and a HAR file with the network requests of the step. It also saves a video of the last seconds. See [Bug clips](#bug-clips).
 
 ### `run_finish`
 
@@ -264,7 +264,7 @@ Checks the current page with axe-core, or one part of it. The reply groups the p
 
 Checks one page or a list of pages (`urls`) with axe-core and the checks from `config.yaml`. Without a run, it makes a run with one step per page, and writes `report.md` and `report.html`. During a run, it adds the pages as steps.
 
-A scan stops after about 45 seconds. The reply then says to call it again with `runId`. `session` loads a saved login first. `standard` and `checks` replace the settings.
+A scan stops after about 45 seconds. The reply then says to call it again with `runId`. `name` names the new run. `session` loads a saved login first. `standard` and `checks` replace the settings.
 
 ### `a11y_report`
 
@@ -277,7 +277,7 @@ Writes the accessibility report of a run. It has two calls:
 
 ## Lighthouse
 
-Lighthouse is an optional download. Install it with `npx -y walkthrough-ui setup lighthouse`. See [Setup](#setup).
+Lighthouse is an optional download. Install it with `npx -y walkthrough-ui setup lighthouse`. See [Setup](#setup), and [Lighthouse reports](lighthouse.md) for the whole flow.
 
 ### `lighthouse`
 
@@ -309,13 +309,13 @@ Writes the Lighthouse report of a run in two calls, like `a11y_report`:
 1. Without `items`, it returns the scores, the findings with IDs such as `LH-001`, a `digest`, and how to write the text.
 2. With `digest`, `summary`, and `items`, it writes `lighthouse.html`, `lighthouse.md`, and `lighthouse.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`.
 
-A new report compares itself with the last report of the same pages. A flow report compares itself with the last report of the same plan. Issues keep their IDs, and the report shows the changes in page load scores. `compareTo` picks the report to compare with.
+A new report compares itself with the last report of the same pages. A flow report compares itself with the last report of the same plan. Issues keep their IDs, and the report shows the changes in page load scores. `runId` picks the run. The default is the run that is going, or the newest run with Lighthouse results. `compareTo` picks the report to compare with.
 
 ## Record and share
 
 ### `video`
 
-Records the active tab as a video. The video follows the active tab to other tabs.
+Records the active tab as a video. The video follows the active tab to other tabs. See [Videos](video.md) for examples of each use.
 
 | Parameter | What it does |
 | --- | --- |
@@ -367,17 +367,17 @@ Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId
 
 ### `issue_draft`
 
-Writes a GitHub issue title and body from a bug or a failed step. `runId` and `stepId` pick the step. It saves the body to a file and lists the screenshots. It does not create the issue.
+Writes a GitHub issue title and body from a bug or a failed step. `runId` and `stepId` pick the step. It saves the body to a file. It lists the screenshots and the other files of the step, such as the HAR file and the bug clip. It does not create the issue.
 
 ## Setup
 
 ### `init_project`
 
-Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan schema, `.env.example`, and `.gitignore`. `baseUrl` sets the start page. It keeps files that exist.
+Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan schema, `.env.example`, and `.gitignore`. `baseUrl` sets the start page. `projectDir` sets the project folder, if Walkthrough cannot find it. It keeps files that exist.
 
 ### `doctor`
 
-Checks Node, Chrome, the project folder, the settings, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`.
+Checks Node, Chrome, the project folder, the settings, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`. `projectDir` checks another project folder.
 
 Lighthouse and ffmpeg are optional downloads. Install them from a terminal:
 

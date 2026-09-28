@@ -61,7 +61,7 @@ These settings are for accessibility checks and reports. See [Accessibility repo
 
 ### Video
 
-These settings are for videos and GIFs.
+These settings are for videos and GIFs. See [Videos](video.md).
 
 | Setting | Default | What it does |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ These settings are for videos and GIFs.
 
 ### Lighthouse
 
-These settings are for Lighthouse reports and for plans with Lighthouse steps. A plan's `lighthouse` block wins over them.
+These settings are for Lighthouse reports and for plans with Lighthouse steps. A plan's `lighthouse` block wins over them. See [Lighthouse reports](lighthouse.md).
 
 | Setting | Default | What it does |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ Walkthrough also hides these values if they appear on a page, in a log, or in a 
 | `UIWALK_FFMPEG` | The ffmpeg program to use, when `ffmpegPath` is not set. |
 | `UIWALK_TRACE_FILE` | A file path. The server writes one JSON line for each action, for debugging. |
 
-The tests use three more variables: `UIWALK_FORCE_PANEL` shows the panel in a hidden browser, `UIWALK_DEBUG_PORT` sets the Chrome debug port, and `UIWALK_SCAN_LIMIT_MS` sets the time limit of one `a11y_scan` call. Do not use them for normal testing.
+The tests use three more variables. `UIWALK_FORCE_PANEL` shows the panel in a hidden browser. `UIWALK_DEBUG_ENDPOINT_FILE` names a file for the address of the test Chrome. `UIWALK_SCAN_LIMIT_MS` sets the time limit of one `a11y_scan` call. Do not use them for normal testing.
 
 ## How Walkthrough finds the project folder
 

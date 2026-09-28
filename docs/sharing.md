@@ -184,3 +184,5 @@ VIDEO=docs/videos/checkout.mp4 PACE_MS=50 node .walkthrough/exports/checkout-dem
 - The script records only the first tab. For a video with other tabs, use `video` with action `replay` in Walkthrough.
 - The video has no captions, pointer, or title card. The `video` tool with action `replay` adds them.
 
+[Videos](video.md#make-the-video-again-in-ci) has a GitHub Actions example.
+

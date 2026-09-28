@@ -9,6 +9,9 @@ Check the Walkthrough setup for the developer.
 2. For each line that starts with `FIX`, explain the fix in one or two plain sentences.
 3. If Chrome is missing, the developer can install Google Chrome. Or, with the developer's approval, run this command to download Chrome for Testing (about 170 MB):
    `node "${CLAUDE_PLUGIN_ROOT}/server/uiwalk.mjs" setup`
+4. Lighthouse and ffmpeg are optional. An `INFO` line for one of them is not a problem. If the developer wants Lighthouse reports, or MP4 videos when Chrome cannot make them, offer the command from the `INFO` line. Run it only with the developer's approval:
+   - `node "${CLAUDE_PLUGIN_ROOT}/server/uiwalk.mjs" setup lighthouse` (about 170 MB)
+   - `node "${CLAUDE_PLUGIN_ROOT}/server/uiwalk.mjs" setup ffmpeg`
 
 If the uiwalk tools are not available, the server did not start. Then do these checks:
 

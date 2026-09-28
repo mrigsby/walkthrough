@@ -41,15 +41,20 @@ Inside `packages/server/src`:
 
 | Folder | What it does |
 | --- | --- |
-| `browser/` | Starts or connects to Chrome, and handles tabs, dialogs, devices, and saved logins. |
-| `page/` | Page outlines, refs, actions, selectors, and element reads. |
+| `browser/` | Starts or connects to Chrome, and handles tabs, logins, dialogs, devices, and saved logins. `fetch-router.ts` runs the guard for allowed sites and the mock rules in each tab. |
+| `page/` | Page outlines, refs, actions, selectors, element reads, and `{{unique}}`. |
 | `panel/` | The panel in the browser and its link to the server. |
-| `guards/` | Allowed sites, secrets, upload paths, and the marks on page text. |
-| `evidence/` | Screenshots, logs, and the removal of tokens. |
+| `guards/` | Allowed sites, secrets, file paths, and the marks on page text. |
+| `evidence/` | Screenshots, logs, network requests, HAR files, and the removal of tokens. |
+| `devtools/` | Cookies and storage, Chrome issues, `inspect`, and the schemas for cookie checks and mock rules. |
 | `run/` | Test plans, runs, and step results. |
-| `report/` | The Markdown and HTML reports, and the accessibility reports. |
+| `report/` | The Markdown and HTML reports, and the accessibility and Lighthouse reports. |
 | `visual/` | Visual checks. |
 | `audit/` | Accessibility checks (axe-core, keyboard, dark mode, reflow), findings, scores, and report comparison. |
+| `lighthouse/` | Lighthouse checks of pages, user flows in runs, and findings. |
+| `video/` | Screen capture, the timeline that cuts wait time, and the encoder. `encoder-page/` runs in a hidden Chrome. The build adds it to the bundle as text. |
+| `replay/` | `ops.ts` turns a run into a list of steps for export and replay. `replayer.ts` records a run again. |
+| `downloads/` | The cache folder, and the optional Lighthouse and ffmpeg downloads. |
 | `record/`, `export/`, `issue/` | Record mode, script export, and issue drafts. |
 | `tools/` | The MCP tools. Each file registers a group of tools. |
 
@@ -57,7 +62,8 @@ Inside `packages/server/src`:
 
 1. Edit the source in `packages/server/src`.
 2. Run `npm run build:plugin`. It updates the bundle in `plugins/walkthrough/server`, the plan schema, and the copy of the plan guide in the skill. Use `npm run build:plugin -- --watch` while you work.
-3. Commit the updated bundle with your change. `npm run check:bundle` fails when the bundle does not match the source.
+3. Commit the updated bundle with your change. `npm run check:bundle` fails when the bundle does not match the source. It compares with the staged files, so stage your files first.
+4. When you add a package to the bundle, the build adds its license to `plugins/walkthrough/server/THIRD_PARTY_LICENSES.txt`. Commit that file too.
 
 ## Test with Claude Code
 
@@ -73,9 +79,10 @@ After a rebuild, run `/mcp` in Claude Code and reconnect `uiwalk`.
 
 - `npm test` builds the bundle, runs all tests, and runs the text check.
 - The integration tests start the bundled server over stdio, like Claude Code does. They use a hidden Chrome.
-- `UIWALK_FORCE_PANEL=1` shows the panel in a hidden Chrome. `UIWALK_DEBUG_PORT` lets a test connect to the same Chrome and click the panel like a person.
+- `UIWALK_FORCE_PANEL=1` shows the panel in a hidden Chrome. `UIWALK_DEBUG_ENDPOINT_FILE` names a file. The server writes the exact address of its Chrome there, and `connectChrome()` from `test/helpers/chrome.ts` connects to it. The test can then click the panel like a person. Do not connect by port. When a port is already in use, Chrome can open the same port on IPv6. The test then reaches the wrong Chrome.
 - Tests start the demo shop with `--port 0`, so the system picks a free port. Do not use fixed or random ports in tests. Two test files that share a port share one server, and the first file to finish stops it.
 - Make temp folders with `tempDir()` from `test/helpers/temp.ts`. It removes them after the test file.
+- Tests for Lighthouse and for MP4 through ffmpeg skip when these downloads are missing. To run them, install both once with `node plugins/walkthrough/server/uiwalk.mjs setup lighthouse` and `... setup ffmpeg`. `UIWALK_CACHE_DIR` puts the downloads in another folder.
 
 ### Debug a test
 
@@ -102,6 +109,8 @@ UIWALK_TRACE_FILE=/tmp/uiwalk-trace.jsonl npx vitest run packages/server/test/in
 ## CI
 
 GitHub Actions runs `.github/workflows/ci.yml` on each push to `main` and on each pull request. It runs lint, the type check, and the tests on Ubuntu 24.04 (Node 22 and 24) and macOS (Node 24). It also fails if the committed bundle does not match the source.
+
+Before the tests, CI installs Lighthouse and ffmpeg with `uiwalk setup`, so no test skips. It caches `~/.cache/uiwalk/lighthouse` and `~/.cache/uiwalk/ffmpeg`. The cache key has the hash of `src/downloads/lighthouse.ts` or `src/downloads/ffmpeg.ts`, so a new pinned version downloads again.
 
 `ci.yml` sets the Linux runner to Ubuntu 24.04, not `ubuntu-latest`. This stops a new Ubuntu version from changing CI without warning. To move to a new version, change `os` in `ci.yml`. Then make sure that CI passes.
 

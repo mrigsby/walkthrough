@@ -46,20 +46,15 @@ export async function launchChrome(
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
       defaultViewport: headless ? { width: 1280, height: 800 } : null,
-      args: [
-        '--no-first-run',
-        '--no-default-browser-check',
-        '--window-size=1280,900',
-        // For tests only: a fixed port lets a test connect to this Chrome.
-        ...(process.env.UIWALK_DEBUG_PORT && !options.background
-          ? [`--remote-debugging-port=${process.env.UIWALK_DEBUG_PORT}`]
-          : []),
-      ],
+      args: ['--no-first-run', '--no-default-browser-check', '--window-size=1280,900'],
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,
       handleSIGHUP: false,
     });
+    // For tests only: the exact address of this Chrome, so a test can connect to it.
+    const endpointFile = process.env.UIWALK_DEBUG_ENDPOINT_FILE;
+    if (endpointFile && !options.background) writeFileSync(endpointFile, browser.wsEndpoint());
     return { browser, profileDir, chromePath: chrome.path };
   } catch (error) {
     removeProfile(profileDir);

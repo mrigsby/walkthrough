@@ -33,10 +33,12 @@ To use these commands, install the package with `npm install -g walkthrough-ui`.
 | --- | --- |
 | `uiwalk` or `uiwalk serve` | Start the MCP server. |
 | `uiwalk init` | Make the `.walkthrough` folder in the current folder. |
-| `uiwalk doctor` | Check Node, Chrome, and the project settings. |
+| `uiwalk doctor` | Check Node, Chrome, the project settings, Lighthouse, and ffmpeg. |
 | `uiwalk setup` | Download Chrome for Testing, if Chrome is not installed. |
+| `uiwalk setup lighthouse` | Install Lighthouse, for Lighthouse reports. |
+| `uiwalk setup ffmpeg` | Download ffmpeg, for MP4 videos when Chrome cannot make them. It checks the SHA-256 hash. |
 | `uiwalk schema` | Print the JSON Schema for test plans. |
 
-Walkthrough needs Node.js 22.19 or later and Google Chrome.
+Walkthrough needs Node.js 22.19 or later and Google Chrome. Add `--force` to a `setup` command to download again.
 
 See the [documentation](https://github.com/mrigsby/walkthrough#documentation) for the guides. MIT license.

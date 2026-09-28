@@ -1,22 +1,26 @@
 # Walkthrough
 
-Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the failed requests, and it writes a report.
+Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the network requests. During a test run, it also saves a short video. Then it writes a report.
 
 ![The Walkthrough panel in the browser, with a step to confirm](docs/images/panel.png)
 
 Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP server inside. The server (`uiwalk`) controls Chrome with Puppeteer. The plugin adds a skill and slash commands that teach the agent how to test with you. Other MCP clients, such as Claude Desktop, Cursor, and VS Code, can use the server too.
 
-> Status: version 0.1, early. Expect changes.
+> Status: early. Expect changes.
 
 ## What it does
 
 - **Step-by-step testing.** The agent does a step, checks it, and asks you to confirm it. You watch in a real browser, and a pulsing box shows each element before the agent uses it.
 - **Test plans in YAML.** Save a test in `.walkthrough/plans/` and run it again later. Your editor gives autocomplete. Three modes set how many steps you confirm: every step, only marked steps, or none.
 - **Reports.** Each run writes `report.md` and a single-file `report.html`, with bugs first, steps to reproduce, screenshots, and errors.
-- **Evidence.** Screenshots with a red box on the element, console errors, page errors, and failed requests.
+- **Evidence.** Screenshots with a red box on the element, console errors, page errors, and Chrome issues. Bugs also get a HAR file of the network requests and a video clip of the last seconds.
 - **Record mode.** Use the app yourself, and Walkthrough turns your clicks and typing into a draft plan.
+- **Videos.** Ask for "a recording demo of the checkout workflow", and get a clean MP4 and GIF with captions and a pointer. Record part of a session, save GIFs for your docs, or make the video again in CI. See [Videos](docs/video.md).
 - **Accessibility reports.** Check one page or many with axe-core, a keyboard walk, dark mode, and reflow checks. Get scores, a short explanation and fix for each issue, and a prompt to plan the fixes in a new session. See [Accessibility reports](docs/accessibility.md).
-- **More checks.** Visual checks against saved baselines, phone and tablet screens, dark mode, and slow networks.
+- **Lighthouse reports.** Check the performance, best practices, and SEO of pages or of a user flow, with an explanation and a fix for each issue. See [Lighthouse reports](docs/lighthouse.md).
+- **DevTools for the agent.** The agent can read network requests and cookies, and see the CSS rules and event listeners of an element. It can also answer API requests with test data.
+- **Tabs and logins.** Test two users at the same time, each in a tab with its own login.
+- **More checks.** Visual checks against saved baselines, phone and tablet screens, dark mode, slow networks and CPUs, time zones, and languages.
 - **Sharing.** Export a run as a plain Puppeteer script for CI. Turn a bug into a GitHub issue draft.
 
 ![A Walkthrough report with a failed step, steps to reproduce, and a screenshot](docs/images/report.png)
@@ -36,6 +40,7 @@ Read more in [Safety](docs/safety.md).
 - Node.js 22.19 or later
 - Google Chrome. If it is missing, `/walkthrough:doctor` can download Chrome for Testing.
 - Claude Code, for the plugin. Other MCP clients can use the server alone.
+- Optional: Lighthouse, for Lighthouse reports, and ffmpeg, for MP4 videos when Chrome cannot make them. Install them from a terminal when you need them. `/walkthrough:doctor` shows the commands.
 
 ## Quick start
 
@@ -100,7 +105,9 @@ You can also ask in plain words. The walkthrough skill loads when you ask the ag
 - [Getting started](docs/getting-started.md)
 - [Test plan format](docs/plan-format.md)
 - [Settings](docs/config.md)
+- [Videos](docs/video.md)
 - [Accessibility reports](docs/accessibility.md)
+- [Lighthouse reports](docs/lighthouse.md)
 - [Tools](docs/tools.md)
 - [Safety](docs/safety.md)
 - [Use with other tools and share with a team](docs/sharing.md)

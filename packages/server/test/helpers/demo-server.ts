@@ -1,5 +1,4 @@
 import { type ChildProcess, spawn } from 'node:child_process';
-import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,19 +30,4 @@ export async function startDemoServer(
   // Keep reading output, so the server never waits on a full pipe.
   child.stdout?.resume();
   return { base, port: Number(new URL(base).port), stop: () => child.kill() };
-}
-
-// A free port for Chrome's debug connection in tests.
-export function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      server.close(() =>
-        typeof address === 'object' && address
-          ? resolve(address.port)
-          : reject(new Error('no port')),
-      );
-    });
-  });
 }

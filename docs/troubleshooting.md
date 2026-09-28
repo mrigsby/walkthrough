@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Start with `/walkthrough:doctor`. It checks Node, Chrome, the project folder, the settings, and the secrets. It also explains each line that starts with `FIX`.
+Start with `/walkthrough:doctor`. It checks Node, Chrome, the project folder, the settings, the secrets, Lighthouse, and ffmpeg. It also explains each line that starts with `FIX`.
 
 ## The uiwalk server is not connected
 
@@ -70,6 +70,30 @@ To test with your own logins and extensions, Walkthrough can connect to a Chrome
 
 Chrome 136 and later ignore the debug port for the normal profile, so `--user-data-dir` must point to another folder. Log in to your apps once in that profile. Walkthrough can also connect by the profile folder: `attach: "/Users/you/.chrome-walkthrough"`.
 
+## A new tab opens in its own window
+
+A tab with a separate login (`isolated`) opens in a new Chrome window, like a private window. This is how Chrome keeps the logins apart. The other tools work on it as usual. Close the tab, or switch to another tab with the `tabs` tool.
+
+## Lighthouse is not installed
+
+Lighthouse is an optional download. Install it from a terminal with `npx -y walkthrough-ui setup lighthouse`. In Claude Code, the reply of the `lighthouse` tool shows the exact command for the plugin. See [Lighthouse reports](lighthouse.md#set-up).
+
+## Lighthouse scores change each time
+
+Lighthouse runs on your computer, so other programs change its timing. Compare the changes between reports more than the numbers. See [Scores change from run to run](lighthouse.md#scores-change-from-run-to-run).
+
+## A video is WebM, freezes, or is too big
+
+See [Troubleshooting](video.md#troubleshooting) in the video guide. In short:
+
+- For MP4, Walkthrough needs a Chrome that can make H.264, or ffmpeg. Install ffmpeg with `npx -y walkthrough-ui setup ffmpeg`.
+- Chrome draws nothing for a minimized window. Do not minimize the test browser while it records.
+- Use MP4 instead of GIF for videos longer than a few seconds.
+
+## A replay stops at a step
+
+`video` with action `replay` does the run again in a new login. When a step does not work, it stops and names the step. Fix the plan step, and run the plan again. See [The replay stopped at a step](video.md#the-replay-stopped-at-a-step).
+
 ## A saved login does not work
 
 - Walkthrough saves cookies, localStorage, and sessionStorage. It does not save IndexedDB. Some apps, such as apps that use Firebase, keep the login there. Log in at the start of the plan instead.
@@ -86,6 +110,7 @@ A visual check also fails when a part of the page changes on every load, such as
 - Install the browser package that the first lines of the script name: `npm install --save-dev puppeteer`, or `puppeteer-core` for a script that uses the installed Chrome.
 - Set `BASE_URL` when the app runs at another address, and set the secrets that the script lists.
 - A line that starts with `// Fix by hand` had no stable selector. Add a selector for that element.
+- With `VIDEO`, the script needs ffmpeg. Set `FFMPEG_PATH`, or install ffmpeg.
 - If a step failed in the run, the script fails at that step until the bug is fixed.
 
 ## Record mode missed a step

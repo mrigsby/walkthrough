@@ -1,9 +1,10 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findLighthouse } from '../../src/downloads/lighthouse.js';
-import { freePort, repoRoot, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { panelHidden } from '../helpers/panel.js';
 import { serveFolder } from '../helpers/static-server.js';
@@ -159,15 +160,12 @@ describe.skipIf(!installed)('lighthouse flows in a run', () => {
   let chrome: Browser;
   let page: Page;
   let runId: string;
-  let debugPort: number;
+  let chromeFile: string;
 
   // The test connects to the same Chrome, to see the panel.
   async function connect(): Promise<void> {
     await chrome?.disconnect();
-    chrome = await puppeteer.connect({
-      browserURL: `http://127.0.0.1:${debugPort}`,
-      defaultViewport: null,
-    });
+    chrome = await connectChrome(chromeFile, { defaultViewport: null });
     page = (await chrome.pages()).find((p) => p.url().startsWith(demo.base)) as Page;
   }
 
@@ -177,12 +175,12 @@ describe.skipIf(!installed)('lighthouse flows in a run', () => {
       join(repoRoot, 'examples/demo-app/.walkthrough/plans/performance.yaml'),
       join(project, '.walkthrough', 'plans', 'performance.yaml'),
     );
-    debugPort = await freePort();
+    chromeFile = endpointFile();
     flowMcp = await startClient({
       UIWALK_PROJECT_DIR: project,
       TMPDIR: tempDir('lighthouse-flow-tmp'),
       UIWALK_FORCE_PANEL: '1',
-      UIWALK_DEBUG_PORT: String(debugPort),
+      UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
     });
     expect((await flowMcp.call('browser_open')).isError).toBe(false);
   }, 60_000);

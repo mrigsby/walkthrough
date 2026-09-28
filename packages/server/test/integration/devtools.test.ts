@@ -1,8 +1,9 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { freePort, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { serveFolder } from '../helpers/static-server.js';
 import { tempDir } from '../helpers/temp.js';
@@ -12,7 +13,7 @@ let demo: Awaited<ReturnType<typeof startDemoServer>>;
 let site: Awaited<ReturnType<typeof serveFolder>>;
 let mcp: Awaited<ReturnType<typeof startClient>>;
 let project: string;
-let debugPort: number;
+let chromeFile: string;
 
 // A page with problems that Chrome's Issues panel reports.
 const ISSUES_PAGE = `<!doctype html><html lang="en"><head><title>Issues</title></head><body>
@@ -36,11 +37,11 @@ beforeAll(async () => {
     join(project, '.walkthrough', 'plans', 'logout.yaml'),
     `name: Log out\nmode: autonomous\nsteps:\n  - id: logged-in\n    do: Check the login cookie\n    cookies:\n      - { name: session, httpOnly: true, sameSite: Lax }\n  - id: logged-out\n    do: Log out\n    cookies:\n      - { name: session, exists: false }\n`,
   );
-  debugPort = await freePort();
+  chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('devtools-tmp'),
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   expect((await mcp.call('browser_open')).isError).toBe(false);
 }, 60_000);
@@ -52,7 +53,7 @@ afterAll(async () => {
 });
 
 async function withChrome<T>(fn: (chrome: Browser) => Promise<T>): Promise<T> {
-  const chrome = await puppeteer.connect({ browserURL: `http://127.0.0.1:${debugPort}` });
+  const chrome = await connectChrome(chromeFile);
   try {
     return await fn(chrome);
   } finally {

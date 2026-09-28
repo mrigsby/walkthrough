@@ -2,9 +2,10 @@ import { execFile } from 'node:child_process';
 import { mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { freePort, repoRoot, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { tempDir } from '../helpers/temp.js';
 
@@ -13,7 +14,7 @@ const run = promisify(execFile);
 let demo: Awaited<ReturnType<typeof startDemoServer>>;
 let mcp: Awaited<ReturnType<typeof startClient>>;
 let project: string;
-let debugPort: number;
+let chromeFile: string;
 
 beforeAll(async () => {
   demo = await startDemoServer();
@@ -26,11 +27,11 @@ beforeAll(async () => {
   writeFileSync(join(project, '.walkthrough', '.env'), 'DEMO_PASSWORD=demo123\n');
   // The exported script imports puppeteer-core from the project.
   symlinkSync(join(repoRoot, 'node_modules'), join(project, 'node_modules'));
-  debugPort = await freePort();
+  chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('tabs-tmp'),
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   expect((await mcp.call('browser_open', { url: '/?tab=main' })).isError).toBe(false);
 }, 60_000);
@@ -42,10 +43,7 @@ afterAll(async () => {
 
 // Runs code in the tab whose address has this text, then disconnects.
 async function inTab<T>(part: string, fn: (page: Page) => Promise<T>): Promise<T> {
-  const chrome: Browser = await puppeteer.connect({
-    browserURL: `http://127.0.0.1:${debugPort}`,
-    defaultViewport: null,
-  });
+  const chrome: Browser = await connectChrome(chromeFile, { defaultViewport: null });
   try {
     const pages = (await Promise.all(chrome.browserContexts().map((c) => c.pages()))).flat();
     const page = pages.find((p) => p.url().includes(part));
@@ -272,9 +270,7 @@ describe('export with tabs', () => {
 describe('no tabs left', () => {
   // Like a developer who closes every window while Chrome keeps running.
   async function closeEveryTab(): Promise<void> {
-    const chrome: Browser = await puppeteer.connect({
-      browserURL: `http://127.0.0.1:${debugPort}`,
-    });
+    const chrome: Browser = await connectChrome(chromeFile);
     try {
       for (const context of chrome.browserContexts())
         for (const page of await context.pages()) await page.close();

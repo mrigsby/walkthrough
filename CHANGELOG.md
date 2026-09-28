@@ -30,22 +30,22 @@ This file lists all notable changes to the project.
 - `video` with action `slideshow` makes a GIF or video of the screenshots of a run, with the step titles as captions.
 - A failed step, and a bug from the panel, save a HAR file with the requests of the step. Reports link it, and `issue_draft` lists it.
 - `logs` shows Chrome issues, the same problems as the Issues panel in DevTools: blocked cookies, CSP and CORS blocks, mixed content, deprecated features, and form problems. `kinds` filters the entries.
+- New guides: [Videos](docs/video.md), with an example of each use, and [Lighthouse reports](docs/lighthouse.md). The demo README shows how to try both.
 
 ### Changed
 
 - One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
 - `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
-
 - `emulate` changes only the active tab. Use `allTabs: true` to change every tab.
 - `session` saves the login of the active tab. A saved login loads into the tab that asks for it.
+- Run records keep the tab name of each action and the answers to dialogs.
+- Tests connect to the test Chrome by its exact address, from the file in `UIWALK_DEBUG_ENDPOINT_FILE`. `UIWALK_DEBUG_PORT` is gone. When a port was in use, Chrome could open the same port on IPv6, and a test could reach the Chrome of another test.
 
 ### Fixed
 
 - When Chrome runs with no tab, for example after you close its window, `browser_open` and `navigate` with a url open a new tab. Before, both failed, and the error named the same two tools.
 - `snapshot` with `ref` outlines that part of the page. Before, it always failed with a Chrome error, because the new snapshot released the element it started from. A ref that is out of date now gets the normal "take a new snapshot" message.
 - The Chrome that Walkthrough starts does not offer to save passwords or check them for leaks. Before, a login with a test password from a leak list could open Chrome's "Change your password" dialog, and the tab then ignored every click.
-
-- Run records keep the tab name of each action and the answers to dialogs.
 
 ## 0.2.0 (2026-09-25)
 
@@ -64,9 +64,6 @@ This file lists all notable changes to the project.
 - The demo app has more planted accessibility issues, and an `accessibility` plan.
 
 ### Changed
-
-- One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
-- `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
 
 - Exported scripts use the screen size and the color scheme of the run. Without a device, the screen is 1280x800, not 800x600.
 - `a11y_audit` checks WCAG 2.2 AA and best practices by default, names the WCAG criteria, and saves more data: items that need review, rules that passed, and contrast ratios.
@@ -127,9 +124,6 @@ The first version.
 - The server closes Chrome and removes its temporary profile when it stops.
 
 ### Changed
-
-- One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
-- `export_script` and the replay use the same list of steps, so they always repeat a run the same way.
 
 - The bundle now includes every package it needs. Before, an installed plugin could not start, because Puppeteer loads `chromium-bidi` and the bundle did not include it. A test now runs the plugin from a folder outside the repo.
 - The planted coupon field problem in the demo shop is now a real missing label. A placeholder counts as a label for the accessibility checker.

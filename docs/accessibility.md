@@ -118,6 +118,10 @@ See [Accessibility checks](plan-format.md#accessibility-checks) in the plan form
 
 The `accessibility` settings in `config.yaml` set the standard and the checks. See [Settings](config.md#accessibility).
 
+## Lighthouse and this report
+
+Lighthouse can also check accessibility, with `accessibility` in its `categories`. Its accessibility score uses axe-core too, but it runs fewer rules. It does not do the keyboard, dark mode, reflow, or frame checks, and it scores the page in another way. So the two scores are not the same. Use this report for accessibility, and Lighthouse for performance, best practices, and SEO. See [Lighthouse reports](lighthouse.md).
+
 ## Limits
 
 - Automated checks find about a third of accessibility problems. Test with a keyboard and a screen reader too.

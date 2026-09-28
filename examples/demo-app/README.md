@@ -74,3 +74,30 @@ SHOT=total node .walkthrough/exports/help-shots.mjs
 ```
 
 The second command saves only `total.png`. See [Screenshots for docs](../../docs/plan-format.md#screenshots-for-docs).
+
+## Lighthouse
+
+Try the Lighthouse report on the demo. Lighthouse is an optional download, so install it first. From this folder, run:
+
+```sh
+node ../../plugins/walkthrough/server/uiwalk.mjs setup lighthouse
+```
+
+1. Start the demo shop, and open Claude Code in this folder.
+2. Run `/walkthrough:lighthouse / /help.html`. The agent checks the two pages and writes the report.
+3. Open `lighthouse.html` from the run folder. Look at the scores, the explanations, and "Where to fix". The `lighthouse/` folder has the reports from Lighthouse itself.
+4. Run `/walkthrough:lighthouse performance`. The `performance` plan measures a user flow in three steps. It measures the load of the shop page, a timespan that adds the mug and opens the cart, and a snapshot of the checkout page. Also open `lighthouse/flow.report.html` from the run folder.
+5. Run step 2 again. The new report compares itself with the first one, and the issues keep their IDs.
+
+Scores on your computer change from run to run. See [Lighthouse reports](../../docs/lighthouse.md).
+
+## Make a video
+
+1. Start the demo shop, and open Claude Code in this folder.
+2. Say "Create a recording demo of the checkout workflow". The agent finds the `checkout-demo` plan, runs it, and records a clean replay as an MP4 and a GIF in the run folder.
+3. Open the MP4 and the GIF. They start with a title card, show captions and the pointer, and end on the "Thank you" page.
+4. Say "make it slower and save a GIF to docs/images/checkout.gif". The agent records the same run again. It does not run the plan again.
+
+To see the agent write the plan itself, move `.walkthrough/plans/checkout-demo.yaml` out of the `plans` folder first. Then say the same words.
+
+Each run and each replay places an order in the demo shop. The email address has `{{unique}}`, so each order gets a new one. See [Videos](../../docs/video.md).

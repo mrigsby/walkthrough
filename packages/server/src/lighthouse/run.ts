@@ -54,6 +54,7 @@ export async function auditPage(
       {
         output: ['html', 'json'],
         logLevel: 'error',
+        enableErrorReporting: false,
         disableStorageReset: true,
         onlyCategories: options.categories,
       },

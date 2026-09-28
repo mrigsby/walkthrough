@@ -10,10 +10,11 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { validatePlanText } from '../../src/run/plans.js';
-import { freePort, repoRoot, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { clickPanel, waitForPanel } from '../helpers/panel.js';
 import { tempDir } from '../helpers/temp.js';
@@ -23,7 +24,7 @@ const run = promisify(execFile);
 let demo: Awaited<ReturnType<typeof startDemoServer>>;
 let mcp: Awaited<ReturnType<typeof startClient>>;
 let project: string;
-let debugPort: number;
+let chromeFile: string;
 
 beforeAll(async () => {
   demo = await startDemoServer();
@@ -35,12 +36,12 @@ beforeAll(async () => {
   );
   // The exported script imports puppeteer-core from the project.
   symlinkSync(join(repoRoot, 'node_modules'), join(project, 'node_modules'));
-  debugPort = await freePort();
+  chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('share-tmp'),
     UIWALK_FORCE_PANEL: '1',
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   expect((await mcp.call('browser_open')).isError).toBe(false);
 }, 60_000);
@@ -51,10 +52,7 @@ afterAll(async () => {
 });
 
 async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
-  const chrome: Browser = await puppeteer.connect({
-    browserURL: `http://127.0.0.1:${debugPort}`,
-    defaultViewport: null,
-  });
+  const chrome: Browser = await connectChrome(chromeFile, { defaultViewport: null });
   try {
     const page = (await chrome.pages()).find((p) => p.url().startsWith(demo.base)) as Page;
     return await fn(page);

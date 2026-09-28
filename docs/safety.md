@@ -25,6 +25,7 @@ To test a staging server, add it to the list, such as `https://*.staging.example
 - Logs hide the values of URL parameters such as `token`, `key`, and `password`, and text that looks like a token.
 - The `network` tool shows login headers and secret body fields, such as `password`, as a fingerprint. HAR files always remove them.
 - The `storage` tool shows cookie and storage values as a fingerprint, not the value. Only `allowSecretValues: true` in `config.local.yaml` shows them. It reads and changes only the sites under test that are open in the active tab's login, never other sites.
+- The `network` tool keeps the bodies of text responses in memory while the server runs, up to 256 KB each. It shows them to the agent as page text, with secrets removed.
 
 `/walkthrough:init` offers to add rules to `.claude/settings.json` that stop Claude Code from reading `.walkthrough/.env` and saved logins. We recommend these rules.
 
@@ -44,11 +45,19 @@ The page under test could try to click **Pass** for you. Walkthrough stops this:
 - Each question has a one-time code. An answer without the current code does not count.
 - The agent cannot use the panel either. Page outlines leave it out, and the `act` tool refuses to click it.
 
+## Videos
+
+- Walkthrough hides the panel in videos, except in bug clips. It hides a field before the agent types a secret into it.
+- A video shows everything else on the screen, such as names and email addresses. Walkthrough removes secrets from text, but it does not check the pictures of a video. Use test data, and watch a video before you share it.
+- Videos stay in the run folder, which Git does not track, unless you give a `path`.
+
+See [Videos](video.md#privacy).
+
 ## Risky tools are off
 
 - The `evaluate` tool runs JavaScript in the page. It is off unless you set `allowEvaluate: true` in `config.local.yaml`.
 - Uploads must come from the project folder. Walkthrough never uploads hidden files, `.env`, `config.local.yaml`, or saved logins.
-- Walkthrough reads `allowEvaluate` and `uploadsRoot` only from `config.local.yaml`, which Git does not track. A change that someone commits cannot turn them on for you.
+- Walkthrough reads `allowEvaluate`, `uploadsRoot`, `screenshotRoots`, `allowSecretValues`, and `ffmpegPath` only from `config.local.yaml`, which Git does not track. A change that someone commits cannot turn them on for you. For example, an `ffmpegPath` in a shared file could make Walkthrough run any program when you clone a project.
 
 ## Saved logins
 
@@ -59,6 +68,14 @@ The page under test could try to click **Pass** for you. Walkthrough stops this:
 ## GitHub issues
 
 `/walkthrough:bug` never creates an issue for you. It shows you the draft, and it asks before it opens the issue page in your browser. You add the screenshots and click Submit. Read the draft and the screenshots before you submit, because they show what was on the page.
+
+## Downloads
+
+Lighthouse, ffmpeg, and Chrome for Testing are optional downloads. Walkthrough downloads them only when you run `uiwalk setup` in a terminal. The tools never download anything by themselves.
+
+- Lighthouse comes from npm, at a fixed version. npm checks the package. Walkthrough turns off the error reports that Lighthouse can send to its team.
+- ffmpeg comes from a fixed release. Walkthrough checks the SHA-256 hash of the download against a hash in its code, and refuses a file that does not match.
+- All downloads go in `~/.cache/uiwalk`, or in `UIWALK_CACHE_DIR`.
 
 ## Your own Chrome
 

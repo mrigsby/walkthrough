@@ -1,8 +1,9 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { freePort, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { tempDir } from '../helpers/temp.js';
 
@@ -10,7 +11,7 @@ import { tempDir } from '../helpers/temp.js';
 let demo: Awaited<ReturnType<typeof startDemoServer>>;
 let mcp: Awaited<ReturnType<typeof startClient>>;
 let project: string;
-let debugPort: number;
+let chromeFile: string;
 
 beforeAll(async () => {
   demo = await startDemoServer();
@@ -21,12 +22,12 @@ beforeAll(async () => {
     `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n`,
   );
   writeFileSync(join(project, '.walkthrough', '.env'), 'DEMO_PASSWORD=demo123\n');
-  debugPort = await freePort();
+  chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('quality-tmp'),
     UIWALK_FORCE_PANEL: '1',
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   expect((await mcp.call('browser_open')).isError).toBe(false);
 }, 60_000);
@@ -39,10 +40,7 @@ afterAll(async () => {
 // Runs code on the demo tab with the test's own Puppeteer, then disconnects.
 // A connection that stays open can reset the server's network settings.
 async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
-  const chrome: Browser = await puppeteer.connect({
-    browserURL: `http://127.0.0.1:${debugPort}`,
-    defaultViewport: null,
-  });
+  const chrome: Browser = await connectChrome(chromeFile, { defaultViewport: null });
   try {
     const pages = await chrome.pages();
     return await fn(pages.find((p) => p.url().startsWith(demo.base)) as Page);

@@ -1,9 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Run } from '../../src/run/run-store.js';
-import { freePort, startDemoServer } from '../helpers/demo-server.js';
+import { connectChrome, endpointFile } from '../helpers/chrome.js';
+import { startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import { clickPanel, typeNotes, waitForPanel } from '../helpers/panel.js';
 import { tempDir } from '../helpers/temp.js';
@@ -47,19 +48,16 @@ beforeAll(async () => {
     `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n`,
   );
   writeFileSync(join(project, '.walkthrough', 'plans', 'mini.yaml'), PLAN);
-  const debugPort = await freePort();
+  const chromeFile = endpointFile();
   mcp = await startClient({
     UIWALK_PROJECT_DIR: project,
     TMPDIR: tempDir('run-tmp'),
     UIWALK_FORCE_PANEL: '1',
-    UIWALK_DEBUG_PORT: String(debugPort),
+    UIWALK_DEBUG_ENDPOINT_FILE: chromeFile,
   });
   const open = await mcp.call('browser_open');
   expect(open.isError, open.text).toBe(false);
-  chrome = await puppeteer.connect({
-    browserURL: `http://127.0.0.1:${debugPort}`,
-    defaultViewport: null,
-  });
+  chrome = await connectChrome(chromeFile, { defaultViewport: null });
   page = (await chrome.pages()).find((p) => p.url().startsWith(demo.base)) as Page;
 }, 60_000);
 

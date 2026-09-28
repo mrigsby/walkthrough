@@ -240,7 +240,7 @@ A check has a `name`, and any of these: `exists` (`false` means the cookie must 
 
 ## Lighthouse flows
 
-A plan can measure a user flow with Lighthouse, like the Lighthouse user flows in DevTools. Lighthouse must be installed. See [Lighthouse](tools.md#lighthouse).
+A plan can measure a user flow with Lighthouse, like the Lighthouse user flows in DevTools. Install Lighthouse first. See [Lighthouse reports](lighthouse.md).
 
 ```yaml
 lighthouse:
@@ -292,7 +292,7 @@ steps:
 - Each step shows its `caption` at the bottom of the video, or its `do` text. Write captions for viewers: short, and about what happens on the screen.
 - Walkthrough cuts wait time and question time, hides the panel, and hides typed secrets.
 - `run_finish` saves the video as `video/run.<format>` in the run folder.
-- For a clean demo video, use `/walkthrough:video`. It records the run again with `video` action `replay`: a new login, an even pace, and a title card.
+- For a clean demo video, use `/walkthrough:video`. It records the run again with `video` action `replay`: a new login, an even pace, and a title card. See [Videos](video.md).
 
 ## Saved logins
 
