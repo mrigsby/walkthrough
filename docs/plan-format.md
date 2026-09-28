@@ -53,6 +53,7 @@ steps:
 | `a11y` | No | Check accessibility after the step. `true`, or `{ selector, checks }`. See [Accessibility checks](#accessibility-checks). |
 | `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
 | `cookies` | No | Cookie checks after the step, such as `[{ name: session, httpOnly: true }]`. See [Cookie checks](#cookie-checks). |
+| `mock` | No | Mock rules to add before the step, or `off` to remove all rules. See [Mocked requests](#mocked-requests). |
 
 ### Write a good `expect`
 
@@ -196,6 +197,25 @@ steps:
 - Set `device` and `colorScheme`, so the screenshots have the same size and colors each time.
 
 To make the screenshots again without an agent, export the run as a script. `SHOT=cart` makes only one of them again. See [Make screenshots again](sharing.md#make-screenshots-again).
+
+## Mocked requests
+
+A step can answer requests with your own data, block them, or delay them. Use this to test an error state or an empty list without changing the server.
+
+```yaml
+  - id: stock-down
+    do: Check the stock of the mug when the stock service is down
+    mock:
+      - { url: /api/stock, status: 503, json: { error: Service down } }
+    action: { click: { selector: '[data-stock="mug"]' } }
+    expect: The page says "Could not check stock. Try again later."
+  - id: stock-up
+    do: Check the stock again when the service works
+    mock: off
+    action: { click: { selector: '[data-stock="mug"]' } }
+```
+
+A rule takes the same keys as the `intercept` tool: `url` or `urlRegex`, and `method`, `type`, `tab`, `status`, `json`, `body`, `headers`, `contentType`, `delayMs`, `block`, and `times`. Rules stay on for the next steps. `mock: off` removes all rules. The report marks each step that used a rule, and exported scripts repeat the rules.
 
 ## Cookie checks
 

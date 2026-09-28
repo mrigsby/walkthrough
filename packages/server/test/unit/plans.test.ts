@@ -168,6 +168,15 @@ steps:
     expect(bad.ok).toBe(false);
   });
 
+  it('accepts mock rules and "off" on a step', () => {
+    const result = validatePlanText(
+      'name: x\nsteps:\n  - do: Break the stock check\n    mock:\n      - { url: /api/stock, status: 500, json: { error: down } }\n  - do: Fix it\n    mock: off\n',
+    );
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+    const bad = validatePlanText('name: x\nsteps:\n  - do: a\n    mock: [{ url: /a, speed: 3 }]\n');
+    expect(bad.ok).toBe(false);
+  });
+
   it('explains a bad tab name or setting', () => {
     const name = validatePlanText(
       'name: x\nsteps:\n  - do: a\n    action: { newTab: { name: Guest Tab } }\n',

@@ -76,6 +76,7 @@ When the developer asks for a new plan:
 - **Devices and settings:** `emulate` sets the active tab's screen (`mobile`, `tablet`, `desktop`), `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, and `permissions`. `allTabs: true` sets every tab. Take a new snapshot after it.
 - **Tabs and second users:** `tabs` with action `new` opens a tab. `isolated: true` gives it its own login, so you can test as a second user. `isolated: "admin"` gives it a login that tabs share. Plan steps can use `newTab`, `switchTab`, and `closeTab`.
 - **Cookies and storage:** `storage` lists, sets, deletes, and clears cookies and local or session storage, and checks cookies (`check`). For a plan step with cookie checks, call it with action `check` and the `stepId`. Values show as a fingerprint. Do not ask the developer to set `allowSecretValues` unless they need the real values.
+- **Mocked requests:** `intercept` answers requests with your own data, blocks them, or delays them, such as `{ url: /api/orders, status: 500 }`. Use it to test error and empty states. Tell the developer when a step used a mock. Clear the rules when you are done.
 - **Saved logins:** after the developer logs in, `session` with action `save` keeps the login. Later, `browser_open` with `session`, or `session:` in a plan, starts logged in. Never show the content of a session file.
 
 ## Rules

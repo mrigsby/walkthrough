@@ -20,6 +20,8 @@ export interface StepResult {
   screenshot?: string;
   // Other evidence files, like a HAR file, from the project folder.
   files?: string[];
+  // What mock rules did during the step.
+  mocked?: string[];
   logs?: LogEntry[];
 }
 
@@ -38,6 +40,7 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
       : join(store.projectDir, result.screenshot);
     step.screenshots.push(relative(store.dir, full));
   }
+  if (result.mocked?.length) step.mocked = [...new Set([...(step.mocked ?? []), ...result.mocked])];
   for (const file of result.files ?? []) {
     const full = isAbsolute(file) ? file : join(store.projectDir, file);
     step.files = [...(step.files ?? []), relative(store.dir, full)];

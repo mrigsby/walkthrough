@@ -197,6 +197,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         const label = question.stepId ?? question.title;
         const stepLogs = driver.logs.currentStep();
         const stepRequests = driver.network.currentStep();
+        const mocked = driver.stepMocks;
         driver.endStep(label);
 
         const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || '(none)'}`];
@@ -260,6 +261,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             notes: answer.note,
             screenshot: record.screenshot,
             files: record.files,
+            mocked,
             logs: stepLogs,
           },
         );

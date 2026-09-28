@@ -40,6 +40,11 @@ export function draftIssue(
     `- Page: ${step.actions.at(-1)?.url ?? run.baseUrl ?? 'unknown'}`,
     ...(run.chrome ? [`- Browser: ${run.chrome}`] : []),
     ...(run.setup ? [`- Setup: ${run.setup}`] : []),
+    ...(step.mocked?.length
+      ? [
+          `- Mocked: the step used answers from mock rules, not from the server: ${step.mocked.join('; ')}`,
+        ]
+      : []),
     `- Found by: Walkthrough ${VERSION}, run \`${run.id}\`, step ${step.index}`,
   ];
   const files = options.files ?? [];

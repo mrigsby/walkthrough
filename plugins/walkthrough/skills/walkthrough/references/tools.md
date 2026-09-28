@@ -23,6 +23,7 @@ All tools come from the `uiwalk` MCP server.
 | `screenshot` | Save a screenshot. With a ref and `annotate: true`, draw a red box around the element. With `path`, save to that exact file. With `stepId`, add it to a run step. |
 | `logs` | See console errors, page errors, failed requests, and Chrome issues (blocked cookies, CSP, CORS, form problems). `kinds` filters them. |
 | `network` | List requests (page, XHR, fetch) since the step started. `show` one request with its headers and body. `har` saves a HAR file. |
+| `intercept` | `add` a rule that answers requests with your data (`status`, `json`, `body`), blocks them, or delays them. `list`, `remove`, or `clear` rules. |
 | `inspect` | Show an element's computed styles, box, CSS rules (file and line), and event listeners (file and line). |
 | `evaluate` | Run page JavaScript. It is off unless the developer turns it on in `config.local.yaml`. |
 

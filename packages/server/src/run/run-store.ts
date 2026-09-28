@@ -54,6 +54,8 @@ export interface RunStep {
   a11y?: { selector?: string; checks: CheckName[] };
   // Cookie checks from the plan.
   cookies?: CookieCheck[];
+  // What mock rules did during the step, like "GET /api/stock -> 500 (mock m1)".
+  mocked?: string[];
 }
 
 export interface Run {

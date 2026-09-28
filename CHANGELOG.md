@@ -19,11 +19,14 @@ This file lists all notable changes to the project.
 - The new `storage` tool lists, sets, deletes, and clears cookies, `localStorage`, and `sessionStorage` of the sites under test, and clears site data. Values show as a fingerprint unless `allowSecretValues` is on.
 - Plan steps can check cookies with `cookies`, such as `{ name: session, exists: false }`. Exported scripts check them too, and repeat storage changes.
 - The new `network` tool lists requests, shows one with its headers and body, and saves HAR files. Login headers and secret body fields show as a fingerprint, and HAR files always remove them.
-- The new `inspect` tool shows an element's computed styles, box, CSS rules with file and line, and event listeners with file and line. The server has 32 tools.
+- The new `inspect` tool shows an element's computed styles, box, CSS rules with file and line, and event listeners with file and line.
+- The new `intercept` tool answers requests with your own data, blocks them, or delays them, for every tab or for one tab. Plan steps can add rules with `mock`, and `mock: off` removes them. Reports mark steps that used a rule as **Mocked**, and exported scripts repeat the rules. The server has 33 tools.
 - A failed step, and a bug from the panel, save a HAR file with the requests of the step. Reports link it, and `issue_draft` lists it.
 - `logs` shows Chrome issues, the same problems as the Issues panel in DevTools: blocked cookies, CSP and CORS blocks, mixed content, deprecated features, and form problems. `kinds` filters the entries.
 
 ### Changed
+
+- One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
 
 - `emulate` changes only the active tab. Use `allTabs: true` to change every tab.
 - `session` saves the login of the active tab. A saved login loads into the tab that asks for it.
@@ -52,6 +55,8 @@ This file lists all notable changes to the project.
 - The demo app has more planted accessibility issues, and an `accessibility` plan.
 
 ### Changed
+
+- One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
 
 - Exported scripts use the screen size and the color scheme of the run. Without a device, the screen is 1280x800, not 800x600.
 - `a11y_audit` checks WCAG 2.2 AA and best practices by default, names the WCAG criteria, and saves more data: items that need review, rules that passed, and contrast ratios.
@@ -112,6 +117,8 @@ The first version.
 - The server closes Chrome and removes its temporary profile when it stops.
 
 ### Changed
+
+- One request router in each tab now runs the guard for allowed sites and the mock rules. The guard still runs first.
 
 - The bundle now includes every package it needs. Before, an installed plugin could not start, because Puppeteer loads `chromium-bidi` and the bundle did not include it. A test now runs the plugin from a folder outside the repo.
 - The planted coupon field problem in the demo shop is now a real missing label. A placeholder counts as a label for the accessibility checker.

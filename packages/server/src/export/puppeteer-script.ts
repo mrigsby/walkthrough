@@ -46,6 +46,7 @@ interface Needs {
   tabs: boolean;
   cookies: boolean;
   siteData: boolean;
+  mocks: boolean;
 }
 
 // What the script knows while it is written: open tabs, their settings, and dialog answers.
@@ -130,6 +131,7 @@ async function openTab(name, login) {
   const tab = await logins[login].newPage();
   tab.setDefaultTimeout(10_000);
   tab.on('dialog', answerDialog);
+  if (typeof watchRequests === 'function') await watchRequests(tab);
   tabs[name] = tab;
   return tab;
 }
@@ -143,6 +145,7 @@ async function popupOf(opener) {
   const tab = await target.page();
   tab.setDefaultTimeout(10_000);
   tab.on('dialog', answerDialog);
+  if (typeof watchRequests === 'function') await watchRequests(tab);
   return tab;
 }
 `;
@@ -241,6 +244,22 @@ function pageChangeCode(action: RunStep['actions'][number], gen: Gen): string[] 
     }
     case 'storage':
       return storageCode(value, gen);
+    case 'mock': {
+      gen.needs.mocks = true;
+      const { tab, ...rule } = value as Record<string, unknown>;
+      if (typeof tab !== 'string') return [`await mock(${JSON.stringify(rule)});`];
+      // A rule for one tab needs that tab's page.
+      if (!gen.known.has(tab))
+        return [
+          `// Fix by hand: this mock is only for the tab "${tab}", which the script does not know.`,
+        ];
+      const target = tab === gen.current ? 'page' : `tabs[${js(tab)}]`;
+      return [`await mock(${JSON.stringify(rule)}, ${target});`];
+    }
+    case 'mock-clear': {
+      gen.needs.mocks = true;
+      return [typeof value.id === 'string' ? `clearMocks(${js(value.id)});` : 'clearMocks();'];
+    }
     case 'emulate': {
       const { allTabs, ...change } = value as Emulation & { allTabs?: boolean };
       gen.needs.emulate = true;
@@ -312,6 +331,74 @@ async function deleteCookies(match = {}) {
     if (match.path && cookie.path !== match.path) continue;
     await context.deleteCookie(cookie);
   }
+}
+`;
+
+// The mock helpers. Only scripts that mock requests get them.
+const MOCK_HELPERS = `
+// Mocked, blocked, and slow requests, like the run had. The first rule that matches wins.
+const MOCKS = [];
+const watchedPages = new WeakSet();
+
+// True when the text matches the pattern. * stands for any text.
+function globMatch(glob, text) {
+  const parts = glob.split('*');
+  if (parts.length === 1) return text === glob;
+  if (!text.startsWith(parts[0])) return false;
+  let at = parts[0].length;
+  for (const part of parts.slice(1, -1)) {
+    const found = text.indexOf(part, at);
+    if (found < 0) return false;
+    at = found + part.length;
+  }
+  const last = parts.at(-1);
+  return text.length - last.length >= at && text.endsWith(last);
+}
+
+function mockMatches(rule, request, target) {
+  if (rule.only && rule.only !== target) return false;
+  if (rule.times !== undefined && rule.hits >= rule.times) return false;
+  if (rule.method && rule.method.toUpperCase() !== request.method().toUpperCase()) return false;
+  if (rule.type && rule.type.toLowerCase() !== request.resourceType()) return false;
+  if (rule.urlRegex) return new RegExp(rule.urlRegex).test(request.url());
+  if (rule.url.startsWith('/')) {
+    const url = new URL(request.url());
+    return globMatch(rule.url, rule.url.includes('?') ? url.pathname + url.search : url.pathname);
+  }
+  return globMatch(rule.url, request.url());
+}
+
+async function watchRequests(target) {
+  if (watchedPages.has(target)) return;
+  watchedPages.add(target);
+  await target.setRequestInterception(true);
+  target.on('request', async (request) => {
+    const rule = MOCKS.find((r) => mockMatches(r, request, target));
+    if (!rule) return void request.continue();
+    rule.hits += 1;
+    if (rule.delayMs) await new Promise((resolve) => setTimeout(resolve, rule.delayMs));
+    if (rule.block) return void request.abort('blockedbyclient');
+    const answers = rule.status !== undefined || rule.json !== undefined || rule.body !== undefined || rule.headers;
+    if (!answers) return void request.continue();
+    return void request.respond({
+      status: rule.status ?? 200,
+      headers: rule.headers ?? {},
+      contentType: rule.contentType ?? (rule.json !== undefined ? 'application/json' : 'text/plain; charset=utf-8'),
+      body: rule.json !== undefined ? JSON.stringify(rule.json) : (rule.body ?? ''),
+    });
+  });
+}
+
+// Adds a rule. "only" limits it to one tab.
+async function mock(rule, only) {
+  MOCKS.push({ ...rule, only, hits: 0 });
+  for (const target of await browser.pages()) await watchRequests(target);
+}
+
+// Removes one rule, or all rules.
+function clearMocks(id) {
+  const keep = id ? MOCKS.filter((r) => r.id !== id) : [];
+  MOCKS.splice(0, MOCKS.length, ...keep);
 }
 `;
 
@@ -568,6 +655,7 @@ export function exportScript(
     tabs: false,
     cookies: false,
     siteData: false,
+    mocks: false,
   };
   const gen: Gen = {
     needs,
@@ -737,7 +825,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${needs.emulate ? EMULATE_HELPER : ''}${needs.cookies ? COOKIE_HELPERS : ''}${needs.siteData ? SITE_DATA_HELPER : ''}${hasShots ? captureHelpers([...secretFields]) : ''}
+${needs.emulate ? EMULATE_HELPER : ''}${needs.cookies ? COOKIE_HELPERS : ''}${needs.mocks ? MOCK_HELPERS : ''}${needs.siteData ? SITE_DATA_HELPER : ''}${hasShots ? captureHelpers([...secretFields]) : ''}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 

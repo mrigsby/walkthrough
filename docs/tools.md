@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 32 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 33 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -115,6 +115,25 @@ Lists the requests of the browser, like the Network panel in DevTools. By defaul
 | `name`, `stepId` | For `har`: a short name for the file, and a run step to add the file to. |
 
 Walkthrough keeps the bodies of page, XHR, and fetch responses with text, up to 256 KB each. Login headers such as `Authorization` and `Cookie`, and body fields such as `password` and `token`, show as a fingerprint unless `allowSecretValues` is on. HAR files always remove them, because you share HAR files. DevTools and other tools can open a HAR file.
+
+### `intercept`
+
+Answers requests with your own data, blocks them, or delays them. Use it to test error states, empty states, and slow answers without changing the server.
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `list` the rules (the default), `add` a rule, `remove` one rule by `id`, or `clear` all rules. |
+| `url` | The address to match. A path such as `/api/stock` matches that path on any site. Add `?` to match the query too. A full address or a pattern with `*`, such as `*/images/*`, matches the whole address. |
+| `urlRegex` | A regular expression for the whole address, instead of `url`. |
+| `method`, `type`, `tab` | Match only this method (`POST`), this resource type (`fetch`, `xhr`, `document`, `image`), or this tab (a name or an id). |
+| `status`, `json`, `body`, `headers`, `contentType` | The answer. `json` sends JSON. `body` sends text. |
+| `block` | Fail the request, as if the network blocked it. |
+| `delayMs` | Wait this long, then send the request on, or send the answer. |
+| `times` | Use the rule this many times, then stop. |
+
+The first rule that matches wins. Rules apply to every tab, also tabs that open later, until you clear them or the browser closes. While rules exist, the browser cache is off, so every request reaches the rules. The guard for allowed sites runs first, so a rule never opens a site that is not allowed.
+
+In a run, a step that used a rule shows a **Mocked** badge in the report, so a pass with fake data does not look like a real pass.
 
 ### `inspect`
 

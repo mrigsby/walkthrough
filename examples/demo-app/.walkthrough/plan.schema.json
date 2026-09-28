@@ -838,6 +838,90 @@
               "additionalProperties": false
             }
           },
+          "mock": {
+            "description": "Mock rules to add before this step, like [{ url: /api/stock, status: 500 }]. They stay on for later steps. \"off\" removes all mocks.",
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "off"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "description": "The address to match. \"/api/stock\" matches the path on any site. A full URL or a pattern with * matches the whole address.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "urlRegex": {
+                      "description": "A regular expression for the whole address.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "method": {
+                      "description": "Only this method, like \"POST\".",
+                      "type": "string"
+                    },
+                    "type": {
+                      "description": "Only this resource type, like \"fetch\", \"xhr\", \"document\", \"image\", or \"script\".",
+                      "type": "string"
+                    },
+                    "tab": {
+                      "description": "Only this tab, by name or id. Default: every tab.",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "The status to answer with.",
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    },
+                    "json": {
+                      "description": "A JSON body to answer with."
+                    },
+                    "body": {
+                      "description": "A text body to answer with.",
+                      "type": "string"
+                    },
+                    "headers": {
+                      "description": "Headers to answer with.",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "contentType": {
+                      "description": "The content type. Default: from json or text.",
+                      "type": "string"
+                    },
+                    "delayMs": {
+                      "description": "Wait this long first.",
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 60000
+                    },
+                    "block": {
+                      "description": "Fail the request, as if the network blocked it.",
+                      "type": "boolean"
+                    },
+                    "times": {
+                      "description": "Use the rule this many times, then stop.",
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
           "a11y": {
             "description": "Check accessibility after this step.",
             "anyOf": [

@@ -18,6 +18,8 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === 'developer' ? 'the developer' : 'the agent'}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  if (step.mocked?.length)
+    out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join('; ')}`);
   const a11y = stepAccessibility(run, step);
   if (a11y) out.push(`- **Accessibility:** ${a11y}`);
   out.push('');

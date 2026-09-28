@@ -12,9 +12,11 @@ import type {
 } from 'puppeteer-core';
 import type { Config, DialogPolicy } from '../config.js';
 import { describeIssue } from '../devtools/issues.js';
+import { checkRule, hitText, type MockRule, type MockRuleInput } from '../devtools/mock-schema.js';
 import { ToolError } from '../errors.js';
 import { LogBook } from '../evidence/logs.js';
 import { NetworkBook } from '../evidence/network.js';
+import { scrubUrl } from '../evidence/scrub.js';
 import { onShutdown } from '../lifecycle.js';
 import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
@@ -22,8 +24,8 @@ import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
 import { applyEmulation, checkEmulation, type Emulation } from './devices.js';
 import { mergeEmulation, permissionEntries } from './emulation-schema.js';
+import { FetchRouter } from './fetch-router.js';
 import { killChrome, launchChrome, removeProfile } from './launch.js';
-import { guardNavigation } from './navigation-guard.js';
 
 export interface Tab {
   id: string;
@@ -40,6 +42,8 @@ export interface Tab {
   mobile: boolean;
   // The screen, color, network, and other settings of this tab.
   emulation: Emulation;
+  // The session that sees each request first: the guard and the mocks.
+  router?: FetchRouter;
   cdp?: CDPSession;
 }
 
@@ -79,6 +83,11 @@ export class Driver {
   defaultEmulation: Emulation = {};
   // Cookie jars by login name. "main" is the browser's own.
   readonly logins = new Map<string, BrowserContext>();
+  // Mock rules for requests, in order. The first match wins.
+  readonly mocks: MockRule[] = [];
+  private mockCounter = 0;
+  // What the mocks did in the current step.
+  private mockHits = new Set<string>();
   private userAgent = '';
   activeId?: string;
   dialogPolicy: DialogPolicy;
@@ -273,14 +282,18 @@ export class Driver {
     this.network.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
 
-    tab.cdp = await guardNavigation(
-      page,
-      (url) => this.options.isAllowed(url),
-      (url) =>
+    tab.router = await FetchRouter.install(page, {
+      isAllowed: (url) => this.options.isAllowed(url),
+      onBlocked: (url) =>
         this.note(
           `Walkthrough blocked the tab from opening ${url}, because that site is not allowed.`,
         ),
-    );
+      rules: () => this.rulesFor(tab),
+      onHit: (rule, request) =>
+        this.mockHits.add(hitText(rule, request.method, scrubUrl(request.url))),
+    });
+    tab.cdp = tab.router?.cdp;
+    if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
 
     // Chrome's Issues panel: blocked cookies, CSP, CORS, and more.
     if (tab.cdp) {
@@ -548,6 +561,46 @@ export class Driver {
   endStep(label: string): void {
     this.logs.endStep(label);
     this.network.endStep(label);
+    this.mockHits.clear();
+  }
+
+  // What the mocks did since the step started.
+  get stepMocks(): string[] {
+    return [...this.mockHits];
+  }
+
+  // The mock rules for one tab.
+  rulesFor(tab: Tab): MockRule[] {
+    return this.mocks.filter((r) => !r.tab || r.tab === tab.id || r.tab === tab.name);
+  }
+
+  async addMock(input: MockRuleInput): Promise<MockRule> {
+    const problem = checkRule(input);
+    if (problem) throw new ToolError(problem, 'bad_input');
+    const rule: MockRule = { ...input, id: `m${++this.mockCounter}`, hits: 0 };
+    this.mocks.push(rule);
+    await this.refreshRouters();
+    return rule;
+  }
+
+  // Removes one rule, or all rules without an id. Returns how many it removed.
+  async removeMocks(id?: string): Promise<number> {
+    const before = this.mocks.length;
+    const keep = id ? this.mocks.filter((r) => r.id !== id) : [];
+    this.mocks.splice(0, this.mocks.length, ...keep);
+    await this.refreshRouters();
+    return before - this.mocks.length;
+  }
+
+  private async refreshRouters(): Promise<void> {
+    for (const tab of this.tabs.values()) await this.refreshRouter(tab);
+  }
+
+  // While mocks exist, the cache is off, so every request reaches the rules.
+  // DevTools does the same when it intercepts requests.
+  private async refreshRouter(tab: Tab): Promise<void> {
+    await tab.router?.refresh().catch(() => undefined);
+    await tab.page.setCacheEnabled(this.rulesFor(tab).length === 0).catch(() => undefined);
   }
 
   note(text: string): void {

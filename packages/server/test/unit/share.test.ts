@@ -406,6 +406,64 @@ describe('exportScript', () => {
     expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
   });
 
+  it('repeats mocks with request interception', () => {
+    const at = 'http://localhost:4321/';
+    const mockRun: Run = {
+      ...run,
+      steps: [
+        {
+          id: 'stock',
+          index: 1,
+          title: 'Check stock with a mock',
+          confirm: false,
+          status: 'pass',
+          screenshots: [],
+          mocked: ['GET http://localhost:4321/api/stock?id=mug -> 200 (mock m1)'],
+          actions: [
+            {
+              tab: 'main',
+              action: 'mock',
+              label: 'Mock GET /api/stock -> 200 JSON, all tabs',
+              value: JSON.stringify({
+                id: 'm1',
+                url: '/api/stock',
+                status: 200,
+                json: { inStock: true },
+              }),
+              url: at,
+            },
+            {
+              tab: 'main',
+              action: 'mock',
+              label: 'Mock only in main',
+              value: JSON.stringify({ id: 'm2', url: '/images/*', block: true, tab: 'main' }),
+              url: at,
+            },
+            {
+              tab: 'main',
+              action: 'mock-clear',
+              label: 'Remove the mock m1',
+              value: JSON.stringify({ id: 'm1' }),
+              url: at,
+            },
+            { tab: 'main', action: 'mock-clear', label: 'Remove all mocks', value: '{}', url: at },
+          ],
+        },
+      ],
+    };
+    const code = exportScript(mockRun).code;
+    expect(code).toContain(
+      'await mock({"id":"m1","url":"/api/stock","status":200,"json":{"inStock":true}});',
+    );
+    expect(code).toContain('await mock({"id":"m2","url":"/images/*","block":true}, page);');
+    expect(code).toContain('clearMocks("m1");');
+    expect(code).toContain('clearMocks();');
+    expect(code).toContain('async function watchRequests(target)');
+    const file = join(tempDir('export-mocks'), 'mocks.mjs');
+    writeFileSync(file, code);
+    expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
+  });
+
   it('uses the viewport of a named device', () => {
     const result = exportScript({ ...run, emulation: { device: 'mobile' } });
     expect(result.code).toContain('// Screen: mobile.');

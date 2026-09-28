@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
 import { emulationSchema } from '../browser/emulation-schema.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
+import { mockRuleSchema } from '../devtools/mock-schema.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -142,6 +143,12 @@ export const stepSchema = z
       .min(1)
       .optional()
       .describe('Cookie checks after this step, like [{ name: session, httpOnly: true }].'),
+    mock: z
+      .union([z.literal('off'), z.array(mockRuleSchema).min(1)])
+      .optional()
+      .describe(
+        'Mock rules to add before this step, like [{ url: /api/stock, status: 500 }]. They stay on for later steps. "off" removes all mocks.',
+      ),
     a11y: z
       .union([
         z.literal(true),

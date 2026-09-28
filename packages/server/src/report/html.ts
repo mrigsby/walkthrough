@@ -28,7 +28,7 @@ function image(runDir: string, path: string, alt: string): string {
 function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): string {
   const parts = [
     `<details class="step ${step.status}"${open ? ' open' : ''}>`,
-    `<summary><span class="badge ${step.status}">${esc(STATUS_LABELS[step.status])}</span> Step ${step.index}: ${esc(step.title)}</summary>`,
+    `<summary><span class="badge ${step.status}">${esc(STATUS_LABELS[step.status])}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''} Step ${step.index}: ${esc(step.title)}</summary>`,
     '<dl>',
   ];
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc(step.expect)}</dd>`);
@@ -38,6 +38,11 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
       `<dt>Checked by</dt><dd>${step.checkedBy === 'developer' ? 'The developer' : 'The agent'}</dd>`,
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc(step.notes)}</dd>`);
+  if (step.mocked?.length) {
+    parts.push(
+      `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc(step.mocked.join('; '))}</dd>`,
+    );
+  }
   const a11y = stepAccessibility(run, step);
   if (a11y) parts.push(`<dt>Accessibility</dt><dd>${esc(a11y)}</dd>`);
   parts.push('</dl>');
@@ -67,7 +72,7 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
 const CSS = `
 :root { color-scheme: light dark; --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0; --link: #1d4ed8;
   --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #475569; --blocked: #c2410c;
-  --critical: #7f1d1d; --serious: #b91c1c; }
+  --critical: #7f1d1d; --serious: #b91c1c; --mocked: #6d28d9; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; --link: #93c5fd; } }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -80,7 +85,7 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
 .badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
-.badge.stop { background: var(--stop); }
+.badge.stop { background: var(--stop); } .badge.mocked { background: var(--mocked); }
 .badge.impact-critical { background: var(--critical); } .badge.impact-serious { background: var(--serious); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
 h2 { margin-top: 28px; font-size: 18px; }
 h3 { margin: 12px 0 4px; font-size: 15px; }
@@ -158,7 +163,7 @@ ${problems.length ? `<h2>Bugs and failures</h2>\n${problems.map((s) => stepCard(
 ${run.steps
   .map(
     (s) =>
-      `<tr><td>${s.index}</td><td>${esc(s.title)}</td><td><span class="badge ${s.status}">${esc(STATUS_LABELS[s.status])}</span></td><td>${s.checkedBy === 'developer' ? 'Developer' : s.checkedBy === 'agent' ? 'Agent' : ''}</td><td>${esc(s.notes ?? '')}</td></tr>`,
+      `<tr><td>${s.index}</td><td>${esc(s.title)}</td><td><span class="badge ${s.status}">${esc(STATUS_LABELS[s.status])}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''}</td><td>${s.checkedBy === 'developer' ? 'Developer' : s.checkedBy === 'agent' ? 'Agent' : ''}</td><td>${esc(s.notes ?? '')}</td></tr>`,
   )
   .join('\n')}
 </tbody>

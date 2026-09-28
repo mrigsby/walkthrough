@@ -62,6 +62,7 @@ describe('uiwalk tools', () => {
         'evaluate',
         'init_project',
         'inspect',
+        'intercept',
         'issue_draft',
         'logs',
         'navigate',

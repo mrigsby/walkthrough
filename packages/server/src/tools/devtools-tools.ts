@@ -6,6 +6,7 @@ import type { Tab } from '../browser/driver.js';
 import type { Context } from '../context.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { DEFAULT_PROPERTIES, inspectElement } from '../devtools/inspect.js';
+import { describeRule, type MockRuleInput, mockRuleSchema } from '../devtools/mock-schema.js';
 import {
   checkCookies,
   describeCookie,
@@ -387,6 +388,70 @@ export function registerDevtoolsTools(server: McpServer, ctx: Context): void {
           ancestors: input.ancestors ?? true,
         });
         return untrusted(text);
+      }),
+  );
+
+  server.registerTool(
+    'intercept',
+    {
+      title: 'Mock or block requests',
+      description: [
+        'Answer requests with your own data, block them, or delay them, to test error states, empty states, and slow answers.',
+        'A rule matches by url (like "/api/stock" or "*/images/*"), or urlRegex, and optional method, type, and tab.',
+        'It answers with status, json, body, and headers, or blocks, or waits delayMs first. Rules apply to every tab, and to new tabs, unless tab is set.',
+        'The guard runs first, so a mock never opens a site that is not allowed. Rules end when the browser closes.',
+      ].join(' '),
+      inputSchema: {
+        action: z.enum(['add', 'list', 'remove', 'clear']).default('list'),
+        id: z.string().optional().describe('For remove: the rule id, like "m1".'),
+        ...mockRuleSchema.shape,
+      },
+    },
+    ({ action, id, ...input }) =>
+      runTool(ctx, 'intercept', async () => {
+        const driver = ctx.requireDriver();
+        const tab = driver.activeTab({ allowDialog: true });
+        const keep = (label: string, detail: Record<string, unknown>) =>
+          ctx.actionLog.push({
+            at: new Date().toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: action === 'add' ? 'mock' : 'mock-clear',
+            label,
+            value: JSON.stringify(detail),
+            url: tokenizeUnique(tab.page.url(), ctx.unique),
+          });
+        if (action === 'list') {
+          if (driver.mocks.length === 0) return 'There are no mock rules.';
+          return driver.mocks
+            .map((r) => `${r.id}: ${describeRule(r)}. Used ${r.hits} time(s).`)
+            .join('\n');
+        }
+        if (action === 'remove') {
+          if (!id) throw new ToolError('Give the rule "id", like "m1".', 'bad_input');
+          const removed = await driver.removeMocks(id);
+          if (removed === 0) throw new ToolError(`There is no mock rule "${id}".`, 'not_found');
+          keep(`Remove the mock ${id}`, { id });
+          return `Removed the mock rule ${id}.`;
+        }
+        if (action === 'clear') {
+          const removed = await driver.removeMocks();
+          keep('Remove all mocks', {});
+          return `Removed ${removed} mock rule(s). Requests go to the real server again.`;
+        }
+        const rule = Object.fromEntries(
+          Object.entries(input).filter(([, v]) => v !== undefined),
+        ) as MockRuleInput;
+        const added = await driver.addMock(rule);
+        keep(`Mock ${describeRule(rule)}`, { id: added.id, ...rule });
+        const unknownTab = rule.tab && !driver.tabByRef(rule.tab);
+        return [
+          `Added the mock rule ${added.id}: ${describeRule(rule)}.`,
+          'It applies to the next requests. Reload the page, or do the action again, to see it.',
+          unknownTab ? `No tab "${rule.tab}" is open now. The rule works when one opens.` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
       }),
   );
 }

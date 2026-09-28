@@ -31012,7 +31012,7 @@ var init_BrowsingContextImpl = __esm({
           this.#lifecycle.load.reject(new UnknownErrorException("navigation canceled"));
         }
       }
-      async navigate(url2, wait2) {
+      async navigate(url2, wait3) {
         try {
           new URL(url2);
         } catch {
@@ -31033,7 +31033,7 @@ var init_BrowsingContextImpl = __esm({
         })();
         const result = await Promise.race([
           // No `loaderId` means same-document navigation.
-          this.#waitNavigation(wait2, cdpNavigatePromise, navigationState),
+          this.#waitNavigation(wait3, cdpNavigatePromise, navigationState),
           // Throw an error if the navigation is canceled.
           navigationState.finished
         ]);
@@ -31052,27 +31052,27 @@ var init_BrowsingContextImpl = __esm({
           url: navigationState.url
         };
       }
-      async #waitNavigation(wait2, cdpCommandPromise, navigationState) {
+      async #waitNavigation(wait3, cdpCommandPromise, navigationState) {
         await Promise.all([navigationState.committed, cdpCommandPromise]);
-        if (wait2 === "none") {
+        if (wait3 === "none") {
           return;
         }
         if (navigationState.isFragmentNavigation === true) {
           await navigationState.finished;
           return;
         }
-        if (wait2 === "interactive") {
+        if (wait3 === "interactive") {
           await this.#lifecycle.DOMContentLoaded;
           return;
         }
-        if (wait2 === "complete") {
+        if (wait3 === "complete") {
           await this.#lifecycle.load;
           return;
         }
-        throw new InvalidArgumentException(`Wait condition ${wait2} is not supported`);
+        throw new InvalidArgumentException(`Wait condition ${wait3} is not supported`);
       }
       // TODO: support concurrent navigations analogous to `navigate`.
-      async reload(ignoreCache, wait2) {
+      async reload(ignoreCache, wait3) {
         await this.targetUnblockedOrThrow();
         this.#resetLifecycleIfFinished();
         const navigationState = this.#navigationTracker.createPendingNavigation(this.#navigationTracker.url);
@@ -31081,7 +31081,7 @@ var init_BrowsingContextImpl = __esm({
         });
         const result = await Promise.race([
           // No `loaderId` means same-document navigation.
-          this.#waitNavigation(wait2, cdpReloadPromise, navigationState),
+          this.#waitNavigation(wait3, cdpReloadPromise, navigationState),
           // Throw an error if the navigation is canceled.
           navigationState.finished
         ]);
@@ -36909,11 +36909,11 @@ var init_BrowsingContext = __esm({
             delta
           });
         }
-        async navigate(url2, wait2) {
+        async navigate(url2, wait3) {
           await this.#session.send("browsingContext.navigate", {
             context: this.id,
             url: url2,
-            wait: wait2
+            wait: wait3
           });
         }
         async reload(options = {}) {
@@ -97777,6 +97777,77 @@ var cookieCheckSchema = external_exports.object({
   sameSite: external_exports.enum(["Strict", "Lax", "None"]).optional()
 }).strict();
 
+// packages/server/src/devtools/mock-schema.ts
+var mockRuleSchema = external_exports.object({
+  url: external_exports.string().min(1).optional().describe(
+    'The address to match. "/api/stock" matches the path on any site. A full URL or a pattern with * matches the whole address.'
+  ),
+  urlRegex: external_exports.string().min(1).optional().describe("A regular expression for the whole address."),
+  method: external_exports.string().optional().describe('Only this method, like "POST".'),
+  type: external_exports.string().optional().describe('Only this resource type, like "fetch", "xhr", "document", "image", or "script".'),
+  tab: external_exports.string().optional().describe("Only this tab, by name or id. Default: every tab."),
+  status: external_exports.number().int().min(100).max(599).optional().describe("The status to answer with."),
+  json: external_exports.unknown().optional().describe("A JSON body to answer with."),
+  body: external_exports.string().optional().describe("A text body to answer with."),
+  headers: external_exports.record(external_exports.string(), external_exports.string()).optional().describe("Headers to answer with."),
+  contentType: external_exports.string().optional().describe("The content type. Default: from json or text."),
+  delayMs: external_exports.number().int().min(0).max(6e4).optional().describe("Wait this long first."),
+  block: external_exports.boolean().optional().describe("Fail the request, as if the network blocked it."),
+  times: external_exports.number().int().min(1).optional().describe("Use the rule this many times, then stop.")
+}).strict();
+function globToRegex(glob) {
+  const escaped = glob.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  return new RegExp(`^${escaped}$`);
+}
+function checkRule(rule) {
+  if (!rule.url && !rule.urlRegex) return 'Give "url" or "urlRegex".';
+  if (rule.urlRegex) {
+    try {
+      new RegExp(rule.urlRegex);
+    } catch (error62) {
+      return `"urlRegex" is not a valid regular expression: ${error62.message}`;
+    }
+  }
+  if (rule.json !== void 0 && rule.body !== void 0) return 'Give "json" or "body", not both.';
+  const answers = rule.status !== void 0 || rule.json !== void 0 || rule.body !== void 0 || rule.headers !== void 0;
+  if (rule.block && answers) return "A rule cannot both block and answer.";
+  if (!rule.block && !answers && rule.delayMs === void 0)
+    return 'Say what to do: "block", a "status" or body to answer with, or "delayMs".';
+  return void 0;
+}
+function ruleMatches(rule, request3) {
+  if (rule.method && rule.method.toUpperCase() !== request3.method.toUpperCase()) return false;
+  if (rule.type && rule.type.toLowerCase() !== request3.type.toLowerCase()) return false;
+  if (rule.urlRegex) return new RegExp(rule.urlRegex).test(request3.url);
+  const pattern = rule.url ?? "";
+  if (pattern.startsWith("/")) {
+    let target2 = request3.url;
+    try {
+      const parsed = new URL(request3.url);
+      target2 = pattern.includes("?") ? parsed.pathname + parsed.search : parsed.pathname;
+    } catch {
+    }
+    return globToRegex(pattern).test(target2);
+  }
+  return globToRegex(pattern).test(request3.url);
+}
+function hitText(rule, method, url2) {
+  const what = rule.block ? "blocked" : rule.status !== void 0 || rule.json !== void 0 || rule.body !== void 0 || rule.headers ? String(rule.status ?? 200) : "sent on";
+  return `${method} ${url2} -> ${what}${rule.delayMs ? ` after ${rule.delayMs} ms` : ""} (mock ${rule.id})`;
+}
+function describeRule(rule) {
+  const what = rule.block ? "blocked" : rule.status !== void 0 || rule.json !== void 0 || rule.body !== void 0 || rule.headers ? `${rule.status ?? 200}${rule.json !== void 0 ? " JSON" : rule.body !== void 0 ? " text" : ""}` : "continue";
+  const parts = [
+    `${rule.method?.toUpperCase() ?? "any method"} ${rule.url ?? `/${rule.urlRegex}/`}`,
+    rule.type ? `(${rule.type})` : "",
+    `-> ${what}`,
+    rule.delayMs ? `after ${rule.delayMs} ms` : "",
+    rule.times ? `, ${rule.times} time(s)` : "",
+    rule.tab ? `, tab ${rule.tab}` : ", all tabs"
+  ];
+  return parts.filter(Boolean).join(" ").replace(/ ,/g, ",");
+}
+
 // packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
 var target = external_exports.object({
@@ -97853,6 +97924,9 @@ var stepSchema = external_exports.object({
     "Settings for the tab of this step, like { device: mobile }. They apply before the step."
   ),
   cookies: external_exports.array(cookieCheckSchema).min(1).optional().describe("Cookie checks after this step, like [{ name: session, httpOnly: true }]."),
+  mock: external_exports.union([external_exports.literal("off"), external_exports.array(mockRuleSchema).min(1)]).optional().describe(
+    'Mock rules to add before this step, like [{ url: /api/stock, status: 500 }]. They stay on for later steps. "off" removes all mocks.'
+  ),
   a11y: external_exports.union([
     external_exports.literal(true),
     external_exports.object({
@@ -107023,13 +107097,13 @@ function panelMain(opts, candidates) {
   };
   if (document.documentElement) start();
   else {
-    const wait2 = new MutationObserver(() => {
+    const wait3 = new MutationObserver(() => {
       if (document.documentElement) {
-        wait2.disconnect();
+        wait3.disconnect();
         start();
       }
     });
-    wait2.observe(document, { childList: true });
+    wait3.observe(document, { childList: true });
   }
 }
 
@@ -107489,6 +107563,81 @@ function describeEmulation(emulation, onlySet = false) {
   return parts.join(", ");
 }
 
+// packages/server/src/browser/fetch-router.ts
+var wait = (ms) => new Promise((resolve11) => setTimeout(resolve11, ms));
+var FetchRouter = class _FetchRouter {
+  constructor(cdp, mainFrameId, options) {
+    this.cdp = cdp;
+    this.mainFrameId = mainFrameId;
+    this.options = options;
+  }
+  cdp;
+  mainFrameId;
+  options;
+  static async install(page, options) {
+    try {
+      const cdp = await page.createCDPSession();
+      const { frameTree } = await cdp.send("Page.getFrameTree");
+      const router = new _FetchRouter(cdp, frameTree.frame.id, options);
+      cdp.on("Fetch.requestPaused", (event) => {
+        router.onPaused(event).catch(() => void 0);
+      });
+      await router.refresh();
+      return router;
+    } catch (error62) {
+      log.warn("could not turn on the request router for a tab", error62);
+      return void 0;
+    }
+  }
+  // Page loads always pass through here, for the guard. Other requests only while mocks exist.
+  async refresh() {
+    const patterns = [
+      { urlPattern: "*", resourceType: "Document", requestStage: "Request" }
+    ];
+    if (this.options.rules().length > 0)
+      patterns.push({ urlPattern: "*", requestStage: "Request" });
+    await this.cdp.send("Fetch.enable", { patterns });
+  }
+  async onPaused(event) {
+    const { requestId, request: request3, frameId, resourceType } = event;
+    const cdp = this.cdp;
+    if (resourceType === "Document" && frameId === this.mainFrameId && !this.options.isAllowed(request3.url)) {
+      this.options.onBlocked(request3.url);
+      await cdp.send("Fetch.fulfillRequest", { requestId, responseCode: 204, body: "" });
+      return;
+    }
+    const info = { url: request3.url, method: request3.method, type: resourceType };
+    const rule = this.options.rules().find((r) => (r.times === void 0 || r.hits < r.times) && ruleMatches(r, info));
+    if (!rule) {
+      await cdp.send("Fetch.continueRequest", { requestId });
+      return;
+    }
+    rule.hits += 1;
+    this.options.onHit(rule, request3);
+    if (rule.delayMs) await wait(rule.delayMs);
+    if (rule.block) {
+      await cdp.send("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" });
+      return;
+    }
+    const answers = rule.status !== void 0 || rule.json !== void 0 || rule.body !== void 0 || rule.headers !== void 0;
+    if (!answers) {
+      await cdp.send("Fetch.continueRequest", { requestId });
+      return;
+    }
+    const body = rule.json !== void 0 ? JSON.stringify(rule.json) : rule.body ?? "";
+    const contentType = rule.contentType ?? (rule.json !== void 0 ? "application/json" : "text/plain; charset=utf-8");
+    const headers2 = Object.entries({ "content-type": contentType, ...rule.headers }).map(
+      ([name, value]) => ({ name, value })
+    );
+    await cdp.send("Fetch.fulfillRequest", {
+      requestId,
+      responseCode: rule.status ?? 200,
+      responseHeaders: headers2,
+      body: Buffer.from(body).toString("base64")
+    });
+  }
+};
+
 // packages/server/src/browser/launch.ts
 import { mkdtempSync, rmSync as rmSync4 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
@@ -107530,37 +107679,14 @@ function removeProfile(dir) {
   } catch {
   }
 }
-var wait = (ms) => new Promise((resolve11) => setTimeout(resolve11, ms));
+var wait2 = (ms) => new Promise((resolve11) => setTimeout(resolve11, ms));
 async function killChrome(browser) {
   const proc = browser.process();
   if (!proc || proc.exitCode !== null) return;
   const exited = new Promise((resolve11) => proc.once("exit", resolve11));
-  await Promise.race([browser.close().catch(() => void 0), wait(1500)]);
+  await Promise.race([browser.close().catch(() => void 0), wait2(1500)]);
   if (proc.exitCode === null) proc.kill("SIGKILL");
-  await Promise.race([exited, wait(2e3)]);
-}
-
-// packages/server/src/browser/navigation-guard.ts
-async function guardNavigation(page, isAllowed, onBlocked) {
-  try {
-    const cdp = await page.createCDPSession();
-    const { frameTree } = await cdp.send("Page.getFrameTree");
-    const mainFrameId = frameTree.frame.id;
-    cdp.on("Fetch.requestPaused", (event) => {
-      const { requestId, request: request3, frameId } = event;
-      const blocked = frameId === mainFrameId && !isAllowed(request3.url);
-      const reply = blocked ? cdp.send("Fetch.fulfillRequest", { requestId, responseCode: 204, body: "" }) : cdp.send("Fetch.continueRequest", { requestId });
-      if (blocked) onBlocked(request3.url);
-      reply.catch(() => void 0);
-    });
-    await cdp.send("Fetch.enable", {
-      patterns: [{ urlPattern: "*", resourceType: "Document", requestStage: "Request" }]
-    });
-    return cdp;
-  } catch (error62) {
-    log.warn("could not turn on the navigation guard for a tab", error62);
-    return void 0;
-  }
+  await Promise.race([exited, wait2(2e3)]);
 }
 
 // packages/server/src/browser/driver.ts
@@ -107593,6 +107719,11 @@ var Driver = class _Driver {
   defaultEmulation = {};
   // Cookie jars by login name. "main" is the browser's own.
   logins = /* @__PURE__ */ new Map();
+  // Mock rules for requests, in order. The first match wins.
+  mocks = [];
+  mockCounter = 0;
+  // What the mocks did in the current step.
+  mockHits = /* @__PURE__ */ new Set();
   userAgent = "";
   activeId;
   dialogPolicy;
@@ -107744,13 +107875,16 @@ var Driver = class _Driver {
     this.logs.attach(page, tab.id);
     this.network.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
-    tab.cdp = await guardNavigation(
-      page,
-      (url3) => this.options.isAllowed(url3),
-      (url3) => this.note(
+    tab.router = await FetchRouter.install(page, {
+      isAllowed: (url3) => this.options.isAllowed(url3),
+      onBlocked: (url3) => this.note(
         `Walkthrough blocked the tab from opening ${url3}, because that site is not allowed.`
-      )
-    );
+      ),
+      rules: () => this.rulesFor(tab),
+      onHit: (rule, request3) => this.mockHits.add(hitText(rule, request3.method, scrubUrl(request3.url)))
+    });
+    tab.cdp = tab.router?.cdp;
+    if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
     if (tab.cdp) {
       tab.cdp.on("Audits.issueAdded", ({ issue: issue3 }) => {
         const found = describeIssue(issue3);
@@ -107982,6 +108116,40 @@ var Driver = class _Driver {
   endStep(label) {
     this.logs.endStep(label);
     this.network.endStep(label);
+    this.mockHits.clear();
+  }
+  // What the mocks did since the step started.
+  get stepMocks() {
+    return [...this.mockHits];
+  }
+  // The mock rules for one tab.
+  rulesFor(tab) {
+    return this.mocks.filter((r) => !r.tab || r.tab === tab.id || r.tab === tab.name);
+  }
+  async addMock(input3) {
+    const problem = checkRule(input3);
+    if (problem) throw new ToolError(problem, "bad_input");
+    const rule = { ...input3, id: `m${++this.mockCounter}`, hits: 0 };
+    this.mocks.push(rule);
+    await this.refreshRouters();
+    return rule;
+  }
+  // Removes one rule, or all rules without an id. Returns how many it removed.
+  async removeMocks(id) {
+    const before = this.mocks.length;
+    const keep = id ? this.mocks.filter((r) => r.id !== id) : [];
+    this.mocks.splice(0, this.mocks.length, ...keep);
+    await this.refreshRouters();
+    return before - this.mocks.length;
+  }
+  async refreshRouters() {
+    for (const tab of this.tabs.values()) await this.refreshRouter(tab);
+  }
+  // While mocks exist, the cache is off, so every request reaches the rules.
+  // DevTools does the same when it intercepts requests.
+  async refreshRouter(tab) {
+    await tab.router?.refresh().catch(() => void 0);
+    await tab.page.setCacheEnabled(this.rulesFor(tab).length === 0).catch(() => void 0);
   }
   note(text) {
     this.notes.push(text);
@@ -111325,7 +111493,7 @@ function image(runDir, path14, alt) {
 function stepCard(run, runDir, step, open4) {
   const parts = [
     `<details class="step ${step.status}"${open4 ? " open" : ""}>`,
-    `<summary><span class="badge ${step.status}">${esc2(STATUS_LABELS[step.status])}</span> Step ${step.index}: ${esc2(step.title)}</summary>`,
+    `<summary><span class="badge ${step.status}">${esc2(STATUS_LABELS[step.status])}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""} Step ${step.index}: ${esc2(step.title)}</summary>`,
     "<dl>"
   ];
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc2(step.expect)}</dd>`);
@@ -111335,6 +111503,11 @@ function stepCard(run, runDir, step, open4) {
       `<dt>Checked by</dt><dd>${step.checkedBy === "developer" ? "The developer" : "The agent"}</dd>`
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc2(step.notes)}</dd>`);
+  if (step.mocked?.length) {
+    parts.push(
+      `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc2(step.mocked.join("; "))}</dd>`
+    );
+  }
   const a11y = stepAccessibility(run, step);
   if (a11y) parts.push(`<dt>Accessibility</dt><dd>${esc2(a11y)}</dd>`);
   parts.push("</dl>");
@@ -111363,7 +111536,7 @@ function stepCard(run, runDir, step, open4) {
 var CSS3 = `
 :root { color-scheme: light dark; --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0; --link: #1d4ed8;
   --pass: #15803d; --bug: #b91c1c; --fail: #b91c1c; --skip: #64748b; --stop: #a16207; --pending: #475569; --blocked: #c2410c;
-  --critical: #7f1d1d; --serious: #b91c1c; }
+  --critical: #7f1d1d; --serious: #b91c1c; --mocked: #6d28d9; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --card: #111827; --fg: #e5e7eb; --muted: #94a3b8; --line: #1f2937; --link: #93c5fd; } }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -111376,7 +111549,7 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #ffffff; font-size: 12px; font-weight: 600; }
 .badge.pass { background: var(--pass); } .badge.bug, .badge.fail { background: var(--bug); } .badge.skip { background: var(--skip); }
-.badge.stop { background: var(--stop); }
+.badge.stop { background: var(--stop); } .badge.mocked { background: var(--mocked); }
 .badge.impact-critical { background: var(--critical); } .badge.impact-serious { background: var(--serious); } .badge.impact-moderate { background: var(--stop); } .badge.impact-minor { background: var(--skip); } .badge.pending { background: var(--pending); } .badge.blocked { background: var(--blocked); }
 h2 { margin-top: 28px; font-size: 18px; }
 h3 { margin: 12px 0 4px; font-size: 15px; }
@@ -111446,7 +111619,7 @@ ${problems.map((s) => stepCard(run, runDir, s, true)).join("\n")}` : ""}
 <thead><tr><th scope="col">#</th><th scope="col">Step</th><th scope="col">Result</th><th scope="col">Checked by</th><th scope="col">Notes</th></tr></thead>
 <tbody>
 ${run.steps.map(
-    (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(STATUS_LABELS[s.status])}</span></td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
+    (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(STATUS_LABELS[s.status])}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""}</td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
   ).join("\n")}
 </tbody>
 </table>
@@ -111467,6 +111640,8 @@ function stepDetails(run, step, withRepro) {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === "developer" ? "the developer" : "the agent"}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  if (step.mocked?.length)
+    out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join("; ")}`);
   const a11y = stepAccessibility(run, step);
   if (a11y) out.push(`- **Accessibility:** ${a11y}`);
   out.push("");
@@ -111676,6 +111851,7 @@ function recordResult(ctx, ref, result) {
     const full = isAbsolute7(result.screenshot) ? result.screenshot : join25(store.projectDir, result.screenshot);
     step.screenshots.push(relative7(store.dir, full));
   }
+  if (result.mocked?.length) step.mocked = [.../* @__PURE__ */ new Set([...step.mocked ?? [], ...result.mocked])];
   for (const file2 of result.files ?? []) {
     const full = isAbsolute7(file2) ? file2 : join25(store.projectDir, file2);
     step.files = [...step.files ?? [], relative7(store.dir, full)];
@@ -111724,7 +111900,7 @@ function timings(entry) {
   const t = entry.timing;
   if (!t) return { blocked: -1, dns: -1, connect: -1, ssl: -1, send: 0, wait: total, receive: 0 };
   const span = (start, end) => start >= 0 && end >= 0 ? end - start : -1;
-  const wait2 = span(t.sendEnd, t.receiveHeadersEnd);
+  const wait3 = span(t.sendEnd, t.receiveHeadersEnd);
   const before = Math.max(0, t.sendEnd);
   return {
     blocked: -1,
@@ -111732,8 +111908,8 @@ function timings(entry) {
     connect: span(t.connectStart, t.connectEnd),
     ssl: span(t.sslStart, t.sslEnd),
     send: Math.max(0, span(t.sendStart, t.sendEnd)),
-    wait: Math.max(0, wait2),
-    receive: Math.max(0, total - before - Math.max(0, wait2))
+    wait: Math.max(0, wait3),
+    receive: Math.max(0, total - before - Math.max(0, wait3))
   };
 }
 function toHar(entries, secrets) {
@@ -111947,6 +112123,7 @@ function registerDeveloperTools(server, ctx) {
       const label = question.stepId ?? question.title;
       const stepLogs = driver.logs.currentStep();
       const stepRequests = driver.network.currentStep();
+      const mocked = driver.stepMocks;
       driver.endStep(label);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
       const extraContent = [];
@@ -112007,6 +112184,7 @@ function registerDeveloperTools(server, ctx) {
           notes: answer.note,
           screenshot: record2.screenshot,
           files: record2.files,
+          mocked,
           logs: stepLogs
         }
       );
@@ -112123,13 +112301,18 @@ function stepList(plan, mode) {
       describeCapture(plan, step),
       step.visual ? "visual check" : "",
       step.a11y ? describeA11y(step) : "",
-      step.cookies ? "cookie check" : ""
+      step.cookies ? "cookie check" : "",
+      step.mock ? "mock" : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
     if (step.expect) lines.push(`   Expect: ${step.expect}`);
     if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
     if (step.cookies)
       lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join("; ")}`);
+    if (step.mock)
+      lines.push(
+        `   Mock: ${step.mock === "off" ? "off (remove all mocks)" : step.mock.map(describeRule).join("; ")}`
+      );
     const hint = describeAction(step);
     if (hint) lines.push(`   Action: ${hint}`);
     return lines.join("\n");
@@ -112275,7 +112458,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-        '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail.',
+        '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail. For a "mock" step, call intercept with action add for each rule before the step. For "Mock: off", call intercept with action clear.',
         "6. When every step has a result, or the developer says stop, call run_finish.",
         ""
       ];
@@ -112314,6 +112497,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       const tab = driver.activeTab();
       const stepLogs = driver.logs.currentStep();
       const stepRequests = driver.network.currentStep();
+      const mocked = driver.stepMocks;
       driver.endStep(stepId ?? title ?? `step-${step}`);
       const lines = [];
       const extra = [];
@@ -112342,6 +112526,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           notes,
           screenshot: shotPath,
           files,
+          mocked,
           logs: stepLogs
         }
       );
@@ -113678,6 +113863,63 @@ function registerDevtoolsTools(server, ctx) {
       return untrusted(text);
     })
   );
+  server.registerTool(
+    "intercept",
+    {
+      title: "Mock or block requests",
+      description: [
+        "Answer requests with your own data, block them, or delay them, to test error states, empty states, and slow answers.",
+        'A rule matches by url (like "/api/stock" or "*/images/*"), or urlRegex, and optional method, type, and tab.',
+        "It answers with status, json, body, and headers, or blocks, or waits delayMs first. Rules apply to every tab, and to new tabs, unless tab is set.",
+        "The guard runs first, so a mock never opens a site that is not allowed. Rules end when the browser closes."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["add", "list", "remove", "clear"]).default("list"),
+        id: external_exports.string().optional().describe('For remove: the rule id, like "m1".'),
+        ...mockRuleSchema.shape
+      }
+    },
+    ({ action: action2, id, ...input3 }) => runTool(ctx, "intercept", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab({ allowDialog: true });
+      const keep = (label, detail) => ctx.actionLog.push({
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        tabId: tab.id,
+        tab: tab.name,
+        action: action2 === "add" ? "mock" : "mock-clear",
+        label,
+        value: JSON.stringify(detail),
+        url: tokenizeUnique(tab.page.url(), ctx.unique)
+      });
+      if (action2 === "list") {
+        if (driver.mocks.length === 0) return "There are no mock rules.";
+        return driver.mocks.map((r) => `${r.id}: ${describeRule(r)}. Used ${r.hits} time(s).`).join("\n");
+      }
+      if (action2 === "remove") {
+        if (!id) throw new ToolError('Give the rule "id", like "m1".', "bad_input");
+        const removed = await driver.removeMocks(id);
+        if (removed === 0) throw new ToolError(`There is no mock rule "${id}".`, "not_found");
+        keep(`Remove the mock ${id}`, { id });
+        return `Removed the mock rule ${id}.`;
+      }
+      if (action2 === "clear") {
+        const removed = await driver.removeMocks();
+        keep("Remove all mocks", {});
+        return `Removed ${removed} mock rule(s). Requests go to the real server again.`;
+      }
+      const rule = Object.fromEntries(
+        Object.entries(input3).filter(([, v2]) => v2 !== void 0)
+      );
+      const added = await driver.addMock(rule);
+      keep(`Mock ${describeRule(rule)}`, { id: added.id, ...rule });
+      const unknownTab = rule.tab && !driver.tabByRef(rule.tab);
+      return [
+        `Added the mock rule ${added.id}: ${describeRule(rule)}.`,
+        "It applies to the next requests. Reload the page, or do the action again, to see it.",
+        unknownTab ? `No tab "${rule.tab}" is open now. The rule works when one opens.` : ""
+      ].filter(Boolean).join("\n");
+    })
+  );
 }
 function headerLines(headers2, show) {
   return Object.entries(headers2 ?? {}).map(
@@ -114776,6 +115018,7 @@ async function openTab(name, login) {
   const tab = await logins[login].newPage();
   tab.setDefaultTimeout(10_000);
   tab.on('dialog', answerDialog);
+  if (typeof watchRequests === 'function') await watchRequests(tab);
   tabs[name] = tab;
   return tab;
 }
@@ -114789,6 +115032,7 @@ async function popupOf(opener) {
   const tab = await target.page();
   tab.setDefaultTimeout(10_000);
   tab.on('dialog', answerDialog);
+  if (typeof watchRequests === 'function') await watchRequests(tab);
   return tab;
 }
 `;
@@ -114883,6 +115127,21 @@ function pageChangeCode(action2, gen) {
     }
     case "storage":
       return storageCode(value, gen);
+    case "mock": {
+      gen.needs.mocks = true;
+      const { tab, ...rule } = value;
+      if (typeof tab !== "string") return [`await mock(${JSON.stringify(rule)});`];
+      if (!gen.known.has(tab))
+        return [
+          `// Fix by hand: this mock is only for the tab "${tab}", which the script does not know.`
+        ];
+      const target2 = tab === gen.current ? "page" : `tabs[${js(tab)}]`;
+      return [`await mock(${JSON.stringify(rule)}, ${target2});`];
+    }
+    case "mock-clear": {
+      gen.needs.mocks = true;
+      return [typeof value.id === "string" ? `clearMocks(${js(value.id)});` : "clearMocks();"];
+    }
     case "emulate": {
       const { allTabs, ...change } = value;
       gen.needs.emulate = true;
@@ -114945,6 +115204,72 @@ async function deleteCookies(match = {}) {
     if (match.path && cookie.path !== match.path) continue;
     await context.deleteCookie(cookie);
   }
+}
+`;
+var MOCK_HELPERS = `
+// Mocked, blocked, and slow requests, like the run had. The first rule that matches wins.
+const MOCKS = [];
+const watchedPages = new WeakSet();
+
+// True when the text matches the pattern. * stands for any text.
+function globMatch(glob, text) {
+  const parts = glob.split('*');
+  if (parts.length === 1) return text === glob;
+  if (!text.startsWith(parts[0])) return false;
+  let at = parts[0].length;
+  for (const part of parts.slice(1, -1)) {
+    const found = text.indexOf(part, at);
+    if (found < 0) return false;
+    at = found + part.length;
+  }
+  const last = parts.at(-1);
+  return text.length - last.length >= at && text.endsWith(last);
+}
+
+function mockMatches(rule, request, target) {
+  if (rule.only && rule.only !== target) return false;
+  if (rule.times !== undefined && rule.hits >= rule.times) return false;
+  if (rule.method && rule.method.toUpperCase() !== request.method().toUpperCase()) return false;
+  if (rule.type && rule.type.toLowerCase() !== request.resourceType()) return false;
+  if (rule.urlRegex) return new RegExp(rule.urlRegex).test(request.url());
+  if (rule.url.startsWith('/')) {
+    const url = new URL(request.url());
+    return globMatch(rule.url, rule.url.includes('?') ? url.pathname + url.search : url.pathname);
+  }
+  return globMatch(rule.url, request.url());
+}
+
+async function watchRequests(target) {
+  if (watchedPages.has(target)) return;
+  watchedPages.add(target);
+  await target.setRequestInterception(true);
+  target.on('request', async (request) => {
+    const rule = MOCKS.find((r) => mockMatches(r, request, target));
+    if (!rule) return void request.continue();
+    rule.hits += 1;
+    if (rule.delayMs) await new Promise((resolve) => setTimeout(resolve, rule.delayMs));
+    if (rule.block) return void request.abort('blockedbyclient');
+    const answers = rule.status !== undefined || rule.json !== undefined || rule.body !== undefined || rule.headers;
+    if (!answers) return void request.continue();
+    return void request.respond({
+      status: rule.status ?? 200,
+      headers: rule.headers ?? {},
+      contentType: rule.contentType ?? (rule.json !== undefined ? 'application/json' : 'text/plain; charset=utf-8'),
+      body: rule.json !== undefined ? JSON.stringify(rule.json) : (rule.body ?? ''),
+    });
+  });
+}
+
+// Adds a rule. "only" limits it to one tab.
+async function mock(rule, only) {
+  MOCKS.push({ ...rule, only, hits: 0 });
+  for (const target of await browser.pages()) await watchRequests(target);
+}
+
+// Removes one rule, or all rules.
+function clearMocks(id) {
+  const keep = id ? MOCKS.filter((r) => r.id !== id) : [];
+  MOCKS.splice(0, MOCKS.length, ...keep);
 }
 `;
 var SITE_DATA_HELPER = `
@@ -115173,7 +115498,8 @@ function exportScript(run, options = {}) {
     emulate: false,
     tabs: false,
     cookies: false,
-    siteData: false
+    siteData: false,
+    mocks: false
   };
   const gen = {
     needs,
@@ -115338,7 +115664,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${needs.emulate ? EMULATE_HELPER : ""}${needs.cookies ? COOKIE_HELPERS : ""}${needs.siteData ? SITE_DATA_HELPER : ""}${hasShots ? captureHelpers([...secretFields]) : ""}
+${needs.emulate ? EMULATE_HELPER : ""}${needs.cookies ? COOKIE_HELPERS : ""}${needs.mocks ? MOCK_HELPERS : ""}${needs.siteData ? SITE_DATA_HELPER : ""}${hasShots ? captureHelpers([...secretFields]) : ""}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 
@@ -115387,6 +115713,9 @@ function draftIssue(run, step, options) {
     `- Page: ${step.actions.at(-1)?.url ?? run.baseUrl ?? "unknown"}`,
     ...run.chrome ? [`- Browser: ${run.chrome}`] : [],
     ...run.setup ? [`- Setup: ${run.setup}`] : [],
+    ...step.mocked?.length ? [
+      `- Mocked: the step used answers from mock rules, not from the server: ${step.mocked.join("; ")}`
+    ] : [],
     `- Found by: Walkthrough ${VERSION}, run \`${run.id}\`, step ${step.index}`
   ];
   const files = options.files ?? [];

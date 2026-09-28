@@ -10,6 +10,7 @@ Walkthrough opens only the sites in `allowedOrigins` in `.walkthrough/config.yam
 - A click on a link to another site does not leave the page. Walkthrough stops the page load and tells the agent.
 - A new tab that opens on another site is cleared.
 - Frames inside the page, such as a payment form, can come from other sites. Walkthrough does not block them.
+- Mock rules from the `intercept` tool cannot open a site that is not allowed. The guard checks each page load before any rule.
 
 To test a staging server, add it to the list, such as `https://*.staging.example.com`. Do not add production sites unless you mean to test them.
 

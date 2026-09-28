@@ -6,6 +6,7 @@ import { CHECKS } from '../audit/standards.js';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
+import { describeRule } from '../devtools/mock-schema.js';
 import { ToolError } from '../errors.js';
 import { checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
@@ -141,6 +142,7 @@ function stepList(plan: Plan, mode: Mode): string {
         step.visual ? 'visual check' : '',
         step.a11y ? describeA11y(step) : '',
         step.cookies ? 'cookie check' : '',
+        step.mock ? 'mock' : '',
       ]
         .filter(Boolean)
         .join(', ');
@@ -149,6 +151,10 @@ function stepList(plan: Plan, mode: Mode): string {
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       if (step.cookies)
         lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join('; ')}`);
+      if (step.mock)
+        lines.push(
+          `   Mock: ${step.mock === 'off' ? 'off (remove all mocks)' : step.mock.map(describeRule).join('; ')}`,
+        );
       const hint = describeAction(step);
       if (hint) lines.push(`   Action: ${hint}`);
       return lines.join('\n');
@@ -325,7 +331,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
-          '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail.',
+          '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail. For a "mock" step, call intercept with action add for each rule before the step. For "Mock: off", call intercept with action clear.',
           '6. When every step has a result, or the developer says stop, call run_finish.',
           '',
         ];
@@ -373,6 +379,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const tab = driver.activeTab();
         const stepLogs = driver.logs.currentStep();
         const stepRequests = driver.network.currentStep();
+        const mocked = driver.stepMocks;
         driver.endStep(stepId ?? title ?? `step-${step}`);
 
         const lines: string[] = [];
@@ -402,6 +409,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             notes,
             screenshot: shotPath,
             files,
+            mocked,
             logs: stepLogs,
           },
         );
