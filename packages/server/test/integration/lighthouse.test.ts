@@ -129,8 +129,16 @@ describe.skipIf(!installed)('lighthouse', () => {
     const next = /runId "([^"]+)"/.exec(reply.text)?.[1] as string;
     const first = await reportFor(next);
     expect(first).toContain(`Compared with the report of run ${runId}`);
-    for (const f of before.findings as Array<{ id: string; audit: string }>)
-      expect(first).toContain(`${f.id} [`);
+    type Finding = { id: string; audit: string };
+    const after = JSON.parse(readFileSync(join(runDir(next), 'lighthouse.json'), 'utf8'));
+    // Timing audits can pass in one run and fail in the next. An issue in both keeps its ID.
+    for (const f of after.findings as Finding[]) {
+      const old = (before.findings as Finding[]).find((b) => b.audit === f.audit);
+      if (old) expect(f.id, f.audit).toBe(old.id);
+    }
+    // Issues that do not depend on timing are in both reports.
+    for (const audit of ['image-alt', 'errors-in-console'])
+      expect((after.findings as Finding[]).map((f) => f.audit)).toContain(audit);
   }, 150_000);
 
   it('makes a report page that passes axe in light and dark mode', async () => {

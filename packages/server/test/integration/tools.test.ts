@@ -104,6 +104,7 @@ describe('uiwalk tools', () => {
     expect(reply.text).toMatch(/browser_open/);
   });
 
+  // The first Chrome start on a busy CI machine has taken up to 30 seconds.
   it('opens the base URL and outlines the page', async () => {
     const open = await mcp.call('browser_open');
     expect(open.isError, open.text).toBe(false);
@@ -115,7 +116,7 @@ describe('uiwalk tools', () => {
     expect(outline).toMatch(/\[e\d+\] button "Add to cart"/);
     // The cap image has no alt text. The outline must say it is there.
     expect(outline).toContain('1 visible image has no alt text');
-  });
+  }, 60_000);
 
   it('logs in with a secret that the agent never sees', async () => {
     await mcp.call('navigate', { url: '/login' });
