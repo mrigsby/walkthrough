@@ -55,7 +55,9 @@ export function draftIssue(
     ...files.map((f) =>
       f.endsWith('.har')
         ? `- \`${f}\` (the network requests. Zip the file if GitHub does not take it.)`
-        : `- \`${f}\` (drag the file into this issue)`,
+        : /\.(gif|mp4|webm)$/i.test(f)
+          ? `- \`${f}\` (a video of the seconds before the bug. Drag the file into this issue.)`
+          : `- \`${f}\` (drag the file into this issue)`,
     ),
   ];
 

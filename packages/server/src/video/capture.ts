@@ -1,9 +1,8 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { CDPSession, ElementHandle, Protocol } from 'puppeteer-core';
+import type { CDPSession, Protocol } from 'puppeteer-core';
 import type { Driver } from '../browser/driver.js';
-import { maskSecretFields } from '../evidence/annotate.js';
 import type { Rect } from '../panel/controller.js';
 import type { CaptureFrame, TimelineEvent } from './timeline.js';
 
@@ -14,6 +13,8 @@ const MIN_GAP_MS = 33;
 export interface CaptureOptions {
   maxWidth: number;
   showPanel: boolean;
+  // For the bug clip buffer: pictures older than this many milliseconds go away.
+  keepMs?: number;
 }
 
 // Records the active tab with Chrome's screencast, and follows it to other tabs.
@@ -27,7 +28,9 @@ export class VideoCapture {
   caption = '';
   private session?: { tabId: string; cdp: CDPSession };
   private hiddenTabs = new Set<string>();
-  private restores: Array<() => Promise<void>> = [];
+  private count = 0;
+  // While a clip is made, old pictures stay.
+  private holds = 0;
   private work: Promise<void> = Promise.resolve();
   private readonly onActive = (id?: string) => {
     this.work = this.work.then(() => this.follow(id)).catch(() => undefined);
@@ -43,8 +46,6 @@ export class VideoCapture {
   }
 
   async start(): Promise<void> {
-    // Secrets that are already typed stay hidden while Walkthrough records.
-    this.restores.push(await maskSecretFields(this.driver.secretFields));
     this.driver.emitter.on('active-changed', this.onActive);
     this.onActive(this.driver.activeId);
     await this.work;
@@ -95,7 +96,8 @@ export class VideoCapture {
       writeFileSync(join(this.dir, last.file), data);
       return;
     }
-    const file = `${String(this.frames.length).padStart(6, '0')}.jpg`;
+    this.count += 1;
+    const file = `${String(this.count).padStart(6, '0')}.jpg`;
     writeFileSync(join(this.dir, file), data);
     this.frames.push({
       file,
@@ -104,6 +106,35 @@ export class VideoCapture {
       width: event.metadata.deviceWidth ?? 0,
       height: event.metadata.deviceHeight ?? 0,
     });
+    this.prune(now);
+  }
+
+  // Removes old pictures. The newest picture before the kept time stays,
+  // because it shows the page at the start of that time.
+  private prune(now: number): void {
+    const keep = this.options.keepMs;
+    if (keep === undefined || this.holds > 0) return;
+    while (this.frames.length > 1 && (this.frames[1] as CaptureFrame).t < now - keep) {
+      const old = this.frames.shift() as CaptureFrame;
+      try {
+        unlinkSync(join(this.dir, old.file));
+      } catch {}
+    }
+  }
+
+  // The time that the pictures cover now.
+  get since(): number {
+    return Math.max(this.startedAt, Date.now() - (this.options.keepMs ?? Date.now()));
+  }
+
+  // Keeps all pictures while work reads them.
+  async hold<T>(work: () => Promise<T>): Promise<T> {
+    this.holds += 1;
+    try {
+      return await work();
+    } finally {
+      this.holds -= 1;
+    }
   }
 
   // An action on an element. The video moves the pointer there and marks clicks.
@@ -132,11 +163,6 @@ export class VideoCapture {
     this.events.push({ type: 'question', t: Date.now(), open });
   }
 
-  // Hides a field before a secret goes in, until the recording stops.
-  async maskSecret(handle: ElementHandle): Promise<void> {
-    this.restores.push(await maskSecretFields([handle]));
-  }
-
   // Stops recording. The pictures stay until discard.
   async stop(): Promise<void> {
     if (!this.recording) return;
@@ -152,8 +178,6 @@ export class VideoCapture {
     for (const tabId of this.hiddenTabs) {
       await this.driver.panel?.suppress(tabId, false, 'video').catch(() => undefined);
     }
-    for (const restore of this.restores) await restore().catch(() => undefined);
-    this.restores = [];
   }
 
   discard(): void {

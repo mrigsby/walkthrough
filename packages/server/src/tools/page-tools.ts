@@ -12,6 +12,7 @@ import { formatState, readElement } from '../page/read.js';
 import { stableSelector } from '../page/selectors.js';
 import { buildSnapshot } from '../page/snapshot.js';
 import { waitFor } from '../page/wait.js';
+import { videoHooks } from '../video/recording.js';
 import { runTool, textResult } from './util.js';
 
 const refField = z.string().optional().describe('Element ref from the last snapshot, like "e12".');
@@ -88,7 +89,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
             secrets: await ctx.secrets(),
             log: ctx.actionLog,
             unique: ctx.unique,
-            video: ctx.video?.capture.recording ? ctx.video.capture : undefined,
+            video: videoHooks(ctx),
           },
           input,
         );

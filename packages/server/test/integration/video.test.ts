@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findFfmpeg } from '../../src/downloads/ffmpeg.js';
 import { freePort, startDemoServer } from '../helpers/demo-server.js';
 import { startClient } from '../helpers/mcp.js';
-import { panelHidden } from '../helpers/panel.js';
+import { clickPanel, panelHidden, typeNotes, waitForPanel } from '../helpers/panel.js';
 import { tempDir } from '../helpers/temp.js';
 
 // Video recording: formats, privacy, long GIFs, whole runs, and the ffmpeg fallback.
@@ -174,6 +174,84 @@ describe('video', () => {
     const report = readFileSync(join(runDir, 'report.html'), 'utf8');
     expect(report).toContain('<video controls preload="metadata" src="video/run.webm"');
     expect(readFileSync(join(runDir, 'report.md'), 'utf8')).toContain('[video/run.webm]');
+  }, 120_000);
+});
+
+describe('bug clips and slideshows', () => {
+  const runFolder = (text: string) => join(project, /Run folder: (\S+)/.exec(text)?.[1] as string);
+
+  it('saves a clip of the seconds before a failed step, and issue_draft lists it', async () => {
+    const start = await mcp.call('run_start', { name: 'Bug clip run', mode: 'autonomous' });
+    const runDir = runFolder(start.text);
+    await mcp.call('navigate', { url: '/' });
+    await mcp.call('act', { action: 'click', selector: '[data-add="mug"]' });
+    await mcp.call('navigate', { url: '/cart' });
+    const failed = await mcp.call(
+      'run_step',
+      { title: 'Check the total', status: 'fail', actual: 'The total is wrong.' },
+      { timeoutMs: 120_000 },
+    );
+    const seconds = Number(/Video of the last (\d+) seconds: (\S+)/.exec(failed.text)?.[1]);
+    expect(seconds).toBeGreaterThan(0);
+    expect(seconds).toBeLessThanOrEqual(15);
+    const clip = join(runDir, 'video', 'bug-check-the-total.gif');
+    expect(MAGIC.gif?.(readFileSync(clip))).toBe(true);
+    const draft = await mcp.call('issue_draft', { runId: runDir.split(/[/\\]/).pop() });
+    expect(draft.text).toContain('bug-check-the-total.gif');
+    expect(draft.text).toContain('a video of the seconds before the bug');
+    expect(draft.text).toMatch(/\.har/);
+    await mcp.call('run_finish');
+    expect(readFileSync(join(runDir, 'report.html'), 'utf8')).toContain(
+      '<img src="video/bug-check-the-total.gif"',
+    );
+  }, 120_000);
+
+  it('saves a clip when the developer marks a bug in the panel', async () => {
+    const start = await mcp.call('run_start', { name: 'Panel bug run', mode: 'interactive' });
+    const runDir = runFolder(start.text);
+    await mcp.call('navigate', { url: '/' });
+    await mcp.call('act', { action: 'click', selector: '[data-add="shirt"]' });
+    const reply = mcp.call(
+      'ask_developer',
+      {
+        title: 'Add the shirt',
+        didWhat: 'I clicked Add to cart on the shirt.',
+        expected: 'The cart count goes up.',
+        stepId: 'add-shirt',
+      },
+      { timeoutMs: 120_000 },
+    );
+    await waitForPanel(page, 'Add the shirt');
+    await clickPanel(page, 'bug');
+    await waitForPanel(page, 'Describe the bug in the notes');
+    await typeNotes(page, 'The count did not change.');
+    await clickPanel(page, 'bug');
+    const result = await reply;
+    expect(result.text).toMatch(/^status: bug/);
+    expect(result.text).toMatch(/Video of the last \d+ seconds: .*bug-add-shirt\.gif/);
+    expect(existsSync(join(runDir, 'video', 'bug-add-shirt.gif'))).toBe(true);
+    await mcp.call('run_finish');
+  }, 120_000);
+
+  it('makes a slideshow of the screenshots of a run', async () => {
+    const start = await mcp.call('run_start', { name: 'Slides', mode: 'autonomous' });
+    const runDir = runFolder(start.text);
+    await mcp.call('navigate', { url: '/' });
+    await mcp.call('run_step', { title: 'The shop', status: 'pass', screenshot: true });
+    await mcp.call('navigate', { url: '/help.html' });
+    await mcp.call('run_step', { title: 'The help page', status: 'pass', screenshot: true });
+    await mcp.call('run_finish');
+    const slides = await mcp.call(
+      'video',
+      { action: 'slideshow', runId: runDir.split(/[/\\]/).pop() },
+      { timeoutMs: 120_000 },
+    );
+    expect(slides.isError, slides.text).toBe(false);
+    expect(slides.text).toContain('It shows 2 screenshot(s) from the run "Slides".');
+    expect(slides.images).toBe(1);
+    expect(MAGIC.gif?.(readFileSync(join(runDir, 'video', 'slideshow.gif')))).toBe(true);
+    const run = JSON.parse(readFileSync(join(runDir, 'run.json'), 'utf8'));
+    expect(run.videos.map((v: { name: string }) => v.name)).toContain('slideshow');
   }, 120_000);
 });
 

@@ -18,6 +18,9 @@ export interface Sample {
 export interface EncodeJob {
   format: VideoFormat;
   width: number;
+  // A fixed height, like for a slideshow of pictures in many sizes.
+  // Without it, the first picture sets the shape of the video.
+  height?: number;
   samples: Sample[];
   frameUrl: string;
   outUrl: string;

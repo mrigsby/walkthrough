@@ -10,6 +10,7 @@ import { newUnique } from './page/unique.js';
 import { adhocEvidenceDir } from './project-files.js';
 import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
+import type { VideoCapture } from './video/capture.js';
 import type { VideoRecording } from './video/recording.js';
 
 // Shared state for all tools in one server.
@@ -28,6 +29,11 @@ export class Context {
   lhFlow?: LhFlow;
   // The video that is recording, or one that stopped but is not saved yet.
   video?: VideoRecording;
+  // The bug clip buffer of the run that is going.
+  ring?: VideoCapture;
+  forgetRing?: () => void;
+  // Fields hidden while anything records. They show again when all recordings stop.
+  videoMasks: Array<() => Promise<void>> = [];
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
 
   constructor(

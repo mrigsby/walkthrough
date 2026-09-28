@@ -139,7 +139,7 @@ async function drawSample(
   const dy = (h - dh) / 2;
   g.drawImage(bitmap, dx, dy, dw, dh);
   // CSS pixels to video pixels.
-  const k = dw / sample.width;
+  const k = sample.width ? dw / sample.width : 1;
   const size = Math.max(14, Math.round(h * 0.03));
   if (sample.ripple)
     drawRipple(g, dx + sample.ripple.x * k, dy + sample.ripple.y * k, sample.ripple.p, size);
@@ -153,8 +153,8 @@ async function encode(job: EncodeJob): Promise<EncodeResult> {
   const first = job.samples[0];
   if (!first) throw new Error('The recording has no frames.');
   const firstPicture = await picture(job, first.file);
-  const w = even(Math.min(job.width, firstPicture.width));
-  const h = even((firstPicture.height * w) / firstPicture.width);
+  const w = even(job.height ? job.width : Math.min(job.width, firstPicture.width));
+  const h = even(job.height ?? (firstPicture.height * w) / firstPicture.width);
   const canvas = new OffscreenCanvas(w, h);
   const g = canvas.getContext('2d', { willReadFrequently: job.format === 'gif' }) as Ctx2D;
 

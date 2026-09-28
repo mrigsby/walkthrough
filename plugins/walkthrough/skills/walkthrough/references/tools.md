@@ -39,17 +39,17 @@ All tools come from the `uiwalk` MCP server.
 | `a11y_scan` | Check one page or a list of pages, and save the results in a run with `report.html`. |
 | `a11y_report` | Get the findings of a run, then write `accessibility.html`, `.md`, and `.json` from your text. |
 | `lighthouse` | Check pages with Lighthouse (performance, best practices, SEO), each in its own hidden Chrome with a copy of the login. During a run, `navigate`, `start` and `end`, and `snapshot` measure flow steps in the active tab. `status` shows whether it is installed. |
-| `video` | `start` records the active tab, `caption` sets the text at the bottom, and `stop` saves an MP4, WebM, or GIF (with `format` and `path`). Wait time is cut, and the panel and typed secrets are hidden. |
+| `video` | `start` records the active tab, `caption` sets the text at the bottom, and `stop` saves an MP4, WebM, or GIF (with `format` and `path`). `slideshow` makes a video of a run's screenshots. Wait time is cut, and the panel and typed secrets are hidden. |
 | `lighthouse_report` | Get the Lighthouse findings of a run, then write `lighthouse.html`, `.md`, and `.json` from your text. |
 
 ## Developer and runs
 
 | Tool | Use it to |
 | --- | --- |
-| `ask_developer` | Show a step in the browser panel and wait for Pass, Bug, Skip, or Stop. |
+| `ask_developer` | Show a step in the browser panel and wait for Pass, Bug, Skip, or Stop. On Bug, it saves a screenshot, a HAR file, and a video of the last seconds. |
 | `plan` | `list`, `show`, `validate`, or `save` test plans. |
 | `run_start` | Start a run from a plan, or an ad hoc run with a `name`. |
-| `run_step` | Record a step that you checked yourself: `pass`, `fail`, `skip`, or `blocked`. |
+| `run_step` | Record a step that you checked yourself: `pass`, `fail`, `skip`, or `blocked`. On fail or blocked, it saves a screenshot, a HAR file, and a video of the last seconds. |
 | `run_finish` | Finish the run and write the reports. With `runId`, write an older run's reports again. |
 | `runs` | List recent runs. |
 

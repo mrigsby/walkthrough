@@ -72,6 +72,9 @@ export async function encodeVideo(options: {
   // The file to write. Its extension matches the format.
   outFile: string;
   title?: string;
+  // A fixed size, like for a slideshow. The default width comes from config.yaml.
+  width?: number;
+  height?: number;
 }): Promise<EncodeOutput> {
   const { config, format, outFile } = options;
   const token = randomBytes(16).toString('hex');
@@ -84,9 +87,9 @@ export async function encodeVideo(options: {
       res.end(page);
       return;
     }
-    const frame = new RegExp(`^/${token}/frames/(\\d+\\.jpg)$`).exec(url);
+    const frame = new RegExp(`^/${token}/frames/(\\d+\\.(jpg|jpeg|png|webp))$`).exec(url);
     if (req.method === 'GET' && frame?.[1] && existsSync(join(options.framesDir, frame[1]))) {
-      res.setHeader('content-type', 'image/jpeg');
+      res.setHeader('content-type', `image/${frame[2] === 'jpg' ? 'jpeg' : frame[2]}`);
       createReadStream(join(options.framesDir, frame[1])).pipe(res);
       return;
     }
@@ -108,7 +111,8 @@ export async function encodeVideo(options: {
 
   const job: EncodeJob = {
     format,
-    width: format === 'gif' ? config.video.gifWidth : config.video.width,
+    width: options.width ?? (format === 'gif' ? config.video.gifWidth : config.video.width),
+    height: options.height,
     samples: options.samples,
     frameUrl: `${base}/frames/`,
     outUrl: `${base}/out`,

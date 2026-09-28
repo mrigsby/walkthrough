@@ -161,7 +161,7 @@ Shows a step in the panel and waits for your answer.
 | `step`, `total`, `stepId` | The step number, the number of steps, and the step id in a plan. |
 | `resume` | Keep waiting for the question that is already in the panel. |
 
-The reply starts with `status:` and then `pass`, `bug`, `skip`, `stop`, `waiting`, `use_chat`, or `canceled`. On `bug`, Walkthrough saves a screenshot, the errors from the step, and a HAR file with the network requests of the step.
+The reply starts with `status:` and then `pass`, `bug`, `skip`, `stop`, `waiting`, `use_chat`, or `canceled`. On `bug`, Walkthrough saves a screenshot, the errors from the step, and a HAR file with the network requests of the step. During a run, it also saves a video of the last seconds before the bug. See [Bug clips](#bug-clips).
 
 ## Test plans and runs
 
@@ -175,7 +175,7 @@ Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interacti
 
 ### `run_step`
 
-Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), and `actual` for a failure. On a failure, it saves a screenshot, the errors, and a HAR file with the network requests of the step.
+Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), and `actual` for a failure. On a failure, it saves a screenshot, the errors, a HAR file with the network requests of the step, and a video of the last seconds. See [Bug clips](#bug-clips).
 
 ### `run_finish`
 
@@ -319,12 +319,13 @@ Records the active tab as a video. The video follows the active tab to other tab
 
 | Parameter | What it does |
 | --- | --- |
-| `action` | `start` begins recording. `caption` sets the text at the bottom. `stop` saves the video. `status` shows what is recording. |
+| `action` | `start` begins recording. `caption` sets the text at the bottom. `stop` saves the video. `status` shows what is recording. `slideshow` makes a video of the screenshots of a run. |
 | `name` | A name for the file, such as `checkout`. |
 | `text` | For `caption`: the text. An empty text removes the caption. |
-| `format` | For `stop`: `mp4`, `webm`, or `gif`. The default comes from the `path`, then from `video.runFormat` in `config.yaml`. |
-| `path` | For `stop`: also save the video to this file, such as `docs/images/cart.gif`. The same rules as screenshot paths apply. |
+| `format` | For `stop` and `slideshow`: `mp4`, `webm`, or `gif`. The default comes from the `path`, then from `video.runFormat` in `config.yaml`. A slideshow is a GIF by default. |
+| `path` | For `stop` and `slideshow`: also save the video to this file, such as `docs/images/cart.gif`. The same rules as screenshot paths apply. |
 | `showPanel` | For `start`: show the Walkthrough panel in the video. |
+| `runId` | For `slideshow`: the run. The default is the run that is going, or the newest run. |
 
 - Walkthrough cuts each wait, such as the agent thinking, to `video.idleSeconds` (1 second). It cuts the time that a question waits in the panel.
 - The video draws the mouse pointer and marks each click. Captions show at the bottom. During a run, the captions are the step titles, or the step's `caption` key.
@@ -332,6 +333,15 @@ Records the active tab as a video. The video follows the active tab to other tab
 - A hidden Chrome encodes the video. MP4 needs a Chrome that can make H.264. Without it, Walkthrough makes WebM and converts it with ffmpeg. When ffmpeg is missing, the video stays WebM, and the reply gives the install command.
 - A GIF can be up to `video.maxGifSeconds` long (60 seconds). For a longer one, `stop` refuses and keeps the recording, so you can call `stop` again with `mp4` or `webm`.
 - Without a run, videos go in `.walkthrough/runs/adhoc-<day>/video/`. During a run, they go in the `video/` folder of the run, and the report shows them.
+- A slideshow starts with a title card that shows the run name. Then it shows each screenshot of the run for 2 seconds, with the step title as the caption. It goes in `video/slideshow.<format>`.
+
+#### Bug clips
+
+During a run, Walkthrough keeps the last 3 minutes of the active tab in a temp folder. When a step fails or is blocked, or you mark a bug in the panel, Walkthrough cuts the wait time from those minutes. It then saves the last `video.replaySeconds` (15) seconds as `video/bug-<step>.<format>`. The format comes from `video.bugFormat` (GIF). The step card in the report shows the clip, and `issue_draft` lists it with the other files.
+
+- The panel stays in bug clips, because you use it during the run. Walkthrough hides typed secrets.
+- A run that records a whole video gets its bug clips from that video.
+- `video.replaySeconds: 0` turns bug clips off. Walkthrough then keeps nothing.
 
 ### `record`
 

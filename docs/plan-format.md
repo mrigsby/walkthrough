@@ -315,7 +315,7 @@ Each run gets a folder in `.walkthrough/runs/`. It holds:
 - `a11y/`: screenshots of accessibility problems.
 - `lighthouse.html`, `lighthouse.md`, `lighthouse.json`: the Lighthouse report, when the agent writes one.
 - `lighthouse/`: Lighthouse's own reports, including `flow.report.html` for a flow.
-- `video/`: videos of the run, such as `run.mp4`.
+- `video/`: videos of the run, such as `run.mp4`, bug clips such as `bug-check-total.gif`, and `slideshow.gif`.
 
 If a run ends early, Walkthrough still writes the reports and marks the run "Incomplete".
 

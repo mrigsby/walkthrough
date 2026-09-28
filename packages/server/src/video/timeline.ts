@@ -240,3 +240,15 @@ export function buildSamples(
   }
   return out;
 }
+
+// The end of a video: the last "seconds" seconds. The first picture gets shorter to fit.
+export function lastSeconds(samples: Sample[], seconds: number): Sample[] {
+  const out = samples.map((s) => ({ ...s }));
+  let total = out.reduce((sum, s) => sum + s.duration, 0);
+  while (out.length > 1 && total - (out[0] as Sample).duration >= seconds) {
+    total -= (out.shift() as Sample).duration;
+  }
+  const first = out[0];
+  if (first && total > seconds) first.duration -= total - seconds;
+  return out;
+}

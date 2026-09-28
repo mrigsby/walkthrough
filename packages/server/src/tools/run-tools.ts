@@ -30,9 +30,9 @@ import {
 import { nextStepHint, recordResult } from '../run/record.js';
 import { needsConfirm, RunStore } from '../run/run-store.js';
 import { chooseFormat } from '../video/formats.js';
-import { startVideo, stopVideo } from '../video/recording.js';
+import { startRing, startVideo, stopRing, stopVideo } from '../video/recording.js';
 import { openBrowser } from './browser-tools.js';
-import { bugHar, bugScreenshot } from './developer-tools.js';
+import { bugHar, bugScreenshot, clipLine } from './developer-tools.js';
 import { type Content, runTool, textResult } from './util.js';
 
 // Writes report.md and report.html in the run folder, with secrets hidden.
@@ -397,7 +397,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         });
         const lh = ctx.run.run.lhPlan;
 
+        // A whole-run video gives the bug clips. Otherwise a buffer keeps the last minutes.
+        await stopRing(ctx);
         if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
+        else await startRing(ctx);
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
           ...(videoPlan ? ['Walkthrough records this run as a video. run_finish saves it.'] : []),
@@ -492,6 +495,11 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             files.push(har);
             lines.push(`Network requests (HAR): ${har}`);
           }
+          const clip = await clipLine(ctx, stepId ?? title ?? `step-${step ?? 'step'}`);
+          if (clip) {
+            if (clip.file) files.push(clip.file);
+            lines.push(clip.line);
+          }
         }
         const recorded = recordResult(
           ctx,
@@ -550,6 +558,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
               notes.push(`Walkthrough did not save the video: ${(error as Error).message}`);
             }
           }
+          await stopRing(ctx);
           store.finish(summary);
           ctx.run = undefined;
         } else if (summary) {

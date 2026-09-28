@@ -8,7 +8,7 @@ import type { OriginGuard } from '../guards/origins.js';
 import { checkUploadPath } from '../guards/paths.js';
 import { MASK, type SecretStore } from '../guards/secrets.js';
 import { trace } from '../log.js';
-import type { VideoCapture } from '../video/capture.js';
+import type { VideoHooks } from '../video/recording.js';
 import { stableSelector } from './selectors.js';
 import { tokenizeUnique, withUnique } from './unique.js';
 
@@ -103,8 +103,8 @@ export interface ActContext {
   log: ActionRecord[];
   // The value of {{unique}} for this run.
   unique: string;
-  // The video that is recording, if any.
-  video?: VideoCapture;
+  // The recordings that watch the page, if any.
+  video?: VideoHooks;
 }
 
 // Finds the element from a ref (preferred) or a selector.

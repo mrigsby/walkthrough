@@ -5,6 +5,7 @@ import {
   type CaptureFrame,
   captionTimes,
   END_HOLD,
+  lastSeconds,
   type TimelineEvent,
   TimeMap,
 } from '../../src/video/timeline.js';
@@ -86,6 +87,22 @@ describe('video timeline', () => {
     expect(map.length).toBe(2000);
     expect(map.toReal(500)).toBe(500);
     expect(map.toVideo(6500)).toBeGreaterThan(1000);
+  });
+});
+
+describe('bug clips', () => {
+  it('keeps only the last seconds, and cuts the first picture to fit', () => {
+    const samples = [5, 10, 3, 4].map((duration, i) => ({
+      file: String(i),
+      duration,
+      width: 1,
+      height: 1,
+    }));
+    const clip = lastSeconds(samples, 15);
+    expect(clip.map((s) => s.file)).toEqual(['1', '2', '3']);
+    expect(clip[0]?.duration).toBe(8);
+    expect(length(clip)).toBe(15);
+    expect(lastSeconds(samples, 60)).toHaveLength(4);
   });
 });
 

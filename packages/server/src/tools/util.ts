@@ -3,6 +3,7 @@ import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
 import { log } from '../log.js';
+import { liveCaptures } from '../video/recording.js';
 
 export type Content = CallToolResult['content'][number];
 
@@ -34,7 +35,7 @@ export async function runTool(
       result = { content: [{ type: 'text', text: message }], isError: true };
     }
 
-    if (PAGE_TOOLS.has(name) && ctx.video?.capture.recording) ctx.video.capture.activity(began);
+    if (PAGE_TOOLS.has(name)) for (const capture of liveCaptures(ctx)) capture.activity(began);
 
     // Add things that happened in the browser, like dialogs and new tabs.
     const notes = ctx.driver?.drainNotes() ?? [];

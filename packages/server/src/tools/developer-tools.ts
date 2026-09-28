@@ -14,6 +14,7 @@ import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
 import { nextStepHint, recordResult } from '../run/record.js';
+import { bugClip, liveCaptures } from '../video/recording.js';
 import { type Content, runTool, textResult } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
@@ -85,6 +86,29 @@ function startProgress(extra: Extra): () => void {
 
 function questionText(q: { title: string; didWhat: string; expected: string }): string {
   return `Step: ${q.title}\nWhat I did: ${q.didWhat}\nWhat you should see: ${q.expected}`;
+}
+
+// Saves a video of the last seconds before a bug, when the run records them.
+export async function clipLine(
+  ctx: Context,
+  stepId: string,
+): Promise<{ file: string; line: string } | undefined> {
+  const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+  if (!store) return undefined;
+  try {
+    const clip = await bugClip(ctx, store, stepId);
+    return clip
+      ? {
+          file: clip.file,
+          line: `Video of the last ${Math.round(clip.seconds)} seconds: ${clip.file}`,
+        }
+      : undefined;
+  } catch (error) {
+    return {
+      file: '',
+      line: `Walkthrough could not save a video of the bug: ${(error as Error).message}`,
+    };
+  }
 }
 
 export function registerDeveloperTools(server: McpServer, ctx: Context): void {
@@ -169,14 +193,14 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         const stopProgress = startProgress(extra);
         // A video leaves out the time that the question is open.
         // After a timeout the question stays in the panel, so it is still open.
-        const video = ctx.video?.capture.recording ? ctx.video.capture : undefined;
-        video?.question(true);
+        const captures = liveCaptures(ctx);
+        for (const capture of captures) capture.question(true);
         let outcome: Awaited<ReturnType<typeof panel.waitForAnswer>> | undefined;
         try {
           outcome = await panel.waitForAnswer(timeoutSec * 1000, extra.signal);
         } finally {
           stopProgress();
-          if (outcome?.kind !== 'timeout') video?.question(false);
+          if (outcome?.kind !== 'timeout') for (const capture of captures) capture.question(false);
         }
 
         switch (outcome.kind) {
@@ -232,6 +256,11 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           if (har) {
             record.files = [har];
             lines.push(`Network requests (HAR): ${har}`);
+          }
+          const clip = await clipLine(ctx, question.stepId ?? question.title);
+          if (clip) {
+            if (clip.file) record.files = [...(record.files ?? []), clip.file];
+            lines.push(clip.line);
           }
           lines.push(
             'Errors and failed requests during this step:',

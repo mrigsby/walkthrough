@@ -59,6 +59,15 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
   }
   for (const shot of step.screenshots)
     parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
+  // Bug clips play in the card. The files stay next to the report.
+  for (const clip of (step.files ?? []).filter((f) => /\.(gif|mp4|webm)$/i.test(f))) {
+    const label = `Video of the seconds before the bug in step ${step.index}`;
+    parts.push(
+      /\.gif$/i.test(clip)
+        ? `<img src="${esc(clip)}" alt="${esc(label)}">`
+        : `<video controls preload="metadata" src="${esc(clip)}" aria-label="${esc(label)}"></video>`,
+    );
+  }
   if (step.files?.length) {
     parts.push(
       '<h3>Files</h3><ul>',

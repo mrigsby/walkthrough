@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { VIDEO_FORMATS } from '../video/formats.js';
-import { startVideo, stopVideo } from '../video/recording.js';
+import { slideshow, startVideo, stopVideo } from '../video/recording.js';
 import { writeReports } from './run-tools.js';
 import { type Content, runTool, textResult } from './util.js';
 
@@ -16,9 +16,10 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
         'Record the active tab as a video: MP4, WebM, or GIF. Actions: start records, caption sets the text at the bottom, and stop saves the file.',
         'Walkthrough cuts wait time short, draws the pointer and clicks, and hides the panel and typed secrets.',
         'During a run, the video belongs to the run, and step titles become captions.',
+        'slideshow makes a video of the screenshots of a run, with the step titles as captions.',
       ].join(' '),
       inputSchema: {
-        action: z.enum(['start', 'stop', 'status', 'caption']),
+        action: z.enum(['start', 'stop', 'status', 'caption', 'slideshow']),
         name: z.string().max(60).optional().describe('A name for the file, like "checkout".'),
         text: z
           .string()
@@ -28,17 +29,25 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
         format: z
           .enum(VIDEO_FORMATS)
           .optional()
-          .describe('For stop: mp4, webm, or gif. The default comes from path, then config.yaml.'),
+          .describe(
+            'For stop and slideshow: mp4, webm, or gif. The default comes from path, then config.yaml. A slideshow is a GIF by default.',
+          ),
         path: z
           .string()
           .optional()
           .describe(
-            'For stop: also save the video to this file, from the project folder, like "docs/images/cart.gif".',
+            'For stop and slideshow: also save the video to this file, from the project folder, like "docs/images/cart.gif".',
           ),
         showPanel: z
           .boolean()
           .optional()
           .describe('For start: show the Walkthrough panel in the video.'),
+        runId: z
+          .string()
+          .optional()
+          .describe(
+            'For slideshow: the run. The default is the run that is going, or the newest run.',
+          ),
       },
     },
     (input) =>
@@ -81,17 +90,17 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
             'Call video with action stop to save it.',
           ].join('\n');
         }
-        const saved = await stopVideo(ctx, {
-          format: input.format,
-          path: input.path,
-          name: input.name,
-        });
+        const saved =
+          input.action === 'slideshow'
+            ? await slideshow(ctx, { runId: input.runId, format: input.format, path: input.path })
+            : await stopVideo(ctx, { format: input.format, path: input.path, name: input.name });
         // A run that already ended gets its reports again, with the video.
         if (saved.store && saved.store.run.status !== 'running')
           writeReports(saved.store, await ctx.secrets());
-        const extra: Content[] = saved.preview
-          ? [{ type: 'image', data: saved.preview, mimeType: 'image/jpeg' }]
-          : [];
+        const extra: Content[] =
+          saved.preview && saved.previewType
+            ? [{ type: 'image', data: saved.preview, mimeType: saved.previewType }]
+            : [];
         return textResult(saved.lines.join('\n'), extra);
       }),
   );
