@@ -27,7 +27,24 @@ Goes to a `url` or a path, or does `back`, `forward`, or `reload` with `action`.
 
 ### `tabs`
 
-With `action`: `list` the tabs, `switch` to a tab, or `close` a tab. Give the tab `id`, such as `t2`. Other tools work on the active tab.
+Lists, opens, switches, and closes tabs. Other tools work on the active tab.
+
+| `action` | What it does |
+| --- | --- |
+| `list` | Lists the tabs with their id, name, login, and settings. This is the default. |
+| `new` | Opens a new tab. It becomes the active tab. |
+| `switch` | Makes a tab the active tab. |
+| `close` | Closes a tab. |
+
+| Parameter | What it does |
+| --- | --- |
+| `id` | For `switch` and `close`: a tab id such as `t2`, a tab name, or `newest` for the tab that opened last. |
+| `url` | For `new`: the page to open. |
+| `name` | For `new` and `switch`: a name for the tab, such as `customer`. Plans use names. |
+| `isolated` | For `new`: `true` gives the tab a new login of its own, with its own cookies and storage, like a private window. A name, such as `customer`, gives it a login that other tabs with the same name share. Without it, the tab uses the main login. |
+| `session` | For `new`: a saved login to load into the tab. |
+
+Use a separate login to test two users at the same time, such as an admin and a customer. In a visible Chrome, a separate login opens in its own window. A tab that a page opens, such as a link with `target="_blank"`, gets the login and the settings of the tab that opened it. A separate login ends when its last tab closes.
 
 ### `dialog`
 
@@ -126,11 +143,27 @@ Lists recent runs with their results. `limit` is 10 by default.
 
 ### `emulate`
 
-Sets the `device` (`desktop`, `laptop`, `tablet`, `mobile`, `default`, or a Puppeteer device name such as `Pixel 5`), the `colorScheme` (`light`, `dark`, or `system`), and the `network` (`normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`). The settings apply to all tabs.
+Changes the settings of the active tab. With `allTabs: true`, it changes every tab and the tabs that open later. Without settings, it shows the settings of the active tab.
+
+| Parameter | What it does |
+| --- | --- |
+| `device` | `desktop`, `laptop`, `tablet`, `mobile`, `default`, or a Puppeteer device name such as `Pixel 5`. |
+| `colorScheme` | `light`, `dark`, or `system`. |
+| `network` | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
+| `cpu` | Makes the CPU slower by this factor, such as `4`. `1` is normal speed. |
+| `timezone` | A time zone such as `Europe/Berlin`, or `system`. |
+| `locale` | A language and region such as `de-DE`, or `system`. It changes date and number formats and the `Accept-Language` header. |
+| `geolocation` | A place such as `{ latitude: 52.52, longitude: 13.4 }`. It also allows location for the login. `off` blocks location. |
+| `reducedMotion` | `reduce`, `no-preference`, or `system`. |
+| `media` | `screen` or `print`. |
+| `permissions` | `{ geolocation, notifications, clipboard }`, each `grant`, `deny`, or `prompt`. |
+| `allTabs` | Change every tab, and the tabs that open later. |
+
+Permissions belong to a login, so they apply to every tab of the same login.
 
 ### `session`
 
-With `action`: `save` the login of the open sites with a `name`, `list` the saved logins, or `delete` one.
+With `action`: `save` the login of the active tab with a `name`, `list` the saved logins, or `delete` one. `browser_open`, `tabs` (action `new`), and plans can load a saved login.
 
 ### `visual_check`
 

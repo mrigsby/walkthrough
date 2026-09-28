@@ -58,7 +58,9 @@ async function snap(): Promise<string> {
 describe('devices', () => {
   it('emulates a phone in dark mode, then goes back', async () => {
     const reply = await mcp.call('emulate', { device: 'mobile', colorScheme: 'dark' });
-    expect(reply.text).toContain('Now: device: mobile, color scheme: dark, network: normal.');
+    expect(reply.text).toContain(
+      'Tab t1 now: device: mobile, color scheme: dark, network: normal.',
+    );
     expect(reply.text).toMatch(/Reloaded t1/);
     const phone = await withPage((p) =>
       p.evaluate(() => ({

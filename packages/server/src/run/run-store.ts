@@ -12,6 +12,7 @@ import { join, relative, sep } from 'node:path';
 import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
 import type { KeyboardResult } from '../audit/keyboard.js';
 import { CHECKS, type CheckName } from '../audit/standards.js';
+import type { Emulation } from '../browser/emulation-schema.js';
 import { ToolError } from '../errors.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
@@ -64,8 +65,8 @@ export interface Run {
   summary?: string;
   // Screen, color scheme, network, and saved login used for the run.
   setup?: string;
-  // The screen and color scheme, for exported scripts.
-  emulation?: { device?: string; colorScheme?: string };
+  // The settings of the first tab, for exported scripts.
+  emulation?: Emulation;
   // The value that {{unique}} had in this run.
   unique?: string;
   steps: RunStep[];

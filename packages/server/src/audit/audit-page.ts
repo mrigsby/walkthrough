@@ -66,7 +66,7 @@ export async function auditPage(
     engine: result.engine,
     standard: request.standard,
     tags: request.tags,
-    colorScheme: driver.emulation.colorScheme ?? 'system',
+    colorScheme: tab.emulation.colorScheme ?? 'system',
     viewport: viewport ? `${viewport.width}x${viewport.height}` : 'window size',
     checks: {},
   };
@@ -75,7 +75,7 @@ export async function auditPage(
     check.checks.framesNotChecked = result.framesNotChecked;
   }
   if (wants('darkMode') && check.checks) {
-    const dark = await checkDarkMode(driver, tab, {
+    const dark = await checkDarkMode(tab, {
       frameAllowed: wants('frames') ? (url) => guard.isAllowed(url) : undefined,
       clean,
     });

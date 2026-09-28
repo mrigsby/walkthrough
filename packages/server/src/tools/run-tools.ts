@@ -50,6 +50,24 @@ function describeAction(step: PlanStep): string | undefined {
   const [kind, value] = Object.entries(step.action)[0] ?? [];
   if (!kind) return undefined;
   if (typeof value === 'string') return `${kind} "${value}"`;
+  if (kind === 'switchTab') {
+    const to = value as { tab: string; name?: string };
+    return `switchTab "${to.tab}"${to.name ? `, and name it "${to.name}"` : ''}`;
+  }
+  if (kind === 'newTab') {
+    const tab = value as NonNullable<NonNullable<PlanStep['action']>['newTab']>;
+    const parts = [
+      tab.name ? `named "${tab.name}"` : '',
+      tab.isolated === true
+        ? 'with a new login of its own'
+        : tab.isolated
+          ? `with the login "${tab.isolated}"`
+          : '',
+      tab.session ? `with the saved login "${tab.session}"` : '',
+      tab.url ? `at ${tab.url}` : '',
+    ].filter(Boolean);
+    return `newTab${parts.length ? ` ${parts.join(', ')}` : ''}`;
+  }
   const t = value as {
     role?: string;
     name?: string;
@@ -113,6 +131,7 @@ function stepList(plan: Plan, mode: Mode): string {
         .join(', ');
       const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
       if (step.expect) lines.push(`   Expect: ${step.expect}`);
+      if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       const hint = describeAction(step);
       if (hint) lines.push(`   Action: ${hint}`);
       return lines.join('\n');
@@ -250,7 +269,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
 
         // A new {{unique}} value for each run.
         ctx.unique = newUnique();
-        const emulation: Emulation = {};
+        const emulation: Emulation = { ...plan?.emulate };
         if (plan?.device) emulation.device = plan.device;
         if (plan?.colorScheme) emulation.colorScheme = plan.colorScheme;
         if (plan?.network) emulation.network = plan.network;
@@ -272,11 +291,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           planFile: loaded?.file,
           baseUrl,
           chrome: driver.chromeVersion,
-          setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
-          emulation: {
-            device: driver.emulation.device,
-            colorScheme: driver.emulation.colorScheme,
-          },
+          setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
+          emulation: { ...opened.tab.emulation },
           unique: ctx.unique,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
         });
@@ -288,7 +304,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           HOW_TO[mode],
           '',
           'For each step:',
-          '1. Do what the step says. If it has an Action, use it.',
+          '1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.',
           '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',

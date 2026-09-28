@@ -19479,10 +19479,10 @@ var init_BrowserContext2 = __esm({
         });
       }
       async overridePermissions(origin, permissions) {
-        const protocolPermissions = permissions.map((permission) => {
-          const protocolPermission = WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(permission);
+        const protocolPermissions = permissions.map((permission2) => {
+          const protocolPermission = WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(permission2);
           if (!protocolPermission) {
-            throw new Error("Unknown permission: " + permission);
+            throw new Error("Unknown permission: " + permission2);
           }
           return protocolPermission;
         });
@@ -19493,19 +19493,19 @@ var init_BrowserContext2 = __esm({
         });
       }
       async setPermission(origin, ...permissions) {
-        await Promise.all(permissions.map(async (permission) => {
+        await Promise.all(permissions.map(async (permission2) => {
           const protocolPermission = {
-            name: permission.permission.name,
-            userVisibleOnly: permission.permission.userVisibleOnly,
-            sysex: permission.permission.sysex,
-            allowWithoutSanitization: permission.permission.allowWithoutSanitization,
-            panTiltZoom: permission.permission.panTiltZoom
+            name: permission2.permission.name,
+            userVisibleOnly: permission2.permission.userVisibleOnly,
+            sysex: permission2.permission.sysex,
+            allowWithoutSanitization: permission2.permission.allowWithoutSanitization,
+            panTiltZoom: permission2.permission.panTiltZoom
           };
           await this.#connection.send("Browser.setPermission", {
             origin: origin === "*" ? void 0 : origin,
             browserContextId: this.#id || void 0,
             permission: protocolPermission,
-            setting: permission.state
+            setting: permission2.state
           });
         }));
       }
@@ -41561,24 +41561,24 @@ var init_BrowserContext3 = __esm({
           });
         }
         async overridePermissions(origin, permissions) {
-          const permissionsSet = new Set(permissions.map((permission) => {
-            const protocolPermission = WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(permission);
+          const permissionsSet = new Set(permissions.map((permission2) => {
+            const protocolPermission = WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(permission2);
             if (!protocolPermission) {
-              throw new Error("Unknown permission: " + permission);
+              throw new Error("Unknown permission: " + permission2);
             }
-            return permission;
+            return permission2;
           }));
-          await Promise.all(Array.from(WEB_PERMISSION_TO_PROTOCOL_PERMISSION.keys()).map((permission) => {
+          await Promise.all(Array.from(WEB_PERMISSION_TO_PROTOCOL_PERMISSION.keys()).map((permission2) => {
             const result = this.userContext.setPermissions(
               origin,
               {
-                name: permission
+                name: permission2
               },
-              permissionsSet.has(permission) ? "granted" : "denied"
+              permissionsSet.has(permission2) ? "granted" : "denied"
               /* Bidi.Permissions.PermissionState.Denied */
             );
-            this.#overrides.push({ origin, permission });
-            if (!permissionsSet.has(permission)) {
+            this.#overrides.push({ origin, permission: permission2 });
+            if (!permissionsSet.has(permission2)) {
               return result.catch((error62) => {
                 this.#logger?.(DEBUG_PREFIXES.error)?.(error62);
               });
@@ -41590,27 +41590,27 @@ var init_BrowserContext3 = __esm({
           if (origin === "*") {
             throw new UnsupportedOperation("Origin (*) is not supported by WebDriver BiDi");
           }
-          await Promise.all(permissions.map((permission) => {
-            if (permission.permission.allowWithoutSanitization) {
+          await Promise.all(permissions.map((permission2) => {
+            if (permission2.permission.allowWithoutSanitization) {
               throw new UnsupportedOperation("allowWithoutSanitization is not supported by WebDriver BiDi");
             }
-            if (permission.permission.panTiltZoom) {
+            if (permission2.permission.panTiltZoom) {
               throw new UnsupportedOperation("panTiltZoom is not supported by WebDriver BiDi");
             }
-            if (permission.permission.userVisibleOnly) {
+            if (permission2.permission.userVisibleOnly) {
               throw new UnsupportedOperation("userVisibleOnly is not supported by WebDriver BiDi");
             }
             return this.userContext.setPermissions(origin, {
-              name: permission.permission.name
-            }, permission.state);
+              name: permission2.permission.name
+            }, permission2.state);
           }));
         }
         async clearPermissionOverrides() {
-          const promises = this.#overrides.map(({ permission, origin }) => {
+          const promises = this.#overrides.map(({ permission: permission2, origin }) => {
             return this.userContext.setPermissions(
               origin,
               {
-                name: permission
+                name: permission2
               },
               "prompt"
               /* Bidi.Permissions.PermissionState.Prompt */
@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes8, createHash: createHash4 } = __require("crypto");
+    var { randomBytes: randomBytes9, createHash: createHash4 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key2 = randomBytes8(16).toString("base64");
+      const key2 = randomBytes9(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -97705,6 +97705,68 @@ import { dirname as dirname5, join as join12 } from "node:path";
 
 // packages/server/src/run/plan-schema.ts
 import { isAbsolute as isAbsolute4, join as join11 } from "node:path";
+
+// packages/server/src/browser/emulation-schema.ts
+var NETWORKS = ["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"];
+var permission = external_exports.enum(["grant", "deny", "prompt"]);
+var emulationFields = {
+  device: external_exports.string().optional().describe(
+    'desktop, laptop, tablet, mobile, default, or a Puppeteer device name like "Pixel 5".'
+  ),
+  colorScheme: external_exports.enum(["light", "dark", "system"]).optional().describe("Light or dark mode."),
+  network: external_exports.enum(NETWORKS).optional().describe("Network speed."),
+  cpu: external_exports.number().min(1).max(20).optional().describe("Make the CPU slower by this factor, like 4. 1 is normal speed."),
+  timezone: external_exports.string().min(1).optional().describe('A time zone like "Europe/Berlin", or "system".'),
+  locale: external_exports.string().min(1).optional().describe(
+    'A language and region like "de-DE", or "system". It changes date and number formats and the Accept-Language header.'
+  ),
+  geolocation: external_exports.union([
+    external_exports.literal("off"),
+    external_exports.object({
+      latitude: external_exports.number().min(-90).max(90),
+      longitude: external_exports.number().min(-180).max(180),
+      accuracy: external_exports.number().min(0).optional()
+    }).strict()
+  ]).optional().describe(
+    'A place like { latitude: 52.52, longitude: 13.4 }. It also allows location for the login. "off" blocks location for the login.'
+  ),
+  reducedMotion: external_exports.enum(["reduce", "no-preference", "system"]).optional().describe("The prefers-reduced-motion setting."),
+  media: external_exports.enum(["screen", "print"]).optional().describe("Show the page as on screen or as printed."),
+  permissions: external_exports.object({
+    geolocation: permission.optional(),
+    notifications: permission.optional(),
+    clipboard: permission.optional()
+  }).strict().optional().describe("Browser permissions. They apply to every tab of the same login.")
+};
+var emulationSchema = external_exports.object(emulationFields).strict();
+function mergeEmulation(base, change) {
+  const out = { ...base };
+  for (const [key2, value] of Object.entries(change)) {
+    if (value !== void 0) out[key2] = value;
+  }
+  if (change.permissions) out.permissions = { ...base.permissions, ...change.permissions };
+  return out;
+}
+var PERMISSION_STATE = { grant: "granted", deny: "denied", prompt: "prompt" };
+var PERMISSION_NAMES = {
+  geolocation: ["geolocation"],
+  notifications: ["notifications"],
+  clipboard: ["clipboard-read", "clipboard-write"]
+};
+function permissionEntries(change) {
+  const wanted = {};
+  if (change.geolocation !== void 0)
+    wanted.geolocation = change.geolocation === "off" ? "deny" : "grant";
+  Object.assign(wanted, change.permissions);
+  return Object.entries(wanted).flatMap(
+    ([name, choice]) => (PERMISSION_NAMES[name] ?? []).map((permission2) => ({
+      permission: { name: permission2 },
+      state: PERMISSION_STATE[choice]
+    }))
+  );
+}
+
+// packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
 var target = external_exports.object({
   role: external_exports.string().optional().describe('ARIA role, like "button" or "textbox".'),
@@ -97712,6 +97774,13 @@ var target = external_exports.object({
   selector: external_exports.string().optional().describe("A CSS or Puppeteer selector."),
   value: external_exports.string().optional().describe("Text to type, option to choose, or key to press."),
   files: external_exports.array(external_exports.string()).optional().describe("Files to upload, from the project folder.")
+}).strict();
+var tabName = external_exports.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'Use lowercase letters, numbers, and dashes, like "customer".');
+var newTab = external_exports.object({
+  url: external_exports.string().optional().describe('The page to open. A full URL, or a path like "/login".'),
+  name: tabName.optional().describe("A name for the tab. Later steps switch to it by name."),
+  isolated: external_exports.union([external_exports.literal(true), tabName]).optional().describe("true for a new login of its own. A name for a login that tabs share."),
+  session: external_exports.string().optional().describe("A saved login to load into the tab.")
 }).strict();
 var action = external_exports.object({
   navigate: external_exports.string().optional().describe('A URL or a path like "/cart".'),
@@ -97725,7 +97794,18 @@ var action = external_exports.object({
   press: target.optional(),
   scroll: target.optional(),
   upload: target.optional(),
-  wait: external_exports.string().optional().describe("Text to wait for on the page.")
+  wait: external_exports.string().optional().describe("Text to wait for on the page."),
+  newTab: newTab.optional(),
+  switchTab: external_exports.union([
+    external_exports.string().min(1),
+    external_exports.object({
+      tab: external_exports.string().min(1).describe('A tab name, an id, or "newest".'),
+      name: tabName.optional().describe("A name to give the tab.")
+    }).strict()
+  ]).optional().describe(
+    'The tab to use now: a name, or "newest" for the tab that opened last. { tab: newest, name: help } also names it.'
+  ),
+  closeTab: external_exports.string().min(1).optional().describe("The name or id of the tab to close.")
 }).strict().refine((value) => Object.keys(value).length === 1, {
   message: 'Use exactly one action, like "click" or "fill".'
 }).describe("An exact action for this step. The agent uses it instead of guessing.");
@@ -97758,6 +97838,9 @@ var stepSchema = external_exports.object({
   action: action.optional(),
   screenshot: screenshot.optional(),
   visual: external_exports.boolean().optional().describe("Compare a screenshot with the saved baseline after this step."),
+  emulate: emulationSchema.optional().describe(
+    "Settings for the tab of this step, like { device: mobile }. They apply before the step."
+  ),
   a11y: external_exports.union([
     external_exports.literal(true),
     external_exports.object({
@@ -97776,6 +97859,9 @@ var planSchema = external_exports.object({
   device: external_exports.string().optional().describe("Screen preset: desktop, laptop, tablet, mobile, or a Puppeteer device name."),
   colorScheme: external_exports.enum(["light", "dark"]).optional().describe("Light or dark mode."),
   network: external_exports.enum(["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"]).optional().describe("Network speed."),
+  emulate: emulationSchema.optional().describe(
+    "More settings for every tab, like { timezone: Europe/Berlin, cpu: 4 }. device, colorScheme, and network above win over the same keys here."
+  ),
   session: external_exports.string().optional().describe("A saved login to use. Save one with the session tool."),
   screenshotDir: external_exports.string().min(1).optional().describe(
     'The folder for step screenshot paths, from the project folder, like "docs/images/help".'
@@ -105950,6 +106036,7 @@ var EMPTY_COMPLETION_RESULT = {
 };
 
 // packages/server/src/browser/driver.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
 import { EventEmitter as EventEmitter4 } from "node:events";
 
 // packages/server/src/evidence/scrub.ts
@@ -106064,10 +106151,11 @@ var RefTable = class {
   counter = 0;
   // Starts a new snapshot. Old refs stop working.
   // Numbers keep going up, so an old ref can never point at a new element.
-  async reset() {
+  // "keep" is the element that the new snapshot starts from. It stays usable.
+  async reset(keep) {
     this.entries.clear();
-    const old = this.handles;
-    this.handles = [];
+    const old = this.handles.filter((h) => h !== keep);
+    this.handles = keep ? [keep] : [];
     await Promise.all(old.map((h) => h.dispose().catch(() => void 0)));
   }
   add(node3, tabId, nav) {
@@ -106811,7 +106899,7 @@ var DeveloperPanel = class {
       return;
     }
     if (msg.type.startsWith("rec") && this.recorder) {
-      this.onRecordMessage(msg);
+      this.onRecordMessage(tabId, msg);
       await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
       return;
     }
@@ -106887,11 +106975,11 @@ var DeveloperPanel = class {
   async annotate(tabId, rect) {
     await this.bridges.get(tabId)?.send({ type: "annotate", rect });
   }
-  onRecordMessage(msg) {
+  onRecordMessage(tabId, msg) {
     const recorder = this.recorder;
     if (!recorder) return;
     if (msg.type === "rec") {
-      recorder.add(msg);
+      recorder.add(msg, tabId);
     } else if (msg.type === "rec-expect" && typeof msg.text === "string") {
       recorder.addExpectation(msg.text.slice(0, 500));
     } else if (msg.type === "rec-secret") {
@@ -106985,7 +107073,6 @@ var DEVICE_PRESETS = {
   tablet: "iPad Pro 11",
   mobile: "iPhone 15"
 };
-var NETWORKS = ["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"];
 var NETWORK_PRESETS = {
   "slow-3g": "Slow 3G",
   "fast-3g": "Fast 3G",
@@ -107010,10 +107097,35 @@ function resolveDevice(name) {
     device: KnownDevices[match]
   };
 }
-async function applyEmulation(page, emulation, options) {
+function checkEmulation(emulation) {
+  if (emulation.device !== void 0) resolveDevice(emulation.device);
+  const zone = emulation.timezone;
+  if (zone && zone !== "system") {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: zone });
+    } catch {
+      throw new ToolError(
+        `"${zone}" is not a time zone. Use a name like "Europe/Berlin" or "America/New_York".`,
+        "bad_input"
+      );
+    }
+  }
+  const locale = emulation.locale;
+  if (locale && locale !== "system") {
+    try {
+      Intl.getCanonicalLocales(locale);
+    } catch {
+      throw new ToolError(
+        `"${locale}" is not a locale. Use a tag like "de-DE" or "en-GB".`,
+        "bad_input"
+      );
+    }
+  }
+}
+async function applyEmulation(page, change, full, options) {
   let isMobile = options.wasMobile;
-  if (emulation.device !== void 0) {
-    const resolved = resolveDevice(emulation.device);
+  if (change.device !== void 0) {
+    const resolved = resolveDevice(change.device);
     if (resolved?.device) {
       await page.emulate(resolved.device);
       isMobile = Boolean(resolved.device.viewport.isMobile || resolved.device.viewport.hasTouch);
@@ -107026,24 +107138,79 @@ async function applyEmulation(page, emulation, options) {
       isMobile = false;
     }
   }
-  if (emulation.colorScheme !== void 0) {
-    await page.emulateMediaFeatures(
-      emulation.colorScheme === "system" ? [] : [{ name: "prefers-color-scheme", value: emulation.colorScheme }]
-    );
+  if (change.colorScheme !== void 0 || change.reducedMotion !== void 0 || change.media !== void 0) {
+    await applyMedia(page, options.cdp, full);
   }
-  if (emulation.network !== void 0) {
-    const preset = NETWORK_PRESETS[emulation.network];
+  if (change.network !== void 0) {
+    const preset = NETWORK_PRESETS[change.network];
     await page.emulateNetworkConditions(preset ? PredefinedNetworkConditions[preset] : null);
-    await page.setOfflineMode(emulation.network === "offline");
+    await page.setOfflineMode(change.network === "offline");
   }
+  if (change.cpu !== void 0) await page.emulateCPUThrottling(change.cpu > 1 ? change.cpu : null);
+  if (change.timezone !== void 0)
+    await page.emulateTimezone(change.timezone === "system" ? void 0 : change.timezone);
+  if (change.locale !== void 0)
+    await page.emulateLocale(change.locale === "system" ? void 0 : change.locale);
+  if (change.geolocation !== void 0 && change.geolocation !== "off")
+    await page.setGeolocation(change.geolocation);
   return { needsReload: isMobile !== options.wasMobile, isMobile };
 }
-function describeEmulation(emulation) {
-  const parts = [
+async function applyMedia(page, cdp, emulation) {
+  const features = mediaFeatures(emulation);
+  if (cdp) {
+    await cdp.send("Emulation.setEmulatedMedia", {
+      media: emulation.media === "print" ? "print" : "",
+      features
+    });
+    return;
+  }
+  await page.emulateMediaType(emulation.media === "print" ? "print" : void 0);
+  await page.emulateMediaFeatures(features);
+}
+function mediaFeatures(emulation) {
+  const features = [];
+  if (emulation.colorScheme && emulation.colorScheme !== "system")
+    features.push({ name: "prefers-color-scheme", value: emulation.colorScheme });
+  if (emulation.reducedMotion && emulation.reducedMotion !== "system")
+    features.push({ name: "prefers-reduced-motion", value: emulation.reducedMotion });
+  return features;
+}
+function withoutDefaults(emulation) {
+  const plain = {
+    device: "default",
+    colorScheme: "system",
+    network: "normal",
+    cpu: 1,
+    timezone: "system",
+    locale: "system",
+    reducedMotion: "system",
+    media: "screen"
+  };
+  return Object.fromEntries(
+    Object.entries(emulation).filter(([key2, value]) => value !== void 0 && plain[key2] !== value)
+  );
+}
+function describeEmulation(emulation, onlySet = false) {
+  const parts = onlySet ? [
+    emulation.device ? `device: ${emulation.device}` : "",
+    emulation.colorScheme ? `color scheme: ${emulation.colorScheme}` : "",
+    emulation.network ? `network: ${emulation.network}` : ""
+  ].filter(Boolean) : [
     `device: ${emulation.device ?? "default"}`,
     `color scheme: ${emulation.colorScheme ?? "system"}`,
     `network: ${emulation.network ?? "normal"}`
   ];
+  if (emulation.cpu === 1) parts.push("CPU: normal");
+  if (emulation.cpu && emulation.cpu > 1) parts.push(`CPU: ${emulation.cpu}x slower`);
+  if (emulation.timezone) parts.push(`time zone: ${emulation.timezone}`);
+  if (emulation.locale) parts.push(`locale: ${emulation.locale}`);
+  const place = emulation.geolocation;
+  if (place)
+    parts.push(`location: ${place === "off" ? "off" : `${place.latitude}, ${place.longitude}`}`);
+  if (emulation.reducedMotion) parts.push(`reduced motion: ${emulation.reducedMotion}`);
+  if (emulation.media) parts.push(`media: ${emulation.media}`);
+  const perms = Object.entries(emulation.permissions ?? {});
+  if (perms.length) parts.push(`permissions: ${perms.map(([k, v2]) => `${k} ${v2}`).join(", ")}`);
   return parts.join(", ");
 }
 
@@ -107122,6 +107289,7 @@ async function guardNavigation(page, isAllowed, onBlocked) {
 }
 
 // packages/server/src/browser/driver.ts
+var NAME = /^[a-z0-9][a-z0-9-]*$/;
 var Driver = class _Driver {
   constructor(browser, mode, chromeVersion, options, profileDir) {
     this.browser = browser;
@@ -107145,8 +107313,10 @@ var Driver = class _Driver {
   panel;
   // The element of the last action, for the red box in bug screenshots.
   lastTarget;
-  // Screen, color scheme, and network settings. New tabs get them too.
-  emulation = {};
+  // Settings that new tabs start with. Each tab also has its own.
+  defaultEmulation = {};
+  // Cookie jars by login name. "main" is the browser's own.
+  logins = /* @__PURE__ */ new Map();
   userAgent = "";
   activeId;
   dialogPolicy;
@@ -107157,15 +107327,19 @@ var Driver = class _Driver {
   pendingWork = /* @__PURE__ */ new Map();
   removeShutdown;
   inflight = /* @__PURE__ */ new Set();
+  // A tab that newTab is making. The new-tab event waits for it.
+  newTabWork;
   static async start(options) {
     let driver;
     if (options.attach) {
       const browser = await attachChrome(options.attach);
       driver = new _Driver(browser, "attached", await browser.version(), options);
+      driver.logins.set("main", browser.defaultBrowserContext());
       await driver.addTab(await browser.newPage());
     } else {
       const { browser, profileDir } = await launchChrome(options.config);
       driver = new _Driver(browser, "launched", await browser.version(), options, profileDir);
+      driver.logins.set("main", browser.defaultBrowserContext());
       const first2 = (await browser.pages())[0] ?? await browser.newPage();
       await driver.addTab(first2);
     }
@@ -107174,6 +107348,14 @@ var Driver = class _Driver {
   }
   get alive() {
     return !this.closedReason;
+  }
+  // False when the developer closed the last tab, but Chrome still runs.
+  get hasActiveTab() {
+    return Boolean(this.activeId && this.tabs.has(this.activeId));
+  }
+  // Opens a tab when none is left. It takes the name "main" if that name is free.
+  async reopenTab() {
+    return this.newTab({ name: this.tabByRef("main") ? void 0 : "main" });
   }
   watchBrowser() {
     this.browser.on("disconnected", () => {
@@ -107193,6 +107375,7 @@ var Driver = class _Driver {
         await new Promise((resolve11) => setTimeout(resolve11, 300));
         if (this.profileDir) removeProfile(this.profileDir);
       } else {
+        await this.closeLogins();
         await this.browser.disconnect().catch(() => void 0);
       }
     });
@@ -107201,11 +107384,16 @@ var Driver = class _Driver {
   async onTarget(target2) {
     if (target2.type() !== "page") return;
     const page = await target2.page().catch(() => null);
-    if (!page || this.findTab(page)) return;
+    if (!page) return;
+    if (this.newTabWork) await this.newTabWork.catch(() => void 0);
+    if (this.findTab(page)) return;
     const openerPage = await target2.opener()?.page().catch(() => null);
     const opener = openerPage ? this.findTab(openerPage) : void 0;
     if (this.mode === "attached" && !opener) return;
-    const tab = await this.addTab(page, opener?.id);
+    const tab = await this.addTab(page, opener?.id, {
+      login: opener?.login ?? this.loginOf(page),
+      emulation: opener ? { ...opener.emulation } : void 0
+    });
     this.note(`A new tab opened: ${tab.id}. Use the tabs tool to switch to it.`);
   }
   // Keeps event work that is still running, so an action can wait for it.
@@ -107224,18 +107412,43 @@ var Driver = class _Driver {
     for (const tab of this.tabs.values()) if (tab.page === page) return tab;
     return void 0;
   }
-  async addTab(page, openerId) {
+  // A tab by its id, like "t2", or its name, like "customer". "newest" is the last tab that opened.
+  tabByRef(ref) {
+    if (ref === "newest") return [...this.tabs.values()].at(-1);
+    return this.tabs.get(ref) ?? [...this.tabs.values()].find((t) => t.name === ref);
+  }
+  // Checks a name for a tab. Names like "t2" are ids, and "newest" means the last tab.
+  checkTabName(name, tab) {
+    if (!NAME.test(name) || /^t\d+$/.test(name) || name === "newest") {
+      throw new ToolError(
+        'Use a tab name with lowercase letters, numbers, and dashes, like "customer". Names like "t2" are tab ids.',
+        "bad_input"
+      );
+    }
+    const other = this.tabByRef(name);
+    if (other && other !== tab)
+      throw new ToolError(`A tab named "${name}" is already open.`, "bad_input");
+  }
+  // The login name of a page, from its cookie jar.
+  loginOf(page) {
+    const context2 = page.browserContext();
+    for (const [name, value] of this.logins) if (value === context2) return name;
+    return "main";
+  }
+  async addTab(page, openerId, options = {}) {
     this.tabCounter += 1;
     const id = `t${this.tabCounter}`;
     const tab = {
       id,
-      name: this.tabCounter === 1 ? "main" : id,
+      name: options.name ?? (this.tabCounter === 1 ? "main" : id),
+      login: options.login ?? "main",
       page,
       openerId,
       nav: 0,
       crashed: false,
       closed: false,
-      mobile: false
+      mobile: false,
+      emulation: { ...options.emulation ?? this.defaultEmulation }
     };
     this.tabs.set(tab.id, tab);
     this.activeId ??= tab.id;
@@ -107254,8 +107467,6 @@ var Driver = class _Driver {
     page.on("dialog", (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
-    if (Object.keys(this.emulation).length > 0)
-      await this.emulateTab(tab, this.emulation).catch(() => void 0);
     tab.cdp = await guardNavigation(
       page,
       (url3) => this.options.isAllowed(url3),
@@ -107263,6 +107474,8 @@ var Driver = class _Driver {
         `Walkthrough blocked the tab from opening ${url3}, because that site is not allowed.`
       )
     );
+    if (Object.keys(tab.emulation).length > 0)
+      await this.emulateTab(tab, tab.emulation).catch(() => void 0);
     const url2 = page.url();
     if (url2 && !this.options.isAllowed(url2)) {
       this.note(`Tab ${tab.id} opened ${url2}, which is not allowed. Walkthrough cleared the tab.`);
@@ -107275,12 +107488,17 @@ var Driver = class _Driver {
     this.tabs.delete(tab.id);
     this.pendingDialogs.delete(tab.id);
     this.panel?.detach(tab.id);
+    const context2 = this.logins.get(tab.login);
+    if (tab.login !== "main" && context2 && ![...this.tabs.values()].some((t) => t.login === tab.login)) {
+      this.logins.delete(tab.login);
+      void context2.close().catch(() => void 0);
+    }
     if (this.activeId === tab.id) {
       const next = [...this.tabs.values()].at(-1);
       this.activeId = next?.id;
       if (!this.closedReason) {
         this.note(
-          next ? `Tab ${tab.id} closed. The active tab is now ${next.id}.` : `Tab ${tab.id} closed. No tabs are open.`
+          next ? `Tab ${tab.id} closed. The active tab is now ${next.id}.` : `Tab ${tab.id} closed. No tabs are open. browser_open opens a new tab.`
         );
       }
     }
@@ -107325,29 +107543,79 @@ var Driver = class _Driver {
     this.pendingDialogs.set(tab.id, pending);
     this.emitter.emit("dialog", pending);
   }
-  async emulateTab(tab, emulation) {
+  // Applies changed settings to a tab. tab.emulation already has them.
+  async emulateTab(tab, change) {
     this.userAgent ||= await this.browser.userAgent();
-    const result = await applyEmulation(tab.page, emulation, {
+    const result = await applyEmulation(tab.page, change, tab.emulation, {
       headless: this.options.config.browser.headless,
       userAgent: this.userAgent,
-      wasMobile: tab.mobile
+      wasMobile: tab.mobile,
+      cdp: tab.cdp
     });
     tab.mobile = result.isMobile;
     return result.needsReload;
   }
-  // Changes the screen, color scheme, or network for every tab.
+  // Changes the settings of one tab, or of every tab and of new tabs.
   // A tab reloads when it switches between desktop and phone mode.
-  async setEmulation(emulation, options) {
-    this.emulation = { ...this.emulation, ...emulation };
+  async setEmulation(change, options) {
+    checkEmulation(change);
+    const targets = options.tab ? [options.tab] : [...this.tabs.values()];
+    if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
     const reloaded = [];
-    for (const tab of this.tabs.values()) {
-      const needsReload = await this.emulateTab(tab, emulation);
+    for (const tab of targets) {
+      tab.emulation = mergeEmulation(tab.emulation, change);
+      const needsReload = await this.emulateTab(tab, change);
       if (needsReload && options.reload && /^https?:/.test(tab.page.url())) {
         await tab.page.reload({ waitUntil: "load" }).catch(() => void 0);
         reloaded.push(tab.id);
       }
     }
+    const logins = options.tab ? [options.tab.login] : [...this.logins.keys()];
+    await this.applyPermissions(change, logins);
     return reloaded;
+  }
+  // Permissions belong to a login, not a tab.
+  async applyPermissions(change, logins) {
+    const entries = permissionEntries(change);
+    if (entries.length === 0) return;
+    for (const login of new Set(logins)) {
+      await this.logins.get(login)?.setPermission("*", ...entries);
+    }
+  }
+  // Opens a new tab. isolated: true makes a one-off login. A string names a login that tabs share.
+  async newTab(options = {}) {
+    this.assertAlive();
+    if (options.name !== void 0) this.checkTabName(options.name);
+    const login = options.isolated === true ? `iso-${randomBytes3(2).toString("hex")}` : options.isolated ?? "main";
+    if (!NAME.test(login)) {
+      throw new ToolError(
+        `Use a login name with lowercase letters, numbers, and dashes, like "customer".`,
+        "bad_input"
+      );
+    }
+    const work = (async () => {
+      let context2 = this.logins.get(login);
+      if (!context2) {
+        context2 = await this.browser.createBrowserContext();
+        this.logins.set(login, context2);
+      }
+      const page = await context2.newPage();
+      return this.addTab(page, void 0, { login, name: options.name });
+    })();
+    this.newTabWork = work;
+    try {
+      const tab = await work;
+      this.switchTo(tab.id);
+      return tab;
+    } finally {
+      if (this.newTabWork === work) this.newTabWork = void 0;
+    }
+  }
+  // Closes the separate logins. The main login is the browser's own.
+  async closeLogins() {
+    for (const [name, context2] of this.logins) {
+      if (name !== "main") await context2.close().catch(() => void 0);
+    }
   }
   pendingDialog(tabId = this.activeId) {
     return tabId ? this.pendingDialogs.get(tabId) : void 0;
@@ -107386,7 +107654,10 @@ var Driver = class _Driver {
     this.assertAlive();
     const tab = this.activeId ? this.tabs.get(this.activeId) : void 0;
     if (!tab)
-      throw new ToolError("No tab is open. Use navigate or browser_open to open a page.", "no_tab");
+      throw new ToolError(
+        "No tab is open. Call browser_open, or navigate with a url. Both open a new tab.",
+        "no_tab"
+      );
     if (tab.crashed) {
       throw new ToolError(
         `The page in tab ${tab.id} crashed. Use navigate with action "reload", or close the tab.`,
@@ -107413,14 +107684,14 @@ var Driver = class _Driver {
       );
     }
   }
-  switchTo(id) {
+  switchTo(ref) {
     this.assertAlive();
-    const tab = this.tabs.get(id);
+    const tab = this.tabByRef(ref);
     if (!tab)
-      throw new ToolError(`There is no tab "${id}". Use the tabs tool to list tabs.`, "no_tab");
-    this.activeId = id;
+      throw new ToolError(`There is no tab "${ref}". Use the tabs tool to list tabs.`, "no_tab");
+    this.activeId = tab.id;
     void tab.page.bringToFront().catch(() => void 0);
-    void this.panel?.refresh(id);
+    void this.panel?.refresh(tab.id);
     return tab;
   }
   note(text) {
@@ -107441,6 +107712,7 @@ var Driver = class _Driver {
       await this.browser.close().catch(() => killChrome(this.browser));
       if (this.profileDir) removeProfile(this.profileDir);
     } else {
+      await this.closeLogins();
       await this.browser.disconnect().catch(() => void 0);
     }
   }
@@ -107461,13 +107733,13 @@ var Mutex3 = class {
 };
 
 // packages/server/src/page/unique.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
+import { randomBytes as randomBytes4 } from "node:crypto";
 var TOKEN3 = /\{\{\s*unique\s*\}\}/g;
 var UNIQUE_TOKEN = "{{unique}}";
 function newUnique() {
   const letters = "abcdefghijklmnopqrstuvwxyz";
   const all = `${letters}0123456789`;
-  const bytes = randomBytes3(6);
+  const bytes = randomBytes4(6);
   let out = letters[(bytes[0] ?? 0) % letters.length] ?? "a";
   for (let i = 1; i < 6; i++) out += all[(bytes[i] ?? 0) % all.length];
   return out;
@@ -107594,7 +107866,7 @@ import {
 import { join as join27, relative as relative9, resolve as resolve10, sep as sep5 } from "node:path";
 
 // packages/server/src/audit/axe.ts
-import { randomBytes as randomBytes4 } from "node:crypto";
+import { randomBytes as randomBytes5 } from "node:crypto";
 
 // packages/server/src/audit/axe-source.ts
 import { readFileSync as readFileSync9 } from "node:fs";
@@ -107802,7 +108074,7 @@ var RUN_IN_PAGE = `(async (context, options, maxNodes, inFrame) => {
 async function axeWorld(cdp, frameId) {
   const { executionContextId } = await cdp.send("Page.createIsolatedWorld", {
     frameId,
-    worldName: `uiwalk-axe-${randomBytes4(4).toString("hex")}`
+    worldName: `uiwalk-axe-${randomBytes5(4).toString("hex")}`
   });
   const load = await cdp.send("Runtime.evaluate", {
     expression: axeSource(),
@@ -108515,22 +108787,19 @@ async function settle2(page, ms) {
 function key(node3) {
   return `${node3.frame?.selector ?? ""}|${node3.target}`;
 }
-async function checkDarkMode(driver, tab, options) {
+async function checkDarkMode(tab, options) {
   const page = tab.page;
   const style = await page.addStyleTag({ content: FREEZE_CSS }).catch(() => void 0);
   const results2 = {};
   try {
     for (const scheme of ["light", "dark"]) {
-      await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: scheme }]);
+      await applyMedia(page, tab.cdp, { ...tab.emulation, colorScheme: scheme });
       await settle2(page, 100);
       const run = await runAxe(page, { ...options, rules: ["color-contrast"] });
       results2[scheme] = run.violations.find((v2) => v2.id === "color-contrast");
     }
   } finally {
-    const before = driver.emulation.colorScheme;
-    await page.emulateMediaFeatures(
-      before && before !== "system" ? [{ name: "prefers-color-scheme", value: before }] : []
-    ).catch(() => void 0);
+    await applyMedia(page, tab.cdp, tab.emulation).catch(() => void 0);
     await style?.evaluate((el) => el.remove()).catch(() => void 0);
   }
   const lightKeys = new Set((results2.light?.nodes ?? []).map(key));
@@ -108634,7 +108903,7 @@ async function auditPage(ctx, driver, tab, request3) {
     engine: result.engine,
     standard: request3.standard,
     tags: request3.tags,
-    colorScheme: driver.emulation.colorScheme ?? "system",
+    colorScheme: tab.emulation.colorScheme ?? "system",
     viewport: viewport ? `${viewport.width}x${viewport.height}` : "window size",
     checks: {}
   };
@@ -108643,7 +108912,7 @@ async function auditPage(ctx, driver, tab, request3) {
     check2.checks.framesNotChecked = result.framesNotChecked;
   }
   if (wants("darkMode") && check2.checks) {
-    const dark = await checkDarkMode(driver, tab, {
+    const dark = await checkDarkMode(tab, {
       frameAllowed: wants("frames") ? (url2) => guard.isAllowed(url2) : void 0,
       clean
     });
@@ -108741,7 +109010,7 @@ import { existsSync as existsSync12, readdirSync as readdirSync5, readFileSync a
 import { join as join18 } from "node:path";
 
 // packages/server/src/run/run-store.ts
-import { randomBytes as randomBytes5 } from "node:crypto";
+import { randomBytes as randomBytes6 } from "node:crypto";
 import {
   existsSync as existsSync11,
   mkdirSync as mkdirSync6,
@@ -108771,7 +109040,7 @@ var RunStore = class _RunStore {
   run;
   projectDir;
   static create(projectDir, input3) {
-    const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes5(2).toString("hex")}`;
+    const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes6(2).toString("hex")}`;
     const dir = join17(ensureWalkthroughDir(projectDir), "runs", id);
     mkdirSync6(join17(dir, "screenshots"), { recursive: true });
     const settings = input3.plan?.accessibility;
@@ -109338,7 +109607,7 @@ function jsonReport(data) {
 }
 
 // packages/server/src/report/a11y-html.ts
-import { randomBytes as randomBytes6 } from "node:crypto";
+import { randomBytes as randomBytes7 } from "node:crypto";
 import { readFileSync as readFileSync12 } from "node:fs";
 import { join as join19 } from "node:path";
 
@@ -109907,7 +110176,7 @@ var SCRIPT = `
 })();
 `;
 function a11yHtmlReport(data) {
-  const nonce = randomBytes6(12).toString("base64");
+  const nonce = randomBytes7(12).toString("base64");
   const byImpact = [...data.findings].sort(
     (a2, b2) => IMPACT_ORDER.indexOf(a2.impact) - IMPACT_ORDER.indexOf(b2.impact) || a2.id.localeCompare(b2.id)
   );
@@ -110158,8 +110427,9 @@ function cookieMatches(cookie, hosts) {
 }
 async function saveSession(driver, guard, projectDir, name) {
   const file2 = sessionFile(projectDir, name);
+  const active = driver.activeTab();
   const tabs = [...driver.tabs.values()].filter(
-    (t) => guard.isAllowed(t.page.url()) && /^https?:/.test(t.page.url())
+    (t) => t.login === active.login && guard.isAllowed(t.page.url()) && /^https?:/.test(t.page.url())
   );
   if (tabs.length === 0) {
     throw new ToolError(
@@ -110169,7 +110439,7 @@ async function saveSession(driver, guard, projectDir, name) {
   }
   const origins = [...new Set(tabs.map((t) => new URL(t.page.url()).origin))];
   const hosts = origins.map((o) => new URL(o).hostname);
-  const cookies = (await driver.browser.defaultBrowserContext().cookies()).filter(
+  const cookies = (await active.page.browserContext().cookies()).filter(
     (c) => cookieMatches(c, hosts)
   );
   const storage = {};
@@ -110229,7 +110499,7 @@ function deleteSession(projectDir, name) {
     throw new ToolError(`There is no saved session "${name}".`, "session_not_found");
   rmSync5(file2);
 }
-async function restoreSession(driver, tab, session) {
+async function restoreSession(tab, session) {
   if (session.cookies.length > 0) {
     const cookies = session.cookies.map((c) => ({
       name: c.name,
@@ -110241,7 +110511,7 @@ async function restoreSession(driver, tab, session) {
       secure: c.secure,
       sameSite: c.sameSite
     }));
-    await driver.browser.defaultBrowserContext().setCookie(...cookies);
+    await tab.page.browserContext().setCookie(...cookies);
   }
   if (Object.keys(session.storage).length === 0) return;
   const { identifier } = await tab.page.evaluateOnNewDocument((storage) => {
@@ -110344,15 +110614,20 @@ async function openBrowser(ctx, options) {
     );
   }
   for (const warning of config3.warnings) lines.push(`Warning: ${warning}`);
+  const reopened = alreadyOpen && !driver.hasActiveTab;
+  if (reopened) {
+    await driver.reopenTab();
+    lines.push("No tab was open, so Walkthrough opened a new one.");
+  }
   const tab = driver.activeTab();
   if (options.emulation && Object.keys(options.emulation).length > 0) {
     await driver.setEmulation(options.emulation, { reload: false });
   }
   if (options.session) {
-    await restoreSession(driver, tab, loadSession(config3.projectDir, options.session));
+    await restoreSession(tab, loadSession(config3.projectDir, options.session));
     lines.push(`Loaded the saved login "${options.session}".`);
   }
-  const goAgain = Boolean(options.session) || !alreadyOpen || options.alwaysGo;
+  const goAgain = Boolean(options.session) || !alreadyOpen || reopened || options.alwaysGo;
   const target2 = options.url ?? (goAgain ? config3.baseUrl ?? (options.session ? tab.page.url() : void 0) : void 0);
   if (target2) {
     const full = fullUrl(withUnique(target2, ctx.unique), tab.page.url(), config3.baseUrl);
@@ -110426,6 +110701,8 @@ function registerBrowserTools(server, ctx) {
       const driver = ctx.requireDriver();
       const config3 = await ctx.config();
       const guard = await ctx.guard();
+      const reopened = Boolean(url2) && !driver.hasActiveTab;
+      if (reopened) await driver.reopenTab();
       const tab = action2 === "reload" ? reloadableTab(driver) : driver.activeTab();
       let problem;
       if (url2) {
@@ -110453,48 +110730,132 @@ function registerBrowserTools(server, ctx) {
         throw new ToolError("Give a url or an action (back, forward, reload).", "bad_input");
       }
       if (!url2) await settle3(tab);
-      return [problem, await pageSummary(tab), "Take a snapshot to see the page."].filter(Boolean).join("\n");
+      return [
+        reopened ? "No tab was open, so Walkthrough opened a new one." : "",
+        problem,
+        await pageSummary(tab),
+        "Take a snapshot to see the page."
+      ].filter(Boolean).join("\n");
     })
   );
   server.registerTool(
     "tabs",
     {
       title: "Tabs",
-      description: "List the open tabs, switch the active tab, or close a tab. Tools act on the active tab.",
+      description: [
+        "List the open tabs, open a new tab, switch the active tab, or close a tab. Tools act on the active tab.",
+        "A new tab uses the main login, unless you set isolated.",
+        "isolated: true gives the tab its own new login (cookies and storage), like a private window, to test as a second user.",
+        'isolated: "customer" gives it a named login. Tabs with the same login name share it.'
+      ].join(" "),
       inputSchema: {
-        action: external_exports.enum(["list", "switch", "close"]).default("list"),
-        id: external_exports.string().optional().describe('Tab id, like "t2". Needed for switch and close.')
+        action: external_exports.enum(["list", "new", "switch", "close"]).default("list"),
+        id: external_exports.string().optional().describe(
+          'A tab id like "t2", a tab name, or "newest" for the last tab that opened. Needed for switch and close.'
+        ),
+        url: external_exports.string().optional().describe('For new: the page to open. A full URL, or a path like "/login".'),
+        name: external_exports.string().optional().describe(
+          'For new and switch: a name for the tab, like "customer". Plans use tab names.'
+        ),
+        isolated: external_exports.union([external_exports.boolean(), external_exports.string()]).optional().describe("For new: true for a new login of its own, or a login name that tabs share."),
+        session: external_exports.string().optional().describe("For new: a saved login to load into the tab, from the session tool.")
       }
     },
-    ({ action: action2, id }) => runTool(ctx, "tabs", async () => {
+    ({ action: action2, id, url: url2, name, isolated, session }) => runTool(ctx, "tabs", async () => {
       const driver = ctx.requireDriver();
+      if (action2 === "new") {
+        const config3 = await ctx.config();
+        const guard = await ctx.guard();
+        const from2 = driver.activeId ? driver.tabs.get(driver.activeId)?.page.url() ?? "" : "";
+        const target2 = url2 ?? (session ? config3.baseUrl : void 0);
+        const full = target2 ? fullUrl(withUnique(target2, ctx.unique), from2, config3.baseUrl) : void 0;
+        if (full) guard.check(full);
+        const loginChoice = isolated === true ? true : isolated ? isolated : void 0;
+        const tab = await driver.newTab({ name, isolated: loginChoice });
+        if (session) await restoreSession(tab, loadSession(config3.projectDir, session));
+        const problem = full ? await goTo(tab, full) : void 0;
+        ctx.actionLog.push({
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          tabId: tab.id,
+          tab: tab.name,
+          action: "tab-new",
+          label: `Open a new tab "${tab.name}"${tab.login === "main" ? "" : ` with the login "${tab.login}"`}${full ? ` at ${full}` : ""}`,
+          value: JSON.stringify({
+            name: tab.name,
+            login: tab.login,
+            isolated: loginChoice,
+            url: full ? tokenizeUnique(full, ctx.unique) : void 0,
+            session
+          }),
+          url: ""
+        });
+        return [
+          `Opened tab ${tab.id}${tab.name === tab.id ? "" : ` "${tab.name}"`}. It is the active tab now.`,
+          tab.login === "main" ? "It uses the main login." : `Its login is "${tab.login}". It has its own cookies and storage.${loginChoice === true ? ` To open more tabs with this login, use isolated: "${tab.login}".` : ""}`,
+          config3.browser.headless || tab.login === "main" ? "" : "Chrome shows a separate login in its own window.",
+          session ? `Loaded the saved login "${session}".` : "",
+          problem ?? "",
+          await pageSummary(tab),
+          "Take a snapshot to see the page."
+        ].filter(Boolean).join("\n");
+      }
       if (action2 === "switch") {
-        if (!id) throw new ToolError("Give the id of the tab to switch to.", "bad_input");
-        const tab = driver.switchTo(id);
+        if (!id) throw new ToolError("Give the id or name of the tab to switch to.", "bad_input");
+        const found = driver.tabByRef(id);
+        if (found && name) {
+          driver.checkTabName(name, found);
+          found.name = name;
+        }
+        const tab = driver.switchTo(found?.id ?? id);
+        const opener = tab.openerId ? driver.tabs.get(tab.openerId)?.name : void 0;
+        ctx.actionLog.push({
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          tabId: tab.id,
+          tab: tab.name,
+          action: "tab-switch",
+          label: `Switch to the tab "${tab.name}"`,
+          value: JSON.stringify({ name: tab.name, opener, newest: id === "newest" || void 0 }),
+          url: tokenizeUnique(tab.page.url(), ctx.unique)
+        });
         return `Switched to tab ${tab.id}.
 ${await pageSummary(tab)}
 Take a snapshot to see the page.`;
       }
       if (action2 === "close") {
-        if (!id) throw new ToolError("Give the id of the tab to close.", "bad_input");
-        const tab = driver.tabs.get(id);
+        if (!id) throw new ToolError("Give the id or name of the tab to close.", "bad_input");
+        const tab = driver.tabByRef(id);
         if (!tab) throw new ToolError(`There is no tab "${id}".`, "no_tab");
         if (driver.tabs.size === 1)
           throw new ToolError("This is the last tab. Use browser_close instead.", "bad_input");
         await tab.page.close();
-        return `Closed tab ${id}. The active tab is ${driver.activeId}.`;
+        ctx.actionLog.push({
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          tabId: tab.id,
+          tab: tab.name,
+          action: "tab-close",
+          label: `Close the tab "${tab.name}"`,
+          value: JSON.stringify({ name: tab.name }),
+          url: ""
+        });
+        return `Closed tab ${tab.id}. The active tab is ${driver.activeId}.`;
       }
+      if (driver.tabs.size === 0)
+        return 'No tab is open. Call browser_open, or tabs with action "new", to open one.';
       const rows = [];
       for (const tab of driver.tabs.values()) {
         const title = await tab.page.title().catch(() => "");
+        const settings = describeEmulation(withoutDefaults(tab.emulation), true);
         const flags = [
           tab.id === driver.activeId ? "active" : "",
+          tab.login === "main" ? "" : `login ${tab.login}`,
           tab.openerId ? `opened by ${tab.openerId}` : "",
+          settings,
           driver.pendingDialog(tab.id) ? "dialog open" : "",
           tab.crashed ? "crashed" : ""
         ].filter(Boolean);
+        const label = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
         rows.push(
-          `${tab.id}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
+          `${label}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
         );
       }
       return untrusted(rows.join("\n"));
@@ -110541,7 +110902,11 @@ Take a snapshot to see the page.`;
 }
 function reloadableTab(driver) {
   const tab = driver.activeId ? driver.tabs.get(driver.activeId) : void 0;
-  if (!tab) throw new ToolError("No tab is open.", "no_tab");
+  if (!tab)
+    throw new ToolError(
+      "No tab is open. Call browser_open, or navigate with a url. Both open a new tab.",
+      "no_tab"
+    );
   return tab;
 }
 
@@ -111272,6 +111637,20 @@ function describeAction(step) {
   const [kind, value] = Object.entries(step.action)[0] ?? [];
   if (!kind) return void 0;
   if (typeof value === "string") return `${kind} "${value}"`;
+  if (kind === "switchTab") {
+    const to = value;
+    return `switchTab "${to.tab}"${to.name ? `, and name it "${to.name}"` : ""}`;
+  }
+  if (kind === "newTab") {
+    const tab = value;
+    const parts = [
+      tab.name ? `named "${tab.name}"` : "",
+      tab.isolated === true ? "with a new login of its own" : tab.isolated ? `with the login "${tab.isolated}"` : "",
+      tab.session ? `with the saved login "${tab.session}"` : "",
+      tab.url ? `at ${tab.url}` : ""
+    ].filter(Boolean);
+    return `newTab${parts.length ? ` ${parts.join(", ")}` : ""}`;
+  }
   const t = value;
   const where2 = t.selector ? `selector ${t.selector}` : `${t.role ?? "element"}${t.name ? ` "${t.name}"` : ""}`;
   const extra = t.value !== void 0 ? ` with "${t.value}"` : t.files ? ` with ${t.files.join(", ")}` : "";
@@ -111318,6 +111697,7 @@ function stepList(plan, mode) {
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
     if (step.expect) lines.push(`   Expect: ${step.expect}`);
+    if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
     const hint = describeAction(step);
     if (hint) lines.push(`   Action: ${hint}`);
     return lines.join("\n");
@@ -111427,7 +111807,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       const mode = modeArg ?? plan?.mode ?? "checkpoints";
       const baseUrl = plan?.baseUrl ?? config3.baseUrl;
       ctx.unique = newUnique();
-      const emulation = {};
+      const emulation = { ...plan?.emulate };
       if (plan?.device) emulation.device = plan.device;
       if (plan?.colorScheme) emulation.colorScheme = plan.colorScheme;
       if (plan?.network) emulation.network = plan.network;
@@ -111447,11 +111827,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         planFile: loaded?.file,
         baseUrl,
         chrome: driver.chromeVersion,
-        setup: `${describeEmulation(driver.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
-        emulation: {
-          device: driver.emulation.device,
-          colorScheme: driver.emulation.colorScheme
-        },
+        setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
+        emulation: { ...opened.tab.emulation },
         unique: ctx.unique,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c])
       });
@@ -111462,7 +111839,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         HOW_TO[mode],
         "",
         "For each step:",
-        "1. Do what the step says. If it has an Action, use it.",
+        "1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.",
         '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
@@ -112319,7 +112696,7 @@ function details(node3) {
   return parts.length ? ` (${parts.join(", ")})` : "";
 }
 async function buildSnapshot(tab, refs, root) {
-  await refs.reset();
+  await refs.reset(root);
   const tree = await tab.page.accessibility.snapshot({
     interestingOnly: true,
     includeIframes: true,
@@ -112437,7 +112814,13 @@ function registerPageTools(server, ctx) {
       const tab = driver.activeTab();
       const root = ref ? (await driver.refs.resolve(ref, tab.id, tab.nav)).handle : void 0;
       const title = await tab.page.title().catch(() => "");
-      const outline = await buildSnapshot(tab, driver.refs, root);
+      const outline = await buildSnapshot(tab, driver.refs, root).catch((error62) => {
+        if (!root) throw error62;
+        throw new ToolError(
+          `The element for ref "${ref}" is gone. Take a new snapshot and use a ref from it.`,
+          "stale_ref"
+        );
+      });
       return [
         `Snapshot of tab ${tab.id}:`,
         untrusted(`Title: ${title || "(no title)"}
@@ -112672,7 +113055,7 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { randomBytes as randomBytes7 } from "node:crypto";
+import { randomBytes as randomBytes8 } from "node:crypto";
 import { existsSync as existsSync20, mkdirSync as mkdirSync10, readFileSync as readFileSync18, writeFileSync as writeFileSync10 } from "node:fs";
 import { basename as basename6, dirname as dirname8, extname as extname5, join as join29, relative as relative11 } from "node:path";
 
@@ -112916,7 +113299,7 @@ function registerQualityTools(server, ctx) {
     "session",
     {
       title: "Saved logins",
-      description: 'Save the login state (cookies and storage) of the allowed sites that are open, so later runs start logged in. Or list or delete saved logins. To use one, call browser_open with session, or set "session" in a plan.',
+      description: `Save the login state (cookies and storage) of the active tab's login, for the allowed sites that are open, so later runs start logged in. Or list or delete saved logins. To use one, call browser_open or tabs (action new) with session, or set "session" in a plan.`,
       inputSchema: {
         action: external_exports.enum(["save", "list", "delete"]),
         name: external_exports.string().optional().describe('A name like "admin" or "demo-user".')
@@ -112952,30 +113335,48 @@ function registerQualityTools(server, ctx) {
   server.registerTool(
     "emulate",
     {
-      title: "Screen, color, and network",
-      description: "Test like a phone, tablet, or other screen, in light or dark mode, or on a slow network. Settings apply to all tabs, also new ones.",
+      title: "Emulate a device and settings",
+      description: [
+        "Test like a phone, a tablet, or another screen. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.",
+        "Settings apply to the active tab. With allTabs: true, they apply to every tab and to tabs that open later.",
+        "Permissions apply to every tab of the same login.",
+        "With no settings, it shows the settings of the active tab."
+      ].join(" "),
       inputSchema: {
-        device: external_exports.string().optional().describe(
-          'desktop, laptop, tablet, mobile, default, or a Puppeteer device name like "Pixel 5".'
-        ),
-        colorScheme: external_exports.enum(["light", "dark", "system"]).optional(),
-        network: external_exports.enum(NETWORKS).optional()
+        ...emulationFields,
+        allTabs: external_exports.boolean().optional().describe("Apply to every tab, and to tabs that open later.")
       }
     },
-    ({ device, colorScheme, network }) => runTool(ctx, "emulate", async () => {
+    ({ allTabs, ...settings }) => runTool(ctx, "emulate", async () => {
       const driver = ctx.requireDriver();
-      driver.activeTab();
-      if (device === void 0 && colorScheme === void 0 && network === void 0) {
-        return `Now: ${describeEmulation(driver.emulation)}.`;
-      }
-      const reloaded = await driver.setEmulation(
-        { device, colorScheme, network },
-        { reload: true }
+      const tab = driver.activeTab();
+      const change = Object.fromEntries(
+        Object.entries(settings).filter(([, v2]) => v2 !== void 0)
       );
+      if (Object.keys(change).length === 0) {
+        return [
+          `Tab ${tab.id} (login ${tab.login}): ${describeEmulation(tab.emulation)}.`,
+          `New tabs start with: ${describeEmulation(driver.defaultEmulation)}.`
+        ].join("\n");
+      }
+      const reloaded = await driver.setEmulation(change, {
+        tab: allTabs ? void 0 : tab,
+        reload: true
+      });
+      ctx.actionLog.push({
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        tabId: tab.id,
+        tab: tab.name,
+        action: "emulate",
+        label: `${allTabs ? "On all tabs" : `In the tab "${tab.name}"`}, set ${describeEmulation(change, true)}`,
+        value: JSON.stringify(allTabs ? { ...change, allTabs: true } : change),
+        url: tokenizeUnique(tab.page.url(), ctx.unique)
+      });
       return [
-        `Now: ${describeEmulation(driver.emulation)}.`,
+        allTabs ? `Every tab, and tabs that open later, now have: ${describeEmulation(change, true)}.` : `Tab ${tab.id} now: ${describeEmulation(tab.emulation)}.`,
+        change.permissions || change.geolocation ? `Permissions apply to every tab of the login "${tab.login}".` : "",
         reloaded.length ? `Reloaded ${reloaded.join(", ")}, because the page switched between desktop and phone mode.` : "",
-        "Take a new snapshot. The page layout can be different now."
+        "Take a new snapshot. The page can look different now."
       ].filter(Boolean).join("\n");
     })
   );
@@ -113012,7 +113413,7 @@ function registerQualityTools(server, ctx) {
         selector: input3.selector
       });
       const group = ctx.run?.run.planFile ? basename6(ctx.run.run.planFile, extname5(ctx.run.run.planFile)) : "adhoc";
-      const device = slug(driver.emulation.device ?? "default", 60, "check");
+      const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const baselinePath = join29(config3.projectDir, ".walkthrough", "baselines", group, file2);
       const baselineRel = relative11(config3.projectDir, baselinePath);
@@ -113136,7 +113537,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         label = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
         if (label && isPlainCss(label)) scope = label;
         else {
-          const mark = randomBytes7(4).toString("hex");
+          const mark = randomBytes8(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
           marked = target2.handle;
           scope = `[data-uiwalk-a11y="${mark}"]`;
@@ -113201,6 +113602,190 @@ var UNIQUE_CODE = [
   "const UNIQUE = process.env.UNIQUE ?? 'u' + Date.now().toString(36).slice(-5);",
   ""
 ].join("\n");
+function scriptSettings(change, full) {
+  const out = {};
+  if (change.device !== void 0) {
+    let resolved;
+    try {
+      resolved = resolveDevice(change.device);
+    } catch {
+    }
+    out.device = resolved?.device ? { userAgent: resolved.device.userAgent, viewport: resolved.device.viewport } : {
+      userAgent: null,
+      viewport: { ...resolved?.size ?? { width: 1280, height: 800 }, deviceScaleFactor: 1 }
+    };
+  }
+  if (change.colorScheme !== void 0 || change.reducedMotion !== void 0 || change.media !== void 0)
+    out.media = { type: full.media === "print" ? "print" : "", features: mediaFeatures(full) };
+  if (change.network !== void 0) out.network = NETWORK_PRESETS[change.network] ?? change.network;
+  if (change.cpu !== void 0) out.cpu = change.cpu;
+  if (change.timezone !== void 0) out.timezone = change.timezone;
+  if (change.locale !== void 0) out.locale = change.locale;
+  if (change.geolocation !== void 0 && change.geolocation !== "off")
+    out.geolocation = change.geolocation;
+  const permissions = permissionEntries(change);
+  if (permissions.length) out.permissions = permissions;
+  return out;
+}
+var EMULATE_HELPER = `
+// Changes the screen, colors, network, and other settings of one tab.
+// Media settings need a session that stays open, one for each tab.
+async function emulate(target, s) {
+  emulate.sessions ??= new WeakMap();
+  if (s.device) {
+    await target.setUserAgent(s.device.userAgent ?? (await browser.userAgent()));
+    await target.setViewport(s.device.viewport);
+  }
+  if (s.media) {
+    if (!emulate.sessions.has(target)) emulate.sessions.set(target, await target.createCDPSession());
+    await emulate.sessions.get(target).send('Emulation.setEmulatedMedia', { media: s.media.type, features: s.media.features });
+  }
+  if (s.network) {
+    await target.emulateNetworkConditions(PredefinedNetworkConditions[s.network] ?? null);
+    await target.setOfflineMode(s.network === 'offline');
+  }
+  if (s.cpu) await target.emulateCPUThrottling(s.cpu > 1 ? s.cpu : null);
+  if (s.timezone) await target.emulateTimezone(s.timezone === 'system' ? undefined : s.timezone);
+  if (s.locale) await target.emulateLocale(s.locale === 'system' ? undefined : s.locale);
+  if (s.geolocation) await target.setGeolocation(s.geolocation);
+  if (s.permissions) await target.browserContext().setPermission('*', ...s.permissions);
+}
+`;
+var TAB_HELPERS = `
+// Tabs by name, and the logins (cookie jars) they use.
+const tabs = { main: page };
+const logins = { main: browser.defaultBrowserContext() };
+
+async function openTab(name, login) {
+  logins[login] ??= await browser.createBrowserContext();
+  const tab = await logins[login].newPage();
+  tab.setDefaultTimeout(10_000);
+  tab.on('dialog', answerDialog);
+  tabs[name] = tab;
+  return tab;
+}
+
+// Finds the tab that a click in the opener tab opened.
+async function popupOf(opener) {
+  const target = await browser.waitForTarget(
+    (t) => t.opener() === opener.target() && !Object.values(tabs).some((p) => p.target() === t),
+    { timeout: 10_000 },
+  );
+  const tab = await target.page();
+  tab.setDefaultTimeout(10_000);
+  tab.on('dialog', answerDialog);
+  return tab;
+}
+`;
+function dialogCode(gen) {
+  const special = gen.dialogs.some((d) => !d.accept || d.text !== void 0);
+  if (!special && !gen.needs.tabs) {
+    return "// Accept confirm dialogs, like the run did.\npage.on('dialog', (dialog) => void dialog.accept());";
+  }
+  return [
+    "// The answers to dialogs, in the order the run gave them. Other dialogs are accepted.",
+    `const DIALOG_ANSWERS = ${JSON.stringify(special ? gen.dialogs : [])};`,
+    "function answerDialog(dialog) {",
+    "  const next = DIALOG_ANSWERS.shift() ?? { accept: true };",
+    "  void (next.accept ? dialog.accept(next.text) : dialog.dismiss());",
+    "}",
+    "page.on('dialog', answerDialog);"
+  ].join("\n");
+}
+function pageChangeCode(action2, gen) {
+  const value = (() => {
+    try {
+      return JSON.parse(action2.value ?? "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const fixByHand = `// Fix by hand: ${action2.label.replace(/\n/g, " ")}.`;
+  switch (action2.action) {
+    case "dialog":
+      gen.dialogs.push({
+        accept: value.accept !== false,
+        ...typeof value.text === "string" ? { text: value.text } : {}
+      });
+      return [];
+    case "tab-new": {
+      const name = String(value.name ?? "");
+      if (!name) return [fixByHand];
+      gen.needs.tabs = true;
+      gen.needs.emulate = true;
+      const lines = [`page = await openTab(${js(name)}, ${js(String(value.login ?? "main"))});`];
+      const state = { ...gen.defaults };
+      gen.states.set(name, state);
+      lines.push(
+        `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state))});`
+      );
+      if (value.session)
+        lines.push(
+          `// Fix by hand: this tab used the saved login "${String(value.session)}". The script opens it logged out.`
+        );
+      if (typeof value.url === "string")
+        lines.push(
+          `await page.goto(${urlCode(value.url, gen.needs, gen.baseUrl)}, { waitUntil: 'load' });`
+        );
+      gen.known.add(name);
+      gen.current = name;
+      return lines;
+    }
+    case "tab-switch": {
+      const name = String(value.name ?? "");
+      const opener = typeof value.opener === "string" ? value.opener : void 0;
+      gen.needs.tabs = true;
+      if (gen.known.has(name)) {
+        gen.current = name;
+        return [`page = tabs[${js(name)}];`];
+      }
+      if (opener && gen.known.has(opener)) {
+        gen.needs.emulate = true;
+        const state = { ...gen.states.get(opener) ?? gen.defaults };
+        gen.states.set(name, state);
+        gen.known.add(name);
+        gen.current = name;
+        return [
+          `page = tabs[${js(name)}] = await popupOf(tabs[${js(opener)}]);`,
+          `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state))});`
+        ];
+      }
+      return [
+        `// Fix by hand: switch to the tab "${name}". The script does not know how it opened.`
+      ];
+    }
+    case "tab-close": {
+      const name = String(value.name ?? "");
+      gen.needs.tabs = true;
+      gen.known.delete(name);
+      gen.states.delete(name);
+      const lines = [`await tabs[${js(name)}]?.close();`, `delete tabs[${js(name)}];`];
+      if (gen.current === name) {
+        lines.push("page = Object.values(tabs).at(-1);");
+        gen.current = [...gen.known].at(-1) ?? "main";
+      }
+      return lines;
+    }
+    case "emulate": {
+      const { allTabs, ...change } = value;
+      gen.needs.emulate = true;
+      if (allTabs) {
+        gen.defaults = mergeEmulation(gen.defaults, change);
+        for (const [name, state2] of gen.states) gen.states.set(name, mergeEmulation(state2, change));
+        return [
+          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults))});`
+        ];
+      }
+      const state = mergeEmulation(gen.states.get(gen.current) ?? gen.defaults, change);
+      gen.states.set(gen.current, state);
+      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state))});`];
+    }
+    default:
+      return [
+        `// Fix by hand: the script cannot repeat this yet: ${action2.label.replace(/\n/g, " ")}.`
+      ];
+  }
+}
 function literal2(value, needs) {
   const code = js(value);
   if (!UNIQUE_IN.test(code)) return code;
@@ -113227,7 +113812,8 @@ function frameCode(frameUrl2) {
   }
   return `frame(${js(part)})`;
 }
-function actionCode(action2, secrets, secretFields, needs, baseUrl) {
+function actionCode(action2, secrets, secretFields, gen) {
+  const { needs, baseUrl } = gen;
   const where2 = frameCode(action2.frameUrl);
   const sel = action2.selector ? js(action2.selector) : "";
   const value = (() => {
@@ -113268,9 +113854,7 @@ function actionCode(action2, secrets, secretFields, needs, baseUrl) {
       return [
         `await (await ${where2}.$(${sel}))?.uploadFile(${(action2.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(", ")});`
       ];
-    // The script accepts dialogs on its own.
     case "dialog":
-      return [];
     case "tab-new":
     case "tab-switch":
     case "tab-close":
@@ -113278,12 +113862,10 @@ function actionCode(action2, secrets, secretFields, needs, baseUrl) {
     case "mock":
     case "mock-clear":
     case "storage":
-      return [
-        `// Fix by hand: the script cannot repeat this yet: ${action2.label.replace(/\n/g, " ")}.`
-      ];
+      return pageChangeCode(action2, gen);
   }
 }
-function setupCode(emulation) {
+function setupCode(emulation, gen) {
   const lines = [];
   let resolved;
   try {
@@ -113309,6 +113891,11 @@ function setupCode(emulation) {
     lines.push(
       `await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: ${js(scheme)} }]);`
     );
+  }
+  const { device: _device, colorScheme: _scheme, ...more } = emulation ?? {};
+  if (Object.keys(more).length && emulation) {
+    gen.needs.emulate = true;
+    lines.push(`await emulate(page, ${JSON.stringify(scriptSettings(more, emulation))});`);
   }
   return lines;
 }
@@ -113350,6 +113937,14 @@ async function capture(file, options = {}) {
 }
 `;
 }
+function parseUrl(value) {
+  try {
+    const url2 = JSON.parse(value ?? "{}").url;
+    return typeof url2 === "string" ? url2 : void 0;
+  } catch {
+    return void 0;
+  }
+}
 function exportScript(run, options = {}) {
   const secrets = /* @__PURE__ */ new Set();
   const secretFields = /* @__PURE__ */ new Set();
@@ -113361,7 +113956,17 @@ function exportScript(run, options = {}) {
   let handChecks = 0;
   let lastUrl = run.baseUrl ?? "";
   const body = [];
-  const needs = { unique: false };
+  const needs = { unique: false, emulate: false, tabs: false };
+  const gen = {
+    needs,
+    baseUrl: run.baseUrl,
+    known: /* @__PURE__ */ new Set(["main"]),
+    current: "main",
+    states: /* @__PURE__ */ new Map([["main", { ...run.emulation }]]),
+    defaults: { ...run.emulation },
+    dialogs: []
+  };
+  const setup2 = setupCode(run.emulation, gen);
   for (const step of run.steps) {
     const shots = step.captures ?? [];
     if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
@@ -113378,9 +113983,11 @@ function exportScript(run, options = {}) {
         );
         continue;
       }
-      lines.push(...actionCode(action2, secrets, secretFields, needs, run.baseUrl));
+      lines.push(...actionCode(action2, secrets, secretFields, gen));
       actions += 1;
       if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
+      if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
+      if (action2.action === "tab-close") lastUrl = "";
     }
     if (step.expect) {
       const texts = checkableText(step.expect);
@@ -113419,6 +114026,7 @@ function exportScript(run, options = {}) {
     );
   }
   const pkg = options.installedChrome ? "puppeteer-core" : "puppeteer";
+  const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : "puppeteer";
   const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL }" : "{ headless: !process.env.HEADFUL }";
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
@@ -113432,7 +114040,7 @@ ${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to s
 ` : ""}${needs.unique ? "// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n" : ""}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(", ")}.
 ` : ""}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
 import { fileURLToPath } from 'node:url';
-import puppeteer from '${pkg}';
+import ${imports} from '${pkg}';
 
 const BASE_URL = process.env.BASE_URL ?? ${js(run.baseUrl ?? "http://localhost:3000")};
 // The project folder: this file is in .walkthrough/exports.
@@ -113442,12 +114050,11 @@ for (const name of ${JSON.stringify(secretList)}) {
 }
 ${needs.unique ? UNIQUE_CODE : ""}
 const browser = await puppeteer.launch(${launch3});
-const page = await browser.newPage();
+${needs.tabs ? "let" : "const"} page = await browser.newPage();
 page.setDefaultTimeout(10_000);
-${setupCode(run.emulation).join("\n")}
-// Accept confirm dialogs, like the run did.
-page.on('dialog', (dialog) => void dialog.accept());
-
+${setup2.join("\n")}
+${dialogCode(gen)}
+${needs.tabs ? TAB_HELPERS : ""}
 // Runs one step, and names the step if it fails.
 async function step(name, fn) {
   try {
@@ -113507,7 +114114,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${hasShots ? captureHelpers([...secretFields]) : ""}
+${needs.emulate ? EMULATE_HELPER : ""}${hasShots ? captureHelpers([...secretFields]) : ""}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 
@@ -113623,17 +114230,66 @@ function secretName(field) {
   return name.includes("PASSWORD") || name.includes("SECRET") || name.includes("TOKEN") ? name : `${name || "FIELD"}_SECRET`;
 }
 var Recorder = class {
-  constructor(name, baseUrl) {
+  constructor(name, baseUrl, lookup) {
     this.name = name;
     this.baseUrl = baseUrl;
+    this.lookup = lookup;
   }
   name;
   baseUrl;
+  lookup;
   steps = [];
   lastEventAt = 0;
   secretNames = /* @__PURE__ */ new Set();
+  // The tab of the last step, and the plan name of each tab seen.
+  currentTab;
+  tabNames = /* @__PURE__ */ new Map();
+  popups = 0;
+  newTabs = 0;
+  // The tabs that are open when recording starts, and the active one.
+  startTabs(tabIds, activeId) {
+    for (const id of tabIds) this.tabNames.set(id, this.lookup?.(id)?.name ?? id);
+    this.currentTab = activeId;
+  }
+  // Adds a tab step when an event comes from another tab.
+  // Returns true when a new tab step already holds this page address.
+  followTab(tabId, url2) {
+    if (!tabId || !this.lookup || tabId === this.currentTab) return false;
+    this.currentTab = tabId;
+    const known = this.tabNames.get(tabId);
+    if (known) {
+      this.steps.push({ kind: "switchTab", label: known, tab: { name: known } });
+      return false;
+    }
+    const info = this.lookup(tabId);
+    if (info?.opener) {
+      const name2 = `popup-${++this.popups}`;
+      this.tabNames.set(tabId, name2);
+      this.steps.push({ kind: "switchTab", label: name2, tab: { name: name2, newest: true } });
+      return false;
+    }
+    const name = info && !/^t\d+$/.test(info.name) ? info.name : `tab-${++this.newTabs}`;
+    this.tabNames.set(tabId, name);
+    const path14 = url2 && !url2.startsWith("about:") ? this.path(url2) : void 0;
+    this.steps.push({
+      kind: "newTab",
+      label: name,
+      tab: { name, login: info && info.login !== "main" ? info.login : void 0, url: path14 }
+    });
+    return Boolean(path14);
+  }
+  path(url2) {
+    try {
+      const parsed = new URL(url2);
+      if (this.baseUrl && parsed.origin === new URL(this.baseUrl).origin)
+        return parsed.pathname + parsed.search;
+    } catch {
+    }
+    return url2;
+  }
   // Adds one event from the page. Typing in the same field again replaces the value.
-  add(event) {
+  add(event, tabId) {
+    this.followTab(tabId);
     this.lastEventAt = Date.now();
     const last2 = this.steps.at(-1);
     if (event.kind === "fill" && last2?.kind === "fill" && last2.key === event.key) this.steps.pop();
@@ -113653,15 +114309,16 @@ var Recorder = class {
     this.steps.push(step);
   }
   // A page load that no click caused, like an address the developer typed.
-  addNavigation(url2) {
-    if (Date.now() - this.lastEventAt < 1500) return;
-    let path14 = url2;
-    try {
-      const parsed = new URL(url2);
-      if (this.baseUrl && parsed.origin === new URL(this.baseUrl).origin)
-        path14 = parsed.pathname + parsed.search;
-    } catch {
+  addNavigation(url2, tabId) {
+    if (url2.startsWith("about:")) return;
+    if (tabId && this.lookup && tabId !== this.currentTab) {
+      if (this.lookup(tabId)?.opener) return;
+      this.lastEventAt = Date.now();
+      if (this.followTab(tabId, url2)) return;
+    } else if (Date.now() - this.lastEventAt < 1500) {
+      return;
     }
+    const path14 = this.path(url2);
     const last2 = this.steps.at(-1);
     if (last2?.kind === "navigate" && last2.value === path14) return;
     this.lastEventAt = Date.now();
@@ -113743,10 +114400,28 @@ function describe3(step) {
       return `Upload ${(step.files ?? []).join(", ") || "a file"} to ${step.label}`;
     case "navigate":
       return `Go to ${step.value}`;
+    case "newTab": {
+      const tab = step.tab;
+      const login = tab?.login ? " with its own login" : "";
+      return `Open a new tab "${tab?.name ?? step.label}"${login}${tab?.url ? ` at ${tab.url}` : ""}`;
+    }
+    case "switchTab":
+      return step.tab?.newest ? `Switch to the new tab, and name it "${step.label}"` : `Switch to the tab "${step.label}"`;
   }
 }
 function actionOf(step) {
   if (step.kind === "navigate") return { navigate: step.value };
+  if (step.kind === "switchTab") {
+    const name = step.tab?.name ?? step.label;
+    return { switchTab: step.tab?.newest ? { tab: "newest", name } : name };
+  }
+  if (step.kind === "newTab") {
+    const tab = step.tab;
+    const out = { name: tab?.name ?? step.label };
+    if (tab?.login) out.isolated = tab.login.startsWith("iso-") ? true : tab.login;
+    if (tab?.url) out.url = tab.url;
+    return { newTab: out };
+  }
   const target2 = { ...step.target };
   if (step.kind === "fill")
     target2.value = step.secret ? `{{secret:${step.secret}}}` : step.value ?? "";
@@ -113827,8 +114502,12 @@ function registerShareTools(server, ctx) {
             "A question is waiting in the panel. Get the answer first.",
             "busy"
           );
-        const recorder2 = new Recorder(name ?? "Recorded flow", config3.baseUrl);
-        const onNavigated = ({ url: url2 }) => recorder2.addNavigation(url2);
+        const recorder2 = new Recorder(name ?? "Recorded flow", config3.baseUrl, (id) => {
+          const t = driver.tabs.get(id);
+          return t && { name: t.name, login: t.login, opener: t.openerId };
+        });
+        recorder2.startTabs([...driver.tabs.keys()], driver.activeId);
+        const onNavigated = ({ url: url2, tabId }) => recorder2.addNavigation(url2, tabId);
         driver.emitter.on("navigated", onNavigated);
         stopNavigationWatch = () => driver.emitter.off("navigated", onNavigated);
         await panel.startRecording(recorder2);

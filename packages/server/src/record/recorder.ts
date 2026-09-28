@@ -8,8 +8,20 @@ export interface RecordedTarget {
 }
 
 export interface RecordedStep {
-  kind: 'click' | 'fill' | 'select' | 'check' | 'uncheck' | 'press' | 'upload' | 'navigate';
+  kind:
+    | 'click'
+    | 'fill'
+    | 'select'
+    | 'check'
+    | 'uncheck'
+    | 'press'
+    | 'upload'
+    | 'navigate'
+    | 'newTab'
+    | 'switchTab';
   target?: RecordedTarget;
+  // For newTab and switchTab.
+  tab?: { name: string; login?: string; url?: string; newest?: boolean };
   label: string;
   key?: string;
   value?: string;
@@ -30,28 +42,87 @@ function secretName(field: string): string {
     : `${name || 'FIELD'}_SECRET`;
 }
 
+// What the recorder needs to know about a tab.
+export type TabLookup = (
+  tabId: string,
+) => { name: string; login: string; opener?: string } | undefined;
+
 // Collects what the developer does while recording, and writes a plan draft.
 export class Recorder {
   readonly steps: RecordedStep[] = [];
   private lastEventAt = 0;
   private readonly secretNames = new Set<string>();
+  // The tab of the last step, and the plan name of each tab seen.
+  private currentTab?: string;
+  private readonly tabNames = new Map<string, string>();
+  private popups = 0;
+  private newTabs = 0;
 
   constructor(
     readonly name: string,
     readonly baseUrl?: string,
+    private readonly lookup?: TabLookup,
   ) {}
 
+  // The tabs that are open when recording starts, and the active one.
+  startTabs(tabIds: string[], activeId?: string): void {
+    for (const id of tabIds) this.tabNames.set(id, this.lookup?.(id)?.name ?? id);
+    this.currentTab = activeId;
+  }
+
+  // Adds a tab step when an event comes from another tab.
+  // Returns true when a new tab step already holds this page address.
+  private followTab(tabId: string | undefined, url?: string): boolean {
+    if (!tabId || !this.lookup || tabId === this.currentTab) return false;
+    this.currentTab = tabId;
+    const known = this.tabNames.get(tabId);
+    if (known) {
+      this.steps.push({ kind: 'switchTab', label: known, tab: { name: known } });
+      return false;
+    }
+    const info = this.lookup(tabId);
+    if (info?.opener) {
+      // The page opened this tab, so a click in the plan opens it again.
+      const name = `popup-${++this.popups}`;
+      this.tabNames.set(tabId, name);
+      this.steps.push({ kind: 'switchTab', label: name, tab: { name, newest: true } });
+      return false;
+    }
+    const name = info && !/^t\d+$/.test(info.name) ? info.name : `tab-${++this.newTabs}`;
+    this.tabNames.set(tabId, name);
+    const path = url && !url.startsWith('about:') ? this.path(url) : undefined;
+    this.steps.push({
+      kind: 'newTab',
+      label: name,
+      tab: { name, login: info && info.login !== 'main' ? info.login : undefined, url: path },
+    });
+    return Boolean(path);
+  }
+
+  private path(url: string): string {
+    try {
+      const parsed = new URL(url);
+      if (this.baseUrl && parsed.origin === new URL(this.baseUrl).origin)
+        return parsed.pathname + parsed.search;
+    } catch {}
+    return url;
+  }
+
   // Adds one event from the page. Typing in the same field again replaces the value.
-  add(event: {
-    kind: RecordedStep['kind'];
-    target: RecordedTarget;
-    label: string;
-    key: string;
-    value?: string;
-    secret?: boolean;
-    fieldName?: string;
-    files?: string[];
-  }): void {
+  add(
+    event: {
+      kind: RecordedStep['kind'];
+      target: RecordedTarget;
+      label: string;
+      key: string;
+      value?: string;
+      secret?: boolean;
+      fieldName?: string;
+      files?: string[];
+    },
+    tabId?: string,
+  ): void {
+    this.followTab(tabId);
     this.lastEventAt = Date.now();
     const last = this.steps.at(-1);
     if (event.kind === 'fill' && last?.kind === 'fill' && last.key === event.key) this.steps.pop();
@@ -72,14 +143,18 @@ export class Recorder {
   }
 
   // A page load that no click caused, like an address the developer typed.
-  addNavigation(url: string): void {
-    if (Date.now() - this.lastEventAt < 1500) return;
-    let path = url;
-    try {
-      const parsed = new URL(url);
-      if (this.baseUrl && parsed.origin === new URL(this.baseUrl).origin)
-        path = parsed.pathname + parsed.search;
-    } catch {}
+  addNavigation(url: string, tabId?: string): void {
+    if (url.startsWith('about:')) return;
+    if (tabId && this.lookup && tabId !== this.currentTab) {
+      // A tab that a click opened loads by itself. Only the developer's use of it counts.
+      if (this.lookup(tabId)?.opener) return;
+      this.lastEventAt = Date.now();
+      if (this.followTab(tabId, url)) return;
+    } else if (Date.now() - this.lastEventAt < 1500) {
+      // The page load came from the last click.
+      return;
+    }
+    const path = this.path(url);
     const last = this.steps.at(-1);
     if (last?.kind === 'navigate' && last.value === path) return;
     this.lastEventAt = Date.now();
@@ -175,11 +250,32 @@ export function describe(step: RecordedStep): string {
       return `Upload ${(step.files ?? []).join(', ') || 'a file'} to ${step.label}`;
     case 'navigate':
       return `Go to ${step.value}`;
+    case 'newTab': {
+      const tab = step.tab;
+      const login = tab?.login ? ' with its own login' : '';
+      return `Open a new tab "${tab?.name ?? step.label}"${login}${tab?.url ? ` at ${tab.url}` : ''}`;
+    }
+    case 'switchTab':
+      return step.tab?.newest
+        ? `Switch to the new tab, and name it "${step.label}"`
+        : `Switch to the tab "${step.label}"`;
   }
 }
 
 function actionOf(step: RecordedStep): Record<string, unknown> {
   if (step.kind === 'navigate') return { navigate: step.value };
+  if (step.kind === 'switchTab') {
+    const name = step.tab?.name ?? step.label;
+    return { switchTab: step.tab?.newest ? { tab: 'newest', name } : name };
+  }
+  if (step.kind === 'newTab') {
+    const tab = step.tab;
+    const out: Record<string, unknown> = { name: tab?.name ?? step.label };
+    // A one-off login gets a new login again. A named login keeps its name.
+    if (tab?.login) out.isolated = tab.login.startsWith('iso-') ? true : tab.login;
+    if (tab?.url) out.url = tab.url;
+    return { newTab: out };
+  }
   const target: Record<string, unknown> = { ...step.target };
   if (step.kind === 'fill')
     target.value = step.secret ? `{{secret:${step.secret}}}` : (step.value ?? '');

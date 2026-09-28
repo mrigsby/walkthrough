@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Emulation } from '../browser/devices.js';
+import { describeEmulation, type Emulation, withoutDefaults } from '../browser/devices.js';
 import type { Tab } from '../browser/driver.js';
 import { loadSession, restoreSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
@@ -82,18 +82,24 @@ export async function openBrowser(
   }
   for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
 
+  // Chrome can run with no tabs, for example after the developer closes the window.
+  const reopened = alreadyOpen && !driver.hasActiveTab;
+  if (reopened) {
+    await driver.reopenTab();
+    lines.push('No tab was open, so Walkthrough opened a new one.');
+  }
   const tab = driver.activeTab();
   if (options.emulation && Object.keys(options.emulation).length > 0) {
     // No reload here. The page loads next anyway.
     await driver.setEmulation(options.emulation, { reload: false });
   }
   if (options.session) {
-    await restoreSession(driver, tab, loadSession(config.projectDir, options.session));
+    await restoreSession(tab, loadSession(config.projectDir, options.session));
     lines.push(`Loaded the saved login "${options.session}".`);
   }
   // A new browser starts at the baseUrl. An open one stays where it is.
   // After a saved login, go to the page again, so the login takes effect.
-  const goAgain = Boolean(options.session) || !alreadyOpen || options.alwaysGo;
+  const goAgain = Boolean(options.session) || !alreadyOpen || reopened || options.alwaysGo;
   const target =
     options.url ??
     (goAgain ? (config.baseUrl ?? (options.session ? tab.page.url() : undefined)) : undefined);
@@ -195,6 +201,9 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
         const driver = ctx.requireDriver();
         const config = await ctx.config();
         const guard = await ctx.guard();
+        // With no tab open, a url opens a new tab.
+        const reopened = Boolean(url) && !driver.hasActiveTab;
+        if (reopened) await driver.reopenTab();
         // A reload is the way out of a crashed page.
         const tab = action === 'reload' ? reloadableTab(driver) : driver.activeTab();
         let problem: string | undefined;
@@ -224,7 +233,12 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
           throw new ToolError('Give a url or an action (back, forward, reload).', 'bad_input');
         }
         if (!url) await settle(tab);
-        return [problem, await pageSummary(tab), 'Take a snapshot to see the page.']
+        return [
+          reopened ? 'No tab was open, so Walkthrough opened a new one.' : '',
+          problem,
+          await pageSummary(tab),
+          'Take a snapshot to see the page.',
+        ]
           .filter(Boolean)
           .join('\n');
       }),
@@ -234,41 +248,142 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
     'tabs',
     {
       title: 'Tabs',
-      description:
-        'List the open tabs, switch the active tab, or close a tab. Tools act on the active tab.',
+      description: [
+        'List the open tabs, open a new tab, switch the active tab, or close a tab. Tools act on the active tab.',
+        'A new tab uses the main login, unless you set isolated.',
+        'isolated: true gives the tab its own new login (cookies and storage), like a private window, to test as a second user.',
+        'isolated: "customer" gives it a named login. Tabs with the same login name share it.',
+      ].join(' '),
       inputSchema: {
-        action: z.enum(['list', 'switch', 'close']).default('list'),
-        id: z.string().optional().describe('Tab id, like "t2". Needed for switch and close.'),
+        action: z.enum(['list', 'new', 'switch', 'close']).default('list'),
+        id: z
+          .string()
+          .optional()
+          .describe(
+            'A tab id like "t2", a tab name, or "newest" for the last tab that opened. Needed for switch and close.',
+          ),
+        url: z
+          .string()
+          .optional()
+          .describe('For new: the page to open. A full URL, or a path like "/login".'),
+        name: z
+          .string()
+          .optional()
+          .describe(
+            'For new and switch: a name for the tab, like "customer". Plans use tab names.',
+          ),
+        isolated: z
+          .union([z.boolean(), z.string()])
+          .optional()
+          .describe('For new: true for a new login of its own, or a login name that tabs share.'),
+        session: z
+          .string()
+          .optional()
+          .describe('For new: a saved login to load into the tab, from the session tool.'),
       },
     },
-    ({ action, id }) =>
+    ({ action, id, url, name, isolated, session }) =>
       runTool(ctx, 'tabs', async () => {
         const driver = ctx.requireDriver();
+        if (action === 'new') {
+          const config = await ctx.config();
+          const guard = await ctx.guard();
+          const from = driver.activeId ? (driver.tabs.get(driver.activeId)?.page.url() ?? '') : '';
+          const target = url ?? (session ? config.baseUrl : undefined);
+          const full = target
+            ? fullUrl(withUnique(target, ctx.unique), from, config.baseUrl)
+            : undefined;
+          if (full) guard.check(full);
+          const loginChoice = isolated === true ? true : isolated ? isolated : undefined;
+          const tab = await driver.newTab({ name, isolated: loginChoice });
+          if (session) await restoreSession(tab, loadSession(config.projectDir, session));
+          const problem = full ? await goTo(tab, full) : undefined;
+          ctx.actionLog.push({
+            at: new Date().toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: 'tab-new',
+            label: `Open a new tab "${tab.name}"${tab.login === 'main' ? '' : ` with the login "${tab.login}"`}${full ? ` at ${full}` : ''}`,
+            value: JSON.stringify({
+              name: tab.name,
+              login: tab.login,
+              isolated: loginChoice,
+              url: full ? tokenizeUnique(full, ctx.unique) : undefined,
+              session,
+            }),
+            url: '',
+          });
+          return [
+            `Opened tab ${tab.id}${tab.name === tab.id ? '' : ` "${tab.name}"`}. It is the active tab now.`,
+            tab.login === 'main'
+              ? 'It uses the main login.'
+              : `Its login is "${tab.login}". It has its own cookies and storage.${loginChoice === true ? ` To open more tabs with this login, use isolated: "${tab.login}".` : ''}`,
+            config.browser.headless || tab.login === 'main'
+              ? ''
+              : 'Chrome shows a separate login in its own window.',
+            session ? `Loaded the saved login "${session}".` : '',
+            problem ?? '',
+            await pageSummary(tab),
+            'Take a snapshot to see the page.',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        }
         if (action === 'switch') {
-          if (!id) throw new ToolError('Give the id of the tab to switch to.', 'bad_input');
-          const tab = driver.switchTo(id);
+          if (!id) throw new ToolError('Give the id or name of the tab to switch to.', 'bad_input');
+          const found = driver.tabByRef(id);
+          if (found && name) {
+            driver.checkTabName(name, found);
+            found.name = name;
+          }
+          const tab = driver.switchTo(found?.id ?? id);
+          const opener = tab.openerId ? driver.tabs.get(tab.openerId)?.name : undefined;
+          ctx.actionLog.push({
+            at: new Date().toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: 'tab-switch',
+            label: `Switch to the tab "${tab.name}"`,
+            value: JSON.stringify({ name: tab.name, opener, newest: id === 'newest' || undefined }),
+            url: tokenizeUnique(tab.page.url(), ctx.unique),
+          });
           return `Switched to tab ${tab.id}.\n${await pageSummary(tab)}\nTake a snapshot to see the page.`;
         }
         if (action === 'close') {
-          if (!id) throw new ToolError('Give the id of the tab to close.', 'bad_input');
-          const tab = driver.tabs.get(id);
+          if (!id) throw new ToolError('Give the id or name of the tab to close.', 'bad_input');
+          const tab = driver.tabByRef(id);
           if (!tab) throw new ToolError(`There is no tab "${id}".`, 'no_tab');
           if (driver.tabs.size === 1)
             throw new ToolError('This is the last tab. Use browser_close instead.', 'bad_input');
           await tab.page.close();
-          return `Closed tab ${id}. The active tab is ${driver.activeId}.`;
+          ctx.actionLog.push({
+            at: new Date().toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: 'tab-close',
+            label: `Close the tab "${tab.name}"`,
+            value: JSON.stringify({ name: tab.name }),
+            url: '',
+          });
+          return `Closed tab ${tab.id}. The active tab is ${driver.activeId}.`;
         }
+        if (driver.tabs.size === 0)
+          return 'No tab is open. Call browser_open, or tabs with action "new", to open one.';
         const rows: string[] = [];
         for (const tab of driver.tabs.values()) {
           const title = await tab.page.title().catch(() => '');
+          const settings = describeEmulation(withoutDefaults(tab.emulation), true);
           const flags = [
             tab.id === driver.activeId ? 'active' : '',
+            tab.login === 'main' ? '' : `login ${tab.login}`,
             tab.openerId ? `opened by ${tab.openerId}` : '',
+            settings,
             driver.pendingDialog(tab.id) ? 'dialog open' : '',
             tab.crashed ? 'crashed' : '',
           ].filter(Boolean);
+          const label = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
           rows.push(
-            `${tab.id}${flags.length ? ` (${flags.join(', ')})` : ''}: "${title}" ${tab.page.url()}`,
+            `${label}${flags.length ? ` (${flags.join(', ')})` : ''}: "${title}" ${tab.page.url()}`,
           );
         }
         return untrusted(rows.join('\n'));
@@ -323,6 +438,10 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
 // Gets the active tab even if its page crashed, so it can be reloaded.
 function reloadableTab(driver: ReturnType<Context['requireDriver']>): Tab {
   const tab = driver.activeId ? driver.tabs.get(driver.activeId) : undefined;
-  if (!tab) throw new ToolError('No tab is open.', 'no_tab');
+  if (!tab)
+    throw new ToolError(
+      'No tab is open. Call browser_open, or navigate with a url. Both open a new tab.',
+      'no_tab',
+    );
   return tab;
 }

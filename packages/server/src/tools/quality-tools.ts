@@ -7,13 +7,15 @@ import { z } from 'zod';
 import { auditPage, formatAudit, type PageAudit, standardLabel } from '../audit/audit-page.js';
 import { customViolations } from '../audit/custom-rules.js';
 import { CHECKS, STANDARDS, type Standard, standardTags } from '../audit/standards.js';
-import { describeEmulation, NETWORKS } from '../browser/devices.js';
+import { describeEmulation, type Emulation } from '../browser/devices.js';
+import { emulationFields } from '../browser/emulation-schema.js';
 import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
 import { resolveTarget } from '../page/actions.js';
 import { stableSelector } from '../page/selectors.js';
+import { tokenizeUnique } from '../page/unique.js';
 import { fileStamp } from '../project-files.js';
 import { slug } from '../text.js';
 import { steadyCapture } from '../visual/capture.js';
@@ -31,7 +33,7 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
     {
       title: 'Saved logins',
       description:
-        'Save the login state (cookies and storage) of the allowed sites that are open, so later runs start logged in. Or list or delete saved logins. To use one, call browser_open with session, or set "session" in a plan.',
+        'Save the login state (cookies and storage) of the active tab\'s login, for the allowed sites that are open, so later runs start logged in. Or list or delete saved logins. To use one, call browser_open or tabs (action new) with session, or set "session" in a plan.',
       inputSchema: {
         action: z.enum(['save', 'list', 'delete']),
         name: z.string().optional().describe('A name like "admin" or "demo-user".'),
@@ -72,37 +74,58 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
   server.registerTool(
     'emulate',
     {
-      title: 'Screen, color, and network',
-      description:
-        'Test like a phone, tablet, or other screen, in light or dark mode, or on a slow network. Settings apply to all tabs, also new ones.',
+      title: 'Emulate a device and settings',
+      description: [
+        'Test like a phone, a tablet, or another screen. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.',
+        'Settings apply to the active tab. With allTabs: true, they apply to every tab and to tabs that open later.',
+        'Permissions apply to every tab of the same login.',
+        'With no settings, it shows the settings of the active tab.',
+      ].join(' '),
       inputSchema: {
-        device: z
-          .string()
+        ...emulationFields,
+        allTabs: z
+          .boolean()
           .optional()
-          .describe(
-            'desktop, laptop, tablet, mobile, default, or a Puppeteer device name like "Pixel 5".',
-          ),
-        colorScheme: z.enum(['light', 'dark', 'system']).optional(),
-        network: z.enum(NETWORKS).optional(),
+          .describe('Apply to every tab, and to tabs that open later.'),
       },
     },
-    ({ device, colorScheme, network }) =>
+    ({ allTabs, ...settings }) =>
       runTool(ctx, 'emulate', async () => {
         const driver = ctx.requireDriver();
-        driver.activeTab();
-        if (device === undefined && colorScheme === undefined && network === undefined) {
-          return `Now: ${describeEmulation(driver.emulation)}.`;
+        const tab = driver.activeTab();
+        const change = Object.fromEntries(
+          Object.entries(settings).filter(([, v]) => v !== undefined),
+        ) as Emulation;
+        if (Object.keys(change).length === 0) {
+          return [
+            `Tab ${tab.id} (login ${tab.login}): ${describeEmulation(tab.emulation)}.`,
+            `New tabs start with: ${describeEmulation(driver.defaultEmulation)}.`,
+          ].join('\n');
         }
-        const reloaded = await driver.setEmulation(
-          { device, colorScheme, network },
-          { reload: true },
-        );
+        const reloaded = await driver.setEmulation(change, {
+          tab: allTabs ? undefined : tab,
+          reload: true,
+        });
+        ctx.actionLog.push({
+          at: new Date().toISOString(),
+          tabId: tab.id,
+          tab: tab.name,
+          action: 'emulate',
+          label: `${allTabs ? 'On all tabs' : `In the tab "${tab.name}"`}, set ${describeEmulation(change, true)}`,
+          value: JSON.stringify(allTabs ? { ...change, allTabs: true } : change),
+          url: tokenizeUnique(tab.page.url(), ctx.unique),
+        });
         return [
-          `Now: ${describeEmulation(driver.emulation)}.`,
+          allTabs
+            ? `Every tab, and tabs that open later, now have: ${describeEmulation(change, true)}.`
+            : `Tab ${tab.id} now: ${describeEmulation(tab.emulation)}.`,
+          change.permissions || change.geolocation
+            ? `Permissions apply to every tab of the login "${tab.login}".`
+            : '',
           reloaded.length
             ? `Reloaded ${reloaded.join(', ')}, because the page switched between desktop and phone mode.`
             : '',
-          'Take a new snapshot. The page layout can be different now.',
+          'Take a new snapshot. The page can look different now.',
         ]
           .filter(Boolean)
           .join('\n');
@@ -158,7 +181,7 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
         const group = ctx.run?.run.planFile
           ? basename(ctx.run.run.planFile, extname(ctx.run.run.planFile))
           : 'adhoc';
-        const device = slug(driver.emulation.device ?? 'default', 60, 'check');
+        const device = slug(tab.emulation.device ?? 'default', 60, 'check');
         const file = `${slug(input.name, 60, 'check')}@${device}-${process.platform}.png`;
         const baselinePath = join(config.projectDir, '.walkthrough', 'baselines', group, file);
         const baselineRel = relative(config.projectDir, baselinePath);

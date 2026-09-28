@@ -48,6 +48,135 @@
         "offline"
       ]
     },
+    "emulate": {
+      "description": "More settings for every tab, like { timezone: Europe/Berlin, cpu: 4 }. device, colorScheme, and network above win over the same keys here.",
+      "type": "object",
+      "properties": {
+        "device": {
+          "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
+          "type": "string"
+        },
+        "colorScheme": {
+          "description": "Light or dark mode.",
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "system"
+          ]
+        },
+        "network": {
+          "description": "Network speed.",
+          "type": "string",
+          "enum": [
+            "normal",
+            "slow-3g",
+            "fast-3g",
+            "slow-4g",
+            "fast-4g",
+            "offline"
+          ]
+        },
+        "cpu": {
+          "description": "Make the CPU slower by this factor, like 4. 1 is normal speed.",
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "timezone": {
+          "description": "A time zone like \"Europe/Berlin\", or \"system\".",
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "description": "A language and region like \"de-DE\", or \"system\". It changes date and number formats and the Accept-Language header.",
+          "type": "string",
+          "minLength": 1
+        },
+        "geolocation": {
+          "description": "A place like { latitude: 52.52, longitude: 13.4 }. It also allows location for the login. \"off\" blocks location for the login.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "off"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "longitude": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "accuracy": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "reducedMotion": {
+          "description": "The prefers-reduced-motion setting.",
+          "type": "string",
+          "enum": [
+            "reduce",
+            "no-preference",
+            "system"
+          ]
+        },
+        "media": {
+          "description": "Show the page as on screen or as printed.",
+          "type": "string",
+          "enum": [
+            "screen",
+            "print"
+          ]
+        },
+        "permissions": {
+          "description": "Browser permissions. They apply to every tab of the same login.",
+          "type": "object",
+          "properties": {
+            "geolocation": {
+              "type": "string",
+              "enum": [
+                "grant",
+                "deny",
+                "prompt"
+              ]
+            },
+            "notifications": {
+              "type": "string",
+              "enum": [
+                "grant",
+                "deny",
+                "prompt"
+              ]
+            },
+            "clipboard": {
+              "type": "string",
+              "enum": [
+                "grant",
+                "deny",
+                "prompt"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "session": {
       "description": "A saved login to use. Save one with the session tool.",
       "type": "string"
@@ -424,6 +553,71 @@
               "wait": {
                 "description": "Text to wait for on the page.",
                 "type": "string"
+              },
+              "newTab": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "description": "The page to open. A full URL, or a path like \"/login\".",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "A name for the tab. Later steps switch to it by name.",
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                  },
+                  "isolated": {
+                    "description": "true for a new login of its own. A name for a login that tabs share.",
+                    "anyOf": [
+                      {
+                        "type": "boolean",
+                        "const": true
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9-]*$"
+                      }
+                    ]
+                  },
+                  "session": {
+                    "description": "A saved login to load into the tab.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "switchTab": {
+                "description": "The tab to use now: a name, or \"newest\" for the tab that opened last. { tab: newest, name: help } also names it.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tab": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A tab name, an id, or \"newest\"."
+                      },
+                      "name": {
+                        "description": "A name to give the tab.",
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9-]*$"
+                      }
+                    },
+                    "required": [
+                      "tab"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "closeTab": {
+                "description": "The name or id of the tab to close.",
+                "type": "string",
+                "minLength": 1
               }
             },
             "additionalProperties": false,
@@ -469,6 +663,135 @@
           "visual": {
             "description": "Compare a screenshot with the saved baseline after this step.",
             "type": "boolean"
+          },
+          "emulate": {
+            "description": "Settings for the tab of this step, like { device: mobile }. They apply before the step.",
+            "type": "object",
+            "properties": {
+              "device": {
+                "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
+                "type": "string"
+              },
+              "colorScheme": {
+                "description": "Light or dark mode.",
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark",
+                  "system"
+                ]
+              },
+              "network": {
+                "description": "Network speed.",
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "slow-3g",
+                  "fast-3g",
+                  "slow-4g",
+                  "fast-4g",
+                  "offline"
+                ]
+              },
+              "cpu": {
+                "description": "Make the CPU slower by this factor, like 4. 1 is normal speed.",
+                "type": "number",
+                "minimum": 1,
+                "maximum": 20
+              },
+              "timezone": {
+                "description": "A time zone like \"Europe/Berlin\", or \"system\".",
+                "type": "string",
+                "minLength": 1
+              },
+              "locale": {
+                "description": "A language and region like \"de-DE\", or \"system\". It changes date and number formats and the Accept-Language header.",
+                "type": "string",
+                "minLength": 1
+              },
+              "geolocation": {
+                "description": "A place like { latitude: 52.52, longitude: 13.4 }. It also allows location for the login. \"off\" blocks location for the login.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "off"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "minimum": -90,
+                        "maximum": 90
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "accuracy": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "latitude",
+                      "longitude"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "reducedMotion": {
+                "description": "The prefers-reduced-motion setting.",
+                "type": "string",
+                "enum": [
+                  "reduce",
+                  "no-preference",
+                  "system"
+                ]
+              },
+              "media": {
+                "description": "Show the page as on screen or as printed.",
+                "type": "string",
+                "enum": [
+                  "screen",
+                  "print"
+                ]
+              },
+              "permissions": {
+                "description": "Browser permissions. They apply to every tab of the same login.",
+                "type": "object",
+                "properties": {
+                  "geolocation": {
+                    "type": "string",
+                    "enum": [
+                      "grant",
+                      "deny",
+                      "prompt"
+                    ]
+                  },
+                  "notifications": {
+                    "type": "string",
+                    "enum": [
+                      "grant",
+                      "deny",
+                      "prompt"
+                    ]
+                  },
+                  "clipboard": {
+                    "type": "string",
+                    "enum": [
+                      "grant",
+                      "deny",
+                      "prompt"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           },
           "a11y": {
             "description": "Check accessibility after this step.",

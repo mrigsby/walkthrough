@@ -36,6 +36,7 @@ steps:
 | `device` | No | Screen preset: `desktop`, `laptop`, `tablet`, `mobile`, or a Puppeteer device name, such as `Pixel 5`. |
 | `colorScheme` | No | `light` or `dark`. |
 | `network` | No | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
+| `emulate` | No | More settings for every tab, such as `{ timezone: Europe/Berlin, cpu: 4 }`. It takes the same keys as the `emulate` tool. `device`, `colorScheme`, and `network` above win over the same keys here. |
 | `session` | No | A saved login, from the `session` tool. The run starts logged in. |
 | `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
 | `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
@@ -52,6 +53,7 @@ steps:
 | `screenshot` | No | Save a screenshot after the step. `true` saves it with the run. A path saves it to that exact file. See [Screenshots for docs](#screenshots-for-docs). |
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
 | `a11y` | No | Check accessibility after the step. `true`, or `{ selector, checks }`. See [Accessibility checks](#accessibility-checks). |
+| `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
 
 ### Write a good `expect`
 
@@ -68,10 +70,40 @@ Use one key in `action`:
 - `press` takes a `value`, such as `Enter`, and an optional target.
 - `upload` takes a target and `files`: `{ selector: "#avatar", files: [fixtures/photo.png] }`.
 - `wait: Order placed` waits for that text on the page.
+- `newTab`, `switchTab`, and `closeTab` open, change, and close tabs. See [Tabs and logins](#tabs-and-logins).
 
 For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthrough/.env`, and the agent never sees it.
 
 For data that must be new each time, put `{{unique}}` in a value or a path, such as `value: "demo+{{unique}}@example.com"`. It becomes a short value, such as `k3x9p2`, that stays the same for the whole run. Each run gets a new value, so a flow that makes an account or an order can run again. `run_start` shows the value, and exported scripts make a new one each time.
+
+## Tabs and logins
+
+A plan can use more than one tab, and more than one login. Use this to test two users at the same time, such as a customer and an admin.
+
+```yaml
+steps:
+  - id: guest-cart
+    do: Open the cart as a guest in a new tab
+    action: { newTab: { name: guest, isolated: true, url: /cart } }
+    emulate: { device: mobile }
+    expect: The page says "Your cart is empty."
+  - id: open-help
+    do: Click Help in the guest tab
+    action: { click: { role: link, name: Help } }
+  - id: help-tab
+    do: Use the Help tab that opened
+    action: { switchTab: { tab: newest, name: help } }
+  - id: back
+    do: Go back to the first tab
+    action: { switchTab: main }
+```
+
+- `newTab` takes `url`, `name`, `isolated`, and `session`. `isolated: true` gives the tab a new login of its own. A name, such as `isolated: admin`, gives it a login that tabs with the same name share.
+- `switchTab` takes a tab name, such as `main` or `guest`. The first tab is `main`. `{ tab: newest, name: help }` uses the tab that opened last, such as a popup, and names it.
+- `closeTab` takes a tab name.
+- `emulate` on a step changes only the tab of that step.
+
+Record mode writes these steps when you use more than one tab. Exported scripts repeat the tabs, the logins, and the settings.
 
 ## Run modes
 

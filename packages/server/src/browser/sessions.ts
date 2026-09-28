@@ -39,7 +39,7 @@ function sessionFile(projectDir: string, name: string): string {
 }
 
 // True when a cookie belongs to one of these hosts.
-function cookieMatches(cookie: Cookie, hosts: string[]): boolean {
+export function cookieMatches(cookie: Cookie, hosts: string[]): boolean {
   const domain = cookie.domain.replace(/^\./, '');
   return hosts.some((host) => host === domain || host.endsWith(`.${domain}`));
 }
@@ -52,8 +52,11 @@ export async function saveSession(
   name: string,
 ): Promise<SavedSession> {
   const file = sessionFile(projectDir, name);
+  // Only the login of the active tab. Other logins are other users.
+  const active = driver.activeTab();
   const tabs = [...driver.tabs.values()].filter(
-    (t) => guard.isAllowed(t.page.url()) && /^https?:/.test(t.page.url()),
+    (t) =>
+      t.login === active.login && guard.isAllowed(t.page.url()) && /^https?:/.test(t.page.url()),
   );
   if (tabs.length === 0) {
     throw new ToolError(
@@ -65,7 +68,7 @@ export async function saveSession(
   const hosts = origins.map((o) => new URL(o).hostname);
 
   // Only cookies for the sites under test. In attach mode, the rest of the browser stays private.
-  const cookies = (await driver.browser.defaultBrowserContext().cookies()).filter((c) =>
+  const cookies = (await active.page.browserContext().cookies()).filter((c) =>
     cookieMatches(c, hosts),
   );
 
@@ -136,11 +139,7 @@ export function deleteSession(projectDir: string, name: string): void {
 
 // Puts a saved login back. Cookies go in now. Storage is written by a script
 // that runs before the app's own scripts on the next page load, then stops.
-export async function restoreSession(
-  driver: Driver,
-  tab: Tab,
-  session: SavedSession,
-): Promise<void> {
+export async function restoreSession(tab: Tab, session: SavedSession): Promise<void> {
   if (session.cookies.length > 0) {
     const cookies: CookieData[] = session.cookies.map((c) => ({
       name: c.name,
@@ -152,7 +151,8 @@ export async function restoreSession(
       secure: c.secure,
       sameSite: c.sameSite,
     }));
-    await driver.browser.defaultBrowserContext().setCookie(...cookies);
+    // Into the tab's own login.
+    await tab.page.browserContext().setCookie(...cookies);
   }
   if (Object.keys(session.storage).length === 0) return;
   const { identifier } = await tab.page.evaluateOnNewDocument((storage) => {

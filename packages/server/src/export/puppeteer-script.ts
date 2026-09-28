@@ -1,5 +1,6 @@
 import { isAbsolute } from 'node:path';
-import { resolveDevice } from '../browser/devices.js';
+import { mediaFeatures, NETWORK_PRESETS, resolveDevice } from '../browser/devices.js';
+import { type Emulation, mergeEmulation, permissionEntries } from '../browser/emulation-schema.js';
 import { ELEMENT_ACTIONS } from '../page/actions.js';
 import type { Run, RunStep } from '../run/run-store.js';
 
@@ -40,6 +41,219 @@ const UNIQUE_CODE = [
 // Things the script needs because of what the run did.
 interface Needs {
   unique: boolean;
+  emulate: boolean;
+  tabs: boolean;
+}
+
+// What the script knows while it is written: open tabs, their settings, and dialog answers.
+interface Gen {
+  needs: Needs;
+  baseUrl?: string;
+  known: Set<string>;
+  current: string;
+  states: Map<string, Emulation>;
+  defaults: Emulation;
+  dialogs: { accept: boolean; text?: string }[];
+}
+
+// Settings for the script's emulate() helper. Device names become sizes here.
+export function scriptSettings(change: Emulation, full: Emulation): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (change.device !== undefined) {
+    let resolved: ReturnType<typeof resolveDevice>;
+    try {
+      resolved = resolveDevice(change.device);
+    } catch {}
+    out.device = resolved?.device
+      ? { userAgent: resolved.device.userAgent, viewport: resolved.device.viewport }
+      : {
+          userAgent: null,
+          viewport: { ...(resolved?.size ?? { width: 1280, height: 800 }), deviceScaleFactor: 1 },
+        };
+  }
+  // The media type and features go together. Chrome clears the one that a call leaves out.
+  if (
+    change.colorScheme !== undefined ||
+    change.reducedMotion !== undefined ||
+    change.media !== undefined
+  )
+    out.media = { type: full.media === 'print' ? 'print' : '', features: mediaFeatures(full) };
+  if (change.network !== undefined) out.network = NETWORK_PRESETS[change.network] ?? change.network;
+  if (change.cpu !== undefined) out.cpu = change.cpu;
+  if (change.timezone !== undefined) out.timezone = change.timezone;
+  if (change.locale !== undefined) out.locale = change.locale;
+  if (change.geolocation !== undefined && change.geolocation !== 'off')
+    out.geolocation = change.geolocation;
+  const permissions = permissionEntries(change);
+  if (permissions.length) out.permissions = permissions;
+  return out;
+}
+
+// The emulate() helper. Only scripts that change settings get it.
+const EMULATE_HELPER = `
+// Changes the screen, colors, network, and other settings of one tab.
+// Media settings need a session that stays open, one for each tab.
+async function emulate(target, s) {
+  emulate.sessions ??= new WeakMap();
+  if (s.device) {
+    await target.setUserAgent(s.device.userAgent ?? (await browser.userAgent()));
+    await target.setViewport(s.device.viewport);
+  }
+  if (s.media) {
+    if (!emulate.sessions.has(target)) emulate.sessions.set(target, await target.createCDPSession());
+    await emulate.sessions.get(target).send('Emulation.setEmulatedMedia', { media: s.media.type, features: s.media.features });
+  }
+  if (s.network) {
+    await target.emulateNetworkConditions(PredefinedNetworkConditions[s.network] ?? null);
+    await target.setOfflineMode(s.network === 'offline');
+  }
+  if (s.cpu) await target.emulateCPUThrottling(s.cpu > 1 ? s.cpu : null);
+  if (s.timezone) await target.emulateTimezone(s.timezone === 'system' ? undefined : s.timezone);
+  if (s.locale) await target.emulateLocale(s.locale === 'system' ? undefined : s.locale);
+  if (s.geolocation) await target.setGeolocation(s.geolocation);
+  if (s.permissions) await target.browserContext().setPermission('*', ...s.permissions);
+}
+`;
+
+// The tab helpers. Only scripts that use more than one tab get them.
+const TAB_HELPERS = `
+// Tabs by name, and the logins (cookie jars) they use.
+const tabs = { main: page };
+const logins = { main: browser.defaultBrowserContext() };
+
+async function openTab(name, login) {
+  logins[login] ??= await browser.createBrowserContext();
+  const tab = await logins[login].newPage();
+  tab.setDefaultTimeout(10_000);
+  tab.on('dialog', answerDialog);
+  tabs[name] = tab;
+  return tab;
+}
+
+// Finds the tab that a click in the opener tab opened.
+async function popupOf(opener) {
+  const target = await browser.waitForTarget(
+    (t) => t.opener() === opener.target() && !Object.values(tabs).some((p) => p.target() === t),
+    { timeout: 10_000 },
+  );
+  const tab = await target.page();
+  tab.setDefaultTimeout(10_000);
+  tab.on('dialog', answerDialog);
+  return tab;
+}
+`;
+
+// The code that answers dialogs. It repeats the answers of the run, in order.
+function dialogCode(gen: Gen): string {
+  const special = gen.dialogs.some((d) => !d.accept || d.text !== undefined);
+  if (!special && !gen.needs.tabs) {
+    return "// Accept confirm dialogs, like the run did.\npage.on('dialog', (dialog) => void dialog.accept());";
+  }
+  return [
+    '// The answers to dialogs, in the order the run gave them. Other dialogs are accepted.',
+    `const DIALOG_ANSWERS = ${JSON.stringify(special ? gen.dialogs : [])};`,
+    'function answerDialog(dialog) {',
+    '  const next = DIALOG_ANSWERS.shift() ?? { accept: true };',
+    '  void (next.accept ? dialog.accept(next.text) : dialog.dismiss());',
+    '}',
+    "page.on('dialog', answerDialog);",
+  ].join('\n');
+}
+
+// Code for the tab, settings, and dialog records.
+function pageChangeCode(action: RunStep['actions'][number], gen: Gen): string[] {
+  const value = (() => {
+    try {
+      return JSON.parse(action.value ?? '{}') as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  })();
+  const fixByHand = `// Fix by hand: ${action.label.replace(/\n/g, ' ')}.`;
+  switch (action.action) {
+    case 'dialog':
+      gen.dialogs.push({
+        accept: value.accept !== false,
+        ...(typeof value.text === 'string' ? { text: value.text } : {}),
+      });
+      return [];
+    case 'tab-new': {
+      const name = String(value.name ?? '');
+      if (!name) return [fixByHand];
+      gen.needs.tabs = true;
+      gen.needs.emulate = true;
+      const lines = [`page = await openTab(${js(name)}, ${js(String(value.login ?? 'main'))});`];
+      const state = { ...gen.defaults };
+      gen.states.set(name, state);
+      lines.push(
+        `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state))});`,
+      );
+      if (value.session)
+        lines.push(
+          `// Fix by hand: this tab used the saved login "${String(value.session)}". The script opens it logged out.`,
+        );
+      if (typeof value.url === 'string')
+        lines.push(
+          `await page.goto(${urlCode(value.url, gen.needs, gen.baseUrl)}, { waitUntil: 'load' });`,
+        );
+      gen.known.add(name);
+      gen.current = name;
+      return lines;
+    }
+    case 'tab-switch': {
+      const name = String(value.name ?? '');
+      const opener = typeof value.opener === 'string' ? value.opener : undefined;
+      gen.needs.tabs = true;
+      if (gen.known.has(name)) {
+        gen.current = name;
+        return [`page = tabs[${js(name)}];`];
+      }
+      if (opener && gen.known.has(opener)) {
+        gen.needs.emulate = true;
+        const state = { ...(gen.states.get(opener) ?? gen.defaults) };
+        gen.states.set(name, state);
+        gen.known.add(name);
+        gen.current = name;
+        return [
+          `page = tabs[${js(name)}] = await popupOf(tabs[${js(opener)}]);`,
+          `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state))});`,
+        ];
+      }
+      return [
+        `// Fix by hand: switch to the tab "${name}". The script does not know how it opened.`,
+      ];
+    }
+    case 'tab-close': {
+      const name = String(value.name ?? '');
+      gen.needs.tabs = true;
+      gen.known.delete(name);
+      gen.states.delete(name);
+      const lines = [`await tabs[${js(name)}]?.close();`, `delete tabs[${js(name)}];`];
+      if (gen.current === name) {
+        lines.push('page = Object.values(tabs).at(-1);');
+        gen.current = [...gen.known].at(-1) ?? 'main';
+      }
+      return lines;
+    }
+    case 'emulate': {
+      const { allTabs, ...change } = value as Emulation & { allTabs?: boolean };
+      gen.needs.emulate = true;
+      if (allTabs) {
+        gen.defaults = mergeEmulation(gen.defaults, change);
+        for (const [name, state] of gen.states) gen.states.set(name, mergeEmulation(state, change));
+        return [
+          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults))});`,
+        ];
+      }
+      const state = mergeEmulation(gen.states.get(gen.current) ?? gen.defaults, change);
+      gen.states.set(gen.current, state);
+      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state))});`];
+    }
+    default:
+      return [
+        `// Fix by hand: the script cannot repeat this yet: ${action.label.replace(/\n/g, ' ')}.`,
+      ];
+  }
 }
 
 // A string literal, with {{unique}} turned into the UNIQUE constant.
@@ -78,9 +292,9 @@ function actionCode(
   action: RunStep['actions'][number],
   secrets: Set<string>,
   secretFields: Set<string>,
-  needs: Needs,
-  baseUrl?: string,
+  gen: Gen,
 ): string[] {
+  const { needs, baseUrl } = gen;
   const where = frameCode(action.frameUrl);
   const sel = action.selector ? js(action.selector) : '';
   const value = (() => {
@@ -124,9 +338,7 @@ function actionCode(
       return [
         `await (await ${where}.$(${sel}))?.uploadFile(${(action.files ?? []).map((f) => `resolve(PROJECT_DIR, ${js(f)})`).join(', ')});`,
       ];
-    // The script accepts dialogs on its own.
     case 'dialog':
-      return [];
     case 'tab-new':
     case 'tab-switch':
     case 'tab-close':
@@ -134,14 +346,13 @@ function actionCode(
     case 'mock':
     case 'mock-clear':
     case 'storage':
-      return [
-        `// Fix by hand: the script cannot repeat this yet: ${action.label.replace(/\n/g, ' ')}.`,
-      ];
+      return pageChangeCode(action, gen);
   }
 }
 
 // The screen and color scheme of the run. Without a device, a fixed size, so screenshots match.
-function setupCode(emulation: Run['emulation']): string[] {
+// Other settings go through the emulate() helper.
+function setupCode(emulation: Run['emulation'], gen: Gen): string[] {
   const lines: string[] = [];
   let resolved: ReturnType<typeof resolveDevice>;
   try {
@@ -167,6 +378,11 @@ function setupCode(emulation: Run['emulation']): string[] {
     lines.push(
       `await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: ${js(scheme)} }]);`,
     );
+  }
+  const { device: _device, colorScheme: _scheme, ...more } = emulation ?? {};
+  if (Object.keys(more).length && emulation) {
+    gen.needs.emulate = true;
+    lines.push(`await emulate(page, ${JSON.stringify(scriptSettings(more, emulation))});`);
   }
   return lines;
 }
@@ -211,6 +427,16 @@ async function capture(file, options = {}) {
 `;
 }
 
+// The address in a new-tab record.
+function parseUrl(value?: string): string | undefined {
+  try {
+    const url = (JSON.parse(value ?? '{}') as { url?: unknown }).url;
+    return typeof url === 'string' ? url : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Writes a plain Puppeteer script that repeats a run, for CI or a quick check.
 export function exportScript(
   run: Run,
@@ -228,7 +454,17 @@ export function exportScript(
   let handChecks = 0;
   let lastUrl = run.baseUrl ?? '';
   const body: string[] = [];
-  const needs: Needs = { unique: false };
+  const needs: Needs = { unique: false, emulate: false, tabs: false };
+  const gen: Gen = {
+    needs,
+    baseUrl: run.baseUrl,
+    known: new Set(['main']),
+    current: 'main',
+    states: new Map([['main', { ...run.emulation }]]),
+    defaults: { ...run.emulation },
+    dialogs: [],
+  };
+  const setup = setupCode(run.emulation, gen);
 
   for (const step of run.steps) {
     const shots = step.captures ?? [];
@@ -246,10 +482,12 @@ export function exportScript(
         );
         continue;
       }
-      lines.push(...actionCode(action, secrets, secretFields, needs, run.baseUrl));
+      lines.push(...actionCode(action, secrets, secretFields, gen));
       actions += 1;
       // After a page load, the next action starts at the new address.
       if (action.action === 'navigate') lastUrl = action.value ?? lastUrl;
+      if (action.action === 'tab-new') lastUrl = parseUrl(action.value) ?? 'about:blank';
+      if (action.action === 'tab-close') lastUrl = '';
     }
     if (step.expect) {
       const texts = checkableText(step.expect);
@@ -291,6 +529,7 @@ export function exportScript(
   }
 
   const pkg = options.installedChrome ? 'puppeteer-core' : 'puppeteer';
+  const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : 'puppeteer';
   const launch = options.installedChrome
     ? "{ channel: 'chrome', headless: !process.env.HEADFUL }"
     : '{ headless: !process.env.HEADFUL }';
@@ -304,7 +543,7 @@ export function exportScript(
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
 ${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${needs.unique ? '// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n' : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}${hasShots ? "import { mkdirSync } from 'node:fs';\nimport { basename, dirname, extname, relative, resolve, sep } from 'node:path';" : "import { dirname, resolve } from 'node:path';"}
 import { fileURLToPath } from 'node:url';
-import puppeteer from '${pkg}';
+import ${imports} from '${pkg}';
 
 const BASE_URL = process.env.BASE_URL ?? ${js(run.baseUrl ?? 'http://localhost:3000')};
 // The project folder: this file is in .walkthrough/exports.
@@ -314,12 +553,11 @@ for (const name of ${JSON.stringify(secretList)}) {
 }
 ${needs.unique ? UNIQUE_CODE : ''}
 const browser = await puppeteer.launch(${launch});
-const page = await browser.newPage();
+${needs.tabs ? 'let' : 'const'} page = await browser.newPage();
 page.setDefaultTimeout(10_000);
-${setupCode(run.emulation).join('\n')}
-// Accept confirm dialogs, like the run did.
-page.on('dialog', (dialog) => void dialog.accept());
-
+${setup.join('\n')}
+${dialogCode(gen)}
+${needs.tabs ? TAB_HELPERS : ''}
 // Runs one step, and names the step if it fails.
 async function step(name, fn) {
   try {
@@ -379,7 +617,7 @@ async function pressKeys(combo) {
   await page.keyboard.press(main);
   for (const key of keys.reverse()) await page.keyboard.up(key);
 }
-${hasShots ? captureHelpers([...secretFields]) : ''}
+${needs.emulate ? EMULATE_HELPER : ''}${hasShots ? captureHelpers([...secretFields]) : ''}
 try {
   await page.goto(BASE_URL, { waitUntil: 'load' });
 

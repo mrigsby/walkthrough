@@ -37,7 +37,7 @@ export async function buildSnapshot(
   refs: RefTable,
   root?: ElementHandle,
 ): Promise<string> {
-  await refs.reset();
+  await refs.reset(root);
   const tree = await tab.page.accessibility.snapshot({
     interestingOnly: true,
     includeIframes: true,

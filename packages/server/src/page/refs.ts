@@ -21,10 +21,11 @@ export class RefTable {
 
   // Starts a new snapshot. Old refs stop working.
   // Numbers keep going up, so an old ref can never point at a new element.
-  async reset(): Promise<void> {
+  // "keep" is the element that the new snapshot starts from. It stays usable.
+  async reset(keep?: ElementHandle): Promise<void> {
     this.entries.clear();
-    const old = this.handles;
-    this.handles = [];
+    const old = this.handles.filter((h) => h !== keep);
+    this.handles = keep ? [keep] : [];
     await Promise.all(old.map((h) => h.dispose().catch(() => undefined)));
   }
 

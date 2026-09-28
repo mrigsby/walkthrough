@@ -37,7 +37,14 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
         const tab = driver.activeTab();
         const root = ref ? (await driver.refs.resolve(ref, tab.id, tab.nav)).handle : undefined;
         const title = await tab.page.title().catch(() => '');
-        const outline = await buildSnapshot(tab, driver.refs, root);
+        const outline = await buildSnapshot(tab, driver.refs, root).catch((error: Error) => {
+          // The element can go away between the lookup and the outline.
+          if (!root) throw error;
+          throw new ToolError(
+            `The element for ref "${ref}" is gone. Take a new snapshot and use a ref from it.`,
+            'stale_ref',
+          );
+        });
         return [
           `Snapshot of tab ${tab.id}:`,
           untrusted(`Title: ${title || '(no title)'}\nURL: ${tab.page.url()}\n\n${outline}`),

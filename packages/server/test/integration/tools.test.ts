@@ -341,6 +341,25 @@ describe('uiwalk tools', () => {
     expect(existsSync(join(project, '.walkthrough', '.gitignore'))).toBe(true);
   });
 
+  it('outlines one part of the page, and explains an old ref', async () => {
+    await mcp.call('navigate', { url: '/login' });
+    const outline = await snap();
+    const username = refFor(outline, 'textbox', 'Username');
+    const part = await mcp.call('snapshot', { ref: username });
+    expect(part.isError, part.text).toBe(false);
+    expect(part.text).toMatch(/textbox "Username"/);
+    expect(part.text).not.toMatch(/textbox "Password"/);
+    // A second partial snapshot of a ref from the full outline still works.
+    const again = await mcp.call('snapshot', { ref: refFor(outline, 'textbox', 'Password') });
+    expect(again.isError).toBe(true);
+    expect(again.text).toMatch(/There is no ref|Take a new snapshot/);
+    await mcp.call('navigate', { url: '/cart' });
+    const old = await mcp.call('snapshot', { ref: username });
+    expect(old.isError).toBe(true);
+    expect(old.text).toMatch(/Take a new snapshot/);
+    expect(old.text).not.toMatch(/Protocol error/);
+  });
+
   it('explains when the developer closes the browser', async () => {
     // Stop only the Chrome that uses this test's temp folder. No shell here:
     // on Linux, pkill in a shell also matches the shell's own command line.

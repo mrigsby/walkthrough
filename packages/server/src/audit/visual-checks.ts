@@ -1,4 +1,5 @@
 import type { Page } from 'puppeteer-core';
+import { applyMedia } from '../browser/devices.js';
 import type { Driver, Tab } from '../browser/driver.js';
 import { FREEZE_CSS } from '../visual/capture.js';
 import {
@@ -46,7 +47,6 @@ function key(node: A11yNode): string {
 // Checks color contrast in light mode and in dark mode, and compares them.
 // It changes this page only, and puts the color scheme back after.
 export async function checkDarkMode(
-  driver: Driver,
   tab: Tab,
   options: { frameAllowed?: (url: string) => boolean; clean?: (text: string) => string },
 ): Promise<DarkModeResult> {
@@ -55,18 +55,13 @@ export async function checkDarkMode(
   const results: Partial<Record<'light' | 'dark', A11yViolation>> = {};
   try {
     for (const scheme of ['light', 'dark'] as const) {
-      await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }]);
+      await applyMedia(page, tab.cdp, { ...tab.emulation, colorScheme: scheme });
       await settle(page, 100);
       const run = await runAxe(page, { ...options, rules: ['color-contrast'] });
       results[scheme] = run.violations.find((v) => v.id === 'color-contrast');
     }
   } finally {
-    const before = driver.emulation.colorScheme;
-    await page
-      .emulateMediaFeatures(
-        before && before !== 'system' ? [{ name: 'prefers-color-scheme', value: before }] : [],
-      )
-      .catch(() => undefined);
+    await applyMedia(page, tab.cdp, tab.emulation).catch(() => undefined);
     await style?.evaluate((el) => el.remove()).catch(() => undefined);
   }
   const lightKeys = new Set((results.light?.nodes ?? []).map(key));

@@ -74,4 +74,44 @@ describe('Recorder', () => {
     later.addNavigation('http://localhost:4321/help.html?x=1');
     expect(later.steps[0]).toMatchObject({ kind: 'navigate', value: '/help.html?x=1' });
   });
+
+  it('records tab switches, popups, and new tabs', () => {
+    const tabs: Record<string, { name: string; login: string; opener?: string }> = {
+      t1: { name: 'main', login: 'main' },
+      t2: { name: 't2', login: 'main', opener: 't1' },
+      t3: { name: 't3', login: 'iso-ab12' },
+      t4: { name: 'buyer', login: 'buyer' },
+    };
+    const r = new Recorder('Tabs', 'http://localhost:4321', (id) => tabs[id]);
+    r.startTabs(['t1'], 't1');
+    const click = (key: string) => ({
+      kind: 'click' as const,
+      target: { role: 'button', name: key },
+      label: `"${key}"`,
+      key,
+    });
+    r.add(click('Help'), 't1');
+    r.add(click('Close help'), 't2');
+    r.add(click('Back'), 't1');
+    r.addNavigation('about:blank', 't3');
+    r.addNavigation('http://localhost:4321/cart', 't3');
+    r.add(click('Buy'), 't4');
+    expect(r.steps.map((s) => s.kind)).toEqual([
+      'click',
+      'switchTab',
+      'click',
+      'switchTab',
+      'click',
+      'newTab',
+      'newTab',
+      'click',
+    ]);
+    const yaml = r.toYaml();
+    expect(yaml).toContain('switchTab: { tab: newest, name: popup-1 }');
+    expect(yaml).toContain('switchTab: main');
+    expect(yaml).toContain('newTab: { name: tab-1, isolated: true, url: /cart }');
+    expect(yaml).toContain('newTab: { name: buyer, isolated: buyer }');
+    const result = validatePlanText(yaml);
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+  });
 });

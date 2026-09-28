@@ -96,8 +96,13 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
               'A question is waiting in the panel. Get the answer first.',
               'busy',
             );
-          const recorder = new Recorder(name ?? 'Recorded flow', config.baseUrl);
-          const onNavigated = ({ url }: { url: string }) => recorder.addNavigation(url);
+          const recorder = new Recorder(name ?? 'Recorded flow', config.baseUrl, (id) => {
+            const t = driver.tabs.get(id);
+            return t && { name: t.name, login: t.login, opener: t.openerId };
+          });
+          recorder.startTabs([...driver.tabs.keys()], driver.activeId);
+          const onNavigated = ({ url, tabId }: { url: string; tabId: string }) =>
+            recorder.addNavigation(url, tabId);
           driver.emitter.on('navigated', onNavigated);
           stopNavigationWatch = () => driver.emitter.off('navigated', onNavigated);
           await panel.startRecording(recorder);

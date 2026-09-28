@@ -1,5 +1,14 @@
+import { randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import type { Browser, CDPSession, Dialog, ElementHandle, Page, Target } from 'puppeteer-core';
+import type {
+  Browser,
+  BrowserContext,
+  CDPSession,
+  Dialog,
+  ElementHandle,
+  Page,
+  Target,
+} from 'puppeteer-core';
 import type { Config, DialogPolicy } from '../config.js';
 import { ToolError } from '../errors.js';
 import { LogBook } from '../evidence/logs.js';
@@ -8,7 +17,8 @@ import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
 import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
-import { applyEmulation, type Emulation } from './devices.js';
+import { applyEmulation, checkEmulation, type Emulation } from './devices.js';
+import { mergeEmulation, permissionEntries } from './emulation-schema.js';
 import { killChrome, launchChrome, removeProfile } from './launch.js';
 import { guardNavigation } from './navigation-guard.js';
 
@@ -16,6 +26,8 @@ export interface Tab {
   id: string;
   // "main" for the first tab. Plans and exports use the name.
   name: string;
+  // The login (cookie jar) of the tab. "main" is the normal one.
+  login: string;
   page: Page;
   openerId?: string;
   nav: number;
@@ -23,8 +35,12 @@ export interface Tab {
   closed: boolean;
   // True when the tab emulates a phone or tablet.
   mobile: boolean;
+  // The screen, color, network, and other settings of this tab.
+  emulation: Emulation;
   cdp?: CDPSession;
 }
+
+const NAME = /^[a-z0-9][a-z0-9-]*$/;
 
 export interface PendingDialog {
   tabId: string;
@@ -55,8 +71,10 @@ export class Driver {
   readonly panel?: DeveloperPanel;
   // The element of the last action, for the red box in bug screenshots.
   lastTarget?: { tabId: string; handle: ElementHandle<Element>; label: string };
-  // Screen, color scheme, and network settings. New tabs get them too.
-  emulation: Emulation = {};
+  // Settings that new tabs start with. Each tab also has its own.
+  defaultEmulation: Emulation = {};
+  // Cookie jars by login name. "main" is the browser's own.
+  readonly logins = new Map<string, BrowserContext>();
   private userAgent = '';
   activeId?: string;
   dialogPolicy: DialogPolicy;
@@ -68,6 +86,8 @@ export class Driver {
   private pendingWork = new Map<string, Promise<unknown>>();
   private removeShutdown?: () => void;
   private inflight = new Set<Promise<unknown>>();
+  // A tab that newTab is making. The new-tab event waits for it.
+  private newTabWork?: Promise<unknown>;
 
   private constructor(
     readonly browser: Browser,
@@ -85,11 +105,13 @@ export class Driver {
     if (options.attach) {
       const browser = await attachChrome(options.attach);
       driver = new Driver(browser, 'attached', await browser.version(), options);
+      driver.logins.set('main', browser.defaultBrowserContext());
       // Use a new tab of our own. Never touch the developer's other tabs.
       await driver.addTab(await browser.newPage());
     } else {
       const { browser, profileDir } = await launchChrome(options.config);
       driver = new Driver(browser, 'launched', await browser.version(), options, profileDir);
+      driver.logins.set('main', browser.defaultBrowserContext());
       const first = (await browser.pages())[0] ?? (await browser.newPage());
       await driver.addTab(first);
     }
@@ -99,6 +121,16 @@ export class Driver {
 
   get alive(): boolean {
     return !this.closedReason;
+  }
+
+  // False when the developer closed the last tab, but Chrome still runs.
+  get hasActiveTab(): boolean {
+    return Boolean(this.activeId && this.tabs.has(this.activeId));
+  }
+
+  // Opens a tab when none is left. It takes the name "main" if that name is free.
+  async reopenTab(): Promise<Tab> {
+    return this.newTab({ name: this.tabByRef('main') ? undefined : 'main' });
   }
 
   private watchBrowser(): void {
@@ -123,6 +155,7 @@ export class Driver {
         await new Promise((resolve) => setTimeout(resolve, 300));
         if (this.profileDir) removeProfile(this.profileDir);
       } else {
+        await this.closeLogins();
         await this.browser.disconnect().catch(() => undefined);
       }
     });
@@ -132,7 +165,10 @@ export class Driver {
   private async onTarget(target: Target): Promise<void> {
     if (target.type() !== 'page') return;
     const page = await target.page().catch(() => null);
-    if (!page || this.findTab(page)) return;
+    if (!page) return;
+    // newTab adds its own tab. Wait for it, then skip that tab here.
+    if (this.newTabWork) await this.newTabWork.catch(() => undefined);
+    if (this.findTab(page)) return;
     const openerPage = await target
       .opener()
       ?.page()
@@ -140,7 +176,11 @@ export class Driver {
     const opener = openerPage ? this.findTab(openerPage) : undefined;
     // In attach mode, only follow tabs that our tabs opened.
     if (this.mode === 'attached' && !opener) return;
-    const tab = await this.addTab(page, opener?.id);
+    // A popup gets the login and settings of the tab that opened it.
+    const tab = await this.addTab(page, opener?.id, {
+      login: opener?.login ?? this.loginOf(page),
+      emulation: opener ? { ...opener.emulation } : undefined,
+    });
     this.note(`A new tab opened: ${tab.id}. Use the tabs tool to switch to it.`);
   }
 
@@ -163,18 +203,50 @@ export class Driver {
     return undefined;
   }
 
-  async addTab(page: Page, openerId?: string): Promise<Tab> {
+  // A tab by its id, like "t2", or its name, like "customer". "newest" is the last tab that opened.
+  tabByRef(ref: string): Tab | undefined {
+    if (ref === 'newest') return [...this.tabs.values()].at(-1);
+    return this.tabs.get(ref) ?? [...this.tabs.values()].find((t) => t.name === ref);
+  }
+
+  // Checks a name for a tab. Names like "t2" are ids, and "newest" means the last tab.
+  checkTabName(name: string, tab?: Tab): void {
+    if (!NAME.test(name) || /^t\d+$/.test(name) || name === 'newest') {
+      throw new ToolError(
+        'Use a tab name with lowercase letters, numbers, and dashes, like "customer". Names like "t2" are tab ids.',
+        'bad_input',
+      );
+    }
+    const other = this.tabByRef(name);
+    if (other && other !== tab)
+      throw new ToolError(`A tab named "${name}" is already open.`, 'bad_input');
+  }
+
+  // The login name of a page, from its cookie jar.
+  private loginOf(page: Page): string {
+    const context = page.browserContext();
+    for (const [name, value] of this.logins) if (value === context) return name;
+    return 'main';
+  }
+
+  async addTab(
+    page: Page,
+    openerId?: string,
+    options: { login?: string; name?: string; emulation?: Emulation } = {},
+  ): Promise<Tab> {
     this.tabCounter += 1;
     const id = `t${this.tabCounter}`;
     const tab: Tab = {
       id,
-      name: this.tabCounter === 1 ? 'main' : id,
+      name: options.name ?? (this.tabCounter === 1 ? 'main' : id),
+      login: options.login ?? 'main',
       page,
       openerId,
       nav: 0,
       crashed: false,
       closed: false,
       mobile: false,
+      emulation: { ...(options.emulation ?? this.defaultEmulation) },
     };
     this.tabs.set(tab.id, tab);
     this.activeId ??= tab.id;
@@ -195,8 +267,6 @@ export class Driver {
     page.on('dialog', (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
-    if (Object.keys(this.emulation).length > 0)
-      await this.emulateTab(tab, this.emulation).catch(() => undefined);
 
     tab.cdp = await guardNavigation(
       page,
@@ -206,6 +276,10 @@ export class Driver {
           `Walkthrough blocked the tab from opening ${url}, because that site is not allowed.`,
         ),
     );
+
+    // Settings need tab.cdp, so they come after the guard.
+    if (Object.keys(tab.emulation).length > 0)
+      await this.emulateTab(tab, tab.emulation).catch(() => undefined);
 
     // A popup may have started loading before the guard was ready.
     const url = page.url();
@@ -221,6 +295,16 @@ export class Driver {
     this.tabs.delete(tab.id);
     this.pendingDialogs.delete(tab.id);
     this.panel?.detach(tab.id);
+    // A separate login ends with its last tab.
+    const context = this.logins.get(tab.login);
+    if (
+      tab.login !== 'main' &&
+      context &&
+      ![...this.tabs.values()].some((t) => t.login === tab.login)
+    ) {
+      this.logins.delete(tab.login);
+      void context.close().catch(() => undefined);
+    }
     if (this.activeId === tab.id) {
       const next = [...this.tabs.values()].at(-1);
       this.activeId = next?.id;
@@ -228,7 +312,7 @@ export class Driver {
         this.note(
           next
             ? `Tab ${tab.id} closed. The active tab is now ${next.id}.`
-            : `Tab ${tab.id} closed. No tabs are open.`,
+            : `Tab ${tab.id} closed. No tabs are open. browser_open opens a new tab.`,
         );
       }
     }
@@ -277,30 +361,89 @@ export class Driver {
     this.emitter.emit('dialog', pending);
   }
 
-  private async emulateTab(tab: Tab, emulation: Emulation): Promise<boolean> {
+  // Applies changed settings to a tab. tab.emulation already has them.
+  private async emulateTab(tab: Tab, change: Emulation): Promise<boolean> {
     this.userAgent ||= await this.browser.userAgent();
-    const result = await applyEmulation(tab.page, emulation, {
+    const result = await applyEmulation(tab.page, change, tab.emulation, {
       headless: this.options.config.browser.headless,
       userAgent: this.userAgent,
       wasMobile: tab.mobile,
+      cdp: tab.cdp,
     });
     tab.mobile = result.isMobile;
     return result.needsReload;
   }
 
-  // Changes the screen, color scheme, or network for every tab.
+  // Changes the settings of one tab, or of every tab and of new tabs.
   // A tab reloads when it switches between desktop and phone mode.
-  async setEmulation(emulation: Emulation, options: { reload: boolean }): Promise<string[]> {
-    this.emulation = { ...this.emulation, ...emulation };
+  async setEmulation(
+    change: Emulation,
+    options: { tab?: Tab; reload: boolean },
+  ): Promise<string[]> {
+    checkEmulation(change);
+    const targets = options.tab ? [options.tab] : [...this.tabs.values()];
+    if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
     const reloaded: string[] = [];
-    for (const tab of this.tabs.values()) {
-      const needsReload = await this.emulateTab(tab, emulation);
+    for (const tab of targets) {
+      tab.emulation = mergeEmulation(tab.emulation, change);
+      const needsReload = await this.emulateTab(tab, change);
       if (needsReload && options.reload && /^https?:/.test(tab.page.url())) {
         await tab.page.reload({ waitUntil: 'load' }).catch(() => undefined);
         reloaded.push(tab.id);
       }
     }
+    const logins = options.tab ? [options.tab.login] : [...this.logins.keys()];
+    await this.applyPermissions(change, logins);
     return reloaded;
+  }
+
+  // Permissions belong to a login, not a tab.
+  private async applyPermissions(change: Emulation, logins: string[]): Promise<void> {
+    const entries = permissionEntries(change);
+    if (entries.length === 0) return;
+    for (const login of new Set(logins)) {
+      await this.logins.get(login)?.setPermission('*', ...entries);
+    }
+  }
+
+  // Opens a new tab. isolated: true makes a one-off login. A string names a login that tabs share.
+  async newTab(options: { name?: string; isolated?: true | string } = {}): Promise<Tab> {
+    this.assertAlive();
+    if (options.name !== undefined) this.checkTabName(options.name);
+    const login =
+      options.isolated === true
+        ? `iso-${randomBytes(2).toString('hex')}`
+        : (options.isolated ?? 'main');
+    if (!NAME.test(login)) {
+      throw new ToolError(
+        `Use a login name with lowercase letters, numbers, and dashes, like "customer".`,
+        'bad_input',
+      );
+    }
+    const work = (async () => {
+      let context = this.logins.get(login);
+      if (!context) {
+        context = await this.browser.createBrowserContext();
+        this.logins.set(login, context);
+      }
+      const page = await context.newPage();
+      return this.addTab(page, undefined, { login, name: options.name });
+    })();
+    this.newTabWork = work;
+    try {
+      const tab = await work;
+      this.switchTo(tab.id);
+      return tab;
+    } finally {
+      if (this.newTabWork === work) this.newTabWork = undefined;
+    }
+  }
+
+  // Closes the separate logins. The main login is the browser's own.
+  private async closeLogins(): Promise<void> {
+    for (const [name, context] of this.logins) {
+      if (name !== 'main') await context.close().catch(() => undefined);
+    }
   }
 
   pendingDialog(tabId = this.activeId): PendingDialog | undefined {
@@ -344,7 +487,10 @@ export class Driver {
     this.assertAlive();
     const tab = this.activeId ? this.tabs.get(this.activeId) : undefined;
     if (!tab)
-      throw new ToolError('No tab is open. Use navigate or browser_open to open a page.', 'no_tab');
+      throw new ToolError(
+        'No tab is open. Call browser_open, or navigate with a url. Both open a new tab.',
+        'no_tab',
+      );
     if (tab.crashed) {
       throw new ToolError(
         `The page in tab ${tab.id} crashed. Use navigate with action "reload", or close the tab.`,
@@ -373,14 +519,14 @@ export class Driver {
     }
   }
 
-  switchTo(id: string): Tab {
+  switchTo(ref: string): Tab {
     this.assertAlive();
-    const tab = this.tabs.get(id);
+    const tab = this.tabByRef(ref);
     if (!tab)
-      throw new ToolError(`There is no tab "${id}". Use the tabs tool to list tabs.`, 'no_tab');
-    this.activeId = id;
+      throw new ToolError(`There is no tab "${ref}". Use the tabs tool to list tabs.`, 'no_tab');
+    this.activeId = tab.id;
     void tab.page.bringToFront().catch(() => undefined);
-    void this.panel?.refresh(id);
+    void this.panel?.refresh(tab.id);
     return tab;
   }
 
@@ -404,6 +550,7 @@ export class Driver {
       await this.browser.close().catch(() => killChrome(this.browser));
       if (this.profileDir) removeProfile(this.profileDir);
     } else {
+      await this.closeLogins();
       await this.browser.disconnect().catch(() => undefined);
     }
   }

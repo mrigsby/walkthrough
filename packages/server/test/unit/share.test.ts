@@ -230,6 +230,112 @@ describe('exportScript', () => {
     expect(exportScript(run).code).not.toContain('UNIQUE');
   });
 
+  it('repeats tabs, logins, settings, and dialog answers', () => {
+    const at = 'http://localhost:4321/';
+    const tabsRun: Run = {
+      ...run,
+      emulation: { colorScheme: 'dark', timezone: 'Asia/Tokyo' },
+      steps: [
+        {
+          id: 'two-users',
+          index: 1,
+          title: 'Two users',
+          confirm: false,
+          status: 'pass',
+          screenshots: [],
+          actions: [
+            {
+              tab: 'buyer',
+              action: 'tab-new',
+              label: 'Open a new tab "buyer"',
+              value: JSON.stringify({
+                name: 'buyer',
+                login: 'iso-ab12',
+                isolated: true,
+                url: `${at}cart`,
+              }),
+              url: '',
+            },
+            {
+              tab: 'buyer',
+              action: 'emulate',
+              label: 'In the tab "buyer", set device: mobile',
+              value: JSON.stringify({ device: 'mobile', reducedMotion: 'reduce' }),
+              url: `${at}cart`,
+            },
+            {
+              tab: 'buyer',
+              action: 'click',
+              label: 'link "Help"',
+              selector: 'a[href="/help.html"]',
+              url: `${at}cart`,
+            },
+            {
+              tab: 'help',
+              action: 'tab-switch',
+              label: 'Switch to the tab "help"',
+              value: JSON.stringify({ name: 'help', opener: 'buyer', newest: true }),
+              url: `${at}help.html`,
+            },
+            {
+              tab: 'help',
+              action: 'tab-close',
+              label: 'Close the tab "help"',
+              value: JSON.stringify({ name: 'help' }),
+              url: '',
+            },
+            {
+              tab: 'main',
+              action: 'tab-switch',
+              label: 'Switch to the tab "main"',
+              value: JSON.stringify({ name: 'main' }),
+              url: at,
+            },
+            {
+              tab: 'main',
+              action: 'emulate',
+              label: 'On all tabs, set CPU: 4x slower',
+              value: JSON.stringify({ cpu: 4, allTabs: true }),
+              url: at,
+            },
+            {
+              tab: 'main',
+              action: 'dialog',
+              label: 'Dismiss the confirm dialog',
+              value: JSON.stringify({ accept: false }),
+              url: at,
+            },
+          ],
+        },
+      ],
+    };
+    const result = exportScript(tabsRun);
+    const code = result.code;
+    expect(code).toContain("import puppeteer, { PredefinedNetworkConditions } from 'puppeteer';");
+    expect(code).toContain('let page = await browser.newPage();');
+    expect(code).toContain('page = await openTab("buyer", "iso-ab12");');
+    expect(code).toContain('"timezone":"Asia/Tokyo"');
+    expect(code).toContain(
+      '"media":{"type":"","features":[{"name":"prefers-color-scheme","value":"dark"},{"name":"prefers-reduced-motion","value":"reduce"}]}',
+    );
+    expect(code).toContain('page = tabs["help"] = await popupOf(tabs["buyer"]);');
+    expect(code).toContain('await tabs["help"]?.close();');
+    expect(code).toContain('page = tabs["main"];');
+    expect(code).toContain(
+      'for (const tab of await browser.pages()) await emulate(tab, {"cpu":4});',
+    );
+    expect(code).toContain('const DIALOG_ANSWERS = [{"accept":false}];');
+    expect(code).not.toContain('Fix by hand');
+    const file = join(tempDir('export-tabs'), 'tabs.mjs');
+    writeFileSync(file, code);
+    expect(() => execFileSync(process.execPath, ['--check', file])).not.toThrow();
+    // A run with one tab keeps the old, short script.
+    const plain = exportScript(run).code;
+    expect(plain).toContain('const page = await browser.newPage();');
+    expect(plain).toContain("page.on('dialog', (dialog) => void dialog.accept());");
+    expect(plain).not.toContain('async function emulate(');
+  });
+
   it('uses the viewport of a named device', () => {
     const result = exportScript({ ...run, emulation: { device: 'mobile' } });
     expect(result.code).toContain('// Screen: mobile.');

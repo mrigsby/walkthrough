@@ -13,8 +13,19 @@ This file lists all notable changes to the project.
 - `{{unique}}` in a value, such as `demo+{{unique}}@example.com`, becomes a short value that is the same for the whole run. Each run gets a new one, so a flow that makes new data can run again. Exported scripts make a new value each time, or use `UNIQUE`.
 - `uiwalk setup lighthouse` installs the tested Lighthouse version, and `uiwalk setup ffmpeg` downloads ffmpeg and checks its SHA-256 hash. `doctor` shows both.
 - `config.yaml` has `video` and `lighthouse` settings. `config.local.yaml` has `allowSecretValues` and `ffmpegPath`.
+- The `tabs` tool opens new tabs. `isolated: true` gives a tab a login of its own, to test as a second user. `isolated: "<name>"` gives it a login that tabs share. Tabs have names, and `newest` means the tab that opened last.
+- `emulate` has more settings: `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, and `permissions`.
+- Plans can use `newTab`, `switchTab`, and `closeTab` actions, and `emulate` on a step or on the plan. Record mode writes tab steps, and exported scripts repeat tabs, logins, settings, and dialog answers.
 
 ### Changed
+
+- `emulate` changes only the active tab. Use `allTabs: true` to change every tab.
+- `session` saves the login of the active tab. A saved login loads into the tab that asks for it.
+
+### Fixed
+
+- When Chrome runs with no tab, for example after you close its window, `browser_open` and `navigate` with a url open a new tab. Before, both failed, and the error named the same two tools.
+- `snapshot` with `ref` outlines that part of the page. Before, it always failed with a Chrome error, because the new snapshot released the element it started from. A ref that is out of date now gets the normal "take a new snapshot" message.
 
 - Run records keep the tab name of each action and the answers to dialogs.
 

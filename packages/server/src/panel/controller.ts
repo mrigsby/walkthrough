@@ -125,7 +125,7 @@ export class DeveloperPanel {
       return;
     }
     if (msg.type.startsWith('rec') && this.recorder) {
-      this.onRecordMessage(msg);
+      this.onRecordMessage(tabId, msg);
       await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
       return;
     }
@@ -211,11 +211,11 @@ export class DeveloperPanel {
     await this.bridges.get(tabId)?.send({ type: 'annotate', rect });
   }
 
-  private onRecordMessage(msg: PanelMessage): void {
+  private onRecordMessage(tabId: string, msg: PanelMessage): void {
     const recorder = this.recorder;
     if (!recorder) return;
     if (msg.type === 'rec') {
-      recorder.add(msg as unknown as Parameters<Recorder['add']>[0]);
+      recorder.add(msg as unknown as Parameters<Recorder['add']>[0], tabId);
     } else if (msg.type === 'rec-expect' && typeof msg.text === 'string') {
       recorder.addExpectation(msg.text.slice(0, 500));
     } else if (msg.type === 'rec-secret') {

@@ -138,3 +138,33 @@ describe('sample plans and schema', () => {
     expect(saved, 'Run "npm run build:plugin" to update the schema.').toEqual(planJsonSchema());
   });
 });
+
+describe('tab and emulate keys', () => {
+  it('accepts tab actions and settings on a plan and a step', () => {
+    const result = validatePlanText(`name: Two users
+emulate: { timezone: Europe/Berlin, cpu: 4 }
+steps:
+  - do: Open the cart as a guest
+    action: { newTab: { name: guest, isolated: true, url: /cart } }
+    emulate: { device: mobile, locale: de-DE, permissions: { notifications: grant } }
+  - do: Open the popup
+    action: { switchTab: { tab: newest, name: help } }
+  - do: Go back
+    action: { switchTab: main }
+  - do: Close the guest tab
+    action: { closeTab: guest }
+`);
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+  });
+
+  it('explains a bad tab name or setting', () => {
+    const name = validatePlanText(
+      'name: x\nsteps:\n  - do: a\n    action: { newTab: { name: Guest Tab } }\n',
+    );
+    expect(name.ok).toBe(false);
+    const setting = validatePlanText(
+      'name: x\nsteps:\n  - do: a\n    emulate: { colorScheme: purple }\n',
+    );
+    expect(setting.ok).toBe(false);
+  });
+});

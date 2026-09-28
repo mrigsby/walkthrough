@@ -1,6 +1,7 @@
 import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
+import { emulationSchema } from '../browser/emulation-schema.js';
 
 // How the agent checks each step.
 export const MODES = ['interactive', 'checkpoints', 'autonomous'] as const;
@@ -14,6 +15,23 @@ const target = z
     selector: z.string().optional().describe('A CSS or Puppeteer selector.'),
     value: z.string().optional().describe('Text to type, option to choose, or key to press.'),
     files: z.array(z.string()).optional().describe('Files to upload, from the project folder.'),
+  })
+  .strict();
+
+const tabName = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]*$/, 'Use lowercase letters, numbers, and dashes, like "customer".');
+
+// Opens a new tab. It becomes the active tab.
+const newTab = z
+  .object({
+    url: z.string().optional().describe('The page to open. A full URL, or a path like "/login".'),
+    name: tabName.optional().describe('A name for the tab. Later steps switch to it by name.'),
+    isolated: z
+      .union([z.literal(true), tabName])
+      .optional()
+      .describe('true for a new login of its own. A name for a login that tabs share.'),
+    session: z.string().optional().describe('A saved login to load into the tab.'),
   })
   .strict();
 
@@ -32,6 +50,22 @@ const action = z
     scroll: target.optional(),
     upload: target.optional(),
     wait: z.string().optional().describe('Text to wait for on the page.'),
+    newTab: newTab.optional(),
+    switchTab: z
+      .union([
+        z.string().min(1),
+        z
+          .object({
+            tab: z.string().min(1).describe('A tab name, an id, or "newest".'),
+            name: tabName.optional().describe('A name to give the tab.'),
+          })
+          .strict(),
+      ])
+      .optional()
+      .describe(
+        'The tab to use now: a name, or "newest" for the tab that opened last. { tab: newest, name: help } also names it.',
+      ),
+    closeTab: z.string().min(1).optional().describe('The name or id of the tab to close.'),
   })
   .strict()
   .refine((value) => Object.keys(value).length === 1, {
@@ -97,6 +131,11 @@ export const stepSchema = z
       .boolean()
       .optional()
       .describe('Compare a screenshot with the saved baseline after this step.'),
+    emulate: emulationSchema
+      .optional()
+      .describe(
+        'Settings for the tab of this step, like { device: mobile }. They apply before the step.',
+      ),
     a11y: z
       .union([
         z.literal(true),
@@ -135,6 +174,11 @@ export const planSchema = z
       .enum(['normal', 'slow-3g', 'fast-3g', 'slow-4g', 'fast-4g', 'offline'])
       .optional()
       .describe('Network speed.'),
+    emulate: emulationSchema
+      .optional()
+      .describe(
+        'More settings for every tab, like { timezone: Europe/Berlin, cpu: 4 }. device, colorScheme, and network above win over the same keys here.',
+      ),
     session: z
       .string()
       .optional()
