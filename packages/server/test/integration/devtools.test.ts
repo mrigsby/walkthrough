@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -232,5 +232,79 @@ describe('Chrome issues', () => {
     const consoleOnly = await mcp.call('logs', { kinds: ['console'] });
     expect(consoleOnly.text).not.toContain('tracker');
     await mcp.call('run_finish');
+  });
+});
+
+describe('network', () => {
+  it('lists requests, and shows a failed request with its body', async () => {
+    await mcp.call('run_start', { name: 'Network' });
+    await mcp.call('navigate', { url: '/' });
+    const outline = await snap();
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Check stock') });
+    const list = await mcp.call('network', { status: '500' });
+    expect(list.isError, list.text).toBe(false);
+    const line = /(r\d+) GET 500 fetch \S+\/api\/stock\?id=\w+/.exec(list.text);
+    expect(line, list.text).not.toBeNull();
+    const shown = await mcp.call('network', { action: 'show', id: line?.[1] });
+    expect(shown.text).toContain('Stock service is not available');
+    expect(shown.text).toContain('Response body (application/json)');
+  });
+
+  it('masks the password in a login request', async () => {
+    await logIn();
+    const list = await mcp.call('network', { urlContains: '/api/login' });
+    const id = /(r\d+) POST 200/.exec(list.text)?.[1];
+    expect(id, list.text).toBeDefined();
+    const shown = await mcp.call('network', { action: 'show', id });
+    expect(shown.text).toMatch(/"password": "\*\*\*\* \(7 characters, id [0-9a-f]{4}\)"/);
+    expect(shown.text).toContain('"username": "demo"');
+    expect(shown.text).toMatch(/set-cookie: \*\*\*\* \(/);
+  });
+
+  it('saves a HAR file without logins, and adds one to a failed step', async () => {
+    const saved = await mcp.call('network', { action: 'har', name: 'login', since: 0 });
+    const file = /Saved \d+ request\(s\) to (\S+\.har)/.exec(saved.text)?.[1] as string;
+    expect(file, saved.text).toBeDefined();
+    const text = readFileSync(join(project, file), 'utf8');
+    const har = JSON.parse(text);
+    expect(har.log.entries.length).toBeGreaterThan(2);
+    expect(text).not.toMatch(/"name": "set-cookie",\s*"value": "session=/);
+    expect(text).not.toContain('demo123');
+
+    await mcp.call('navigate', { url: '/' });
+    const outline = await snap();
+    await mcp.call('act', { action: 'click', ref: refFor(outline, 'button', 'Check stock') });
+    const failed = await mcp.call('run_step', {
+      title: 'Check stock',
+      status: 'fail',
+      actual: 'The stock check shows an error.',
+    });
+    expect(failed.text).toMatch(/Network requests \(HAR\): \S+\.har/);
+    const finish = await mcp.call('run_finish');
+    const runId = /runs\/([^/\s]+)\/report/.exec(finish.text)?.[1] as string;
+    const draft = await mcp.call('issue_draft', { runId });
+    expect(draft.text).toContain('Other files to attach:');
+    expect(draft.text).toMatch(/\.har/);
+  });
+});
+
+describe('inspect', () => {
+  it('shows the CSS rule of an element with its file and line', async () => {
+    await mcp.call('navigate', { url: '/' });
+    const reply = await mcp.call('inspect', { selector: '.ship-note', listeners: false });
+    expect(reply.isError, reply.text).toBe(false);
+    expect(reply.text).toContain('Element: p.ship-note');
+    expect(reply.text).toMatch(/Box: [\d.]+ x [\d.]+ px/);
+    expect(reply.text).toMatch(/\.ship-note \(http:\/\/localhost:\d+\/styles\.css:211\)/);
+    expect(reply.text).toMatch(/color: rgb/);
+  });
+
+  it('shows the click listener of a button with its script and line', async () => {
+    const outline = await snap();
+    const reply = await mcp.call('inspect', {
+      ref: refFor(outline, 'button', 'Check stock'),
+      rules: false,
+    });
+    expect(reply.text).toMatch(/click on this element: http:\/\/localhost:\d+\/app\.js:131:\d+/);
   });
 });

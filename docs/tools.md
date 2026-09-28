@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 30 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 32 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -99,6 +99,31 @@ Shows console messages, page errors, failed requests, and Chrome issues. By defa
 
 Chrome issues are the problems that the Issues panel in DevTools shows. They include cookies that Chrome blocked, Content Security Policy and CORS blocks, and mixed content. They also include deprecated features and form problems, such as a label that points to a missing id. Anything that Chrome blocked is an error. Each issue shows once in each step.
 
+### `network`
+
+Lists the requests of the browser, like the Network panel in DevTools. By default, it lists page, XHR, and fetch requests since the current step started. Each request has an id, such as `r12`.
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `list` (the default), `show` one request with its headers and body, or `har` to save the requests as a HAR file. |
+| `id` | For `show`: the request id. |
+| `urlContains` | Only requests whose address has this text. |
+| `types` | Resource types, such as `["xhr", "fetch"]`. `all: true` lists every type, also scripts, styles, and images. |
+| `status` | A status such as `500` or `4xx`. `errors` means 400 and up, or failed. `failed` means the request got no answer. |
+| `since` | Requests after this marker number. `0` means all requests that Walkthrough still has. |
+| `limit` | For `list`: the most requests to show. The default is 50. |
+| `name`, `stepId` | For `har`: a short name for the file, and a run step to add the file to. |
+
+Walkthrough keeps the bodies of page, XHR, and fetch responses with text, up to 256 KB each. Login headers such as `Authorization` and `Cookie`, and body fields such as `password` and `token`, show as a fingerprint unless `allowSecretValues` is on. HAR files always remove them, because you share HAR files. DevTools and other tools can open a HAR file.
+
+### `inspect`
+
+Shows why an element looks and acts the way it does, like the Elements panel in DevTools. Give a `ref` or a `selector`.
+
+The reply has the box size with the padding, border, and margin, and some computed styles. It also has the CSS rules that apply, with their file and line, and the event listeners, with their script, line, and column. `properties` picks other computed styles. `rules: false` or `listeners: false` omits that part. By default, it also shows listeners on the parents, the document, and the window (`ancestors`), because many frameworks put one handler on the root.
+
+It works on the page and on frames from the same site. The files and lines are those that the browser loaded. Walkthrough does not follow source maps.
+
 ### `evaluate`
 
 Runs a JavaScript expression in the page. It is off unless `allowEvaluate: true` is in `config.local.yaml`.
@@ -117,7 +142,7 @@ Shows a step in the panel and waits for your answer.
 | `step`, `total`, `stepId` | The step number, the number of steps, and the step id in a plan. |
 | `resume` | Keep waiting for the question that is already in the panel. |
 
-The reply starts with `status:` and then `pass`, `bug`, `skip`, `stop`, `waiting`, `use_chat`, or `canceled`. On `bug`, Walkthrough saves a screenshot and the errors from the step.
+The reply starts with `status:` and then `pass`, `bug`, `skip`, `stop`, `waiting`, `use_chat`, or `canceled`. On `bug`, Walkthrough saves a screenshot, the errors from the step, and a HAR file with the network requests of the step.
 
 ## Test plans and runs
 
@@ -131,7 +156,7 @@ Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interacti
 
 ### `run_step`
 
-Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), and `actual` for a failure. On a failure, it saves a screenshot and the errors.
+Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), and `actual` for a failure. On a failure, it saves a screenshot, the errors, and a HAR file with the network requests of the step.
 
 ### `run_finish`
 

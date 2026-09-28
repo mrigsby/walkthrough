@@ -50,6 +50,13 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
   }
   for (const shot of step.screenshots)
     parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
+  if (step.files?.length) {
+    parts.push(
+      '<h3>Files</h3><ul>',
+      ...step.files.map((f) => `<li><a href="${esc(f)}">${esc(f)}</a></li>`),
+      '</ul>',
+    );
+  }
   if (step.logs && step.logs !== '(none)') {
     parts.push('<h3>Errors and failed requests</h3>', `<pre tabindex="0">${esc(step.logs)}</pre>`);
   }

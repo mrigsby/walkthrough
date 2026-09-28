@@ -30,7 +30,7 @@ function encodedLength(text: string): number {
 export function draftIssue(
   run: Run,
   step: RunStep,
-  options: { reportPath: string; screenshots: string[] },
+  options: { reportPath: string; screenshots: string[]; files?: string[] },
 ): IssueDraft {
   const what = step.actual ?? step.notes ?? '';
   const title = oneLine(`${step.title}: ${what || 'does not work as expected'}`, 90);
@@ -42,9 +42,17 @@ export function draftIssue(
     ...(run.setup ? [`- Setup: ${run.setup}`] : []),
     `- Found by: Walkthrough ${VERSION}, run \`${run.id}\`, step ${step.index}`,
   ];
-  const evidence = options.screenshots.length
-    ? options.screenshots.map((s) => `- \`${s}\` (drag the file into this issue)`)
-    : ['- No screenshot.'];
+  const files = options.files ?? [];
+  const evidence = [
+    ...(options.screenshots.length
+      ? options.screenshots.map((s) => `- \`${s}\` (drag the file into this issue)`)
+      : ['- No screenshot.']),
+    ...files.map((f) =>
+      f.endsWith('.har')
+        ? `- \`${f}\` (the network requests. Zip the file if GitHub does not take it.)`
+        : `- \`${f}\` (drag the file into this issue)`,
+    ),
+  ];
 
   const parts = {
     summary: section('What happened', [what || 'See the steps below.']),
@@ -58,7 +66,7 @@ export function draftIssue(
       step.logs && step.logs !== '(none)'
         ? section('Errors and failed requests', ['```text', step.logs, '```'])
         : '',
-    evidence: section('Screenshots', evidence),
+    evidence: section(files.length ? 'Screenshots and files' : 'Screenshots', evidence),
     environment: section('Environment', environment),
     report: `The full report is in \`${options.reportPath}\`.\n`,
   };

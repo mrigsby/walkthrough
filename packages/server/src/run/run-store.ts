@@ -39,6 +39,8 @@ export interface RunStep {
   screenshots: string[];
   // Screenshots saved to exact files. Exported scripts take them again.
   captures?: RunCapture[];
+  // Other evidence, like HAR files, relative to the run folder.
+  files?: string[];
   logs?: string;
   errorCount?: number;
   actions: Array<

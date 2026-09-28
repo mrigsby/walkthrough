@@ -27,6 +27,9 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
     out.push('');
   }
   for (const shot of step.screenshots) out.push(`![Step ${step.index} screenshot](${shot})`, '');
+  if (step.files?.length) {
+    out.push('**Files:**', '', ...step.files.map((f) => `- [${f}](${f})`), '');
+  }
   if (step.logs && step.logs !== '(none)') {
     out.push('**Errors and failed requests:**', '', '```text', step.logs, '```', '');
   }

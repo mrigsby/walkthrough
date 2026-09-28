@@ -8435,10 +8435,10 @@ var init_Frame = __esm({
 });
 
 // node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js
-function headersArray(headers) {
+function headersArray(headers2) {
   const result = [];
-  for (const name of Object.keys(headers)) {
-    const value = headers[name];
+  for (const name of Object.keys(headers2)) {
+    const value = headers2[name];
     if (value !== void 0) {
       if (Array.isArray(value)) {
         for (const v2 of value) {
@@ -15440,8 +15440,8 @@ var init_HTTPRequest2 = __esm({
         this.interception.enabled = allowInterception;
         this.updateHeaders(data.request.headers);
       }
-      updateHeaders(headers) {
-        for (const [key2, value] of Object.entries(headers)) {
+      updateHeaders(headers2) {
+        for (const [key2, value] of Object.entries(headers2)) {
           this.#headers[key2.toLowerCase()] = value;
         }
       }
@@ -15504,7 +15504,7 @@ var init_HTTPRequest2 = __esm({
        * @internal
        */
       async _continue(overrides = {}) {
-        const { url: url2, method, postData, headers } = overrides;
+        const { url: url2, method, postData, headers: headers2 } = overrides;
         this.interception.handled = true;
         const postDataBinaryBase64 = postData ? stringToBase64(postData) : void 0;
         if (this._interceptionId === void 0) {
@@ -15515,7 +15515,7 @@ var init_HTTPRequest2 = __esm({
           url: url2,
           method,
           postData: postDataBinaryBase64,
-          headers: headers ? headersArray(headers) : void 0
+          headers: headers2 ? headersArray(headers2) : void 0
         }).catch((error62) => {
           this.interception.handled = false;
           return handleError(error62, this.#logger);
@@ -15684,8 +15684,8 @@ var init_HTTPResponse2 = __esm({
         this.#fromDiskCache = !!responsePayload.fromDiskCache;
         this.#fromServiceWorker = !!responsePayload.fromServiceWorker;
         this.#status = extraInfo ? extraInfo.statusCode : responsePayload.status;
-        const headers = extraInfo ? extraInfo.headers : responsePayload.headers;
-        for (const [key2, value] of Object.entries(headers)) {
+        const headers2 = extraInfo ? extraInfo.headers : responsePayload.headers;
+        for (const [key2, value] of Object.entries(headers2)) {
           const headerName = key2.toLowerCase();
           this.#headers[headerName] = normalizeHeaderValue(headerName, value);
         }
@@ -16025,9 +16025,9 @@ var init_NetworkManager = __esm({
         this.#protocolRequestInterceptionEnabled = enabled;
         await this.#applyToAllClients(this.#applyProtocolRequestInterception.bind(this));
       }
-      async setExtraHTTPHeaders(headers) {
+      async setExtraHTTPHeaders(headers2) {
         const extraHTTPHeaders = {};
-        for (const [key2, value] of Object.entries(headers)) {
+        for (const [key2, value] of Object.entries(headers2)) {
           assert2(isString(value), `Expected value of header "${key2}" to be String, but "${typeof value}" is found.`);
           extraHTTPHeaders[key2.toLowerCase()] = value;
         }
@@ -19013,8 +19013,8 @@ var init_Page2 = __esm({
       async authenticate(credentials) {
         return await this.#frameManager.networkManager.authenticate(credentials);
       }
-      async setExtraHTTPHeaders(headers) {
-        return await this.#frameManager.networkManager.setExtraHTTPHeaders(headers);
+      async setExtraHTTPHeaders(headers2) {
+        return await this.#frameManager.networkManager.setExtraHTTPHeaders(headers2);
       }
       async setUserAgent(userAgentOrOptions, userAgentMetadata) {
         if (typeof userAgentOrOptions === "string") {
@@ -26975,8 +26975,8 @@ var init_base64 = __esm({
 });
 
 // node_modules/chromium-bidi/out/Default/gen/src/bidiMapper/modules/network/NetworkUtils.js
-function computeHeadersSize(headers) {
-  const requestHeaders = headers.reduce((acc, header) => {
+function computeHeadersSize(headers2) {
+  const requestHeaders = headers2.reduce((acc, header) => {
     return `${acc}${header.name}: ${header.value.value}\r
 `;
   }, "");
@@ -26995,11 +26995,11 @@ function typedArrayToBase642(typedArray) {
   const binaryString = chunks.join("");
   return btoa(binaryString);
 }
-function bidiNetworkHeadersFromCdpNetworkHeaders(headers) {
-  if (!headers) {
+function bidiNetworkHeadersFromCdpNetworkHeaders(headers2) {
+  if (!headers2) {
     return [];
   }
-  return Object.entries(headers).map(([name, value]) => ({
+  return Object.entries(headers2).map(([name, value]) => ({
     name,
     value: {
       type: "string",
@@ -27007,20 +27007,20 @@ function bidiNetworkHeadersFromCdpNetworkHeaders(headers) {
     }
   }));
 }
-function cdpFetchHeadersFromBidiNetworkHeaders(headers) {
-  if (headers === void 0) {
+function cdpFetchHeadersFromBidiNetworkHeaders(headers2) {
+  if (headers2 === void 0) {
     return void 0;
   }
-  return headers.map(({ name, value }) => ({
+  return headers2.map(({ name, value }) => ({
     name,
     value: value.value
   }));
 }
-function networkHeaderFromCookieHeaders(headers) {
-  if (headers === void 0) {
+function networkHeaderFromCookieHeaders(headers2) {
+  if (headers2 === void 0) {
     return void 0;
   }
-  const value = headers.reduce((acc, value2, index) => {
+  const value = headers2.reduce((acc, value2, index) => {
     if (index > 0) {
       acc += ";";
     }
@@ -27215,9 +27215,9 @@ function includesChar(str, chars) {
   }
   return false;
 }
-function parseBiDiHeaders(headers) {
+function parseBiDiHeaders(headers2) {
   const parsedHeaders = {};
-  for (const bidiHeader of headers) {
+  for (const bidiHeader of headers2) {
     if (bidiHeader.value.type === "string") {
       const name = bidiHeader.name;
       const value = bidiHeader.value.value;
@@ -27392,8 +27392,8 @@ var init_NetworkProcessor = __esm({
       /**
        * Validate https://fetch.spec.whatwg.org/#header-value
        */
-      static validateHeaders(headers) {
-        for (const header of headers) {
+      static validateHeaders(headers2) {
+        for (const header of headers2) {
           let headerValue;
           if (header.value.type === "string") {
             headerValue = header.value.value;
@@ -32252,12 +32252,12 @@ var init_NetworkRequest = __esm({
         }
         return cookies;
       }
-      #getBodySizeFromHeaders(headers) {
-        if (headers === void 0) {
+      #getBodySizeFromHeaders(headers2) {
+        if (headers2 === void 0) {
           return void 0;
         }
-        if (headers["Content-Length"] !== void 0) {
-          const bodySize = Number.parseInt(headers["Content-Length"]);
+        if (headers2["Content-Length"] !== void 0) {
+          const bodySize = Number.parseInt(headers2["Content-Length"]);
           if (Number.isInteger(bodySize)) {
             return bodySize;
           }
@@ -32297,14 +32297,14 @@ var init_NetworkRequest = __esm({
         return this.#responseOverrides?.statusCode ?? this.#response.paused?.responseStatusCode ?? this.#response.extraInfo?.statusCode ?? this.#response.info?.status;
       }
       get #requestHeaders() {
-        let headers = [];
+        let headers2 = [];
         if (this.#requestOverrides?.headers) {
           const headerMap = new DefaultMap(() => []);
           for (const header of this.#requestOverrides.headers) {
             headerMap.get(header.name).push(header.value.value);
           }
           for (const [name, value] of headerMap.entries()) {
-            headers.push({
+            headers2.push({
               name,
               value: {
                 type: "string",
@@ -32313,12 +32313,12 @@ var init_NetworkRequest = __esm({
             });
           }
         } else {
-          headers = [
+          headers2 = [
             ...bidiNetworkHeadersFromCdpNetworkHeaders(this.#request.info?.request.headers),
             ...bidiNetworkHeadersFromCdpNetworkHeaders(this.#request.extraInfo?.headers)
           ];
         }
-        return headers;
+        return headers2;
       }
       get #authChallenges() {
         if (!this.#response.info) {
@@ -32556,12 +32556,12 @@ var init_NetworkRequest = __esm({
       /** @see https://chromedevtools.github.io/devtools-protocol/tot/Fetch/#method-continueRequest */
       async continueRequest(overrides = {}) {
         const overrideHeaders = this.#getOverrideHeader(overrides.headers, overrides.cookies);
-        const headers = cdpFetchHeadersFromBidiNetworkHeaders(overrideHeaders);
+        const headers2 = cdpFetchHeadersFromBidiNetworkHeaders(overrideHeaders);
         const postData = getCdpBodyFromBiDiBytesValue(overrides.body);
         await this.#continueRequest({
           url: overrides.url,
           method: overrides.method,
-          headers,
+          headers: headers2,
           postData
         });
         this.#requestOverrides = {
@@ -32736,7 +32736,7 @@ var init_NetworkRequest = __esm({
         for (const [key2, value] of Object.entries(cdpRawHeaders)) {
           cdpHeaders[key2] = value;
         }
-        const headers = bidiNetworkHeadersFromCdpNetworkHeaders(cdpHeaders);
+        const headers2 = bidiNetworkHeadersFromCdpNetworkHeaders(cdpHeaders);
         const authChallenges = this.#authChallenges;
         const response = {
           url: this.url,
@@ -32745,11 +32745,11 @@ var init_NetworkRequest = __esm({
           // TODO: Throw an exception or use some other status code?
           statusText: this.#response.info?.statusText || this.#response.paused?.responseStatusText || "",
           fromCache: this.#response.info?.fromDiskCache || this.#response.info?.fromPrefetchCache || this.#servedFromCache,
-          headers: this.#responseOverrides?.headers ?? headers,
+          headers: this.#responseOverrides?.headers ?? headers2,
           mimeType: this.#response.info?.mimeType || "",
           // TODO: this should be the size for the entire HTTP response.
           bytesReceived: this.encodedResponseBodySize,
-          headersSize: computeHeadersSize(headers),
+          headersSize: computeHeadersSize(headers2),
           bodySize: this.encodedResponseBodySize,
           content: {
             size: this.#decodedResponseBodySize
@@ -32768,14 +32768,14 @@ var init_NetworkRequest = __esm({
         return this.#decodedResponseBodySize;
       }
       #getRequestData() {
-        const headers = this.#requestHeaders;
+        const headers2 = this.#requestHeaders;
         const request3 = {
           request: this.#id,
           url: this.url,
           method: this.#method ?? _a6.unknownParameter,
-          headers,
+          headers: headers2,
           cookies: this.#cookies,
-          headersSize: computeHeadersSize(headers),
+          headersSize: computeHeadersSize(headers2),
           bodySize: this.bodySize,
           // TODO: populate
           destination: this.#getDestination(),
@@ -32886,11 +32886,11 @@ var init_NetworkRequest = __esm({
         const faviconUrl = "/favicon.ico";
         return this.#request.paused?.request.url.endsWith(faviconUrl) ?? this.#request.info?.request.url.endsWith(faviconUrl) ?? false;
       }
-      #getOverrideHeader(headers, cookies) {
-        if (!headers && !cookies) {
+      #getOverrideHeader(headers2, cookies) {
+        if (!headers2 && !cookies) {
           return void 0;
         }
-        let overrideHeaders = headers;
+        let overrideHeaders = headers2;
         const cookieHeader = networkHeaderFromCookieHeaders(cookies);
         if (cookieHeader && !overrideHeaders) {
           overrideHeaders = this.#requestHeaders;
@@ -33830,9 +33830,9 @@ var init_CdpTarget = __esm({
           });
         }
       }
-      async setExtraHeaders(headers) {
+      async setExtraHeaders(headers2) {
         await this.cdpClient.sendCommand("Network.setExtraHTTPHeaders", {
-          headers
+          headers: headers2
         });
       }
       async setUserAgentAndAcceptLanguage(userAgent, acceptLanguage, clientHints) {
@@ -36351,12 +36351,12 @@ var init_Request = __esm({
         get hasPostData() {
           return (this.#event.request.bodySize ?? 0) > 0;
         }
-        async continueRequest({ url: url2, method, headers, cookies, body }) {
+        async continueRequest({ url: url2, method, headers: headers2, cookies, body }) {
           await this.#session.send("network.continueRequest", {
             request: this.id,
             url: url2,
             method,
-            headers,
+            headers: headers2,
             body,
             cookies
           });
@@ -36366,12 +36366,12 @@ var init_Request = __esm({
             request: this.id
           });
         }
-        async provideResponse({ statusCode, reasonPhrase, headers, body }) {
+        async provideResponse({ statusCode, reasonPhrase, headers: headers2, body }) {
           await this.#session.send("network.provideResponse", {
             request: this.id,
             statusCode,
             reasonPhrase,
-            headers,
+            headers: headers2,
             body
           });
         }
@@ -37167,9 +37167,9 @@ var init_BrowsingContext = __esm({
         async waitForDevicePrompt(timeout2, signal) {
           return await this.#deviceRequestPromptManager.waitForDevicePrompt(timeout2, signal);
         }
-        async setExtraHTTPHeaders(headers) {
+        async setExtraHTTPHeaders(headers2) {
           await this.#session.send("network.setExtraHeaders", {
-            headers: Object.entries(headers).map(([key2, value]) => {
+            headers: Object.entries(headers2).map(([key2, value]) => {
               assert2(isString(value), `Expected value of header "${key2}" to be String, but "${typeof value}" is found.`);
               return {
                 name: key2.toLowerCase(),
@@ -38137,16 +38137,16 @@ var init_HTTPResponse3 = __esm({
           return this.#data.statusText;
         }
         headers() {
-          const headers = {};
+          const headers2 = {};
           for (const header of this.#data.headers) {
             if (header.value.type === "string") {
               const headerName = header.name.toLowerCase();
-              const value = headerName in headers ? `${headers[headerName]}
+              const value = headerName in headers2 ? `${headers2[headerName]}
 ${header.value.value}` : header.value.value;
-              headers[headerName] = normalizeHeaderValue(headerName, value);
+              headers2[headerName] = normalizeHeaderValue(headerName, value);
             }
           }
-          return headers;
+          return headers2;
         }
         request() {
           return this.#request;
@@ -38202,12 +38202,12 @@ ${header.value.value}` : header.value.value;
 
 // node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js
 function getBidiHeaders(rawHeaders) {
-  const headers = [];
+  const headers2 = [];
   for (const [name, value] of Object.entries(rawHeaders ?? [])) {
     if (!Object.is(value, void 0)) {
       const values = Array.isArray(value) ? value : [value];
       for (const value2 of values) {
-        headers.push({
+        headers2.push({
           name: name.toLowerCase(),
           value: {
             type: "string",
@@ -38217,7 +38217,7 @@ function getBidiHeaders(rawHeaders) {
       }
     }
   }
-  return headers;
+  return headers2;
 }
 var _a9, requests, BidiHTTPRequest;
 var init_HTTPRequest3 = __esm({
@@ -38307,12 +38307,12 @@ var init_HTTPRequest3 = __esm({
         return await this.#request.fetchPostData();
       }
       headers() {
-        const headers = {};
+        const headers2 = {};
         for (const header of this.#request.headers) {
-          headers[header.name.toLowerCase()] = header.value.value;
+          headers2[header.name.toLowerCase()] = header.value.value;
         }
         return {
-          ...headers
+          ...headers2
         };
       }
       response() {
@@ -38340,7 +38340,7 @@ var init_HTTPRequest3 = __esm({
         return this.#frame;
       }
       async _continue(overrides = {}) {
-        const headers = getBidiHeaders(overrides.headers);
+        const headers2 = getBidiHeaders(overrides.headers);
         this.interception.handled = true;
         return await this.#request.continueRequest({
           url: overrides.url,
@@ -38349,7 +38349,7 @@ var init_HTTPRequest3 = __esm({
             type: "base64",
             value: stringToBase64(overrides.postData)
           } : void 0,
-          headers: headers.length > 0 ? headers : void 0
+          headers: headers2.length > 0 ? headers2 : void 0
         }).catch((error62) => {
           this.interception.handled = false;
           return handleError(error62, this.#logger);
@@ -38368,12 +38368,12 @@ var init_HTTPRequest3 = __esm({
         if (response.body) {
           parsedBody = HTTPRequest.getResponse(response.body);
         }
-        const headers = getBidiHeaders(response.headers);
-        const hasContentLength = headers.some((header) => {
+        const headers2 = getBidiHeaders(response.headers);
+        const hasContentLength = headers2.some((header) => {
           return header.name === "content-length";
         });
         if (response.contentType) {
-          headers.push({
+          headers2.push({
             name: "content-type",
             value: {
               type: "string",
@@ -38382,7 +38382,7 @@ var init_HTTPRequest3 = __esm({
           });
         }
         if (parsedBody?.contentLength && !hasContentLength) {
-          headers.push({
+          headers2.push({
             name: "content-length",
             value: {
               type: "string",
@@ -38393,7 +38393,7 @@ var init_HTTPRequest3 = __esm({
         const status = response.status || 200;
         return await this.#request.provideResponse({
           statusCode: status,
-          headers: headers.length > 0 ? headers : void 0,
+          headers: headers2.length > 0 ? headers2 : void 0,
           reasonPhrase: STATUS_TEXTS[status],
           body: parsedBody?.base64 ? {
             type: "base64",
@@ -40956,8 +40956,8 @@ var init_Page3 = __esm({
         /**
          * @internal
          */
-        async setExtraHTTPHeaders(headers) {
-          await this.#frame.browsingContext.setExtraHTTPHeaders(headers);
+        async setExtraHTTPHeaders(headers2) {
+          await this.#frame.browsingContext.setExtraHTTPHeaders(headers2);
         }
         /**
          * @internal
@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes9, createHash: createHash5 } = __require("crypto");
+    var { randomBytes: randomBytes10, createHash: createHash5 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key2 = randomBytes9(16).toString("base64");
+      const key2 = randomBytes10(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -45491,10 +45491,10 @@ var require_websocket = __commonJS({
           websocket._originalIpc = isIpcUrl;
           websocket._originalSecure = isSecure;
           websocket._originalHostOrSocketPath = isIpcUrl ? opts.socketPath : parsedUrl.host;
-          const headers = options && options.headers;
+          const headers2 = options && options.headers;
           options = { ...options, headers: {} };
-          if (headers) {
-            for (const [key3, value] of Object.entries(headers)) {
+          if (headers2) {
+            for (const [key3, value] of Object.entries(headers2)) {
               options.headers[key3.toLowerCase()] = value;
             }
           }
@@ -46197,9 +46197,9 @@ var require_websocket_server = __commonJS({
             req
           };
           if (this.options.verifyClient.length === 2) {
-            this.options.verifyClient(info, (verified, code, message, headers) => {
+            this.options.verifyClient(info, (verified, code, message, headers2) => {
               if (!verified) {
-                return abortHandshake(socket, code || 401, message, headers);
+                return abortHandshake(socket, code || 401, message, headers2);
               }
               this.completeUpgrade(
                 extensions,
@@ -46239,7 +46239,7 @@ var require_websocket_server = __commonJS({
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
         const digest = createHash5("sha1").update(key2 + GUID).digest("base64");
-        const headers = [
+        const headers2 = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
           "Connection: Upgrade",
@@ -46249,7 +46249,7 @@ var require_websocket_server = __commonJS({
         if (protocols.size) {
           const protocol = this.options.handleProtocols ? this.options.handleProtocols(protocols, req) : protocols.values().next().value;
           if (protocol) {
-            headers.push(`Sec-WebSocket-Protocol: ${protocol}`);
+            headers2.push(`Sec-WebSocket-Protocol: ${protocol}`);
             ws._protocol = protocol;
           }
         }
@@ -46258,11 +46258,11 @@ var require_websocket_server = __commonJS({
           const value = extension2.format({
             [PerMessageDeflate2.extensionName]: [params]
           });
-          headers.push(`Sec-WebSocket-Extensions: ${value}`);
+          headers2.push(`Sec-WebSocket-Extensions: ${value}`);
           ws._extensions = extensions;
         }
-        this.emit("headers", headers, req);
-        socket.write(headers.concat("\r\n").join("\r\n"));
+        this.emit("headers", headers2, req);
+        socket.write(headers2.concat("\r\n").join("\r\n"));
         socket.removeListener("error", socketOnError);
         ws.setSocket(socket, head, {
           allowSynchronousEvents: this.options.allowSynchronousEvents,
@@ -46299,27 +46299,27 @@ var require_websocket_server = __commonJS({
     function socketOnError() {
       this.destroy();
     }
-    function abortHandshake(socket, code, message, headers) {
+    function abortHandshake(socket, code, message, headers2) {
       message = message || http2.STATUS_CODES[code];
-      headers = {
+      headers2 = {
         Connection: "close",
         "Content-Type": "text/html",
         "Content-Length": Buffer.byteLength(message),
-        ...headers
+        ...headers2
       };
       socket.once("finish", socket.destroy);
       socket.end(
         `HTTP/1.1 ${code} ${http2.STATUS_CODES[code]}\r
-` + Object.keys(headers).map((h) => `${h}: ${headers[h]}`).join("\r\n") + "\r\n\r\n" + message
+` + Object.keys(headers2).map((h) => `${h}: ${headers2[h]}`).join("\r\n") + "\r\n\r\n" + message
       );
     }
-    function abortHandshakeOrEmitwsClientError(server, req, socket, code, message, headers) {
+    function abortHandshakeOrEmitwsClientError(server, req, socket, code, message, headers2) {
       if (server.listenerCount("wsClientError")) {
         const err = new Error(message);
         Error.captureStackTrace(err, abortHandshakeOrEmitwsClientError);
         server.emit("wsClientError", err, socket, req);
       } else {
-        abortHandshake(socket, code, message, headers);
+        abortHandshake(socket, code, message, headers2);
       }
     }
   }
@@ -46355,7 +46355,7 @@ var init_NodeWebSocketTransport = __esm({
     init_version();
     DEFAULT_KEEP_ALIVE_INTERVAL_MS = 3e4;
     NodeWebSocketTransport = class _NodeWebSocketTransport {
-      static create(url2, headers, logger, options = {}) {
+      static create(url2, headers2, logger, options = {}) {
         return new Promise((resolve11, reject) => {
           const ws = new wrapper_default(url2, [], {
             followRedirects: true,
@@ -46365,7 +46365,7 @@ var init_NodeWebSocketTransport = __esm({
             // 256Mb
             headers: {
               "User-Agent": `Puppeteer ${packageVersion}`,
-              ...headers
+              ...headers2
             }
           });
           ws.addEventListener("open", () => {
@@ -48937,11 +48937,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative13 = path14;
-  if (/^[a-zA-Z]:/.test(relative13)) relative13 = relative13.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative13.startsWith("/")) relative13 = relative13.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative13.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative13;
+  let relative15 = path14;
+  if (/^[a-zA-Z]:/.test(relative15)) relative15 = relative15.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative15.startsWith("/")) relative15 = relative15.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative15.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative15;
 }
 function packTar(sources, options = {}) {
   const results2 = /* @__PURE__ */ new Map();
@@ -56918,22 +56918,22 @@ async function _connectToBrowser(options) {
 }
 async function getConnectionTransport(options) {
   const { browserWSEndpoint, browserURL, channel, transport } = options;
-  const headers = options.wsOptions?.headers ?? options.headers ?? {};
+  const headers2 = options.wsOptions?.headers ?? options.headers ?? {};
   const wsOptions = options.wsOptions ?? {};
   assert2(Number(!!browserWSEndpoint) + Number(!!browserURL) + Number(!!transport) + Number(!!channel) === 1, "Exactly one of browserWSEndpoint, browserURL, transport or channel must be passed to puppeteer.connect");
   if (transport) {
     return { connectionTransport: transport, endpointUrl: "" };
   } else if (browserWSEndpoint) {
     const WebSocketClass = await getWebSocketTransportClass();
-    const connectionTransport = await WebSocketClass.create(browserWSEndpoint, headers, options.logger, wsOptions);
+    const connectionTransport = await WebSocketClass.create(browserWSEndpoint, headers2, options.logger, wsOptions);
     return {
       connectionTransport,
       endpointUrl: browserWSEndpoint
     };
   } else if (browserURL) {
-    const connectionURL = await getWSEndpoint(browserURL, headers);
+    const connectionURL = await getWSEndpoint(browserURL, headers2);
     const WebSocketClass = await getWebSocketTransportClass();
-    const connectionTransport = await WebSocketClass.create(connectionURL, headers, options.logger, wsOptions);
+    const connectionTransport = await WebSocketClass.create(connectionURL, headers2, options.logger, wsOptions);
     return {
       connectionTransport,
       endpointUrl: connectionURL
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join32 } = await import("node:path");
+    const { join: join33 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join32(userDataDir, "DevToolsActivePort");
+    const portPath = join33(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -56964,7 +56964,7 @@ async function getConnectionTransport(options) {
       }
       const browserWSEndpoint2 = `ws://localhost:${port}${rawPath}`;
       const WebSocketClass = await getWebSocketTransportClass();
-      const connectionTransport = await WebSocketClass.create(browserWSEndpoint2, headers, options.logger, wsOptions);
+      const connectionTransport = await WebSocketClass.create(browserWSEndpoint2, headers2, options.logger, wsOptions);
       return {
         connectionTransport,
         endpointUrl: browserWSEndpoint2
@@ -56977,12 +56977,12 @@ async function getConnectionTransport(options) {
   }
   throw new Error("Invalid connection options");
 }
-async function getWSEndpoint(browserURL, headers) {
+async function getWSEndpoint(browserURL, headers2) {
   const endpointURL = new URL("/json/version", browserURL);
   try {
     const result = await globalThis.fetch(endpointURL.toString(), {
       method: "GET",
-      headers
+      headers: headers2
     });
     if (!result.ok) {
       throw new Error(`HTTP ${result.statusText}`);
@@ -68743,49 +68743,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative13, options, skipNormalization) {
+    function resolveComponent(base, relative15, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
         base = parse6(serialize(base, options), options);
-        relative13 = parse6(serialize(relative13, options), options);
+        relative15 = parse6(serialize(relative15, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative13.scheme) {
-        target2.scheme = relative13.scheme;
-        target2.userinfo = relative13.userinfo;
-        target2.host = relative13.host;
-        target2.port = relative13.port;
-        target2.path = removeDotSegments(relative13.path || "");
-        target2.query = relative13.query;
+      if (!options.tolerant && relative15.scheme) {
+        target2.scheme = relative15.scheme;
+        target2.userinfo = relative15.userinfo;
+        target2.host = relative15.host;
+        target2.port = relative15.port;
+        target2.path = removeDotSegments(relative15.path || "");
+        target2.query = relative15.query;
       } else {
-        if (relative13.userinfo !== void 0 || relative13.host !== void 0 || relative13.port !== void 0) {
-          target2.userinfo = relative13.userinfo;
-          target2.host = relative13.host;
-          target2.port = relative13.port;
-          target2.path = removeDotSegments(relative13.path || "");
-          target2.query = relative13.query;
+        if (relative15.userinfo !== void 0 || relative15.host !== void 0 || relative15.port !== void 0) {
+          target2.userinfo = relative15.userinfo;
+          target2.host = relative15.host;
+          target2.port = relative15.port;
+          target2.path = removeDotSegments(relative15.path || "");
+          target2.query = relative15.query;
         } else {
-          if (!relative13.path) {
+          if (!relative15.path) {
             target2.path = base.path;
-            if (relative13.query !== void 0) {
-              target2.query = relative13.query;
+            if (relative15.query !== void 0) {
+              target2.query = relative15.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative13.path[0] === "/") {
-              target2.path = removeDotSegments(relative13.path);
+            if (relative15.path[0] === "/") {
+              target2.path = removeDotSegments(relative15.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative13.path;
+                target2.path = "/" + relative15.path;
               } else if (!base.path) {
-                target2.path = relative13.path;
+                target2.path = relative15.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative13.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative15.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative13.query;
+            target2.query = relative15.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -68793,7 +68793,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative13.fragment;
+      target2.fragment = relative15.fragment;
       return target2;
     }
     function equal2(uriA, uriB, options) {
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname9, join as join31 } from "node:path";
+import { dirname as dirname10, join as join32 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -106273,6 +106273,152 @@ function formatLogs(entries) {
   ).join("\n");
 }
 
+// packages/server/src/evidence/network.ts
+var MAX_ENTRIES2 = 1e3;
+var MAX_BODY = 256 * 1024;
+var MAX_POST = 64 * 1024;
+var BODY_BUDGET = 20 * 1024 * 1024;
+var BODY_TYPES = /* @__PURE__ */ new Set(["document", "xhr", "fetch"]);
+var TEXT_MIME = /^(text\/|application\/(json|[\w.+-]*\+json|xml|[\w.+-]*\+xml|javascript|x-www-form-urlencoded|graphql))/i;
+var SECRET_HEADER = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-csrf-token|x-xsrf-token)$|token|secret|api-key|apikey/i;
+var SECRET_KEY = /^(password|passwd|pwd|pass|passcode|secret|clientsecret|token|accesstoken|refreshtoken|idtoken|apikey|authorization|auth|jwt|session|sessionid|sid|otp|pin|cvv|cvc|cardnumber|ssn)$/i;
+function isSecretKey(key2) {
+  return SECRET_KEY.test(key2.replace(/[-_\s]/g, ""));
+}
+function maskBody(text, mimeType, mask = () => MASK) {
+  const mime = mimeType ?? "";
+  if (/json/i.test(mime) || /^\s*[[{]/.test(text)) {
+    try {
+      const walk = (value) => {
+        if (Array.isArray(value)) return value.map(walk);
+        if (value && typeof value === "object") {
+          return Object.fromEntries(
+            Object.entries(value).map(([k, v2]) => [
+              k,
+              isSecretKey(k) && (typeof v2 === "string" || typeof v2 === "number") ? mask(String(v2)) : walk(v2)
+            ])
+          );
+        }
+        return value;
+      };
+      return JSON.stringify(walk(JSON.parse(text)), null, 2);
+    } catch {
+    }
+  }
+  if (/x-www-form-urlencoded/i.test(mime)) {
+    const params = new URLSearchParams(text);
+    for (const [key2, value] of [...params]) if (isSecretKey(key2)) params.set(key2, mask(value));
+    return params.toString();
+  }
+  return text;
+}
+var NetworkBook = class {
+  entries = [];
+  byRequest = /* @__PURE__ */ new WeakMap();
+  seq = 0;
+  stepStart = 0;
+  bodyBytes = 0;
+  get marker() {
+    return this.seq;
+  }
+  attach(page, tabId) {
+    page.on("request", (request3) => this.onRequest(request3, tabId));
+    page.on("requestfinished", (request3) => void this.onFinished(request3));
+    page.on("requestfailed", (request3) => {
+      const entry = this.byRequest.get(request3);
+      if (!entry) return;
+      entry.endedAt = Date.now();
+      entry.failure = request3.failure()?.errorText ?? "failed";
+    });
+  }
+  onRequest(request3, tabId) {
+    this.seq += 1;
+    const post = request3.postData();
+    const entry = {
+      id: `r${this.seq}`,
+      seq: this.seq,
+      tabId,
+      method: request3.method(),
+      url: request3.url(),
+      type: request3.resourceType(),
+      startedAt: Date.now(),
+      requestHeaders: request3.headers(),
+      postData: post && post.length > MAX_POST ? `${post.slice(0, MAX_POST)}...` : post
+    };
+    this.byRequest.set(request3, entry);
+    this.entries.push(entry);
+    if (this.entries.length > MAX_ENTRIES2) {
+      const dropped = this.entries.shift();
+      if (dropped?.body) this.bodyBytes -= dropped.body.length;
+    }
+  }
+  async onFinished(request3) {
+    const entry = this.byRequest.get(request3);
+    const response = request3.response();
+    if (!entry || !response) return;
+    entry.endedAt = Date.now();
+    this.readResponse(entry, response);
+    if (!BODY_TYPES.has(entry.type) || !TEXT_MIME.test(entry.mimeType ?? "")) {
+      entry.bodyNote = "Walkthrough keeps bodies only for pages, XHR, and fetch requests with text.";
+      return;
+    }
+    if (entry.status && entry.status >= 300 && entry.status < 400) return;
+    try {
+      const text = await response.text();
+      entry.size ??= Buffer.byteLength(text);
+      if (text.length > MAX_BODY) {
+        entry.body = text.slice(0, MAX_BODY);
+        entry.bodyNote = `The body has ${text.length} characters. Walkthrough kept the first ${MAX_BODY}.`;
+      } else {
+        entry.body = text;
+      }
+      this.bodyBytes += entry.body.length;
+      this.trimBodies();
+    } catch {
+      entry.bodyNote = "Chrome no longer had the body.";
+    }
+  }
+  readResponse(entry, response) {
+    const headers2 = response.headers();
+    entry.status = response.status();
+    entry.statusText = response.statusText();
+    entry.responseHeaders = headers2;
+    entry.mimeType = (headers2["content-type"] ?? "").split(";")[0]?.trim() || void 0;
+    const length = Number(headers2["content-length"]);
+    if (Number.isFinite(length) && length >= 0) entry.size = length;
+    entry.fromCache = response.fromCache();
+    entry.timing = response.timing() ?? void 0;
+    const address = response.remoteAddress();
+    if (address?.ip) entry.remoteAddress = address.ip;
+  }
+  // Drops the oldest bodies when they use too much memory.
+  trimBodies() {
+    for (const entry of this.entries) {
+      if (this.bodyBytes <= BODY_BUDGET) return;
+      if (!entry.body) continue;
+      this.bodyBytes -= entry.body.length;
+      entry.body = void 0;
+      entry.bodyNote = "Walkthrough dropped this body to save memory.";
+    }
+  }
+  get(id) {
+    return this.entries.find((e) => e.id === id);
+  }
+  since(marker) {
+    return this.entries.filter((e) => e.seq > marker);
+  }
+  currentStep() {
+    return this.since(this.stepStart);
+  }
+  // Ends the current step: tags its requests and starts the next step.
+  endStep(label) {
+    for (const entry of this.entries) {
+      if (entry.seq > this.stepStart && !entry.step) entry.step = label;
+    }
+    this.stepStart = this.seq;
+  }
+};
+
 // packages/server/src/page/refs.ts
 var RefTable = class {
   entries = /* @__PURE__ */ new Map();
@@ -107439,6 +107585,7 @@ var Driver = class _Driver {
   tabs = /* @__PURE__ */ new Map();
   secretFields = [];
   logs = new LogBook();
+  network = new NetworkBook();
   panel;
   // The element of the last action, for the red box in bug screenshots.
   lastTarget;
@@ -107595,6 +107742,7 @@ var Driver = class _Driver {
     page.on("close", () => this.onTabClosed(tab));
     page.on("dialog", (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
+    this.network.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
     tab.cdp = await guardNavigation(
       page,
@@ -107830,6 +107978,11 @@ var Driver = class _Driver {
     void this.panel?.refresh(tab.id);
     return tab;
   }
+  // Ends a step in the logs and in the network list.
+  endStep(label) {
+    this.logs.endStep(label);
+    this.network.endStep(label);
+  }
   note(text) {
     this.notes.push(text);
   }
@@ -107997,9 +108150,9 @@ import {
   readFileSync as readFileSync16,
   realpathSync as realpathSync3,
   statSync as statSync6,
-  writeFileSync as writeFileSync9
+  writeFileSync as writeFileSync10
 } from "node:fs";
-import { join as join27, relative as relative9, resolve as resolve10, sep as sep5 } from "node:path";
+import { join as join28, relative as relative10, resolve as resolve10, sep as sep5 } from "node:path";
 
 // packages/server/src/audit/axe.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -111048,8 +111201,8 @@ function reloadableTab(driver) {
 }
 
 // packages/server/src/tools/run-tools.ts
-import { existsSync as existsSync17, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join26, relative as relative8 } from "node:path";
+import { existsSync as existsSync17, writeFileSync as writeFileSync9 } from "node:fs";
+import { join as join27, relative as relative9 } from "node:path";
 
 // packages/server/src/guards/paths.ts
 import { existsSync as existsSync14, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
@@ -111194,6 +111347,13 @@ function stepCard(run, runDir, step, open4) {
   }
   for (const shot of step.screenshots)
     parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
+  if (step.files?.length) {
+    parts.push(
+      "<h3>Files</h3><ul>",
+      ...step.files.map((f) => `<li><a href="${esc2(f)}">${esc2(f)}</a></li>`),
+      "</ul>"
+    );
+  }
   if (step.logs && step.logs !== "(none)") {
     parts.push("<h3>Errors and failed requests</h3>", `<pre tabindex="0">${esc2(step.logs)}</pre>`);
   }
@@ -111316,6 +111476,9 @@ function stepDetails(run, step, withRepro) {
     out.push("");
   }
   for (const shot of step.screenshots) out.push(`![Step ${step.index} screenshot](${shot})`, "");
+  if (step.files?.length) {
+    out.push("**Files:**", "", ...step.files.map((f) => `- [${f}](${f})`), "");
+  }
   if (step.logs && step.logs !== "(none)") {
     out.push("**Errors and failed requests:**", "", "```text", step.logs, "```", "");
   }
@@ -111513,6 +111676,10 @@ function recordResult(ctx, ref, result) {
     const full = isAbsolute7(result.screenshot) ? result.screenshot : join25(store.projectDir, result.screenshot);
     step.screenshots.push(relative7(store.dir, full));
   }
+  for (const file2 of result.files ?? []) {
+    const full = isAbsolute7(file2) ? file2 : join25(store.projectDir, file2);
+    step.files = [...step.files ?? [], relative7(store.dir, full)];
+  }
   if (result.logs) {
     step.logs = formatLogs(result.logs);
     step.errorCount = result.logs.filter((e) => e.level === "error").length;
@@ -111541,6 +111708,101 @@ function nextStepHint(ctx) {
 }
 
 // packages/server/src/tools/developer-tools.ts
+import { relative as relative8 } from "node:path";
+
+// packages/server/src/evidence/har.ts
+import { mkdirSync as mkdirSync10, writeFileSync as writeFileSync8 } from "node:fs";
+import { dirname as dirname8, join as join26 } from "node:path";
+function headers(values, clean) {
+  return Object.entries(values ?? {}).map(([name, value]) => ({
+    name,
+    value: SECRET_HEADER.test(name) ? MASK : clean(value)
+  }));
+}
+function timings(entry) {
+  const total = entry.endedAt ? entry.endedAt - entry.startedAt : 0;
+  const t = entry.timing;
+  if (!t) return { blocked: -1, dns: -1, connect: -1, ssl: -1, send: 0, wait: total, receive: 0 };
+  const span = (start, end) => start >= 0 && end >= 0 ? end - start : -1;
+  const wait2 = span(t.sendEnd, t.receiveHeadersEnd);
+  const before = Math.max(0, t.sendEnd);
+  return {
+    blocked: -1,
+    dns: span(t.dnsStart, t.dnsEnd),
+    connect: span(t.connectStart, t.connectEnd),
+    ssl: span(t.sslStart, t.sslEnd),
+    send: Math.max(0, span(t.sendStart, t.sendEnd)),
+    wait: Math.max(0, wait2),
+    receive: Math.max(0, total - before - Math.max(0, wait2))
+  };
+}
+function toHar(entries, secrets) {
+  const clean = (text) => scrubText(secrets ? secrets.redact(text) : text);
+  return {
+    log: {
+      version: "1.2",
+      creator: { name: "Walkthrough", version: VERSION },
+      pages: [],
+      entries: entries.map((entry) => {
+        const url2 = new URL(scrubUrl(entry.url));
+        const requestMime = entry.requestHeaders["content-type"]?.split(";")[0]?.trim();
+        return {
+          startedDateTime: new Date(entry.startedAt).toISOString(),
+          time: entry.endedAt ? entry.endedAt - entry.startedAt : 0,
+          request: {
+            method: entry.method,
+            url: scrubUrl(entry.url),
+            httpVersion: "HTTP/1.1",
+            headers: headers(entry.requestHeaders, clean),
+            queryString: [...url2.searchParams].map(([name, value]) => ({ name, value })),
+            cookies: [],
+            headersSize: -1,
+            bodySize: entry.postData ? Buffer.byteLength(entry.postData) : 0,
+            ...entry.postData ? {
+              postData: {
+                mimeType: requestMime ?? "text/plain",
+                text: clean(maskBody(entry.postData, requestMime))
+              }
+            } : {}
+          },
+          response: {
+            status: entry.status ?? 0,
+            statusText: entry.failure ?? entry.statusText ?? "",
+            httpVersion: "HTTP/1.1",
+            headers: headers(entry.responseHeaders, clean),
+            cookies: [],
+            content: {
+              size: entry.size ?? -1,
+              mimeType: entry.mimeType ?? "x-unknown",
+              ...entry.body !== void 0 ? { text: clean(maskBody(entry.body, entry.mimeType)) } : {},
+              ...entry.bodyNote ? { comment: entry.bodyNote } : {}
+            },
+            redirectURL: scrubUrl(entry.responseHeaders?.location ?? ""),
+            headersSize: -1,
+            bodySize: entry.size ?? -1
+          },
+          cache: {},
+          timings: timings(entry),
+          ...entry.remoteAddress ? { serverIPAddress: entry.remoteAddress } : {},
+          _resourceType: entry.type,
+          _tab: entry.tabId
+        };
+      })
+    }
+  };
+}
+function networkDir(ctx, projectDir) {
+  return join26(dirname8(ctx.evidenceDir(projectDir)), "network");
+}
+function writeHar(dir, label, entries, secrets) {
+  mkdirSync10(dir, { recursive: true });
+  const file2 = join26(dir, `${fileStamp(label)}.har`);
+  writeFileSync8(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
+`);
+  return file2;
+}
+
+// packages/server/src/tools/developer-tools.ts
 function defaultAskTimeoutSec(clientName) {
   return clientName === "claude-code" ? 300 : 50;
 }
@@ -111556,6 +111818,17 @@ async function bugScreenshot(ctx, driver, tab, stepLabel) {
       label: `bug-${stepLabel}`
     })
   );
+}
+async function bugHar(ctx, entries, stepLabel) {
+  if (entries.length === 0) return void 0;
+  const config3 = await ctx.config();
+  const file2 = writeHar(
+    networkDir(ctx, config3.projectDir),
+    `step-${stepLabel}`,
+    entries,
+    await ctx.secrets()
+  );
+  return relative8(config3.projectDir, file2);
 }
 function startProgress(extra) {
   const token = extra._meta?.progressToken;
@@ -111673,7 +111946,8 @@ function registerDeveloperTools(server, ctx) {
       const { answer, question } = outcome;
       const label = question.stepId ?? question.title;
       const stepLogs = driver.logs.currentStep();
-      driver.logs.endStep(label);
+      const stepRequests = driver.network.currentStep();
+      driver.endStep(label);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
       const extraContent = [];
       const record2 = {
@@ -111695,6 +111969,11 @@ function registerDeveloperTools(server, ctx) {
           extraContent.push({ type: "image", data: shot.preview, mimeType: "image/jpeg" });
         } catch (error62) {
           lines.push(`Walkthrough could not save a screenshot: ${error62.message}`);
+        }
+        const har = await bugHar(ctx, stepRequests, question.stepId ?? question.title);
+        if (har) {
+          record2.files = [har];
+          lines.push(`Network requests (HAR): ${har}`);
         }
         lines.push(
           "Errors and failed requests during this step:",
@@ -111727,6 +112006,7 @@ function registerDeveloperTools(server, ctx) {
           checkedBy: "developer",
           notes: answer.note,
           screenshot: record2.screenshot,
+          files: record2.files,
           logs: stepLogs
         }
       );
@@ -111761,14 +112041,14 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown = join26(store.dir, "report.md");
-  const html = join26(store.dir, "report.html");
+  const markdown = join27(store.dir, "report.md");
+  const html = join27(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
-  const a11yReport = existsSync17(join26(store.dir, "accessibility.html"));
+  const a11yReport = existsSync17(join27(store.dir, "accessibility.html"));
   const md = markdownReport(run, { a11yReport });
-  writeFileSync8(markdown, secrets ? secrets.redact(md) : md);
-  writeFileSync8(html, htmlReport(run, store.dir));
-  return { markdown: relative8(store.projectDir, markdown), html: relative8(store.projectDir, html) };
+  writeFileSync9(markdown, secrets ? secrets.redact(md) : md);
+  writeFileSync9(html, htmlReport(run, store.dir));
+  return { markdown: relative9(store.projectDir, markdown), html: relative9(store.projectDir, html) };
 }
 function describeAction(step) {
   if (!step.action) return void 0;
@@ -111886,7 +112166,7 @@ function registerRunTools(server, ctx) {
         if (!name || !content)
           throw new ToolError("Give a name and the plan content to save.", "bad_input");
         const file3 = savePlan(projectDir, name, content, overwrite);
-        return `Saved the plan: ${relative8(projectDir, file3)}`;
+        return `Saved the plan: ${relative9(projectDir, file3)}`;
       }
       if (action2 === "validate" && content) {
         const result = validatePlanText(content);
@@ -111899,15 +112179,15 @@ function registerRunTools(server, ctx) {
         const shots = screenshotProblems(plan, projectDir, screenshotRoots);
         if (shots.length) {
           return [
-            `The plan ${relative8(projectDir, file2)} has screenshot paths that Walkthrough cannot use:`,
+            `The plan ${relative9(projectDir, file2)} has screenshot paths that Walkthrough cannot use:`,
             ...shots.map((p) => `- ${p}`)
           ].join("\n");
         }
-        return `The plan ${relative8(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
+        return `The plan ${relative9(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
       }
       const mode = plan.mode ?? "checkpoints";
       return [
-        `Plan: ${plan.name} (${relative8(projectDir, file2)})`,
+        `Plan: ${plan.name} (${relative9(projectDir, file2)})`,
         plan.description ? `About: ${plan.description}` : "",
         `Mode: ${mode}`,
         plan.baseUrl ? `Start page: ${plan.baseUrl}` : "",
@@ -111971,7 +112251,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       });
       const driver = ctx.requireDriver();
       ctx.actionCursor = ctx.actionLog.length;
-      driver.logs.endStep("(before the run)");
+      driver.endStep("(before the run)");
       ctx.run = RunStore.create(config3.projectDir, {
         name: plan?.name ?? name ?? "Ad hoc run",
         mode,
@@ -112033,7 +112313,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const stepLogs = driver.logs.currentStep();
-      driver.logs.endStep(stepId ?? title ?? `step-${step}`);
+      const stepRequests = driver.network.currentStep();
+      driver.endStep(stepId ?? title ?? `step-${step}`);
       const lines = [];
       const extra = [];
       let shotPath;
@@ -112042,6 +112323,14 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         shotPath = shot.relativePath;
         lines.push(`Screenshot: ${shot.relativePath}`);
         extra.push({ type: "image", data: shot.preview, mimeType: "image/jpeg" });
+      }
+      const files = [];
+      if (status === "fail" || status === "blocked") {
+        const har = await bugHar(ctx, stepRequests, stepId ?? String(step ?? "step"));
+        if (har) {
+          files.push(har);
+          lines.push(`Network requests (HAR): ${har}`);
+        }
       }
       const recorded = recordResult(
         ctx,
@@ -112052,6 +112341,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           actual,
           notes,
           screenshot: shotPath,
+          files,
           logs: stepLogs
         }
       );
@@ -112111,11 +112401,11 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
 // packages/server/src/tools/a11y-tools.ts
 var TIME_LIMIT_MS = Number(process.env.UIWALK_SCAN_LIMIT_MS) || 45e3;
 function latestA11yRunId(projectDir) {
-  const dir = join27(projectDir, ".walkthrough", "runs");
+  const dir = join28(projectDir, ".walkthrough", "runs");
   if (!existsSync18(dir)) return void 0;
   for (const id of readdirSync8(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync16(join27(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync16(join28(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
     } catch {
     }
@@ -112488,18 +112778,18 @@ function registerA11yTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join27(store.dir, "accessibility.html"),
-        md: join27(store.dir, "accessibility.md"),
-        json: join27(store.dir, "accessibility.json")
+        html: join28(store.dir, "accessibility.html"),
+        md: join28(store.dir, "accessibility.md"),
+        json: join28(store.dir, "accessibility.json")
       };
-      writeFileSync9(files.html, a11yHtmlReport(data));
-      writeFileSync9(files.md, secrets.redact(a11yMarkdownReport(data)));
-      writeFileSync9(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
+      writeFileSync10(files.html, a11yHtmlReport(data));
+      writeFileSync10(files.md, secrets.redact(a11yMarkdownReport(data)));
+      writeFileSync10(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
 `);
       writeReports(store, secrets);
       return [
         `Wrote the accessibility report for the run "${store.run.name}":`,
-        ...Object.values(files).map((f) => `- ${relative9(projectDir, f)}`),
+        ...Object.values(files).map((f) => `- ${relative10(projectDir, f)}`),
         scoreLine(scores),
         compareLine,
         ...warnings.length ? ["Warnings:", ...warnings.map((w2) => `- ${w2}`)] : [],
@@ -112508,6 +112798,185 @@ function registerA11yTools(server, ctx) {
       ].filter(Boolean).join("\n");
     })
   );
+}
+
+// packages/server/src/tools/devtools-tools.ts
+import { relative as relative11 } from "node:path";
+
+// packages/server/src/devtools/inspect.ts
+import { randomBytes as randomBytes8 } from "node:crypto";
+var DEFAULT_PROPERTIES = [
+  "display",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "width",
+  "height",
+  "box-sizing",
+  "color",
+  "background-color",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "line-height",
+  "text-align",
+  "opacity",
+  "visibility",
+  "overflow-x",
+  "overflow-y",
+  "z-index",
+  "cursor",
+  "pointer-events",
+  "flex-direction",
+  "justify-content",
+  "align-items",
+  "transform"
+];
+function edges(outer, inner) {
+  const n = (v2) => Math.round(v2 * 10) / 10;
+  const [ox1 = 0, oy1 = 0, ox2 = 0, , , oy3 = 0] = outer;
+  const [ix1 = 0, iy1 = 0, ix2 = 0, , , iy3 = 0] = inner;
+  return `${n(iy1 - oy1)} ${n(ox2 - ix2)} ${n(oy3 - iy3)} ${n(ix1 - ox1)}`;
+}
+function nodeLabel(node3) {
+  const attrs = node3.attributes ?? [];
+  const get = (name) => {
+    const i = attrs.indexOf(name);
+    return i >= 0 && i % 2 === 0 ? attrs[i + 1] : void 0;
+  };
+  const id = get("id");
+  const classes = (get("class") ?? "").split(/\s+/).filter(Boolean).slice(0, 2);
+  return `${node3.nodeName.toLowerCase()}${id ? `#${id}` : ""}${classes.map((c) => `.${c}`).join("")}`;
+}
+async function findNode(cdp, handle) {
+  const token = randomBytes8(6).toString("hex");
+  await handle.evaluate((el, t) => el.setAttribute("data-uiwalk-inspect", t), token);
+  try {
+    await cdp.send("DOM.getDocument", { depth: -1, pierce: true });
+    const { searchId, resultCount } = await cdp.send("DOM.performSearch", {
+      query: `[data-uiwalk-inspect="${token}"]`,
+      includeUserAgentShadowDOM: false
+    });
+    const { nodeIds } = resultCount ? await cdp.send("DOM.getSearchResults", { searchId, fromIndex: 0, toIndex: resultCount }) : { nodeIds: [] };
+    await cdp.send("DOM.discardSearchResults", { searchId }).catch(() => void 0);
+    const nodeId = nodeIds[0];
+    if (!nodeId) {
+      throw new ToolError(
+        "inspect works on elements of the page and of frames from the same site. Walkthrough could not reach this element.",
+        "not_found"
+      );
+    }
+    return nodeId;
+  } finally {
+    await handle.evaluate((el) => el.removeAttribute("data-uiwalk-inspect")).catch(() => void 0);
+  }
+}
+async function inspectElement(tab, handle, options) {
+  const cdp = await tab.page.createCDPSession();
+  const sheets = /* @__PURE__ */ new Map();
+  const scripts = /* @__PURE__ */ new Map();
+  cdp.on(
+    "CSS.styleSheetAdded",
+    ({ header }) => sheets.set(header.styleSheetId, header)
+  );
+  cdp.on(
+    "Debugger.scriptParsed",
+    (event) => scripts.set(event.scriptId, event.url)
+  );
+  try {
+    await cdp.send("DOM.enable");
+    await cdp.send("CSS.enable");
+    if (options.listeners) await cdp.send("Debugger.enable");
+    const nodeId = await findNode(cdp, handle);
+    const { node: node3 } = await cdp.send("DOM.describeNode", { nodeId });
+    const lines = [`Element: ${nodeLabel(node3)} (tab ${tab.id})`];
+    const box = await cdp.send("DOM.getBoxModel", { nodeId }).catch(() => void 0);
+    if (box) {
+      const m = box.model;
+      lines.push(
+        `Box: ${m.width} x ${m.height} px, at x ${Math.round(m.border[0] ?? 0)}, y ${Math.round(m.border[1] ?? 0)}.`,
+        `  Padding ${edges(m.padding, m.content)}. Border ${edges(m.border, m.padding)}. Margin ${edges(m.margin, m.border)} (top right bottom left).`
+      );
+    } else {
+      lines.push(
+        "Box: none. The page does not show the element, for example because of display: none."
+      );
+    }
+    const wanted = options.properties?.length ? options.properties : DEFAULT_PROPERTIES;
+    const { computedStyle } = await cdp.send("CSS.getComputedStyleForNode", { nodeId });
+    const computed = computedStyle.filter(
+      (p) => wanted.some((w2) => p.name === w2 || p.name.startsWith(`${w2}-`))
+    );
+    lines.push("", "Computed styles:", ...computed.map((p) => `  ${p.name}: ${p.value}`));
+    if (options.rules) {
+      const matched = await cdp.send("CSS.getMatchedStylesForNode", { nodeId });
+      const where3 = (rule) => {
+        const header = rule.styleSheetId ? sheets.get(rule.styleSheetId) : void 0;
+        if (!header) return "no file";
+        const line2 = (header.startLine ?? 0) + (rule.style.range?.startLine ?? 0) + 1;
+        return `${header.sourceURL || "(style tag)"}:${line2}`;
+      };
+      const declarations = (style) => style.cssProperties.filter((p) => !p.disabled && !p.implicit && p.parsedOk !== false && p.text).slice(0, 20).map((p) => `      ${p.name}: ${p.value}${p.important ? " !important" : ""};`);
+      const rules = (matched.matchedCSSRules ?? []).filter((m) => m.rule.origin === "regular");
+      lines.push("", "CSS rules, in cascade order (later rules win):");
+      if (rules.length === 0) lines.push("  No rules from the site style sheets.");
+      rules.forEach((m, i) => {
+        lines.push(
+          `  ${i + 1}. ${m.rule.selectorList.text} (${where3(m.rule)})`,
+          ...declarations(m.rule.style)
+        );
+      });
+      if (matched.inlineStyle?.cssProperties.length) {
+        lines.push("  Inline style attribute:", ...declarations(matched.inlineStyle));
+      }
+    }
+    if (options.listeners) {
+      lines.push("", "Event listeners:");
+      const found = await listenerLines(cdp, nodeId, scripts, options.ancestors);
+      lines.push(...found.length ? found : ["  None found."]);
+      await cdp.send("Debugger.disable").catch(() => void 0);
+    }
+    return lines.join("\n");
+  } finally {
+    await cdp.detach().catch(() => void 0);
+  }
+}
+async function listenerLines(cdp, nodeId, scripts, ancestors) {
+  const lines = [];
+  const describe4 = (l, owner2) => {
+    const file2 = scripts.get(l.scriptId) || "an inline script";
+    const flags = [l.useCapture ? "capture" : "", l.passive ? "passive" : "", l.once ? "once" : ""].filter(Boolean).join(", ");
+    return `  ${l.type} on ${owner2}: ${file2}:${l.lineNumber + 1}:${l.columnNumber + 1}${flags ? ` (${flags})` : ""}`;
+  };
+  const { object: object3 } = await cdp.send("DOM.resolveNode", { nodeId });
+  let objectId = object3.objectId;
+  let owner = "this element";
+  for (let depth = 0; objectId && depth < 20 && lines.length < 40; depth++) {
+    const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId });
+    for (const l of listeners) lines.push(describe4(l, owner));
+    if (!ancestors) break;
+    const { result } = await cdp.send("Runtime.callFunctionOn", {
+      objectId,
+      functionDeclaration: "function () { return this.parentNode; }"
+    });
+    objectId = result.objectId;
+    if (objectId) {
+      const { node: node3 } = await cdp.send("DOM.describeNode", { objectId });
+      owner = node3.nodeName === "#document" ? "the document" : `the parent ${nodeLabel(node3)}`;
+    }
+  }
+  if (ancestors) {
+    const { result } = await cdp.send("Runtime.evaluate", { expression: "window" });
+    if (result.objectId) {
+      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", {
+        objectId: result.objectId
+      });
+      for (const l of listeners) lines.push(describe4(l, "the window"));
+    }
+  }
+  return lines;
 }
 
 // packages/server/src/devtools/storage.ts
@@ -112627,222 +113096,6 @@ async function writeStorage(tab, kind, op, key2, value) {
     value ?? null
   );
 }
-
-// packages/server/src/tools/devtools-tools.ts
-var KINDS = ["cookies", "local", "session"];
-var STORAGE_NAMES = { local: "localStorage", session: "sessionStorage" };
-function registerDevtoolsTools(server, ctx) {
-  server.registerTool(
-    "storage",
-    {
-      title: "Cookies and storage",
-      description: [
-        "List, get, set, delete, or clear cookies, localStorage, or sessionStorage. It works on the sites under test, in the login of the active tab.",
-        `check compares cookies with checks, like { name: "session", httpOnly: true }. clearSiteData clears cookies, storage, cache, IndexedDB, and service workers of the active tab's site.`,
-        "Values show as a fingerprint unless the developer allows them in config.local.yaml. Walkthrough never touches other sites."
-      ].join(" "),
-      inputSchema: {
-        action: external_exports.enum(["list", "get", "set", "delete", "clear", "check", "clearSiteData"]),
-        kind: external_exports.enum(KINDS).default("cookies").describe("cookies (default), local, or session."),
-        name: external_exports.string().min(1).optional().describe("The cookie name or the storage key."),
-        value: external_exports.string().optional().describe("For set. {{secret:NAME}} and {{unique}} work here."),
-        domain: external_exports.string().optional().describe("For cookies: the domain. Default: the active tab."),
-        path: external_exports.string().optional().describe('For cookies: the path. Default: "/".'),
-        expires: external_exports.number().optional().describe("For set cookie: when it ends, in Unix seconds. Default: with the session."),
-        httpOnly: external_exports.boolean().optional().describe("For set cookie."),
-        secure: external_exports.boolean().optional().describe("For set cookie."),
-        sameSite: external_exports.enum(["Strict", "Lax", "None"]).optional().describe("For set cookie."),
-        checks: external_exports.array(cookieCheckSchema).optional().describe("For check: the cookie checks. With stepId, the checks come from the plan."),
-        stepId: external_exports.string().optional().describe('For check: a plan step with "cookies" checks.')
-      }
-    },
-    (input3) => runTool(ctx, "storage", async () => {
-      const driver = ctx.requireDriver();
-      const tab = driver.activeTab();
-      const config3 = await ctx.config();
-      const guard = await ctx.guard();
-      const secrets = await ctx.secrets();
-      const show = config3.allowSecretValues;
-      const resolve11 = (text) => secrets.resolve(withUnique(text, ctx.unique));
-      const keep = (label, detail) => ctx.actionLog.push({
-        at: (/* @__PURE__ */ new Date()).toISOString(),
-        tabId: tab.id,
-        tab: tab.name,
-        action: "storage",
-        label,
-        value: JSON.stringify({ kind: input3.kind, op: input3.action, ...detail }),
-        url: tokenizeUnique(tab.page.url(), ctx.unique)
-      });
-      if (input3.action === "clearSiteData") {
-        const origin = pageOrigin(tab, guard.isAllowed.bind(guard));
-        if (!tab.cdp)
-          throw new ToolError("Walkthrough cannot reach this tab to clear its data.", "no_tab");
-        await tab.cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
-        keep(`Clear the site data of ${origin}`, {});
-        return `Cleared the cookies, storage, cache, IndexedDB, and service workers of ${origin} in the login "${tab.login}". Reload the page to see the effect.`;
-      }
-      if (input3.kind !== "cookies") {
-        return storageAction(
-          tab,
-          { ...input3, kind: input3.kind },
-          show,
-          resolve11,
-          keep,
-          guard.isAllowed.bind(guard)
-        );
-      }
-      const hosts = loginHosts(driver, tab, guard);
-      const cookies = await siteCookies(tab, hosts);
-      const context2 = tab.page.browserContext();
-      const named = () => {
-        if (!input3.name)
-          throw new ToolError(`Give the cookie "name" for ${input3.action}.`, "bad_input");
-        return cookies.filter(
-          (c) => c.name === input3.name && (!input3.domain || c.domain.replace(/^\./, "") === input3.domain.replace(/^\./, "")) && (!input3.path || c.path === input3.path)
-        );
-      };
-      switch (input3.action) {
-        case "list":
-          return cookies.length ? untrusted(
-            [
-              `${cookies.length} cookie(s) for ${hosts.join(", ")}:`,
-              ...cookies.map((c) => describeCookie(c, show))
-            ].join("\n")
-          ) : `There are no cookies for ${hosts.join(", ")} in the login "${tab.login}".`;
-        case "get": {
-          const found = named();
-          if (found.length === 0)
-            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
-          return untrusted(found.map((c) => describeCookie(c, show)).join("\n"));
-        }
-        case "set": {
-          if (!input3.name || input3.value === void 0)
-            throw new ToolError('Give the cookie "name" and "value" to set.', "bad_input");
-          const domain2 = input3.domain ?? new URL(tab.page.url()).hostname;
-          if (!hosts.some(
-            (h) => h === domain2.replace(/^\./, "") || h.endsWith(`.${domain2.replace(/^\./, "")}`)
-          )) {
-            throw new ToolError(
-              `Walkthrough only sets cookies for the sites under test (${hosts.join(", ")}), not for "${domain2}".`,
-              "origin_blocked"
-            );
-          }
-          const cookie = {
-            name: input3.name,
-            value: resolve11(input3.value),
-            domain: domain2,
-            path: input3.path ?? "/",
-            ...input3.expires !== void 0 ? { expires: input3.expires } : {},
-            ...input3.httpOnly !== void 0 ? { httpOnly: input3.httpOnly } : {},
-            ...input3.secure !== void 0 ? { secure: input3.secure } : {},
-            ...input3.sameSite ? { sameSite: input3.sameSite } : {}
-          };
-          await context2.setCookie(cookie);
-          keep(`Set the cookie "${input3.name}"`, {
-            name: input3.name,
-            value: input3.value,
-            domain: domain2,
-            path: cookie.path,
-            expires: input3.expires,
-            httpOnly: input3.httpOnly,
-            secure: input3.secure,
-            sameSite: input3.sameSite
-          });
-          return `Set the cookie "${input3.name}" for ${domain2}${cookie.path === "/" ? "" : ` at ${cookie.path}`} in the login "${tab.login}". Reload the page if the app reads it on load.`;
-        }
-        case "delete": {
-          const found = named();
-          if (found.length === 0)
-            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
-          await context2.deleteCookie(...found);
-          keep(`Delete the cookie "${input3.name}"`, {
-            name: input3.name,
-            domain: input3.domain,
-            path: input3.path
-          });
-          return `Deleted ${found.length} cookie(s) named "${input3.name}".`;
-        }
-        case "clear": {
-          if (cookies.length) await context2.deleteCookie(...cookies);
-          keep(`Clear the cookies of ${hosts.join(", ")}`, {});
-          return `Deleted ${cookies.length} cookie(s) for ${hosts.join(", ")} in the login "${tab.login}". Other sites keep their cookies.`;
-        }
-        case "check": {
-          const checks = input3.checks ?? stepChecks(ctx, input3.stepId);
-          const result = checkCookies(cookies, checks, resolve11);
-          return [
-            `result: ${result.ok ? "pass" : "fail"}`,
-            untrusted(result.lines.join("\n"))
-          ].join("\n");
-        }
-      }
-    })
-  );
-}
-function pageOrigin(tab, isAllowed) {
-  const url2 = tab.page.url();
-  if (!/^https?:/.test(url2) || !isAllowed(url2)) {
-    throw new ToolError(
-      "The active tab is not on an allowed site. Walkthrough only reads and changes the data of the sites under test.",
-      "origin_blocked"
-    );
-  }
-  return new URL(url2).origin;
-}
-function stepChecks(ctx, stepId) {
-  if (!stepId)
-    throw new ToolError(
-      'Give "checks", or the "stepId" of a plan step with cookie checks.',
-      "bad_input"
-    );
-  const run = ctx.run?.run;
-  if (run?.status !== "running")
-    throw new ToolError("No run is going, so there is no plan step to read.", "no_run");
-  const step = run.steps.find((s) => s.id === stepId);
-  if (!step) throw new ToolError(`The run has no step "${stepId}".`, "bad_step");
-  if (!step.cookies?.length)
-    throw new ToolError(`Step "${stepId}" has no cookie checks.`, "bad_step");
-  return step.cookies;
-}
-async function storageAction(tab, input3, show, resolve11, keep, isAllowed) {
-  const origin = pageOrigin(tab, isAllowed);
-  const store = STORAGE_NAMES[input3.kind];
-  const entries = await readStorage(tab, input3.kind);
-  const line2 = ([key2, value]) => `- ${key2}: ${maskValue(value, show)}`;
-  switch (input3.action) {
-    case "list":
-      return entries.length ? untrusted(
-        [`${entries.length} item(s) in ${store} of ${origin}:`, ...entries.map(line2)].join(
-          "\n"
-        )
-      ) : `${store} of ${origin} is empty.`;
-    case "get": {
-      if (!input3.name) throw new ToolError('Give the key "name" to get.', "bad_input");
-      const found = entries.find(([key2]) => key2 === input3.name);
-      return found ? untrusted(line2(found)) : `${store} of ${origin} has no key "${input3.name}".`;
-    }
-    case "set":
-      if (!input3.name || input3.value === void 0)
-        throw new ToolError('Give the key "name" and the "value" to set.', "bad_input");
-      await writeStorage(tab, input3.kind, "set", input3.name, resolve11(input3.value));
-      keep(`Set "${input3.name}" in ${store}`, { name: input3.name, value: input3.value });
-      return `Set "${input3.name}" in ${store} of ${origin}.`;
-    case "delete":
-      if (!input3.name) throw new ToolError('Give the key "name" to delete.', "bad_input");
-      await writeStorage(tab, input3.kind, "delete", input3.name);
-      keep(`Delete "${input3.name}" from ${store}`, { name: input3.name });
-      return `Deleted "${input3.name}" from ${store} of ${origin}.`;
-    case "clear":
-      await writeStorage(tab, input3.kind, "clear");
-      keep(`Clear ${store}`, {});
-      return `Cleared ${store} of ${origin}.`;
-    default:
-      throw new ToolError(`The ${input3.action} action works only for cookies.`, "bad_input");
-  }
-}
-
-// packages/server/src/tools/page-tools.ts
-import { relative as relative10 } from "node:path";
 
 // packages/server/src/page/actions.ts
 var ACTIONS = [
@@ -113121,6 +113374,385 @@ Navigate back to an allowed page first.`,
   if (selector) lines.push(`Selector: ${selector}`);
   return lines.join("\n");
 }
+
+// packages/server/src/tools/devtools-tools.ts
+var KINDS = ["cookies", "local", "session"];
+var NET_TYPES = ["document", "xhr", "fetch"];
+var MAX_SHOWN_BODY = 2e4;
+function filterRequests(entries, filters2) {
+  return entries.filter((e) => {
+    if (filters2.urlContains && !e.url.includes(filters2.urlContains)) return false;
+    if (filters2.types && !filters2.types.includes(e.type)) return false;
+    const status = filters2.status?.toLowerCase();
+    if (!status) return true;
+    if (status === "failed") return Boolean(e.failure);
+    if (status === "errors") return Boolean(e.failure) || (e.status ?? 0) >= 400;
+    const range = /^([1-5])xx$/.exec(status);
+    if (range) return Math.floor((e.status ?? 0) / 100) === Number(range[1]);
+    return String(e.status) === status;
+  });
+}
+function sizeText(bytes) {
+  if (bytes === void 0) return "? B";
+  return bytes < 1024 ? `${bytes} B` : `${Math.round(bytes / 102.4) / 10} KB`;
+}
+function requestLine(e) {
+  const time3 = e.endedAt ? `${e.endedAt - e.startedAt} ms` : "not finished";
+  const result = e.failure ? `failed (${e.failure})` : String(e.status ?? "...");
+  const extra = [time3, sizeText(e.size), e.fromCache ? "from cache" : "", `tab ${e.tabId}`].filter(Boolean).join(", ");
+  return `${e.id} ${e.method} ${result} ${e.type} ${scrubUrl(e.url)} (${extra})${e.step ? ` [step "${e.step}"]` : ""}`;
+}
+var STORAGE_NAMES = { local: "localStorage", session: "sessionStorage" };
+function registerDevtoolsTools(server, ctx) {
+  server.registerTool(
+    "storage",
+    {
+      title: "Cookies and storage",
+      description: [
+        "List, get, set, delete, or clear cookies, localStorage, or sessionStorage. It works on the sites under test, in the login of the active tab.",
+        `check compares cookies with checks, like { name: "session", httpOnly: true }. clearSiteData clears cookies, storage, cache, IndexedDB, and service workers of the active tab's site.`,
+        "Values show as a fingerprint unless the developer allows them in config.local.yaml. Walkthrough never touches other sites."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["list", "get", "set", "delete", "clear", "check", "clearSiteData"]),
+        kind: external_exports.enum(KINDS).default("cookies").describe("cookies (default), local, or session."),
+        name: external_exports.string().min(1).optional().describe("The cookie name or the storage key."),
+        value: external_exports.string().optional().describe("For set. {{secret:NAME}} and {{unique}} work here."),
+        domain: external_exports.string().optional().describe("For cookies: the domain. Default: the active tab."),
+        path: external_exports.string().optional().describe('For cookies: the path. Default: "/".'),
+        expires: external_exports.number().optional().describe("For set cookie: when it ends, in Unix seconds. Default: with the session."),
+        httpOnly: external_exports.boolean().optional().describe("For set cookie."),
+        secure: external_exports.boolean().optional().describe("For set cookie."),
+        sameSite: external_exports.enum(["Strict", "Lax", "None"]).optional().describe("For set cookie."),
+        checks: external_exports.array(cookieCheckSchema).optional().describe("For check: the cookie checks. With stepId, the checks come from the plan."),
+        stepId: external_exports.string().optional().describe('For check: a plan step with "cookies" checks.')
+      }
+    },
+    (input3) => runTool(ctx, "storage", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const config3 = await ctx.config();
+      const guard = await ctx.guard();
+      const secrets = await ctx.secrets();
+      const show = config3.allowSecretValues;
+      const resolve11 = (text) => secrets.resolve(withUnique(text, ctx.unique));
+      const keep = (label, detail) => ctx.actionLog.push({
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        tabId: tab.id,
+        tab: tab.name,
+        action: "storage",
+        label,
+        value: JSON.stringify({ kind: input3.kind, op: input3.action, ...detail }),
+        url: tokenizeUnique(tab.page.url(), ctx.unique)
+      });
+      if (input3.action === "clearSiteData") {
+        const origin = pageOrigin(tab, guard.isAllowed.bind(guard));
+        if (!tab.cdp)
+          throw new ToolError("Walkthrough cannot reach this tab to clear its data.", "no_tab");
+        await tab.cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
+        keep(`Clear the site data of ${origin}`, {});
+        return `Cleared the cookies, storage, cache, IndexedDB, and service workers of ${origin} in the login "${tab.login}". Reload the page to see the effect.`;
+      }
+      if (input3.kind !== "cookies") {
+        return storageAction(
+          tab,
+          { ...input3, kind: input3.kind },
+          show,
+          resolve11,
+          keep,
+          guard.isAllowed.bind(guard)
+        );
+      }
+      const hosts = loginHosts(driver, tab, guard);
+      const cookies = await siteCookies(tab, hosts);
+      const context2 = tab.page.browserContext();
+      const named = () => {
+        if (!input3.name)
+          throw new ToolError(`Give the cookie "name" for ${input3.action}.`, "bad_input");
+        return cookies.filter(
+          (c) => c.name === input3.name && (!input3.domain || c.domain.replace(/^\./, "") === input3.domain.replace(/^\./, "")) && (!input3.path || c.path === input3.path)
+        );
+      };
+      switch (input3.action) {
+        case "list":
+          return cookies.length ? untrusted(
+            [
+              `${cookies.length} cookie(s) for ${hosts.join(", ")}:`,
+              ...cookies.map((c) => describeCookie(c, show))
+            ].join("\n")
+          ) : `There are no cookies for ${hosts.join(", ")} in the login "${tab.login}".`;
+        case "get": {
+          const found = named();
+          if (found.length === 0)
+            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
+          return untrusted(found.map((c) => describeCookie(c, show)).join("\n"));
+        }
+        case "set": {
+          if (!input3.name || input3.value === void 0)
+            throw new ToolError('Give the cookie "name" and "value" to set.', "bad_input");
+          const domain2 = input3.domain ?? new URL(tab.page.url()).hostname;
+          if (!hosts.some(
+            (h) => h === domain2.replace(/^\./, "") || h.endsWith(`.${domain2.replace(/^\./, "")}`)
+          )) {
+            throw new ToolError(
+              `Walkthrough only sets cookies for the sites under test (${hosts.join(", ")}), not for "${domain2}".`,
+              "origin_blocked"
+            );
+          }
+          const cookie = {
+            name: input3.name,
+            value: resolve11(input3.value),
+            domain: domain2,
+            path: input3.path ?? "/",
+            ...input3.expires !== void 0 ? { expires: input3.expires } : {},
+            ...input3.httpOnly !== void 0 ? { httpOnly: input3.httpOnly } : {},
+            ...input3.secure !== void 0 ? { secure: input3.secure } : {},
+            ...input3.sameSite ? { sameSite: input3.sameSite } : {}
+          };
+          await context2.setCookie(cookie);
+          keep(`Set the cookie "${input3.name}"`, {
+            name: input3.name,
+            value: input3.value,
+            domain: domain2,
+            path: cookie.path,
+            expires: input3.expires,
+            httpOnly: input3.httpOnly,
+            secure: input3.secure,
+            sameSite: input3.sameSite
+          });
+          return `Set the cookie "${input3.name}" for ${domain2}${cookie.path === "/" ? "" : ` at ${cookie.path}`} in the login "${tab.login}". Reload the page if the app reads it on load.`;
+        }
+        case "delete": {
+          const found = named();
+          if (found.length === 0)
+            return `There is no cookie named "${input3.name}" for ${hosts.join(", ")}.`;
+          await context2.deleteCookie(...found);
+          keep(`Delete the cookie "${input3.name}"`, {
+            name: input3.name,
+            domain: input3.domain,
+            path: input3.path
+          });
+          return `Deleted ${found.length} cookie(s) named "${input3.name}".`;
+        }
+        case "clear": {
+          if (cookies.length) await context2.deleteCookie(...cookies);
+          keep(`Clear the cookies of ${hosts.join(", ")}`, {});
+          return `Deleted ${cookies.length} cookie(s) for ${hosts.join(", ")} in the login "${tab.login}". Other sites keep their cookies.`;
+        }
+        case "check": {
+          const checks = input3.checks ?? stepChecks(ctx, input3.stepId);
+          const result = checkCookies(cookies, checks, resolve11);
+          return [
+            `result: ${result.ok ? "pass" : "fail"}`,
+            untrusted(result.lines.join("\n"))
+          ].join("\n");
+        }
+      }
+    })
+  );
+  server.registerTool(
+    "network",
+    {
+      title: "Network requests",
+      description: [
+        "List the requests of the browser, like the Network panel in DevTools. By default, it lists page, XHR, and fetch requests since the current step started.",
+        "show gives one request with its headers and body. har saves the requests as a HAR file.",
+        "The reply masks login headers and secret body fields, unless the developer allows them in config.local.yaml."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["list", "show", "har"]).default("list"),
+        id: external_exports.string().optional().describe('For show: the request id, like "r12".'),
+        urlContains: external_exports.string().optional().describe("Only requests whose address has this text."),
+        types: external_exports.array(external_exports.string()).optional().describe(
+          'Resource types, like ["xhr", "fetch"]. Default for list: document, xhr, fetch. Default for har: all.'
+        ),
+        all: external_exports.boolean().optional().describe("All resource types, also scripts, images, and styles."),
+        status: external_exports.string().optional().describe('Like "500", "4xx", "errors" (400 and up, or failed), or "failed".'),
+        since: external_exports.number().int().min(0).optional().describe(
+          "Requests after this marker number. 0 for all. Default: since the step started."
+        ),
+        limit: external_exports.number().int().min(1).max(500).optional().describe("For list. Default 50."),
+        name: external_exports.string().optional().describe("For har: a short name for the file."),
+        stepId: external_exports.string().optional().describe("For har during a run: add the file to this step.")
+      }
+    },
+    (input3) => runTool(ctx, "network", async () => {
+      const driver = ctx.requireDriver();
+      const config3 = await ctx.config();
+      const show = config3.allowSecretValues;
+      if (input3.action === "show") {
+        if (!input3.id) throw new ToolError('Give the request "id", like "r12".', "bad_input");
+        const e = driver.network.get(input3.id);
+        if (!e)
+          throw new ToolError(
+            `There is no request "${input3.id}". It may be too old.`,
+            "not_found"
+          );
+        const requestMime = e.requestHeaders["content-type"]?.split(";")[0]?.trim();
+        const lines2 = [
+          requestLine(e),
+          `Status: ${e.failure ? `failed: ${e.failure}` : `${e.status ?? "..."} ${e.statusText ?? ""}`.trim()}`,
+          "",
+          "Request headers:",
+          ...headerLines(e.requestHeaders, show)
+        ];
+        if (e.postData) lines2.push("", "Request body:", bodyText(e.postData, requestMime, show));
+        if (e.responseHeaders)
+          lines2.push("", "Response headers:", ...headerLines(e.responseHeaders, show));
+        if (e.body !== void 0) {
+          lines2.push(
+            "",
+            `Response body (${e.mimeType ?? "unknown type"}):`,
+            bodyText(e.body, e.mimeType, show)
+          );
+        }
+        if (e.bodyNote) lines2.push("", `Note: ${e.bodyNote}`);
+        return untrusted(lines2.join("\n"));
+      }
+      const base = input3.since === void 0 ? driver.network.currentStep() : driver.network.since(input3.since);
+      const types = input3.all ? void 0 : input3.types ?? (input3.action === "har" ? void 0 : NET_TYPES);
+      const entries = filterRequests(base, {
+        urlContains: input3.urlContains,
+        types,
+        status: input3.status
+      });
+      if (input3.action === "har") {
+        if (entries.length === 0)
+          return "There are no requests to save. Try since: 0, or fewer filters.";
+        const file2 = writeHar(
+          networkDir(ctx, config3.projectDir),
+          input3.name ?? "requests",
+          entries,
+          await ctx.secrets()
+        );
+        const relativePath = relative11(config3.projectDir, file2);
+        if (input3.stepId && ctx.run?.run.status === "running") {
+          const step = ctx.run.step({ id: input3.stepId });
+          step.files = [...step.files ?? [], relative11(ctx.run.dir, file2)];
+          ctx.run.save();
+        }
+        return `Saved ${entries.length} request(s) to ${relativePath}. The file has no login headers, cookies, or secret body fields. DevTools and other tools can open the file.`;
+      }
+      const limit = input3.limit ?? 50;
+      const shown = entries.slice(-limit);
+      const lines = shown.map(requestLine);
+      const head = `${entries.length} request(s)${input3.since === void 0 ? " since the current step started" : ` after marker ${input3.since}`}${entries.length > shown.length ? `. Showing the last ${shown.length}.` : "."}`;
+      return [
+        head,
+        lines.length ? untrusted(lines.join("\n")) : "",
+        `Latest marker: ${driver.network.marker}. Use show with an id to see headers and the body.`
+      ].filter(Boolean).join("\n");
+    })
+  );
+  server.registerTool(
+    "inspect",
+    {
+      title: "Inspect an element",
+      description: [
+        "Show why an element looks and acts the way it does, like the Elements panel in DevTools.",
+        "It gives the computed styles and the box size. It also gives the CSS rules and the event listeners, each with its file and line.",
+        "Listeners on parents count too, because many frameworks put one handler on the root."
+      ].join(" "),
+      inputSchema: {
+        ref: external_exports.string().optional().describe('A ref from the last snapshot, like "e12".'),
+        selector: external_exports.string().optional().describe("A CSS or Puppeteer selector."),
+        properties: external_exports.array(external_exports.string()).optional().describe(
+          `Computed styles to show. Default: ${DEFAULT_PROPERTIES.slice(0, 6).join(", ")}, and more.`
+        ),
+        rules: external_exports.boolean().optional().describe("Show the CSS rules. Default true."),
+        listeners: external_exports.boolean().optional().describe("Show the event listeners. Default true."),
+        ancestors: external_exports.boolean().optional().describe("Also show listeners on parents, the document, and the window. Default true.")
+      }
+    },
+    (input3) => runTool(ctx, "inspect", async () => {
+      const driver = ctx.requireDriver();
+      const tab = driver.activeTab();
+      const target2 = await resolveTarget(driver, tab, input3);
+      if (!target2) throw new ToolError('Give a "ref" or a "selector".', "bad_input");
+      const text = await inspectElement(tab, target2.handle, {
+        properties: input3.properties,
+        rules: input3.rules ?? true,
+        listeners: input3.listeners ?? true,
+        ancestors: input3.ancestors ?? true
+      });
+      return untrusted(text);
+    })
+  );
+}
+function headerLines(headers2, show) {
+  return Object.entries(headers2 ?? {}).map(
+    ([name, value]) => `  ${name}: ${SECRET_HEADER.test(name) ? maskValue(value, show) : show ? value : scrubText(value)}`
+  );
+}
+function bodyText(text, mime, show) {
+  const masked = show ? maskBody(text, mime, (v2) => v2) : scrubText(maskBody(text, mime, (v2) => maskValue(v2, false)));
+  return masked.length > MAX_SHOWN_BODY ? `${masked.slice(0, MAX_SHOWN_BODY)}
+... (${masked.length - MAX_SHOWN_BODY} more characters)` : masked;
+}
+function pageOrigin(tab, isAllowed) {
+  const url2 = tab.page.url();
+  if (!/^https?:/.test(url2) || !isAllowed(url2)) {
+    throw new ToolError(
+      "The active tab is not on an allowed site. Walkthrough only reads and changes the data of the sites under test.",
+      "origin_blocked"
+    );
+  }
+  return new URL(url2).origin;
+}
+function stepChecks(ctx, stepId) {
+  if (!stepId)
+    throw new ToolError(
+      'Give "checks", or the "stepId" of a plan step with cookie checks.',
+      "bad_input"
+    );
+  const run = ctx.run?.run;
+  if (run?.status !== "running")
+    throw new ToolError("No run is going, so there is no plan step to read.", "no_run");
+  const step = run.steps.find((s) => s.id === stepId);
+  if (!step) throw new ToolError(`The run has no step "${stepId}".`, "bad_step");
+  if (!step.cookies?.length)
+    throw new ToolError(`Step "${stepId}" has no cookie checks.`, "bad_step");
+  return step.cookies;
+}
+async function storageAction(tab, input3, show, resolve11, keep, isAllowed) {
+  const origin = pageOrigin(tab, isAllowed);
+  const store = STORAGE_NAMES[input3.kind];
+  const entries = await readStorage(tab, input3.kind);
+  const line2 = ([key2, value]) => `- ${key2}: ${maskValue(value, show)}`;
+  switch (input3.action) {
+    case "list":
+      return entries.length ? untrusted(
+        [`${entries.length} item(s) in ${store} of ${origin}:`, ...entries.map(line2)].join(
+          "\n"
+        )
+      ) : `${store} of ${origin} is empty.`;
+    case "get": {
+      if (!input3.name) throw new ToolError('Give the key "name" to get.', "bad_input");
+      const found = entries.find(([key2]) => key2 === input3.name);
+      return found ? untrusted(line2(found)) : `${store} of ${origin} has no key "${input3.name}".`;
+    }
+    case "set":
+      if (!input3.name || input3.value === void 0)
+        throw new ToolError('Give the key "name" and the "value" to set.', "bad_input");
+      await writeStorage(tab, input3.kind, "set", input3.name, resolve11(input3.value));
+      keep(`Set "${input3.name}" in ${store}`, { name: input3.name, value: input3.value });
+      return `Set "${input3.name}" in ${store} of ${origin}.`;
+    case "delete":
+      if (!input3.name) throw new ToolError('Give the key "name" to delete.', "bad_input");
+      await writeStorage(tab, input3.kind, "delete", input3.name);
+      keep(`Delete "${input3.name}" from ${store}`, { name: input3.name });
+      return `Deleted "${input3.name}" from ${store} of ${origin}.`;
+    case "clear":
+      await writeStorage(tab, input3.kind, "clear");
+      keep(`Clear ${store}`, {});
+      return `Cleared ${store} of ${origin}.`;
+    default:
+      throw new ToolError(`The ${input3.action} action works only for cookies.`, "bad_input");
+  }
+}
+
+// packages/server/src/tools/page-tools.ts
+import { relative as relative12 } from "node:path";
 
 // packages/server/src/page/read.ts
 async function readElement(handle) {
@@ -113453,7 +114085,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
       const saved = exact?.display ?? shot.relativePath;
       if (stepId && store) {
         const step = store.step({ id: stepId });
-        step.screenshots.push(relative10(store.dir, shot.path));
+        step.screenshots.push(relative12(store.dir, shot.path));
         if (exact) {
           const element = target2 && !rect ? target2 : void 0;
           const found = element ? selector ?? await stableSelector(element.handle, element) : void 0;
@@ -113479,7 +114111,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 
 // packages/server/src/tools/project-tools.ts
 import { existsSync as existsSync19, readdirSync as readdirSync9, readFileSync as readFileSync17 } from "node:fs";
-import { join as join28 } from "node:path";
+import { join as join29 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -113515,16 +114147,16 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join28(projectDir, ".walkthrough", "runs");
+      const dir = join29(projectDir, ".walkthrough", "runs");
       if (!existsSync19(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync9(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join28(dir, id, "run.json");
+        const file2 = join29(dir, id, "run.json");
         if (!existsSync19(file2)) continue;
         try {
           const run = JSON.parse(readFileSync17(file2, "utf8"));
-          const report = existsSync19(join28(dir, id, "report.html")) ? `report written${existsSync19(join28(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}` : "no report yet";
+          const report = existsSync19(join29(dir, id, "report.html")) ? `report written${existsSync19(join29(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}` : "no report yet";
           rows.push(
             `- ${id}: "${run.name}", ${run.status}, ${resultLine(run) || "no steps"} (${report})`
           );
@@ -113538,9 +114170,9 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { randomBytes as randomBytes8 } from "node:crypto";
-import { existsSync as existsSync20, mkdirSync as mkdirSync10, readFileSync as readFileSync18, writeFileSync as writeFileSync10 } from "node:fs";
-import { basename as basename6, dirname as dirname8, extname as extname5, join as join29, relative as relative11 } from "node:path";
+import { randomBytes as randomBytes9 } from "node:crypto";
+import { existsSync as existsSync20, mkdirSync as mkdirSync11, readFileSync as readFileSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { basename as basename6, dirname as dirname9, extname as extname5, join as join30, relative as relative13 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -113898,8 +114530,8 @@ function registerQualityTools(server, ctx) {
       const group = ctx.run?.run.planFile ? basename6(ctx.run.run.planFile, extname5(ctx.run.run.planFile)) : "adhoc";
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
-      const baselinePath = join29(config3.projectDir, ".walkthrough", "baselines", group, file2);
-      const baselineRel = relative11(config3.projectDir, baselinePath);
+      const baselinePath = join30(config3.projectDir, ".walkthrough", "baselines", group, file2);
+      const baselineRel = relative13(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
         handle: target2?.handle,
         fullPage: input3.fullPage,
@@ -113907,8 +114539,8 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync20(baselinePath) || input3.updateBaseline) {
         const existed = existsSync20(baselinePath);
-        mkdirSync10(dirname8(baselinePath), { recursive: true });
-        writeFileSync10(baselinePath, capture.png);
+        mkdirSync11(dirname9(baselinePath), { recursive: true });
+        writeFileSync11(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -113921,7 +114553,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join29(dir, `${stamp3}-actual.png`);
+      const actualPath = join30(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -113931,7 +114563,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync10(actualPath, capture.png);
+        writeFileSync11(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -113944,11 +114576,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join29(dir, `${stamp3}-diff.png`);
-          writeFileSync10(diffPath, comparison.diffPng);
+          const diffPath = join30(dir, `${stamp3}-diff.png`);
+          writeFileSync11(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
-            `Diff image (changed pixels in red): ${relative11(config3.projectDir, diffPath)}`
+            `Diff image (changed pixels in red): ${relative13(config3.projectDir, diffPath)}`
           );
           images.push({
             type: "image",
@@ -113957,7 +114589,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           });
         }
         lines.push(
-          `Screenshot now: ${relative11(config3.projectDir, actualPath)}`,
+          `Screenshot now: ${relative13(config3.projectDir, actualPath)}`,
           `Baseline: ${baselineRel}`
         );
         lines.push(
@@ -113966,7 +114598,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       }
       if (input3.stepId && ctx.run?.run.status === "running" && saved.length) {
         const step = ctx.run.step({ id: input3.stepId });
-        step.screenshots.push(...saved.map((p) => relative11(ctx.run?.dir ?? "", p)));
+        step.screenshots.push(...saved.map((p) => relative13(ctx.run?.dir ?? "", p)));
         ctx.run.save();
       }
       return textResult(lines.join("\n"), images);
@@ -114020,7 +114652,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         label = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
         if (label && isPlainCss(label)) scope = label;
         else {
-          const mark = randomBytes8(4).toString("hex");
+          const mark = randomBytes9(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
           marked = target2.handle;
           scope = `[data-uiwalk-a11y="${mark}"]`;
@@ -114038,7 +114670,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.
-            root: dirname8(ctx.evidenceDir(config3.projectDir)),
+            root: dirname9(ctx.evidenceDir(config3.projectDir)),
             sub: "a11y",
             max: config3.accessibility.maxScreenshots
           }
@@ -114058,7 +114690,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative11(config3.projectDir, join29(dirname8(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative13(config3.projectDir, join30(dirname9(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -114066,8 +114698,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync21, mkdirSync as mkdirSync11, writeFileSync as writeFileSync11 } from "node:fs";
-import { join as join30, relative as relative12 } from "node:path";
+import { existsSync as existsSync21, mkdirSync as mkdirSync12, writeFileSync as writeFileSync12 } from "node:fs";
+import { join as join31, relative as relative14 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -114757,7 +115389,13 @@ function draftIssue(run, step, options) {
     ...run.setup ? [`- Setup: ${run.setup}`] : [],
     `- Found by: Walkthrough ${VERSION}, run \`${run.id}\`, step ${step.index}`
   ];
-  const evidence = options.screenshots.length ? options.screenshots.map((s) => `- \`${s}\` (drag the file into this issue)`) : ["- No screenshot."];
+  const files = options.files ?? [];
+  const evidence = [
+    ...options.screenshots.length ? options.screenshots.map((s) => `- \`${s}\` (drag the file into this issue)`) : ["- No screenshot."],
+    ...files.map(
+      (f) => f.endsWith(".har") ? `- \`${f}\` (the network requests. Zip the file if GitHub does not take it.)` : `- \`${f}\` (drag the file into this issue)`
+    )
+  ];
   const parts = {
     summary: section("What happened", [what || "See the steps below."]),
     repro: section("Steps to reproduce", repro),
@@ -114767,7 +115405,7 @@ function draftIssue(run, step, options) {
       ...step.notes && step.actual ? ["", `Developer notes: ${step.notes}`] : []
     ]),
     logs: step.logs && step.logs !== "(none)" ? section("Errors and failed requests", ["```text", step.logs, "```"]) : "",
-    evidence: section("Screenshots", evidence),
+    evidence: section(files.length ? "Screenshots and files" : "Screenshots", evidence),
     environment: section("Environment", environment2),
     report: `The full report is in \`${options.reportPath}\`.
 `
@@ -115162,13 +115800,13 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join30(projectDir, ".walkthrough", "exports");
-      mkdirSync11(dir, { recursive: true });
-      const file2 = join30(dir, `${name}.mjs`);
+      const dir = join31(projectDir, ".walkthrough", "exports");
+      mkdirSync12(dir, { recursive: true });
+      const file2 = join31(dir, `${name}.mjs`);
       const existed = existsSync21(file2);
       const result = exportScript(store.run, { installedChrome });
-      const rel = relative12(projectDir, file2);
-      writeFileSync11(file2, result.code.replace("<this file>", rel));
+      const rel = relative14(projectDir, file2);
+      writeFileSync12(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
         `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
@@ -115210,18 +115848,25 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync21(join30(store.dir, "report.md")) ? { markdown: relative12(projectDir, join30(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative12(projectDir, join30(store.dir, s)));
+      const reports = existsSync21(join31(store.dir, "report.md")) ? { markdown: relative14(projectDir, join31(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative14(projectDir, join31(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative14(projectDir, join31(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
-      const draft = draftIssue(run, safeStep, { reportPath: reports.markdown, screenshots });
-      const bodyFile = join30(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
-      writeFileSync11(bodyFile, draft.body);
+      const draft = draftIssue(run, safeStep, {
+        reportPath: reports.markdown,
+        screenshots,
+        files
+      });
+      const bodyFile = join31(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      writeFileSync12(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
-        `Body file: ${relative12(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
+        `Body file: ${relative14(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join30(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join31(projectDir, s)}`).join("\n")}` : " none"}`,
+        ...files.length ? [`Other files to attach:
+${files.map((f) => `- ${join31(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -115368,7 +116013,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join31(dirname9(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join32(dirname10(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

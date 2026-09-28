@@ -249,16 +249,24 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
           ? { markdown: relative(projectDir, join(store.dir, 'report.md')) }
           : writeReports(store, secrets);
         const screenshots = step.screenshots.map((s) => relative(projectDir, join(store.dir, s)));
+        const files = (step.files ?? []).map((f) => relative(projectDir, join(store.dir, f)));
         // Hide secrets before draftIssue runs, so its length limit still holds.
         const run = redactDeep(store.run, secrets);
         const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
-        const draft = draftIssue(run, safeStep, { reportPath: reports.markdown, screenshots });
+        const draft = draftIssue(run, safeStep, {
+          reportPath: reports.markdown,
+          screenshots,
+          files,
+        });
         const bodyFile = join(store.dir, `issue-${slug(step.id, 50, 'step')}.md`);
         writeFileSync(bodyFile, draft.body);
         return [
           `Title: ${draft.title}`,
           `Body file: ${relative(projectDir, bodyFile)}${draft.shortened ? ' (shortened to fit in the browser address)' : ''}`,
           `Screenshots to drag into the issue:${screenshots.length ? `\n${screenshots.map((s) => `- ${join(projectDir, s)}`).join('\n')}` : ' none'}`,
+          ...(files.length
+            ? [`Other files to attach:\n${files.map((f) => `- ${join(projectDir, f)}`).join('\n')}`]
+            : []),
           'Show the title and the body to the developer. Ask before you open the issue page.',
           'Body:',
           untrusted(draft.body),

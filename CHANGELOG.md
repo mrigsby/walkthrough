@@ -16,8 +16,11 @@ This file lists all notable changes to the project.
 - The `tabs` tool opens new tabs. `isolated: true` gives a tab a login of its own, to test as a second user. `isolated: "<name>"` gives it a login that tabs share. Tabs have names, and `newest` means the tab that opened last.
 - `emulate` has more settings: `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, and `permissions`.
 - Plans can use `newTab`, `switchTab`, and `closeTab` actions, and `emulate` on a step or on the plan. Record mode writes tab steps, and exported scripts repeat tabs, logins, settings, and dialog answers.
-- The new `storage` tool lists, sets, deletes, and clears cookies, `localStorage`, and `sessionStorage` of the sites under test, and clears site data. Values show as a fingerprint unless `allowSecretValues` is on. The server has 30 tools.
+- The new `storage` tool lists, sets, deletes, and clears cookies, `localStorage`, and `sessionStorage` of the sites under test, and clears site data. Values show as a fingerprint unless `allowSecretValues` is on.
 - Plan steps can check cookies with `cookies`, such as `{ name: session, exists: false }`. Exported scripts check them too, and repeat storage changes.
+- The new `network` tool lists requests, shows one with its headers and body, and saves HAR files. Login headers and secret body fields show as a fingerprint, and HAR files always remove them.
+- The new `inspect` tool shows an element's computed styles, box, CSS rules with file and line, and event listeners with file and line. The server has 32 tools.
+- A failed step, and a bug from the panel, save a HAR file with the requests of the step. Reports link it, and `issue_draft` lists it.
 - `logs` shows Chrome issues, the same problems as the Issues panel in DevTools: blocked cookies, CSP and CORS blocks, mixed content, deprecated features, and form problems. `kinds` filters the entries.
 
 ### Changed

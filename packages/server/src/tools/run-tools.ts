@@ -26,7 +26,7 @@ import {
 import { nextStepHint, recordResult } from '../run/record.js';
 import { needsConfirm, RunStore } from '../run/run-store.js';
 import { openBrowser } from './browser-tools.js';
-import { bugScreenshot } from './developer-tools.js';
+import { bugHar, bugScreenshot } from './developer-tools.js';
 import { type Content, runTool, textResult } from './util.js';
 
 // Writes report.md and report.html in the run folder, with secrets hidden.
@@ -299,7 +299,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const driver = ctx.requireDriver();
         // Start clean: earlier actions and page errors are not part of this run.
         ctx.actionCursor = ctx.actionLog.length;
-        driver.logs.endStep('(before the run)');
+        driver.endStep('(before the run)');
 
         ctx.run = RunStore.create(config.projectDir, {
           name: plan?.name ?? name ?? 'Ad hoc run',
@@ -372,7 +372,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const stepLogs = driver.logs.currentStep();
-        driver.logs.endStep(stepId ?? title ?? `step-${step}`);
+        const stepRequests = driver.network.currentStep();
+        driver.endStep(stepId ?? title ?? `step-${step}`);
 
         const lines: string[] = [];
         const extra: Content[] = [];
@@ -383,6 +384,14 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           lines.push(`Screenshot: ${shot.relativePath}`);
           extra.push({ type: 'image', data: shot.preview, mimeType: 'image/jpeg' });
         }
+        const files: string[] = [];
+        if (status === 'fail' || status === 'blocked') {
+          const har = await bugHar(ctx, stepRequests, stepId ?? String(step ?? 'step'));
+          if (har) {
+            files.push(har);
+            lines.push(`Network requests (HAR): ${har}`);
+          }
+        }
         const recorded = recordResult(
           ctx,
           { id: stepId, index: step, title },
@@ -392,6 +401,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             actual,
             notes,
             screenshot: shotPath,
+            files,
             logs: stepLogs,
           },
         );

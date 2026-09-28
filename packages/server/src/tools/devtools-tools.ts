@@ -1,9 +1,11 @@
+import { relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CookieData } from 'puppeteer-core';
 import { z } from 'zod';
 import type { Tab } from '../browser/driver.js';
 import type { Context } from '../context.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
+import { DEFAULT_PROPERTIES, inspectElement } from '../devtools/inspect.js';
 import {
   checkCookies,
   describeCookie,
@@ -14,11 +16,50 @@ import {
   writeStorage,
 } from '../devtools/storage.js';
 import { ToolError } from '../errors.js';
+import { networkDir, writeHar } from '../evidence/har.js';
+import { maskBody, type NetEntry, SECRET_HEADER } from '../evidence/network.js';
+import { scrubText, scrubUrl } from '../evidence/scrub.js';
 import { untrusted } from '../guards/untrusted.js';
+import { resolveTarget } from '../page/actions.js';
 import { tokenizeUnique, withUnique } from '../page/unique.js';
 import { runTool } from './util.js';
 
 const KINDS = ['cookies', 'local', 'session'] as const;
+const NET_TYPES = ['document', 'xhr', 'fetch'];
+const MAX_SHOWN_BODY = 20_000;
+
+// Keeps requests that match the filters.
+function filterRequests(
+  entries: NetEntry[],
+  filters: { urlContains?: string; types?: string[]; status?: string },
+): NetEntry[] {
+  return entries.filter((e) => {
+    if (filters.urlContains && !e.url.includes(filters.urlContains)) return false;
+    if (filters.types && !filters.types.includes(e.type)) return false;
+    const status = filters.status?.toLowerCase();
+    if (!status) return true;
+    if (status === 'failed') return Boolean(e.failure);
+    if (status === 'errors') return Boolean(e.failure) || (e.status ?? 0) >= 400;
+    const range = /^([1-5])xx$/.exec(status);
+    if (range) return Math.floor((e.status ?? 0) / 100) === Number(range[1]);
+    return String(e.status) === status;
+  });
+}
+
+function sizeText(bytes?: number): string {
+  if (bytes === undefined) return '? B';
+  return bytes < 1024 ? `${bytes} B` : `${Math.round(bytes / 102.4) / 10} KB`;
+}
+
+// One line for a request, like: r12 GET 500 xhr http://localhost/api/stock (12 ms, 45 B)
+function requestLine(e: NetEntry): string {
+  const time = e.endedAt ? `${e.endedAt - e.startedAt} ms` : 'not finished';
+  const result = e.failure ? `failed (${e.failure})` : String(e.status ?? '...');
+  const extra = [time, sizeText(e.size), e.fromCache ? 'from cache' : '', `tab ${e.tabId}`]
+    .filter(Boolean)
+    .join(', ');
+  return `${e.id} ${e.method} ${result} ${e.type} ${scrubUrl(e.url)} (${extra})${e.step ? ` [step "${e.step}"]` : ''}`;
+}
 const STORAGE_NAMES = { local: 'localStorage', session: 'sessionStorage' } as const;
 
 export function registerDevtoolsTools(server: McpServer, ctx: Context): void {
@@ -189,6 +230,183 @@ export function registerDevtoolsTools(server: McpServer, ctx: Context): void {
         }
       }),
   );
+
+  server.registerTool(
+    'network',
+    {
+      title: 'Network requests',
+      description: [
+        'List the requests of the browser, like the Network panel in DevTools. By default, it lists page, XHR, and fetch requests since the current step started.',
+        'show gives one request with its headers and body. har saves the requests as a HAR file.',
+        'The reply masks login headers and secret body fields, unless the developer allows them in config.local.yaml.',
+      ].join(' '),
+      inputSchema: {
+        action: z.enum(['list', 'show', 'har']).default('list'),
+        id: z.string().optional().describe('For show: the request id, like "r12".'),
+        urlContains: z.string().optional().describe('Only requests whose address has this text.'),
+        types: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Resource types, like ["xhr", "fetch"]. Default for list: document, xhr, fetch. Default for har: all.',
+          ),
+        all: z
+          .boolean()
+          .optional()
+          .describe('All resource types, also scripts, images, and styles.'),
+        status: z
+          .string()
+          .optional()
+          .describe('Like "500", "4xx", "errors" (400 and up, or failed), or "failed".'),
+        since: z
+          .number()
+          .int()
+          .min(0)
+          .optional()
+          .describe(
+            'Requests after this marker number. 0 for all. Default: since the step started.',
+          ),
+        limit: z.number().int().min(1).max(500).optional().describe('For list. Default 50.'),
+        name: z.string().optional().describe('For har: a short name for the file.'),
+        stepId: z.string().optional().describe('For har during a run: add the file to this step.'),
+      },
+    },
+    (input) =>
+      runTool(ctx, 'network', async () => {
+        const driver = ctx.requireDriver();
+        const config = await ctx.config();
+        const show = config.allowSecretValues;
+        if (input.action === 'show') {
+          if (!input.id) throw new ToolError('Give the request "id", like "r12".', 'bad_input');
+          const e = driver.network.get(input.id);
+          if (!e)
+            throw new ToolError(
+              `There is no request "${input.id}". It may be too old.`,
+              'not_found',
+            );
+          const requestMime = e.requestHeaders['content-type']?.split(';')[0]?.trim();
+          const lines = [
+            requestLine(e),
+            `Status: ${e.failure ? `failed: ${e.failure}` : `${e.status ?? '...'} ${e.statusText ?? ''}`.trim()}`,
+            '',
+            'Request headers:',
+            ...headerLines(e.requestHeaders, show),
+          ];
+          if (e.postData) lines.push('', 'Request body:', bodyText(e.postData, requestMime, show));
+          if (e.responseHeaders)
+            lines.push('', 'Response headers:', ...headerLines(e.responseHeaders, show));
+          if (e.body !== undefined) {
+            lines.push(
+              '',
+              `Response body (${e.mimeType ?? 'unknown type'}):`,
+              bodyText(e.body, e.mimeType, show),
+            );
+          }
+          if (e.bodyNote) lines.push('', `Note: ${e.bodyNote}`);
+          return untrusted(lines.join('\n'));
+        }
+        const base =
+          input.since === undefined
+            ? driver.network.currentStep()
+            : driver.network.since(input.since);
+        const types = input.all
+          ? undefined
+          : (input.types ?? (input.action === 'har' ? undefined : NET_TYPES));
+        const entries = filterRequests(base, {
+          urlContains: input.urlContains,
+          types,
+          status: input.status,
+        });
+        if (input.action === 'har') {
+          if (entries.length === 0)
+            return 'There are no requests to save. Try since: 0, or fewer filters.';
+          const file = writeHar(
+            networkDir(ctx, config.projectDir),
+            input.name ?? 'requests',
+            entries,
+            await ctx.secrets(),
+          );
+          const relativePath = relative(config.projectDir, file);
+          if (input.stepId && ctx.run?.run.status === 'running') {
+            const step = ctx.run.step({ id: input.stepId });
+            step.files = [...(step.files ?? []), relative(ctx.run.dir, file)];
+            ctx.run.save();
+          }
+          return `Saved ${entries.length} request(s) to ${relativePath}. The file has no login headers, cookies, or secret body fields. DevTools and other tools can open the file.`;
+        }
+        const limit = input.limit ?? 50;
+        const shown = entries.slice(-limit);
+        const lines = shown.map(requestLine);
+        const head = `${entries.length} request(s)${input.since === undefined ? ' since the current step started' : ` after marker ${input.since}`}${entries.length > shown.length ? `. Showing the last ${shown.length}.` : '.'}`;
+        return [
+          head,
+          lines.length ? untrusted(lines.join('\n')) : '',
+          `Latest marker: ${driver.network.marker}. Use show with an id to see headers and the body.`,
+        ]
+          .filter(Boolean)
+          .join('\n');
+      }),
+  );
+
+  server.registerTool(
+    'inspect',
+    {
+      title: 'Inspect an element',
+      description: [
+        'Show why an element looks and acts the way it does, like the Elements panel in DevTools.',
+        'It gives the computed styles and the box size. It also gives the CSS rules and the event listeners, each with its file and line.',
+        'Listeners on parents count too, because many frameworks put one handler on the root.',
+      ].join(' '),
+      inputSchema: {
+        ref: z.string().optional().describe('A ref from the last snapshot, like "e12".'),
+        selector: z.string().optional().describe('A CSS or Puppeteer selector.'),
+        properties: z
+          .array(z.string())
+          .optional()
+          .describe(
+            `Computed styles to show. Default: ${DEFAULT_PROPERTIES.slice(0, 6).join(', ')}, and more.`,
+          ),
+        rules: z.boolean().optional().describe('Show the CSS rules. Default true.'),
+        listeners: z.boolean().optional().describe('Show the event listeners. Default true.'),
+        ancestors: z
+          .boolean()
+          .optional()
+          .describe('Also show listeners on parents, the document, and the window. Default true.'),
+      },
+    },
+    (input) =>
+      runTool(ctx, 'inspect', async () => {
+        const driver = ctx.requireDriver();
+        const tab = driver.activeTab();
+        const target = await resolveTarget(driver, tab, input);
+        if (!target) throw new ToolError('Give a "ref" or a "selector".', 'bad_input');
+        const text = await inspectElement(tab, target.handle, {
+          properties: input.properties,
+          rules: input.rules ?? true,
+          listeners: input.listeners ?? true,
+          ancestors: input.ancestors ?? true,
+        });
+        return untrusted(text);
+      }),
+  );
+}
+
+// Headers, with login headers masked unless the developer allows them.
+function headerLines(headers: Record<string, string> | undefined, show: boolean): string[] {
+  return Object.entries(headers ?? {}).map(
+    ([name, value]) =>
+      `  ${name}: ${SECRET_HEADER.test(name) ? maskValue(value, show) : show ? value : scrubText(value)}`,
+  );
+}
+
+// A body for a reply: secret fields masked, long bodies shortened.
+function bodyText(text: string, mime: string | undefined, show: boolean): string {
+  const masked = show
+    ? maskBody(text, mime, (v) => v)
+    : scrubText(maskBody(text, mime, (v) => maskValue(v, false)));
+  return masked.length > MAX_SHOWN_BODY
+    ? `${masked.slice(0, MAX_SHOWN_BODY)}\n... (${masked.length - MAX_SHOWN_BODY} more characters)`
+    : masked;
 }
 
 // The origin of the active tab, if it is an allowed site.

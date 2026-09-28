@@ -18,6 +18,8 @@ export interface StepResult {
   actual?: string;
   // Screenshot path, from the project folder.
   screenshot?: string;
+  // Other evidence files, like a HAR file, from the project folder.
+  files?: string[];
   logs?: LogEntry[];
 }
 
@@ -35,6 +37,10 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
       ? result.screenshot
       : join(store.projectDir, result.screenshot);
     step.screenshots.push(relative(store.dir, full));
+  }
+  for (const file of result.files ?? []) {
+    const full = isAbsolute(file) ? file : join(store.projectDir, file);
+    step.files = [...(step.files ?? []), relative(store.dir, full)];
   }
   if (result.logs) {
     step.logs = formatLogs(result.logs);

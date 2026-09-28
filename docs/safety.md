@@ -22,6 +22,7 @@ To test a staging server, add it to the list, such as `https://*.staging.example
 - Run records keep `{{secret:NAME}}`, never the value.
 - In record mode, the value of a password field never leaves the page. For other private fields, click **Mark last field as secret**. Walkthrough throws the value away.
 - Logs hide the values of URL parameters such as `token`, `key`, and `password`, and text that looks like a token.
+- The `network` tool shows login headers and secret body fields, such as `password`, as a fingerprint. HAR files always remove them.
 - The `storage` tool shows cookie and storage values as a fingerprint, not the value. Only `allowSecretValues: true` in `config.local.yaml` shows them. It reads and changes only the sites under test that are open in the active tab's login, never other sites.
 
 `/walkthrough:init` offers to add rules to `.claude/settings.json` that stop Claude Code from reading `.walkthrough/.env` and saved logins. We recommend these rules.

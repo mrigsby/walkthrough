@@ -63,7 +63,10 @@ When the developer asks for a new plan:
 
 - `screenshot` saves a picture. With a ref and `annotate: true`, it draws a red box around the element.
 - A step can say "screenshot to <path>". For that step, call `screenshot` with the `path` and the `stepId`. Also give the `selector` or `fullPage` from the step. Walkthrough replaces the file, and an exported script can save it again.
-- `logs` shows console errors, page errors, and failed requests since the current step started.
+- `logs` shows console errors, page errors, failed requests, and Chrome issues since the current step started.
+- `network` lists the requests of the step. When a button does nothing or shows an error, look at the request with `show`: the status and the response body often name the cause.
+- `inspect` explains an element: which CSS rules set its styles, and which script handles its events, with the file and line. Use it to find the code to fix.
+- A failed step and a bug from the panel save a HAR file with the step's requests. `issue_draft` lists it.
 
 ## More checks
 

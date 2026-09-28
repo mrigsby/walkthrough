@@ -1,3 +1,4 @@
+import { relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -6,7 +7,9 @@ import type { Driver, Tab } from '../browser/driver.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { elementRect, withCleanPage } from '../evidence/annotate.js';
+import { networkDir, writeHar } from '../evidence/har.js';
 import { formatLogs, LOG_KINDS, type LogLevel } from '../evidence/logs.js';
+import type { NetEntry } from '../evidence/network.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
@@ -21,6 +24,7 @@ export interface StepAnswer {
   question: Question;
   answer: Answer;
   screenshot?: string;
+  files?: string[];
   logs: string;
 }
 
@@ -39,6 +43,23 @@ export async function bugScreenshot(ctx: Context, driver: Driver, tab: Tab, step
       label: `bug-${stepLabel}`,
     }),
   );
+}
+
+// Saves the requests of a step as a HAR file. Returns its path from the project folder.
+export async function bugHar(
+  ctx: Context,
+  entries: NetEntry[],
+  stepLabel: string,
+): Promise<string | undefined> {
+  if (entries.length === 0) return undefined;
+  const config = await ctx.config();
+  const file = writeHar(
+    networkDir(ctx, config.projectDir),
+    `step-${stepLabel}`,
+    entries,
+    await ctx.secrets(),
+  );
+  return relative(config.projectDir, file);
 }
 
 // Sends "still waiting" progress, if the client asked for progress.
@@ -175,7 +196,8 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         const { answer, question } = outcome;
         const label = question.stepId ?? question.title;
         const stepLogs = driver.logs.currentStep();
-        driver.logs.endStep(label);
+        const stepRequests = driver.network.currentStep();
+        driver.endStep(label);
 
         const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || '(none)'}`];
         const extraContent: Content[] = [];
@@ -199,6 +221,11 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             extraContent.push({ type: 'image', data: shot.preview, mimeType: 'image/jpeg' });
           } catch (error) {
             lines.push(`Walkthrough could not save a screenshot: ${(error as Error).message}`);
+          }
+          const har = await bugHar(ctx, stepRequests, question.stepId ?? question.title);
+          if (har) {
+            record.files = [har];
+            lines.push(`Network requests (HAR): ${har}`);
           }
           lines.push(
             'Errors and failed requests during this step:',
@@ -232,6 +259,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             checkedBy: 'developer',
             notes: answer.note,
             screenshot: record.screenshot,
+            files: record.files,
             logs: stepLogs,
           },
         );

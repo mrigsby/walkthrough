@@ -14,6 +14,7 @@ import type { Config, DialogPolicy } from '../config.js';
 import { describeIssue } from '../devtools/issues.js';
 import { ToolError } from '../errors.js';
 import { LogBook } from '../evidence/logs.js';
+import { NetworkBook } from '../evidence/network.js';
 import { onShutdown } from '../lifecycle.js';
 import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
@@ -70,6 +71,7 @@ export class Driver {
   readonly tabs = new Map<string, Tab>();
   readonly secretFields: ElementHandle[] = [];
   readonly logs = new LogBook();
+  readonly network = new NetworkBook();
   readonly panel?: DeveloperPanel;
   // The element of the last action, for the red box in bug screenshots.
   lastTarget?: { tabId: string; handle: ElementHandle<Element>; label: string };
@@ -268,6 +270,7 @@ export class Driver {
     page.on('close', () => this.onTabClosed(tab));
     page.on('dialog', (dialog) => void this.onDialog(tab, dialog));
     this.logs.attach(page, tab.id);
+    this.network.attach(page, tab.id);
     await this.panel?.attach(page, tab.id);
 
     tab.cdp = await guardNavigation(
@@ -539,6 +542,12 @@ export class Driver {
     void tab.page.bringToFront().catch(() => undefined);
     void this.panel?.refresh(tab.id);
     return tab;
+  }
+
+  // Ends a step in the logs and in the network list.
+  endStep(label: string): void {
+    this.logs.endStep(label);
+    this.network.endStep(label);
   }
 
   note(text: string): void {
