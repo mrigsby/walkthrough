@@ -2,6 +2,12 @@
 
 This file lists all notable changes to the project.
 
+## 0.3.1 (2026-09-29)
+
+### Changed
+
+- The install steps show a one-line install first: `/plugin install walkthrough --marketplace mrigsby/walkthrough`. It needs Claude Code 2.1.275 or later. The README also has an infographic of the workflow.
+
 ## 0.3.0 (2026-09-29)
 
 ### Breaking

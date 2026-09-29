@@ -97583,7 +97583,7 @@ function loadLighthouse(cacheDir = CACHE_DIR) {
 }
 
 // packages/server/src/version.ts
-var VERSION = true ? "0.3.0" : "0.0.0-dev";
+var VERSION = true ? "0.3.1" : "0.0.0-dev";
 var MIN_NODE = [22, 19];
 function nodeVersionOk(version2 = process.versions.node) {
   const [major = 0, minor = 0] = version2.split(".").map(Number);
