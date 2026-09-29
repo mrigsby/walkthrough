@@ -16,6 +16,12 @@ You need:
 In Claude Code, run:
 
 ```text
+/plugin install walkthrough --marketplace mrigsby/walkthrough
+```
+
+This command needs Claude Code 2.1.275 or later. With an earlier version, add the marketplace first, and then install the plugin:
+
+```text
 /plugin marketplace add mrigsby/walkthrough
 /plugin install walkthrough@walkthrough
 ```

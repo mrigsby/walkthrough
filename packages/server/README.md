@@ -5,6 +5,12 @@ This package has `uiwalk`, the MCP server of [Walkthrough](https://github.com/mr
 In Claude Code, install the Walkthrough plugin instead. It includes this server, a skill, and slash commands:
 
 ```text
+/plugin install walkthrough --marketplace mrigsby/walkthrough
+```
+
+This command needs Claude Code 2.1.275 or later. With an earlier version, add the marketplace first, and then install the plugin:
+
+```text
 /plugin marketplace add mrigsby/walkthrough
 /plugin install walkthrough@walkthrough
 ```

@@ -1,5 +1,7 @@
 # Walkthrough
 
+![How Walkthrough works: the agent plans a step, runs it in a visible browser, and explains it. You answer Pass, Bug, Skip, or Stop in a panel. For a bug, Walkthrough saves a screenshot, console errors, and network requests. At the end, it writes a report.](docs/images/walkthrough-infographic.png)
+
 Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the network requests. During a test run, it also saves a short video. Then it writes a report.
 
 ![The Walkthrough panel in the browser, with a step to confirm](docs/images/panel.png)
@@ -44,7 +46,13 @@ Read more in [Safety](docs/safety.md).
 
 ## Quick start
 
-1. In Claude Code, add the marketplace and install the plugin:
+1. In Claude Code, install the plugin:
+
+   ```text
+   /plugin install walkthrough --marketplace mrigsby/walkthrough
+   ```
+
+   This command needs Claude Code 2.1.275 or later. With an earlier version, add the marketplace first, and then install the plugin:
 
    ```text
    /plugin marketplace add mrigsby/walkthrough
