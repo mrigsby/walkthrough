@@ -2,7 +2,7 @@
 
 This file lists all notable changes to the project.
 
-## Unreleased
+## 0.3.0 (2026-09-29)
 
 ### Breaking
 
