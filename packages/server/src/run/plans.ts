@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { LineCounter, parseDocument } from 'yaml';
-import { ToolError } from '../errors.js';
+import { issueMessage, ToolError } from '../errors.js';
 import { LATER_KEYS, LATER_STEP_KEYS, type Plan, planSchema } from './plan-schema.js';
 
 export interface PlanProblem {
@@ -49,7 +49,7 @@ export function validatePlanText(text: string): PlanResult {
           .join('')
           .replace(/^\./, '')
       : '(top)';
-    return { line, path: where, message: issue.message };
+    return { line, path: where, message: issueMessage(issue) };
   });
   return { ok: false, problems };
 }

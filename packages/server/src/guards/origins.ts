@@ -27,21 +27,45 @@ function patternToRegex(pattern: string): RegExp {
   return new RegExp(`^${scheme}://${hostRe}${portRe}$`, 'i');
 }
 
+// A site that stays blocked, even when an allowed pattern matches it.
+export interface DeniedOrigin {
+  origin: string;
+  // Why, for the message.
+  reason: string;
+}
+
 export class OriginGuard {
   private readonly patterns: RegExp[];
+  private readonly deniedPatterns: Array<{ re: RegExp; reason: string }>;
 
-  constructor(readonly allowed: string[]) {
+  constructor(
+    readonly allowed: string[],
+    readonly denied: DeniedOrigin[] = [],
+  ) {
     this.patterns = allowed.map(patternToRegex);
+    this.deniedPatterns = denied.map((d) => ({ re: patternToRegex(d.origin), reason: d.reason }));
+  }
+
+  private originOf(url: string): string | undefined {
+    try {
+      return new URL(url).origin;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private deniedReason(url: string): string | undefined {
+    const origin = this.originOf(url);
+    if (!origin) return undefined;
+    return this.deniedPatterns.find((d) => d.re.test(origin))?.reason;
   }
 
   isAllowed(url: string): boolean {
     if (INTERNAL.test(url)) return true;
-    let origin: string;
-    try {
-      origin = new URL(url).origin;
-    } catch {
-      return false;
-    }
+    const origin = this.originOf(url);
+    if (!origin) return false;
+    // Blocked sites win over allowed patterns, such as a wildcard.
+    if (this.deniedPatterns.some((d) => d.re.test(origin))) return false;
     return this.patterns.some((re) => re.test(origin));
   }
 
@@ -52,10 +76,9 @@ export class OriginGuard {
   }
 
   blockedMessage(url: string): string {
-    let origin = url;
-    try {
-      origin = new URL(url).origin;
-    } catch {}
+    const reason = this.deniedReason(url);
+    if (reason) return `Walkthrough blocked ${url}. ${reason}`;
+    const origin = this.originOf(url) ?? url;
     return [
       `Walkthrough blocked ${url}. The site ${origin} is not in the allowed list.`,
       `Allowed sites: ${this.allowed.join(', ')}.`,

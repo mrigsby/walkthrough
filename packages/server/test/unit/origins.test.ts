@@ -40,6 +40,19 @@ describe('OriginGuard', () => {
     expect(() => new OriginGuard(['localhost:3000'])).toThrow(/not valid/);
   });
 
+  it('blocks a denied site even when a pattern allows it, and says why', () => {
+    const g = new OriginGuard(
+      ['https://*.example.com'],
+      [{ origin: 'https://www.example.com', reason: 'It is production.' }],
+    );
+    expect(g.isAllowed('https://app.example.com/')).toBe(true);
+    expect(g.isAllowed('https://www.example.com/cart')).toBe(false);
+    expect(g.isAllowed('about:blank')).toBe(true);
+    expect(() => g.check('https://www.example.com/cart')).toThrow(
+      'Walkthrough blocked https://www.example.com/cart. It is production.',
+    );
+  });
+
   it('allows only this computer by default', () => {
     const defaults = new OriginGuard(DEFAULT_ORIGINS);
     expect(defaults.isAllowed('http://localhost:8080')).toBe(true);

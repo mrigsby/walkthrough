@@ -121,6 +121,34 @@ describe('validatePlanText', () => {
   });
 });
 
+describe('environment keys', () => {
+  it('accepts environment, environments, vars, and a path start page', () => {
+    const result = validatePlanText(
+      'name: Demo\nbaseUrl: /admin\nenvironment: staging\nenvironments: [development, staging]\nvars:\n  shopper: Demo Shopper\n  count: 2\nsteps:\n  - do: One\n',
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.problems));
+    expect(result.plan.vars).toEqual({ shopper: 'Demo Shopper', count: 2 });
+    // They work in a later update. Until then a run stops with a clear message.
+    expect(laterFeatures(result.plan)).toEqual([
+      '"environment" (comes in a later update)',
+      '"environments" (comes in a later update)',
+      '"vars" (comes in a later update)',
+    ]);
+  });
+
+  it('explains bad environment keys', () => {
+    expect(
+      problems('name: Demo\nenvironment: qa\nenvironments: [staging]\nsteps:\n  - do: One\n')[0]
+        ?.message,
+    ).toMatch(/environments" list too/);
+    expect(problems('name: Demo\nenvironment: Staging\nsteps:\n  - do: One\n')).not.toEqual([]);
+    expect(problems('name: Demo\nvars: { environment: x }\nsteps:\n  - do: One\n')).not.toEqual([]);
+    expect(problems('name: Demo\nbaseUrl: admin\nsteps:\n  - do: One\n')[0]?.message).toMatch(
+      /full URL or a path/,
+    );
+  });
+});
+
 describe('sample plans and schema', () => {
   it('has valid sample plans in the demo project', () => {
     for (const name of ['checkout', 'checkout-demo', 'login', 'mobile', 'performance']) {

@@ -4,6 +4,7 @@ import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
 import { emulationSchema } from '../browser/emulation-schema.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
+import { envNameSchema, varsSchema } from '../environments.js';
 import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
 import { VIDEO_FORMATS } from '../video/formats.js';
 
@@ -190,7 +191,29 @@ export const planSchema = z
   .object({
     name: z.string().min(1).describe('The name of the test.'),
     description: z.string().optional(),
-    baseUrl: z.url().optional().describe('The start page. Overrides baseUrl in config.yaml.'),
+    baseUrl: z
+      .union([z.url(), z.string().regex(/^\/(?!\/)/)], {
+        error: 'Use a full URL or a path that starts with "/".',
+      })
+      .optional()
+      .describe(
+        'The start page: a full URL, or a path like "/admin" on the site of the environment.',
+      ),
+    environment: envNameSchema
+      .optional()
+      .describe(
+        'The environment to run in, like staging, when the tool call and the session do not choose one.',
+      ),
+    environments: z
+      .array(envNameSchema)
+      .min(1)
+      .optional()
+      .describe('The only environments this plan may run in, like [development, staging].'),
+    vars: varsSchema
+      .optional()
+      .describe(
+        'Values for {{var:NAME}} in this plan. An environment in config.yaml can change them.',
+      ),
     mode: z
       .enum(MODES)
       .optional()
@@ -268,7 +291,15 @@ export const planSchema = z
       .describe('Record the whole run as a video. The report shows it.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
-  .strict();
+  .strict()
+  .refine(
+    (plan) =>
+      !plan.environment || !plan.environments || plan.environments.includes(plan.environment),
+    {
+      message: 'Put the plan environment in the "environments" list too.',
+      path: ['environment'],
+    },
+  );
 
 export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
@@ -296,8 +327,11 @@ export function stepCapture(
 }
 
 // Keys that a later update makes work. Until then, a run stops with a clear message.
-// Empty now. A future version can list new keys here before they work.
-export const LATER_KEYS: Record<string, string> = {};
+export const LATER_KEYS: Record<string, string> = {
+  environment: 'a later update',
+  environments: 'a later update',
+  vars: 'a later update',
+};
 export const LATER_STEP_KEYS: Record<string, string> = {};
 
 // JSON Schema for editors, from the same rules.

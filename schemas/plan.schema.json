@@ -11,9 +11,46 @@
       "type": "string"
     },
     "baseUrl": {
-      "description": "The start page. Overrides baseUrl in config.yaml.",
+      "description": "The start page: a full URL, or a path like \"/admin\" on the site of the environment.",
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "string",
+          "pattern": "^\\/(?!\\/)"
+        }
+      ]
+    },
+    "environment": {
+      "description": "The environment to run in, like staging, when the tool call and the session do not choose one.",
       "type": "string",
-      "format": "uri"
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "environments": {
+      "description": "The only environments this plan may run in, like [development, staging].",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "vars": {
+      "description": "Values for {{var:NAME}} in this plan. An environment in config.yaml can change them.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      }
     },
     "mode": {
       "description": "interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step.",

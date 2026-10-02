@@ -8,6 +8,7 @@ import type { Context } from '../context.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { describeRule } from '../devtools/mock-schema.js';
 import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
+import { startUrl } from '../environments.js';
 import { ToolError } from '../errors.js';
 import { scrubText } from '../evidence/scrub.js';
 import { checkMediaPath, checkScreenshotPath } from '../guards/paths.js';
@@ -359,7 +360,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           );
         }
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
-        const baseUrl = plan?.baseUrl ?? config.baseUrl;
+        const baseUrl = startUrl(plan?.baseUrl, config.baseUrl);
 
         // A new {{unique}} value and a new Lighthouse flow for each run.
         ctx.unique = newUnique();

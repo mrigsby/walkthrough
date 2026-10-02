@@ -15686,8 +15686,8 @@ var init_HTTPResponse2 = __esm({
         this.#status = extraInfo ? extraInfo.statusCode : responsePayload.status;
         const headers2 = extraInfo ? extraInfo.headers : responsePayload.headers;
         for (const [key2, value] of Object.entries(headers2)) {
-          const headerName = key2.toLowerCase();
-          this.#headers[headerName] = normalizeHeaderValue(headerName, value);
+          const headerName2 = key2.toLowerCase();
+          this.#headers[headerName2] = normalizeHeaderValue(headerName2, value);
         }
         this.#securityDetails = responsePayload.securityDetails ? new SecurityDetails(responsePayload.securityDetails) : null;
         this.#timing = responsePayload.timing || null;
@@ -32327,10 +32327,10 @@ var init_NetworkRequest = __esm({
         if (!(this.#statusCode === 401 || this.#statusCode === 407)) {
           return void 0;
         }
-        const headerName = this.#statusCode === 401 ? "WWW-Authenticate" : "Proxy-Authenticate";
+        const headerName2 = this.#statusCode === 401 ? "WWW-Authenticate" : "Proxy-Authenticate";
         const authChallenges = [];
         for (const [header, value] of Object.entries(this.#response.info.headers)) {
-          if (header.localeCompare(headerName, void 0, { sensitivity: "base" }) === 0) {
+          if (header.localeCompare(headerName2, void 0, { sensitivity: "base" }) === 0) {
             authChallenges.push({
               scheme: value.split(" ").at(0) ?? "",
               realm: value.match(REALM_REGEX)?.at(0) ?? ""
@@ -38140,10 +38140,10 @@ var init_HTTPResponse3 = __esm({
           const headers2 = {};
           for (const header of this.#data.headers) {
             if (header.value.type === "string") {
-              const headerName = header.name.toLowerCase();
-              const value = headerName in headers2 ? `${headers2[headerName]}
+              const headerName2 = header.name.toLowerCase();
+              const value = headerName2 in headers2 ? `${headers2[headerName2]}
 ${header.value.value}` : header.value.value;
-              headers2[headerName] = normalizeHeaderValue(headerName, value);
+              headers2[headerName2] = normalizeHeaderValue(headerName2, value);
             }
           }
           return headers2;
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname13, join as join41 } from "node:path";
+import { dirname as dirname14, join as join41 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -96955,6 +96955,10 @@ var ToolError = class extends Error {
   }
   code;
 };
+function issueMessage(issue3) {
+  const inner = issue3.code === "invalid_key" ? issue3.issues?.[0]?.message : void 0;
+  return inner ?? issue3.message;
+}
 
 // packages/server/src/browser/chrome.ts
 function systemChrome() {
@@ -97062,20 +97066,33 @@ function patternToRegex(pattern) {
   return new RegExp(`^${scheme}://${hostRe}${portRe}$`, "i");
 }
 var OriginGuard = class {
-  constructor(allowed) {
+  constructor(allowed, denied = []) {
     this.allowed = allowed;
+    this.denied = denied;
     this.patterns = allowed.map(patternToRegex);
+    this.deniedPatterns = denied.map((d) => ({ re: patternToRegex(d.origin), reason: d.reason }));
   }
   allowed;
+  denied;
   patterns;
+  deniedPatterns;
+  originOf(url2) {
+    try {
+      return new URL(url2).origin;
+    } catch {
+      return void 0;
+    }
+  }
+  deniedReason(url2) {
+    const origin = this.originOf(url2);
+    if (!origin) return void 0;
+    return this.deniedPatterns.find((d) => d.re.test(origin))?.reason;
+  }
   isAllowed(url2) {
     if (INTERNAL.test(url2)) return true;
-    let origin;
-    try {
-      origin = new URL(url2).origin;
-    } catch {
-      return false;
-    }
+    const origin = this.originOf(url2);
+    if (!origin) return false;
+    if (this.deniedPatterns.some((d) => d.re.test(origin))) return false;
     return this.patterns.some((re2) => re2.test(origin));
   }
   // Throws a helpful error when the URL is not allowed.
@@ -97084,11 +97101,9 @@ var OriginGuard = class {
     throw new ToolError(this.blockedMessage(url2), "origin_blocked");
   }
   blockedMessage(url2) {
-    let origin = url2;
-    try {
-      origin = new URL(url2).origin;
-    } catch {
-    }
+    const reason = this.deniedReason(url2);
+    if (reason) return `Walkthrough blocked ${url2}. ${reason}`;
+    const origin = this.originOf(url2) ?? url2;
     return [
       `Walkthrough blocked ${url2}. The site ${origin} is not in the allowed list.`,
       `Allowed sites: ${this.allowed.join(", ")}.`,
@@ -97096,6 +97111,63 @@ var OriginGuard = class {
     ].join("\n");
   }
 };
+
+// packages/server/src/environments.ts
+var DEVELOPMENT = "development";
+var ENV_NAME = /^[a-z][a-z0-9-]*$/;
+var envNameSchema = external_exports.string().regex(ENV_NAME, 'Use lowercase letters, numbers, and dashes, like "staging".');
+var VAR_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+var RESERVED_VARS = ["environment", "baseUrl"];
+var varName = external_exports.string().regex(VAR_NAME, 'Use letters, numbers, and underscores, like "shopper".').refine((name) => !RESERVED_VARS.includes(name), "This name is reserved. Walkthrough sets it.");
+var varsSchema = external_exports.record(varName, external_exports.union([external_exports.string(), external_exports.number(), external_exports.boolean()]));
+var secretName = external_exports.string().regex(VAR_NAME, 'Use letters, numbers, and underscores, like "APP_PASSWORD".');
+var headerName = external_exports.string().regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, "Use a header name.");
+var environmentFileSchema = external_exports.object({
+  baseUrl: external_exports.url().optional(),
+  label: external_exports.string().min(1).max(40).optional(),
+  color: external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#b45309".').optional(),
+  allowedOrigins: external_exports.array(external_exports.string()).optional(),
+  vars: varsSchema.optional(),
+  secrets: external_exports.record(secretName, secretName).optional(),
+  protected: external_exports.boolean().optional(),
+  headers: external_exports.record(headerName, external_exports.string()).optional(),
+  httpCredentials: external_exports.object({ username: external_exports.string().min(1), password: external_exports.string().min(1) }).strict().optional(),
+  ignoreHttpsErrors: external_exports.boolean().optional(),
+  actionTimeoutMs: external_exports.number().int().min(1e3).max(12e4).optional()
+}).strict();
+var COLORS = {
+  development: "#15803d",
+  staging: "#b45309",
+  production: "#b91c1c"
+};
+function defaultColor(name) {
+  return COLORS[name] ?? "#4b5563";
+}
+function defaultLabel(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+function stringValues(values) {
+  return Object.fromEntries(Object.entries(values ?? {}).map(([k, v2]) => [k, String(v2)]));
+}
+function originOf(url2) {
+  if (!url2) return void 0;
+  try {
+    return new URL(url2).origin;
+  } catch {
+    return void 0;
+  }
+}
+function startUrl(planBase, envBase) {
+  if (!planBase) return envBase;
+  if (!planBase.startsWith("/")) return planBase;
+  if (!envBase) {
+    throw new ToolError(
+      `The plan starts at the path ${planBase}, but the environment has no baseUrl. Set baseUrl in .walkthrough/config.yaml.`,
+      "bad_input"
+    );
+  }
+  return new URL(planBase, envBase).href;
+}
 
 // packages/server/src/lighthouse/categories.ts
 var LH_CATEGORIES = [
@@ -97172,7 +97244,10 @@ var sharedSchema = external_exports.object({
   lighthouse: external_exports.object({
     device: external_exports.enum(LH_DEVICES).optional(),
     categories: external_exports.array(external_exports.enum(LH_CATEGORIES)).min(1).optional()
-  }).strict().optional()
+  }).strict().optional(),
+  environment: envNameSchema.optional(),
+  vars: varsSchema.optional(),
+  environments: external_exports.record(envNameSchema, environmentFileSchema).optional()
 }).loose();
 var LOCAL_ONLY = [
   "allowEvaluate",
@@ -97189,6 +97264,74 @@ var localSchema = sharedSchema.extend({
   // A program path in a shared file could run any program, so it is local only.
   ffmpegPath: external_exports.string().min(1).optional()
 });
+var SECRET_TOKEN = /\{\{\s*secret:[A-Za-z_][A-Za-z0-9_]*\s*\}\}/;
+function mergeEnvironments(shared, local, warnings) {
+  const names = /* @__PURE__ */ new Set([
+    DEVELOPMENT,
+    ...Object.keys(shared.environments ?? {}),
+    ...Object.keys(local.environments ?? {})
+  ]);
+  const out = {};
+  for (const name of names) {
+    const s = shared.environments?.[name];
+    const l = local.environments?.[name];
+    const m = { ...s, ...l };
+    const isDev = name === DEVELOPMENT;
+    const baseUrl = m.baseUrl ?? (isDev ? local.baseUrl ?? shared.baseUrl : void 0);
+    if (!baseUrl && !isDev) {
+      throw new ToolError(
+        `The environment "${name}" needs a baseUrl, like baseUrl: https://${name}.example.com.`,
+        "config_invalid"
+      );
+    }
+    const isProtected = m.protected ?? name === "production";
+    if (l?.protected === false && (s?.protected ?? name === "production")) {
+      warnings.push(
+        `config.local.yaml turns off the protection of the "${name}" environment. Walkthrough does not ask before it works there.`
+      );
+    }
+    let ignoreHttpsErrors = m.ignoreHttpsErrors ?? false;
+    if (ignoreHttpsErrors && isProtected) {
+      warnings.push(
+        `Walkthrough ignores "ignoreHttpsErrors" for the "${name}" environment, because it is protected.`
+      );
+      ignoreHttpsErrors = false;
+    }
+    for (const [header, value] of Object.entries(s?.headers ?? {})) {
+      if (!SECRET_TOKEN.test(value)) {
+        warnings.push(
+          `The header "${header}" of the "${name}" environment in .walkthrough/config.yaml has a plain value. Put the value in .walkthrough/.env.${name}, and use {{secret:NAME}} in config.yaml.`
+        );
+      }
+    }
+    if (s?.httpCredentials && !SECRET_TOKEN.test(s.httpCredentials.password)) {
+      warnings.push(
+        `The httpCredentials password of the "${name}" environment in .walkthrough/config.yaml is a plain value. Put it in .walkthrough/.env.${name}, and use {{secret:NAME}} in config.yaml.`
+      );
+    }
+    let source2 = "built in";
+    if (s && l) source2 = "config.yaml and config.local.yaml";
+    else if (s) source2 = "config.yaml";
+    else if (l) source2 = "config.local.yaml";
+    else if (isDev && baseUrl) source2 = "baseUrl in config.yaml";
+    out[name] = {
+      name,
+      label: m.label ?? defaultLabel(name),
+      color: m.color ?? defaultColor(name),
+      baseUrl,
+      allowedOrigins: m.allowedOrigins ?? [],
+      vars: { ...stringValues(s?.vars), ...stringValues(l?.vars) },
+      secrets: { ...s?.secrets, ...l?.secrets },
+      protected: isProtected,
+      headers: { ...s?.headers, ...l?.headers },
+      httpCredentials: m.httpCredentials,
+      ignoreHttpsErrors,
+      actionTimeoutMs: m.actionTimeoutMs,
+      source: source2
+    };
+  }
+  return out;
+}
 function readYaml(file2) {
   if (!existsSync4(file2)) return {};
   try {
@@ -97201,7 +97344,7 @@ function readYaml(file2) {
 function validate3(schema, data, file2) {
   const result = schema.safeParse(data);
   if (result.success) return result.data;
-  const problems = result.error.issues.map((issue3) => `${issue3.path.join(".") || "(top)"}: ${issue3.message}`).join(". ");
+  const problems = result.error.issues.map((issue3) => `${issue3.path.join(".") || "(top)"}: ${issueMessage(issue3)}`).join(". ");
   throw new ToolError(`The settings in ${file2} are not valid. ${problems}`, "config_invalid");
 }
 function resolveProjectDir(options = {}) {
@@ -97220,7 +97363,7 @@ function resolveProjectDir(options = {}) {
   }
   return { dir: cwd, source: "current folder" };
 }
-function loadConfig(projectDir, projectDirSource = "current folder") {
+function loadConfig(projectDir, projectDirSource = "current folder", environmentName) {
   const folder5 = join6(projectDir, ".walkthrough");
   const sharedFile = join6(folder5, "config.yaml");
   const localFile = join6(folder5, "config.local.yaml");
@@ -97247,21 +97390,45 @@ function loadConfig(projectDir, projectDirSource = "current folder") {
   const fromProject = (dir) => isAbsolute3(dir) ? dir : resolve7(projectDir, dir);
   const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
   const screenshotRoots = (local.screenshotRoots ?? []).map(fromProject);
+  const environments = mergeEnvironments(shared, local, warnings);
+  const names = Object.keys(environments).join(", ");
+  const defaultEnvironment = local.environment ?? shared.environment ?? DEVELOPMENT;
+  if (!environments[defaultEnvironment]) {
+    throw new ToolError(
+      `The default environment "${defaultEnvironment}" is not in "environments". Environments: ${names}.`,
+      "config_invalid"
+    );
+  }
+  const envName = environmentName ?? defaultEnvironment;
+  const environment2 = environments[envName];
+  if (!environment2) {
+    throw new ToolError(
+      `There is no environment "${envName}". Environments: ${names}. Add it under "environments" in .walkthrough/config.yaml.`,
+      "environment_unknown"
+    );
+  }
+  const allowedOrigins = [
+    .../* @__PURE__ */ new Set([...merged.allowedOrigins ?? DEFAULT_ORIGINS, ...environment2.allowedOrigins])
+  ];
+  const envOrigin = originOf(environment2.baseUrl);
+  if (envOrigin && !new OriginGuard(allowedOrigins).isAllowed(envOrigin)) {
+    allowedOrigins.push(envOrigin);
+  }
   const envHeadless = process.env.UIWALK_HEADLESS;
   const headless = envHeadless ? envHeadless !== "0" : merged.browser.headless ?? false;
   const panel = (merged.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === "1");
   return {
     projectDir,
     projectDirSource,
-    baseUrl: merged.baseUrl,
-    allowedOrigins: merged.allowedOrigins ?? DEFAULT_ORIGINS,
+    baseUrl: environment2.baseUrl,
+    allowedOrigins,
     browser: {
       headless,
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath
     },
     dialogs: merged.dialogs ?? "ask",
-    actionTimeoutMs: merged.actionTimeoutMs ?? 1e4,
+    actionTimeoutMs: environment2.actionTimeoutMs ?? merged.actionTimeoutMs ?? 1e4,
     askTimeoutSec: merged.askTimeoutSec,
     panel,
     highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
@@ -97295,6 +97462,10 @@ function loadConfig(projectDir, projectDirSource = "current folder") {
       device: lighthouse.device ?? "desktop",
       categories: lighthouse.categories ?? ["performance", "best-practices", "seo"]
     },
+    environment: environment2,
+    environments,
+    defaultEnvironment,
+    vars: { ...stringValues(shared.vars), ...stringValues(local.vars) },
     warnings
   };
 }
@@ -97663,22 +97834,42 @@ async function doctorReport(config3, secrets, driver) {
 
 // packages/server/src/guards/secrets.ts
 var import_dotenv = __toESM(require_dist2(), 1);
-import { readFileSync as readFileSync7 } from "node:fs";
-import { join as join10 } from "node:path";
+import { readdirSync as readdirSync3, readFileSync as readFileSync7 } from "node:fs";
+import { dirname as dirname5, join as join10 } from "node:path";
 var MASK = "****";
 var TOKEN = /\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g;
 var SecretStore = class _SecretStore {
-  constructor(envFile, processEnv = process.env) {
+  constructor(envFile, processEnv = process.env, scope) {
     this.envFile = envFile;
     this.processEnv = processEnv;
-    this.fileValues = _SecretStore.readFile(envFile);
+    this.scope = scope;
+    const base = scope?.protected ? {} : _SecretStore.readFile(envFile);
+    const own2 = scope ? _SecretStore.readFile(this.scopeFile(scope.name)) : {};
+    this.fileValues = { ...base, ...own2 };
+    this.allFileValues = _SecretStore.envFiles(dirname5(envFile)).flatMap(
+      (f) => Object.values(_SecretStore.readFile(f))
+    );
   }
   envFile;
   processEnv;
+  scope;
   fileValues;
+  // Every value in .env and .env.<name> files, to hide them all.
+  allFileValues;
   used = /* @__PURE__ */ new Map();
-  static forProject(projectDir) {
-    return new _SecretStore(join10(projectDir, ".walkthrough", ".env"));
+  static forProject(projectDir, scope) {
+    return new _SecretStore(join10(projectDir, ".walkthrough", ".env"), process.env, scope);
+  }
+  scopeFile(name) {
+    return join10(dirname5(this.envFile), `.env.${name}`);
+  }
+  // .env and .env.<name> files in the folder. .env.example has no real values.
+  static envFiles(dir) {
+    try {
+      return readdirSync3(dir).filter((f) => /^\.env(\.[A-Za-z0-9_-]+)?$/.test(f) && f !== ".env.example").map((f) => join10(dir, f));
+    } catch {
+      return [];
+    }
   }
   static readFile(file2) {
     try {
@@ -97697,20 +97888,31 @@ var SecretStore = class _SecretStore {
   // Swaps {{secret:NAME}} for the real value. The agent never sees the value.
   resolve(text) {
     return text.replace(TOKEN, (_all, name) => {
-      const value = this.fileValues[name] ?? this.processEnv[name];
-      if (value === void 0 || value === "") {
-        throw new ToolError(
-          `The secret ${name} is not set. Ask the developer to add ${name}=... to .walkthrough/.env.`,
-          "secret_missing"
-        );
-      }
-      this.used.set(name, value);
+      const lookup = this.scope?.rename[name] ?? name;
+      const value = this.fileValues[lookup] ?? this.processEnv[lookup];
+      if (value === void 0 || value === "") throw this.missing(name, lookup);
+      this.used.set(lookup, value);
       return value;
     });
   }
+  missing(name, lookup) {
+    const scope = this.scope;
+    if (!scope || scope.name === "development" && lookup === name) {
+      return new ToolError(
+        `The secret ${name} is not set. Ask the developer to add ${name}=... to .walkthrough/.env.`,
+        "secret_missing"
+      );
+    }
+    const renamed = lookup === name ? "" : ` The "${scope.name}" environment reads it as ${lookup}.`;
+    const files = scope.protected ? `.walkthrough/.env.${scope.name}` : `.walkthrough/.env.${scope.name} or .walkthrough/.env`;
+    return new ToolError(
+      `The secret ${name} is not set for the "${scope.name}" environment.${renamed} Ask the developer to add ${lookup}=... to ${files}.`,
+      "secret_missing"
+    );
+  }
   // Values to hide: everything in .env, plus secrets from the environment that we used.
   values() {
-    const all = /* @__PURE__ */ new Set([...Object.values(this.fileValues), ...this.used.values()]);
+    const all = /* @__PURE__ */ new Set([...this.allFileValues, ...this.used.values()]);
     return [...all].filter((v2) => v2.length >= 4);
   }
   // Replaces each secret value, and its common encoded forms, with ****.
@@ -97740,7 +97942,7 @@ function redactDeep(value, secrets) {
 
 // packages/server/src/init.ts
 import { existsSync as existsSync8, mkdirSync as mkdirSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname5, join as join12 } from "node:path";
+import { dirname as dirname6, join as join12 } from "node:path";
 
 // packages/server/src/run/plan-schema.ts
 import { isAbsolute as isAbsolute4, join as join11 } from "node:path";
@@ -97984,7 +98186,18 @@ var stepSchema = external_exports.object({
 var planSchema = external_exports.object({
   name: external_exports.string().min(1).describe("The name of the test."),
   description: external_exports.string().optional(),
-  baseUrl: external_exports.url().optional().describe("The start page. Overrides baseUrl in config.yaml."),
+  baseUrl: external_exports.union([external_exports.url(), external_exports.string().regex(/^\/(?!\/)/)], {
+    error: 'Use a full URL or a path that starts with "/".'
+  }).optional().describe(
+    'The start page: a full URL, or a path like "/admin" on the site of the environment.'
+  ),
+  environment: envNameSchema.optional().describe(
+    "The environment to run in, like staging, when the tool call and the session do not choose one."
+  ),
+  environments: external_exports.array(envNameSchema).min(1).optional().describe("The only environments this plan may run in, like [development, staging]."),
+  vars: varsSchema.optional().describe(
+    "Values for {{var:NAME}} in this plan. An environment in config.yaml can change them."
+  ),
   mode: external_exports.enum(MODES).optional().describe(
     "interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step."
   ),
@@ -98018,7 +98231,13 @@ var planSchema = external_exports.object({
     }).strict()
   ]).optional().describe("Record the whole run as a video. The report shows it."),
   steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
-}).strict();
+}).strict().refine(
+  (plan) => !plan.environment || !plan.environments || plan.environments.includes(plan.environment),
+  {
+    message: 'Put the plan environment in the "environments" list too.',
+    path: ["environment"]
+  }
+);
 function stepCapture(plan, step) {
   const shot = step.screenshot;
   if (shot === void 0 || typeof shot === "boolean") return void 0;
@@ -98028,7 +98247,11 @@ function stepCapture(plan, step) {
   }
   return capture;
 }
-var LATER_KEYS = {};
+var LATER_KEYS = {
+  environment: "a later update",
+  environments: "a later update",
+  vars: "a later update"
+};
 var LATER_STEP_KEYS = {};
 function planJsonSchema() {
   return {
@@ -98138,7 +98361,7 @@ function initProject(projectDir, baseUrl = "http://localhost:3000") {
       result.kept.push(shown);
       continue;
     }
-    mkdirSync3(dirname5(file2), { recursive: true });
+    mkdirSync3(dirname6(file2), { recursive: true });
     writeFileSync2(file2, content);
     result.created.push(shown);
   }
@@ -108457,7 +108680,7 @@ var Context = class {
 // packages/server/src/tools/a11y-tools.ts
 import {
   existsSync as existsSync20,
-  readdirSync as readdirSync8,
+  readdirSync as readdirSync9,
   readFileSync as readFileSync17,
   realpathSync as realpathSync3,
   statSync as statSync7,
@@ -108914,7 +109137,7 @@ function customPasses(check2) {
 }
 
 // packages/server/src/audit/element-shots.ts
-import { mkdirSync as mkdirSync6, readdirSync as readdirSync3, writeFileSync as writeFileSync5 } from "node:fs";
+import { mkdirSync as mkdirSync6, readdirSync as readdirSync4, writeFileSync as writeFileSync5 } from "node:fs";
 import { join as join16 } from "node:path";
 
 // packages/server/src/evidence/annotate.ts
@@ -108969,7 +109192,7 @@ function slug(text, max, fallback) {
 // packages/server/src/audit/element-shots.ts
 function nextNumber(dir) {
   try {
-    const numbers = readdirSync3(dir).map((f) => Number.parseInt(f.slice(0, 3), 10)).filter((n) => !Number.isNaN(n));
+    const numbers = readdirSync4(dir).map((f) => Number.parseInt(f.slice(0, 3), 10)).filter((n) => !Number.isNaN(n));
     return numbers.length ? Math.max(...numbers) + 1 : 1;
   } catch {
     return 1;
@@ -109606,7 +109829,7 @@ function standardLabel(standard) {
 }
 
 // packages/server/src/audit/compare.ts
-import { existsSync as existsSync12, readdirSync as readdirSync5, readFileSync as readFileSync11 } from "node:fs";
+import { existsSync as existsSync12, readdirSync as readdirSync6, readFileSync as readFileSync11 } from "node:fs";
 import { join as join18 } from "node:path";
 
 // packages/server/src/run/run-store.ts
@@ -109614,7 +109837,7 @@ import { randomBytes as randomBytes6 } from "node:crypto";
 import {
   existsSync as existsSync11,
   mkdirSync as mkdirSync7,
-  readdirSync as readdirSync4,
+  readdirSync as readdirSync5,
   readFileSync as readFileSync10,
   realpathSync,
   renameSync,
@@ -109783,7 +110006,7 @@ function checkRunId(projectDir, id) {
 function latestRunId(projectDir, options = {}) {
   const dir = join17(projectDir, ".walkthrough", "runs");
   if (!existsSync11(dir)) return void 0;
-  for (const id of readdirSync4(dir).sort().reverse()) {
+  for (const id of readdirSync5(dir).sort().reverse()) {
     try {
       const run = JSON.parse(readFileSync10(join17(dir, id, "run.json"), "utf8"));
       if (!options.finishedOnly || run.status !== "running") return id;
@@ -109809,7 +110032,7 @@ function findPrevious(projectDir, currentRunId, pages, compareTo) {
   }
   const root = join18(projectDir, ".walkthrough", "runs");
   if (!existsSync12(root)) return void 0;
-  for (const id of readdirSync5(root).sort().reverse()) {
+  for (const id of readdirSync6(root).sort().reverse()) {
     if (id >= currentRunId) continue;
     const report = readReport(join18(root, id));
     if (report?.pages.some((p) => pages.includes(p.page))) return report;
@@ -111026,7 +111249,7 @@ import {
   chmodSync as chmodSync2,
   existsSync as existsSync13,
   mkdirSync as mkdirSync8,
-  readdirSync as readdirSync6,
+  readdirSync as readdirSync7,
   readFileSync as readFileSync13,
   rmSync as rmSync5,
   writeFileSync as writeFileSync7
@@ -111104,7 +111327,7 @@ function loadSession(projectDir, name) {
 function listSessions(projectDir) {
   const dir = sessionsDir(projectDir);
   if (!existsSync13(dir)) return [];
-  return readdirSync6(dir).filter((f) => f.endsWith(".json")).sort().flatMap((f) => {
+  return readdirSync7(dir).filter((f) => f.endsWith(".json")).sort().flatMap((f) => {
     try {
       return [JSON.parse(readFileSync13(join20(dir, f), "utf8"))];
     } catch {
@@ -111149,11 +111372,11 @@ async function restoreSession(tab, session, options = {}) {
 // packages/server/src/video/recording.ts
 import { copyFileSync, existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync as mkdtempSync3, readFileSync as readFileSync14, rmSync as rmSync8 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
-import { dirname as dirname8, extname as extname4, join as join25, relative as relative5 } from "node:path";
+import { dirname as dirname9, extname as extname4, join as join25, relative as relative5 } from "node:path";
 
 // packages/server/src/guards/paths.ts
 import { existsSync as existsSync14, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
-import { basename as basename4, dirname as dirname6, extname as extname3, isAbsolute as isAbsolute5, join as join21, relative as relative4, resolve as resolve8, sep as sep4 } from "node:path";
+import { basename as basename4, dirname as dirname7, extname as extname3, isAbsolute as isAbsolute5, join as join21, relative as relative4, resolve as resolve8, sep as sep4 } from "node:path";
 var BLOCKED_NAMES = /* @__PURE__ */ new Set(["config.local.yaml", "config.local.yml"]);
 function checkUploadPath(file2, uploadsRoot, projectDir) {
   const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
@@ -111189,7 +111412,7 @@ function realTarget(full) {
   let dir = full;
   while (!existsSync14(dir)) {
     missing.unshift(basename4(dir));
-    const up = dirname6(dir);
+    const up = dirname7(dir);
     if (up === dir) break;
     dir = up;
   }
@@ -111437,7 +111660,7 @@ import { createServer } from "node:http";
 import { join as join24 } from "node:path";
 
 // packages/server/src/video/encoder-source.ts
-import { dirname as dirname7, join as join23 } from "node:path";
+import { dirname as dirname8, join as join23 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 var built;
 async function encoderSource() {
@@ -111445,7 +111668,7 @@ async function encoderSource() {
   if (built) return built;
   const esbuild = await import("esbuild");
   const result = await esbuild.build({
-    entryPoints: [join23(dirname7(fileURLToPath3(import.meta.url)), "encoder-page", "main.ts")],
+    entryPoints: [join23(dirname8(fileURLToPath3(import.meta.url)), "encoder-page", "main.ts")],
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -111934,7 +112157,7 @@ function describeSaved(projectDir, out, format3, target2) {
   ];
   let copied;
   if (target2 && out.format === format3) {
-    mkdirSync9(dirname8(target2.path), { recursive: true });
+    mkdirSync9(dirname9(target2.path), { recursive: true });
     copyFileSync(out.file, target2.path);
     copied = target2.display;
     lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -112484,7 +112707,7 @@ import { join as join28 } from "node:path";
 
 // packages/server/src/evidence/screenshot.ts
 import { mkdirSync as mkdirSync10 } from "node:fs";
-import { dirname as dirname9, extname as extname5, join as join26, relative as relative6 } from "node:path";
+import { dirname as dirname10, extname as extname5, join as join26, relative as relative6 } from "node:path";
 function imageType(path14) {
   const ext = extname5(path14).toLowerCase();
   return ext === ".jpg" || ext === ".jpeg" ? "jpeg" : ext === ".webp" ? "webp" : "png";
@@ -112494,7 +112717,7 @@ async function takeScreenshot(tab, dir, projectDir, options) {
   const { handle, fullPage = false } = options;
   const type = imageType(path14);
   if (options.path) {
-    mkdirSync10(dirname9(path14), { recursive: true });
+    mkdirSync10(dirname10(path14), { recursive: true });
     await tab.page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => void 0);
   }
   if (handle) {
@@ -113399,7 +113622,7 @@ function markdownReport(run, options = {}) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync18, mkdirSync as mkdirSync12, readdirSync as readdirSync7, readFileSync as readFileSync16, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync18, mkdirSync as mkdirSync12, readdirSync as readdirSync8, readFileSync as readFileSync16, writeFileSync as writeFileSync10 } from "node:fs";
 import { basename as basename6, extname as extname7, isAbsolute as isAbsolute6, join as join29, relative as relative7, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
   return join29(projectDir, ".walkthrough", "plans");
@@ -113428,7 +113651,7 @@ function validatePlanText(text) {
       if (range) line2 = lineCounter.linePos(range[0]).line;
     }
     const where3 = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
-    return { line: line2, path: where3, message: issue3.message };
+    return { line: line2, path: where3, message: issueMessage(issue3) };
   });
   return { ok: false, problems };
 }
@@ -113486,7 +113709,7 @@ function laterFeatures(plan) {
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
   if (!existsSync18(dir)) return [];
-  return readdirSync7(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
+  return readdirSync8(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
     const result = validatePlanText(readFileSync16(join29(dir, f), "utf8"));
     const name = basename6(f, extname7(f));
     const file2 = relative7(projectDir, join29(dir, f));
@@ -113569,7 +113792,7 @@ import { relative as relative9 } from "node:path";
 
 // packages/server/src/evidence/har.ts
 import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
-import { dirname as dirname10, join as join31 } from "node:path";
+import { dirname as dirname11, join as join31 } from "node:path";
 function headers(values, clean) {
   return Object.entries(values ?? {}).map(([name, value]) => ({
     name,
@@ -113649,7 +113872,7 @@ function toHar(entries, secrets) {
   };
 }
 function networkDir(ctx, projectDir) {
-  return join31(dirname10(ctx.evidenceDir(projectDir)), "network");
+  return join31(dirname11(ctx.evidenceDir(projectDir)), "network");
 }
 function writeHar(dir, label2, entries, secrets) {
   mkdirSync13(dir, { recursive: true });
@@ -114178,7 +114401,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         );
       }
       const mode = modeArg ?? plan?.mode ?? "checkpoints";
-      const baseUrl = plan?.baseUrl ?? config3.baseUrl;
+      const baseUrl = startUrl(plan?.baseUrl, config3.baseUrl);
       ctx.unique = newUnique();
       ctx.lhFlow = void 0;
       const emulation = { ...plan?.emulate };
@@ -114390,7 +114613,7 @@ var TIME_LIMIT_MS = Number(process.env.UIWALK_SCAN_LIMIT_MS) || 45e3;
 function latestA11yRunId(projectDir) {
   const dir = join33(projectDir, ".walkthrough", "runs");
   if (!existsSync20(dir)) return void 0;
-  for (const id of readdirSync8(dir).sort().reverse()) {
+  for (const id of readdirSync9(dir).sort().reverse()) {
     try {
       const run = JSON.parse(readFileSync17(join33(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
@@ -114517,9 +114740,9 @@ function registerA11yTools(server, ctx) {
       }
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
-      const startUrl = tab.page.url();
+      const startUrl2 = tab.page.url();
       if (!input3.runId) {
-        const current = /^https?:/.test(startUrl) ? startUrl : "";
+        const current = /^https?:/.test(startUrl2) ? startUrl2 : "";
         pending = (input3.urls?.length ? input3.urls : [current]).map((u) => {
           if (!u) throw new ToolError("Give the pages to check in urls.", "bad_input");
           return fullUrl(u, current, config3.baseUrl);
@@ -114615,7 +114838,7 @@ function registerA11yTools(server, ctx) {
           ctx.actionCursor = ctx.actionLog.length;
           if (!pending.length) scan.run.a11yScan = void 0;
           scan.save();
-          if (/^https?:/.test(startUrl)) await goTo(tab, startUrl).catch(() => void 0);
+          if (/^https?:/.test(startUrl2)) await goTo(tab, startUrl2).catch(() => void 0);
         } else if (pending.length) {
           scan.markIncomplete();
           writeReports(scan, secrets);
@@ -115300,10 +115523,10 @@ async function settle4(tab) {
 }
 async function act(ctx, input3) {
   const tab = ctx.driver.activeTab();
-  const startUrl = tab.page.url();
-  if (!ctx.guard.isAllowed(startUrl)) {
+  const startUrl2 = tab.page.url();
+  if (!ctx.guard.isAllowed(startUrl2)) {
     throw new ToolError(
-      `${ctx.guard.blockedMessage(startUrl)}
+      `${ctx.guard.blockedMessage(startUrl2)}
 Navigate back to an allowed page first.`,
       "origin_blocked"
     );
@@ -115348,7 +115571,7 @@ Navigate back to an allowed page first.`,
     files: input3.action === "upload" ? input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : void 0) : void 0,
     frameUrl: target2 && target2.handle.frame !== tab.page.mainFrame() ? target2.handle.frame.url() : void 0,
     // {{unique}} stays a token, so an export or replay makes a new value.
-    url: tokenizeUnique(startUrl, ctx.unique)
+    url: tokenizeUnique(startUrl2, ctx.unique)
   });
   const lines = [];
   if (outcome.kind === "dialog") {
@@ -115362,7 +115585,7 @@ Navigate back to an allowed page first.`,
     if (["click", "dblclick", "press"].includes(input3.action)) await ctx.driver.settleEvents();
     lines.push(outcome.text);
     const endUrl = tab.page.url();
-    if (endUrl !== startUrl) lines.push(`The page is now ${endUrl}.`);
+    if (endUrl !== startUrl2) lines.push(`The page is now ${endUrl}.`);
   }
   if (selector) lines.push(`Selector: ${selector}`);
   return lines.join("\n");
@@ -115804,7 +116027,7 @@ async function storageAction(tab, input3, show, resolve12, keep, isAllowed) {
 // packages/server/src/tools/lighthouse-tools.ts
 import {
   existsSync as existsSync22,
-  readdirSync as readdirSync10,
+  readdirSync as readdirSync11,
   readFileSync as readFileSync19,
   realpathSync as realpathSync4,
   statSync as statSync8,
@@ -115814,7 +116037,7 @@ import { join as join36, relative as relative13, resolve as resolve11, sep as se
 
 // packages/server/src/lighthouse/findings.ts
 import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync21, readdirSync as readdirSync9, readFileSync as readFileSync18 } from "node:fs";
+import { existsSync as existsSync21, readdirSync as readdirSync10, readFileSync as readFileSync18 } from "node:fs";
 import { join as join34 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
 function checkLabel(check2) {
@@ -115908,7 +116131,7 @@ function findPreviousLh(projectDir, runId, pages, compareTo, plan) {
     return read(compareTo);
   }
   if (!existsSync21(runs)) return void 0;
-  for (const id of readdirSync9(runs).sort().reverse()) {
+  for (const id of readdirSync10(runs).sort().reverse()) {
     if (id >= runId) continue;
     const saved = read(id);
     if (!saved || saved.plan !== plan) continue;
@@ -116009,7 +116232,7 @@ function scoresLine(scores) {
 function latestLhRunId(projectDir) {
   const dir = join36(projectDir, ".walkthrough", "runs");
   if (!existsSync22(dir)) return void 0;
-  for (const id of readdirSync10(dir).sort().reverse()) {
+  for (const id of readdirSync11(dir).sort().reverse()) {
     try {
       const run = JSON.parse(readFileSync19(join36(dir, id, "run.json"), "utf8"));
       if (run.lighthouse?.length) return id;
@@ -116853,7 +117076,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 }
 
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync23, readdirSync as readdirSync11, readFileSync as readFileSync20 } from "node:fs";
+import { existsSync as existsSync23, readdirSync as readdirSync12, readFileSync as readFileSync20 } from "node:fs";
 import { join as join37 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
@@ -116893,7 +117116,7 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
       const dir = join37(projectDir, ".walkthrough", "runs");
       if (!existsSync23(dir)) return "There are no runs yet.";
       const rows = [];
-      for (const id of readdirSync11(dir).sort().reverse()) {
+      for (const id of readdirSync12(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
         const file2 = join37(dir, id, "run.json");
         if (!existsSync23(file2)) continue;
@@ -116915,7 +117138,7 @@ ${result.kept.map((f) => `- ${f}`).join("\n")}` : ""
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes11 } from "node:crypto";
 import { existsSync as existsSync24, mkdirSync as mkdirSync15, readFileSync as readFileSync21, writeFileSync as writeFileSync16 } from "node:fs";
-import { basename as basename7, dirname as dirname11, extname as extname8, join as join38, relative as relative15 } from "node:path";
+import { basename as basename7, dirname as dirname12, extname as extname8, join as join38, relative as relative15 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -117282,7 +117505,7 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync24(baselinePath) || input3.updateBaseline) {
         const existed = existsSync24(baselinePath);
-        mkdirSync15(dirname11(baselinePath), { recursive: true });
+        mkdirSync15(dirname12(baselinePath), { recursive: true });
         writeFileSync16(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
@@ -117413,7 +117636,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.
-            root: dirname11(ctx.evidenceDir(config3.projectDir)),
+            root: dirname12(ctx.evidenceDir(config3.projectDir)),
             sub: "a11y",
             max: config3.accessibility.maxScreenshots
           }
@@ -117433,7 +117656,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative15(config3.projectDir, join38(dirname11(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative15(config3.projectDir, join38(dirname12(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -118359,7 +118582,7 @@ function draftIssue(run, step, options) {
 
 // packages/server/src/record/recorder.ts
 var import_yaml3 = __toESM(require_dist(), 1);
-function secretName(field) {
+function secretName2(field) {
   const name = field.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").toUpperCase();
   return name.includes("PASSWORD") || name.includes("SECRET") || name.includes("TOKEN") ? name : `${name || "FIELD"}_SECRET`;
 }
@@ -118434,7 +118657,7 @@ var Recorder = class {
       key: event.key
     };
     if (event.secret) {
-      step.secret = secretName(event.fieldName ?? "password");
+      step.secret = secretName2(event.fieldName ?? "password");
       this.secretNames.add(step.secret);
     } else if (event.value !== void 0) {
       step.value = event.value;
@@ -118469,7 +118692,7 @@ var Recorder = class {
     const last2 = [...this.steps].reverse().find((s) => s.kind === "fill");
     if (!last2) return void 0;
     if (!last2.secret) {
-      last2.secret = secretName(last2.label.replace(/"/g, ""));
+      last2.secret = secretName2(last2.label.replace(/"/g, ""));
       delete last2.value;
       this.secretNames.add(last2.secret);
     }
@@ -118783,7 +119006,7 @@ ${files.map((f) => `- ${join39(projectDir, f)}`).join("\n")}`] : [],
 // packages/server/src/replay/replayer.ts
 import { randomBytes as randomBytes12 } from "node:crypto";
 import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync22, writeFileSync as writeFileSync18 } from "node:fs";
-import { dirname as dirname12, join as join40, relative as relative17 } from "node:path";
+import { dirname as dirname13, join as join40, relative as relative17 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
   normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
@@ -119173,7 +119396,7 @@ async function replayRun(ctx, input3) {
       const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
       preview = Buffer.from(shot).toString("base64");
       const file2 = join40(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
-      mkdirSync17(dirname12(file2), { recursive: true });
+      mkdirSync17(dirname13(file2), { recursive: true });
       writeFileSync18(file2, shot);
       lines.push(`Screenshot: ${relative17(config3.projectDir, file2)}`);
     } catch {
@@ -119260,7 +119483,7 @@ async function replayRun(ctx, input3) {
       if (out.note) lines.push(out.note);
       const copies = [];
       for (const target2 of targets.filter((t) => t.format === out.format)) {
-        mkdirSync17(dirname12(target2.path), { recursive: true });
+        mkdirSync17(dirname13(target2.path), { recursive: true });
         copyFileSync2(out.file, target2.path);
         copies.push(target2.display);
         lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -119548,7 +119771,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join41(dirname13(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join41(dirname14(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

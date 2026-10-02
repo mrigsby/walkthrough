@@ -10,8 +10,20 @@ import {
   STANDARDS,
   type Standard,
 } from './audit/standards.js';
-import { ToolError } from './errors.js';
-import { DEFAULT_ORIGINS } from './guards/origins.js';
+import {
+  DEVELOPMENT,
+  defaultColor,
+  defaultLabel,
+  type Environment,
+  type EnvironmentFile,
+  environmentFileSchema,
+  envNameSchema,
+  originOf,
+  stringValues,
+  varsSchema,
+} from './environments.js';
+import { issueMessage, ToolError } from './errors.js';
+import { DEFAULT_ORIGINS, OriginGuard } from './guards/origins.js';
 import {
   LH_CATEGORIES,
   LH_DEVICES,
@@ -50,6 +62,13 @@ export interface Config {
   accessibility: AccessibilityConfig;
   video: VideoConfig;
   lighthouse: LighthouseConfig;
+  // The environment these settings are for. baseUrl, allowedOrigins, and actionTimeoutMs follow it.
+  environment: Environment;
+  environments: Record<string, Environment>;
+  // The environment to use when nothing else picks one.
+  defaultEnvironment: string;
+  // Project-wide values for {{var:NAME}}.
+  vars: Record<string, string>;
   warnings: string[];
 }
 
@@ -131,6 +150,9 @@ const sharedSchema = z
       })
       .strict()
       .optional(),
+    environment: envNameSchema.optional(),
+    vars: varsSchema.optional(),
+    environments: z.record(envNameSchema, environmentFileSchema).optional(),
   })
   .loose();
 
@@ -152,6 +174,83 @@ const localSchema = sharedSchema.extend({
 });
 
 type LocalFile = z.infer<typeof localSchema>;
+type SharedFile = z.infer<typeof sharedSchema>;
+
+const SECRET_TOKEN = /\{\{\s*secret:[A-Za-z_][A-Za-z0-9_]*\s*\}\}/;
+
+// Merges each environment of the two files, key by key. Development always exists.
+function mergeEnvironments(
+  shared: SharedFile,
+  local: LocalFile,
+  warnings: string[],
+): Record<string, Environment> {
+  const names = new Set([
+    DEVELOPMENT,
+    ...Object.keys(shared.environments ?? {}),
+    ...Object.keys(local.environments ?? {}),
+  ]);
+  const out: Record<string, Environment> = {};
+  for (const name of names) {
+    const s: EnvironmentFile | undefined = shared.environments?.[name];
+    const l: EnvironmentFile | undefined = local.environments?.[name];
+    const m = { ...s, ...l };
+    const isDev = name === DEVELOPMENT;
+    const baseUrl = m.baseUrl ?? (isDev ? (local.baseUrl ?? shared.baseUrl) : undefined);
+    if (!baseUrl && !isDev) {
+      throw new ToolError(
+        `The environment "${name}" needs a baseUrl, like baseUrl: https://${name}.example.com.`,
+        'config_invalid',
+      );
+    }
+    const isProtected = m.protected ?? name === 'production';
+    if (l?.protected === false && (s?.protected ?? name === 'production')) {
+      warnings.push(
+        `config.local.yaml turns off the protection of the "${name}" environment. Walkthrough does not ask before it works there.`,
+      );
+    }
+    let ignoreHttpsErrors = m.ignoreHttpsErrors ?? false;
+    if (ignoreHttpsErrors && isProtected) {
+      warnings.push(
+        `Walkthrough ignores "ignoreHttpsErrors" for the "${name}" environment, because it is protected.`,
+      );
+      ignoreHttpsErrors = false;
+    }
+    // config.yaml goes into Git, so its values must not be secrets.
+    for (const [header, value] of Object.entries(s?.headers ?? {})) {
+      if (!SECRET_TOKEN.test(value)) {
+        warnings.push(
+          `The header "${header}" of the "${name}" environment in .walkthrough/config.yaml has a plain value. Put the value in .walkthrough/.env.${name}, and use {{secret:NAME}} in config.yaml.`,
+        );
+      }
+    }
+    if (s?.httpCredentials && !SECRET_TOKEN.test(s.httpCredentials.password)) {
+      warnings.push(
+        `The httpCredentials password of the "${name}" environment in .walkthrough/config.yaml is a plain value. Put it in .walkthrough/.env.${name}, and use {{secret:NAME}} in config.yaml.`,
+      );
+    }
+    let source = 'built in';
+    if (s && l) source = 'config.yaml and config.local.yaml';
+    else if (s) source = 'config.yaml';
+    else if (l) source = 'config.local.yaml';
+    else if (isDev && baseUrl) source = 'baseUrl in config.yaml';
+    out[name] = {
+      name,
+      label: m.label ?? defaultLabel(name),
+      color: m.color ?? defaultColor(name),
+      baseUrl,
+      allowedOrigins: m.allowedOrigins ?? [],
+      vars: { ...stringValues(s?.vars), ...stringValues(l?.vars) },
+      secrets: { ...s?.secrets, ...l?.secrets },
+      protected: isProtected,
+      headers: { ...s?.headers, ...l?.headers },
+      httpCredentials: m.httpCredentials,
+      ignoreHttpsErrors,
+      actionTimeoutMs: m.actionTimeoutMs,
+      source,
+    };
+  }
+  return out;
+}
 
 function readYaml(file: string): Record<string, unknown> {
   if (!existsSync(file)) return {};
@@ -167,7 +266,7 @@ function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
   const result = schema.safeParse(data);
   if (result.success) return result.data;
   const problems = result.error.issues
-    .map((issue) => `${issue.path.join('.') || '(top)'}: ${issue.message}`)
+    .map((issue) => `${issue.path.join('.') || '(top)'}: ${issueMessage(issue)}`)
     .join('. ');
   throw new ToolError(`The settings in ${file} are not valid. ${problems}`, 'config_invalid');
 }
@@ -200,7 +299,12 @@ export function resolveProjectDir(options: ProjectDirOptions = {}): {
   return { dir: cwd, source: 'current folder' };
 }
 
-export function loadConfig(projectDir: string, projectDirSource = 'current folder'): Config {
+// Reads the settings for one environment. Without a name, it uses the default environment.
+export function loadConfig(
+  projectDir: string,
+  projectDirSource = 'current folder',
+  environmentName?: string,
+): Config {
   const folder = join(projectDir, '.walkthrough');
   const sharedFile = join(folder, 'config.yaml');
   const localFile = join(folder, 'config.local.yaml');
@@ -231,6 +335,32 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
   const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
   const screenshotRoots = (local.screenshotRoots ?? []).map(fromProject);
 
+  const environments = mergeEnvironments(shared, local, warnings);
+  const names = Object.keys(environments).join(', ');
+  const defaultEnvironment = local.environment ?? shared.environment ?? DEVELOPMENT;
+  if (!environments[defaultEnvironment]) {
+    throw new ToolError(
+      `The default environment "${defaultEnvironment}" is not in "environments". Environments: ${names}.`,
+      'config_invalid',
+    );
+  }
+  const envName = environmentName ?? defaultEnvironment;
+  const environment = environments[envName];
+  if (!environment) {
+    throw new ToolError(
+      `There is no environment "${envName}". Environments: ${names}. Add it under "environments" in .walkthrough/config.yaml.`,
+      'environment_unknown',
+    );
+  }
+  // The shared list, the environment's own sites, and the site of its base URL.
+  const allowedOrigins = [
+    ...new Set([...(merged.allowedOrigins ?? DEFAULT_ORIGINS), ...environment.allowedOrigins]),
+  ];
+  const envOrigin = originOf(environment.baseUrl);
+  if (envOrigin && !new OriginGuard(allowedOrigins).isAllowed(envOrigin)) {
+    allowedOrigins.push(envOrigin);
+  }
+
   // Headless is useful for tests and CI.
   const envHeadless = process.env.UIWALK_HEADLESS;
   const headless = envHeadless ? envHeadless !== '0' : (merged.browser.headless ?? false);
@@ -240,15 +370,15 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
   return {
     projectDir,
     projectDirSource,
-    baseUrl: merged.baseUrl,
-    allowedOrigins: merged.allowedOrigins ?? DEFAULT_ORIGINS,
+    baseUrl: environment.baseUrl,
+    allowedOrigins,
     browser: {
       headless,
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath,
     },
     dialogs: merged.dialogs ?? 'ask',
-    actionTimeoutMs: merged.actionTimeoutMs ?? 10_000,
+    actionTimeoutMs: environment.actionTimeoutMs ?? merged.actionTimeoutMs ?? 10_000,
     askTimeoutSec: merged.askTimeoutSec,
     panel,
     highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
@@ -282,6 +412,10 @@ export function loadConfig(projectDir: string, projectDirSource = 'current folde
       device: lighthouse.device ?? 'desktop',
       categories: lighthouse.categories ?? ['performance', 'best-practices', 'seo'],
     },
+    environment,
+    environments,
+    defaultEnvironment,
+    vars: { ...stringValues(shared.vars), ...stringValues(local.vars) },
     warnings,
   };
 }

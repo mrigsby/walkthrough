@@ -130,6 +130,148 @@ describe('loadConfig', () => {
   });
 });
 
+describe('environments', () => {
+  const shared = `baseUrl: http://localhost:4321
+allowedOrigins: [http://localhost:4321]
+vars:
+  shopper: Demo Shopper
+  store: Demo Shop
+environments:
+  staging:
+    baseUrl: https://staging.example.com/app/
+    allowedOrigins: [https://cdn.staging.example.com]
+    vars: { shopper: Staging Shopper }
+    secrets: { APP_PASSWORD: STAGING_APP_PASSWORD }
+    headers: { x-preview-token: "{{secret:PREVIEW_TOKEN}}" }
+    actionTimeoutMs: 20000
+  production:
+    baseUrl: https://www.example.com
+`;
+
+  it('has development by default, from the top-level settings', () => {
+    const config = loadConfig(project(shared));
+    expect(config.defaultEnvironment).toBe('development');
+    expect(config.environment).toMatchObject({
+      name: 'development',
+      label: 'Development',
+      baseUrl: 'http://localhost:4321',
+      protected: false,
+      source: 'baseUrl in config.yaml',
+    });
+    expect(config.baseUrl).toBe('http://localhost:4321');
+    expect(config.allowedOrigins).toEqual(['http://localhost:4321']);
+    expect(config.actionTimeoutMs).toBe(10_000);
+    expect(config.vars).toEqual({ shopper: 'Demo Shopper', store: 'Demo Shop' });
+    expect(Object.keys(config.environments)).toEqual(['development', 'staging', 'production']);
+  });
+
+  it('makes the settings of another environment', () => {
+    const config = loadConfig(project(shared), 'test', 'staging');
+    expect(config.baseUrl).toBe('https://staging.example.com/app/');
+    // Shared sites, the environment's own sites, and the site of its base URL.
+    expect(config.allowedOrigins).toEqual([
+      'http://localhost:4321',
+      'https://cdn.staging.example.com',
+      'https://staging.example.com',
+    ]);
+    expect(config.actionTimeoutMs).toBe(20_000);
+    expect(config.environment).toMatchObject({
+      label: 'Staging',
+      color: '#b45309',
+      vars: { shopper: 'Staging Shopper' },
+      secrets: { APP_PASSWORD: 'STAGING_APP_PASSWORD' },
+      headers: { 'x-preview-token': '{{secret:PREVIEW_TOKEN}}' },
+      protected: false,
+    });
+    expect(config.warnings).toEqual([]);
+  });
+
+  it('protects production by default', () => {
+    const config = loadConfig(project(shared), 'test', 'production');
+    expect(config.environment.protected).toBe(true);
+    expect(config.environment.color).toBe('#b91c1c');
+  });
+
+  it('merges the local file per environment and key', () => {
+    const local = `environment: staging
+environments:
+  staging:
+    vars: { store: Local Shop }
+    headers: { x-extra: "{{secret:EXTRA}}" }
+  mine:
+    baseUrl: http://10.0.0.5:3000
+`;
+    const config = loadConfig(project(shared, local));
+    expect(config.defaultEnvironment).toBe('staging');
+    expect(config.environment.name).toBe('staging');
+    expect(config.environment.source).toBe('config.yaml and config.local.yaml');
+    expect(config.environment.vars).toEqual({ shopper: 'Staging Shopper', store: 'Local Shop' });
+    expect(Object.keys(config.environment.headers)).toEqual(['x-preview-token', 'x-extra']);
+    expect(config.environments.mine?.source).toBe('config.local.yaml');
+  });
+
+  it('lets environments.development change the top-level base URL', () => {
+    const config = loadConfig(
+      project(`${shared}  development:\n    baseUrl: http://localhost:5000\n    label: Local\n`),
+    );
+    expect(config.baseUrl).toBe('http://localhost:5000');
+    expect(config.environment.label).toBe('Local');
+  });
+
+  it('explains an unknown environment, a missing base URL, and a bad default', () => {
+    expect(() => loadConfig(project(shared), 'test', 'qa')).toThrow(
+      /no environment "qa".*development, staging, production/,
+    );
+    expect(() => loadConfig(project('environments:\n  qa:\n    label: QA\n'))).toThrow(
+      /"qa" needs a baseUrl/,
+    );
+    expect(() => loadConfig(project(`${shared}environment: qa\n`))).toThrow(
+      /default environment "qa"/,
+    );
+  });
+
+  it('refuses bad names, colors, and reserved vars', () => {
+    expect(() =>
+      loadConfig(project('environments:\n  Staging:\n    baseUrl: https://s.example.com\n')),
+    ).toThrow(/environments/);
+    expect(() =>
+      loadConfig(
+        project('environments:\n  s:\n    baseUrl: https://s.example.com\n    color: red\n'),
+      ),
+    ).toThrow(/hex color/);
+    expect(() => loadConfig(project('vars:\n  baseUrl: x\n'))).toThrow(/reserved/);
+  });
+
+  it('warns about plain secrets and turned-off protection', () => {
+    const shared2 = `environments:
+  staging:
+    baseUrl: https://s.example.com
+    headers: { x-token: abc123 }
+    httpCredentials: { username: team, password: hunter22 }
+  production:
+    baseUrl: https://www.example.com
+`;
+    const config = loadConfig(
+      project(shared2, 'environments:\n  production:\n    protected: false\n'),
+    );
+    const text = config.warnings.join('\n');
+    expect(text).toMatch(/header "x-token".*plain value.*\.env\.staging/);
+    expect(text).toMatch(/httpCredentials password.*plain value/);
+    expect(text).toMatch(/turns off the protection of the "production"/);
+    expect(config.environments.production?.protected).toBe(false);
+  });
+
+  it('ignores ignoreHttpsErrors on a protected environment', () => {
+    const config = loadConfig(
+      project(
+        'environments:\n  production:\n    baseUrl: https://www.example.com\n    ignoreHttpsErrors: true\n',
+      ),
+    );
+    expect(config.environments.production?.ignoreHttpsErrors).toBe(false);
+    expect(config.warnings.join(' ')).toMatch(/ignores "ignoreHttpsErrors"/);
+  });
+});
+
 describe('resolveProjectDir', () => {
   it('uses the first source that is set', () => {
     expect(resolveProjectDir({ argument: '/a', env: { UIWALK_PROJECT_DIR: '/b' } }).dir).toBe('/a');
