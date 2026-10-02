@@ -13,6 +13,7 @@ import type {
 import type { Config, DialogPolicy } from '../config.js';
 import { describeIssue } from '../devtools/issues.js';
 import { checkRule, hitText, type MockRule, type MockRuleInput } from '../devtools/mock-schema.js';
+import type { EnvNetwork } from '../environments.js';
 import { ToolError } from '../errors.js';
 import { LogBook } from '../evidence/logs.js';
 import { NetworkBook } from '../evidence/network.js';
@@ -96,6 +97,11 @@ export class Driver {
   closedReason?: 'browser_closed' | 'closed_by_agent';
   // Protected environments that the developer confirmed for this browser.
   readonly confirmedEnvs = new Set<string>();
+  // Headers and a login for the site of the environment.
+  private envNetwork?: EnvNetwork;
+  private ignoringCertErrors = false;
+  // The certificate setting lasts only while this session stays open.
+  private securitySession?: CDPSession;
 
   private tabCounter = 0;
   private notes: string[] = [];
@@ -306,6 +312,7 @@ export class Driver {
       rules: () => this.rulesFor(tab),
       onHit: (rule, request) =>
         this.mockHits.add(hitText(rule, request.method, scrubUrl(request.url))),
+      network: () => this.envNetwork,
     });
     tab.cdp = tab.router?.cdp;
     if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
@@ -618,10 +625,24 @@ export class Driver {
     return before - this.mocks.length;
   }
 
-  // Uses the settings of another environment, such as its time limit.
-  applyEnvironment(config: Config): void {
+  // Uses the settings of another environment: its time limit, request rules, and certificates.
+  async applyEnvironment(config: Config, network?: EnvNetwork): Promise<void> {
     this.options.config = config;
     for (const tab of this.tabs.values()) tab.page.setDefaultTimeout(config.actionTimeoutMs);
+    const changed = JSON.stringify(network) !== JSON.stringify(this.envNetwork);
+    this.envNetwork = network;
+    if (changed) await this.refreshRouters();
+    // Chrome has one setting for the whole browser, so it follows the environment in use.
+    const ignore = config.environment.ignoreHttpsErrors;
+    if (ignore !== this.ignoringCertErrors) {
+      try {
+        this.securitySession ??= await this.browser.target().createCDPSession();
+        await this.securitySession.send('Security.setIgnoreCertificateErrors', { ignore });
+        this.ignoringCertErrors = ignore;
+      } catch (error) {
+        log.warn('could not change the certificate setting', error);
+      }
+    }
   }
 
   async refreshRouters(): Promise<void> {

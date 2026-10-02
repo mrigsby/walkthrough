@@ -97203,6 +97203,31 @@ function rebaseToEnvironment(url2, config3) {
   }
   return url2;
 }
+function environmentNetwork(env2, resolve12, warnings) {
+  const origin = originOf(env2.baseUrl);
+  if (!origin) return void 0;
+  const headers2 = {};
+  for (const [name, value] of Object.entries(env2.headers)) {
+    try {
+      headers2[name] = resolve12(value);
+    } catch (error62) {
+      warnings.push(`Walkthrough does not send the header "${name}": ${error62.message}`);
+    }
+  }
+  let credentials;
+  if (env2.httpCredentials) {
+    try {
+      credentials = {
+        username: resolve12(env2.httpCredentials.username),
+        password: resolve12(env2.httpCredentials.password)
+      };
+    } catch (error62) {
+      warnings.push(`Walkthrough does not use the basic auth login: ${error62.message}`);
+    }
+  }
+  if (Object.keys(headers2).length === 0 && !credentials) return void 0;
+  return { origin, headers: headers2, credentials };
+}
 function secretScope(env2) {
   return { name: env2.name, protected: env2.protected, rename: env2.secrets };
 }
@@ -108026,6 +108051,7 @@ var FetchRouter = class _FetchRouter {
   cdp;
   mainFrameId;
   options;
+  bypassingWorkers = false;
   static async install(page, options) {
     try {
       const cdp = await page.createCDPSession();
@@ -108034,6 +108060,9 @@ var FetchRouter = class _FetchRouter {
       cdp.on("Fetch.requestPaused", (event) => {
         router.onPaused(event).catch(() => void 0);
       });
+      cdp.on("Fetch.authRequired", (event) => {
+        router.onAuth(event).catch(() => void 0);
+      });
       await router.refresh();
       return router;
     } catch (error62) {
@@ -108041,14 +108070,58 @@ var FetchRouter = class _FetchRouter {
       return void 0;
     }
   }
-  // Page loads always pass through here, for the guard. Other requests only while mocks exist.
+  // Page loads always pass through here, for the guard. Other requests only while mocks
+  // exist, or when the environment's site needs headers or a login.
   async refresh() {
     const patterns = [
       { urlPattern: "*", resourceType: "Document", requestStage: "Request" }
     ];
-    if (this.options.rules().length > 0)
+    const network = this.options.network?.();
+    if (this.options.rules().length > 0) {
       patterns.push({ urlPattern: "*", requestStage: "Request" });
-    await this.cdp.send("Fetch.enable", { patterns });
+    } else if (network) {
+      patterns.push({ urlPattern: `${network.origin}/*`, requestStage: "Request" });
+    }
+    await this.cdp.send("Fetch.enable", {
+      patterns,
+      handleAuthRequests: Boolean(network?.credentials)
+    });
+    const bypass = Boolean(network);
+    if (bypass !== this.bypassingWorkers) {
+      if (bypass) await this.cdp.send("Network.enable").catch(() => void 0);
+      await this.cdp.send("Network.setBypassServiceWorker", { bypass }).catch((error62) => log.warn("could not change the service worker setting", error62));
+      this.bypassingWorkers = bypass;
+    }
+  }
+  // The request headers with the environment's headers added, for its own site only.
+  headersFor(request3) {
+    const network = this.options.network?.();
+    if (!network || Object.keys(network.headers).length === 0) return void 0;
+    let origin;
+    try {
+      origin = new URL(request3.url).origin;
+    } catch {
+      return void 0;
+    }
+    if (origin !== network.origin) return void 0;
+    return Object.entries({ ...request3.headers, ...network.headers }).map(([name, value]) => ({
+      name,
+      value: String(value)
+    }));
+  }
+  // Basic auth: answer only for the environment's own site.
+  async onAuth(event) {
+    const network = this.options.network?.();
+    let origin = "";
+    try {
+      origin = new URL(event.request.url).origin;
+    } catch {
+    }
+    const login = network?.credentials;
+    await this.cdp.send("Fetch.continueWithAuth", {
+      requestId: event.requestId,
+      authChallengeResponse: login && origin === network.origin ? { response: "ProvideCredentials", username: login.username, password: login.password } : { response: "Default" }
+    });
   }
   async onPaused(event) {
     const { requestId, request: request3, frameId, resourceType } = event;
@@ -108060,8 +108133,9 @@ var FetchRouter = class _FetchRouter {
     }
     const info = { url: request3.url, method: request3.method, type: resourceType };
     const rule = this.options.rules().find((r) => (r.times === void 0 || r.hits < r.times) && ruleMatches(r, info));
+    const headers2 = this.headersFor(request3);
     if (!rule) {
-      await cdp.send("Fetch.continueRequest", { requestId });
+      await cdp.send("Fetch.continueRequest", { requestId, ...headers2 ? { headers: headers2 } : {} });
       return;
     }
     rule.hits += 1;
@@ -108073,18 +108147,18 @@ var FetchRouter = class _FetchRouter {
     }
     const answers = rule.status !== void 0 || rule.json !== void 0 || rule.body !== void 0 || rule.headers !== void 0;
     if (!answers) {
-      await cdp.send("Fetch.continueRequest", { requestId });
+      await cdp.send("Fetch.continueRequest", { requestId, ...headers2 ? { headers: headers2 } : {} });
       return;
     }
     const body = rule.json !== void 0 ? JSON.stringify(rule.json) : rule.body ?? "";
     const contentType = rule.contentType ?? (rule.json !== void 0 ? "application/json" : "text/plain; charset=utf-8");
-    const headers2 = Object.entries({ "content-type": contentType, ...rule.headers }).map(
+    const responseHeaders = Object.entries({ "content-type": contentType, ...rule.headers }).map(
       ([name, value]) => ({ name, value })
     );
     await cdp.send("Fetch.fulfillRequest", {
       requestId,
       responseCode: rule.status ?? 200,
-      responseHeaders: headers2,
+      responseHeaders,
       body: Buffer.from(body).toString("base64")
     });
   }
@@ -108187,6 +108261,11 @@ var Driver = class _Driver {
   closedReason;
   // Protected environments that the developer confirmed for this browser.
   confirmedEnvs = /* @__PURE__ */ new Set();
+  // Headers and a login for the site of the environment.
+  envNetwork;
+  ignoringCertErrors = false;
+  // The certificate setting lasts only while this session stays open.
+  securitySession;
   tabCounter = 0;
   notes = [];
   pendingDialogs = /* @__PURE__ */ new Map();
@@ -108349,7 +108428,8 @@ var Driver = class _Driver {
         `Walkthrough blocked the tab from opening ${url3}, because that site is not allowed.`
       ),
       rules: () => this.rulesFor(tab),
-      onHit: (rule, request3) => this.mockHits.add(hitText(rule, request3.method, scrubUrl(request3.url)))
+      onHit: (rule, request3) => this.mockHits.add(hitText(rule, request3.method, scrubUrl(request3.url))),
+      network: () => this.envNetwork
     });
     tab.cdp = tab.router?.cdp;
     if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
@@ -108619,10 +108699,23 @@ var Driver = class _Driver {
     await this.refreshRouters();
     return before - this.mocks.length;
   }
-  // Uses the settings of another environment, such as its time limit.
-  applyEnvironment(config3) {
+  // Uses the settings of another environment: its time limit, request rules, and certificates.
+  async applyEnvironment(config3, network) {
     this.options.config = config3;
     for (const tab of this.tabs.values()) tab.page.setDefaultTimeout(config3.actionTimeoutMs);
+    const changed = JSON.stringify(network) !== JSON.stringify(this.envNetwork);
+    this.envNetwork = network;
+    if (changed) await this.refreshRouters();
+    const ignore = config3.environment.ignoreHttpsErrors;
+    if (ignore !== this.ignoringCertErrors) {
+      try {
+        this.securitySession ??= await this.browser.target().createCDPSession();
+        await this.securitySession.send("Security.setIgnoreCertificateErrors", { ignore });
+        this.ignoringCertErrors = ignore;
+      } catch (error62) {
+        log.warn("could not change the certificate setting", error62);
+      }
+    }
   }
   async refreshRouters() {
     for (const tab of this.tabs.values()) await this.refreshRouter(tab);
@@ -108829,6 +108922,8 @@ var Context = class {
   sessionEnv;
   // Values for {{var:NAME}}: config and environment, plus the plan during a run.
   vars = {};
+  // Headers and a login for the environment's site, with secrets filled in.
+  network;
   loaded;
   // A switch to a protected environment that waits for the developer.
   // Tabs move, or the session goes back, after the answer.
@@ -108852,14 +108947,20 @@ var Context = class {
         `The session used the environment "${name}", but the settings do not have it now. Walkthrough uses "${config3.environment.name}".`
       );
     }
+    const secrets = SecretStore.forProject(dir, secretScope(config3.environment));
     this.loaded = {
       config: config3,
-      secrets: SecretStore.forProject(dir, secretScope(config3.environment)),
+      secrets,
       guard: environmentGuard(config3, this.driver?.confirmedEnvs)
     };
     this.vars = buildVars(config3);
+    this.network = environmentNetwork(
+      config3.environment,
+      (text) => secrets.resolve(text),
+      config3.warnings
+    );
     if (this.driver?.alive) {
-      this.driver.applyEnvironment(config3);
+      await this.driver.applyEnvironment(config3, this.network);
       await this.driver.panel?.setEnvironment(environmentBadge(config3));
     }
     return config3;
@@ -109056,6 +109157,7 @@ var Context = class {
       isAllowed: (url2) => (this.loaded?.guard ?? guard).isAllowed(url2)
     });
     this.rebuildGuard();
+    await this.driver.applyEnvironment(config3, this.network);
     await this.driver.panel?.setEnvironment(environmentBadge(config3));
     return this.driver;
   }
@@ -116728,11 +116830,16 @@ async function auditPage2(url2, options) {
   let result;
   try {
     const page = (await browser.pages())[0] ?? await browser.newPage();
+    if (options.config.environment.ignoreHttpsErrors) {
+      const cdp = await browser.target().createCDPSession();
+      await cdp.send("Security.setIgnoreCertificateErrors", { ignore: true });
+    }
     await FetchRouter.install(page, {
       isAllowed: options.isAllowed,
       onBlocked: () => void 0,
       rules: () => options.rules,
-      onHit: () => void 0
+      onHit: () => void 0,
+      network: () => options.network
     });
     if (options.rules.length) await page.setCacheEnabled(false);
     if (options.login) await restoreSession({ page }, options.login, { everyLoad: true });
@@ -117084,7 +117191,8 @@ function registerLighthouseTools(server, ctx) {
               runDir: scan.dir,
               index: (scan.run.lighthouse?.length ?? 0) + 1,
               secrets,
-              clean
+              clean,
+              network: ctx.network
             });
             check2.stepId = stepId;
             if (pageKey(check2.url) !== path14) check2.requestedUrl = url2;

@@ -6,6 +6,7 @@ import { restoreSession, type SavedSession } from '../browser/sessions.js';
 import type { Config } from '../config.js';
 import type { MockRule } from '../devtools/mock-schema.js';
 import { loadLighthouse } from '../downloads/lighthouse.js';
+import type { EnvNetwork } from '../environments.js';
 import { ToolError } from '../errors.js';
 import type { SecretStore } from '../guards/secrets.js';
 import { slug } from '../text.js';
@@ -33,6 +34,8 @@ export async function auditPage(
     index: number;
     secrets: SecretStore;
     clean: (t: string) => string;
+    // The environment's headers and login, as in the test tabs.
+    network?: EnvNetwork;
   },
 ): Promise<LighthouseCheck> {
   const lighthouse = await loadLighthouse();
@@ -40,12 +43,18 @@ export async function auditPage(
   let result: LighthouseResult;
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());
-    // The same guard and mock rules as the test tabs.
+    if (options.config.environment.ignoreHttpsErrors) {
+      // The setting lasts while this session is open, which is until Chrome closes.
+      const cdp = await browser.target().createCDPSession();
+      await cdp.send('Security.setIgnoreCertificateErrors', { ignore: true });
+    }
+    // The same guard, mock rules, headers, and login as the test tabs.
     await FetchRouter.install(page, {
       isAllowed: options.isAllowed,
       onBlocked: () => undefined,
       rules: () => options.rules,
       onHit: () => undefined,
+      network: () => options.network,
     });
     if (options.rules.length) await page.setCacheEnabled(false);
     if (options.login) await restoreSession({ page }, options.login, { everyLoad: true });

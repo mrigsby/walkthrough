@@ -431,6 +431,7 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
                 index: (scan.run.lighthouse?.length ?? 0) + 1,
                 secrets,
                 clean,
+                network: ctx.network,
               });
               check.stepId = stepId;
               if (pageKey(check.url) !== path) check.requestedUrl = url;

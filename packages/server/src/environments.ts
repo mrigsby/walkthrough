@@ -165,6 +165,46 @@ export function rebaseToEnvironment(
   return url;
 }
 
+// Request rules for the site of an environment, with the secrets filled in.
+export interface EnvNetwork {
+  // Only requests to this site get the headers and the login.
+  origin: string;
+  headers: Record<string, string>;
+  credentials?: { username: string; password: string };
+}
+
+// Fills in the secrets of an environment's headers and login.
+// A secret that is not set leaves out that header, with a warning.
+export function environmentNetwork(
+  env: Environment,
+  resolve: (text: string) => string,
+  warnings: string[],
+): EnvNetwork | undefined {
+  const origin = originOf(env.baseUrl);
+  if (!origin) return undefined;
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(env.headers)) {
+    try {
+      headers[name] = resolve(value);
+    } catch (error) {
+      warnings.push(`Walkthrough does not send the header "${name}": ${(error as Error).message}`);
+    }
+  }
+  let credentials: EnvNetwork['credentials'];
+  if (env.httpCredentials) {
+    try {
+      credentials = {
+        username: resolve(env.httpCredentials.username),
+        password: resolve(env.httpCredentials.password),
+      };
+    } catch (error) {
+      warnings.push(`Walkthrough does not use the basic auth login: ${(error as Error).message}`);
+    }
+  }
+  if (Object.keys(headers).length === 0 && !credentials) return undefined;
+  return { origin, headers, credentials };
+}
+
 // What the secret store needs to know about an environment.
 export function secretScope(env: Environment): {
   name: string;

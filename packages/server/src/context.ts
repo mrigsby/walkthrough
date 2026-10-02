@@ -2,8 +2,10 @@ import { Driver } from './browser/driver.js';
 import { type Config, loadConfig, resolveProjectDir } from './config.js';
 import {
   describeEnvironment,
+  type EnvNetwork,
   environmentBadge,
   environmentGuard,
+  environmentNetwork,
   rebaseUrl,
   secretScope,
 } from './environments.js';
@@ -61,6 +63,8 @@ export class Context {
   sessionEnv?: { name: string; source: EnvSource };
   // Values for {{var:NAME}}: config and environment, plus the plan during a run.
   vars: Record<string, string> = {};
+  // Headers and a login for the environment's site, with secrets filled in.
+  network?: EnvNetwork;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
   // A switch to a protected environment that waits for the developer.
   // Tabs move, or the session goes back, after the answer.
@@ -99,14 +103,20 @@ export class Context {
         `The session used the environment "${name}", but the settings do not have it now. Walkthrough uses "${config.environment.name}".`,
       );
     }
+    const secrets = SecretStore.forProject(dir, secretScope(config.environment));
     this.loaded = {
       config,
-      secrets: SecretStore.forProject(dir, secretScope(config.environment)),
+      secrets,
       guard: environmentGuard(config, this.driver?.confirmedEnvs),
     };
     this.vars = buildVars(config);
+    this.network = environmentNetwork(
+      config.environment,
+      (text) => secrets.resolve(text),
+      config.warnings,
+    );
     if (this.driver?.alive) {
-      this.driver.applyEnvironment(config);
+      await this.driver.applyEnvironment(config, this.network);
       await this.driver.panel?.setEnvironment(environmentBadge(config));
     }
     return config;
@@ -341,6 +351,7 @@ export class Context {
     });
     // A new browser has no confirmed environments.
     this.rebuildGuard();
+    await this.driver.applyEnvironment(config, this.network);
     await this.driver.panel?.setEnvironment(environmentBadge(config));
     return this.driver;
   }
