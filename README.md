@@ -48,6 +48,8 @@ Read more in [Safety](docs/safety.md).
 
 1. In Claude Code, install the plugin:
 
+   > **Note:** Install the plugin from Claude Code in a terminal. Start Claude Code with the `claude` command, and then type the commands below. Do not install the plugin from the IDE extension or the desktop app. After the install, the plugin also works in the Claude Code extension for VS Code.
+
    ```text
    /plugin install walkthrough --marketplace mrigsby/walkthrough
    ```

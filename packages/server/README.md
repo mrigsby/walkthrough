@@ -4,6 +4,8 @@ This package has `uiwalk`, the MCP server of [Walkthrough](https://github.com/mr
 
 In Claude Code, install the Walkthrough plugin instead. It includes this server, a skill, and slash commands:
 
+> **Note:** Install the plugin from Claude Code in a terminal. Start Claude Code with the `claude` command, and then type the commands below. Do not install the plugin from the IDE extension or the desktop app. After the install, the plugin also works in the Claude Code extension for VS Code.
+
 ```text
 /plugin install walkthrough --marketplace mrigsby/walkthrough
 ```

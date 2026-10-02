@@ -35,7 +35,7 @@ Add this to `.claude/settings.json` in your project, and commit it:
 }
 ```
 
-When a teammate trusts the project folder, Claude Code asks them to install the marketplace and the plugin. See [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) for more.
+When a teammate trusts the project folder, Claude Code asks them to install the marketplace and the plugin. Teammates must do this step in Claude Code in a terminal (the `claude` command). They must not do it in the IDE extension or the desktop app. See [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) for more.
 
 ## Use the server with other MCP clients
 

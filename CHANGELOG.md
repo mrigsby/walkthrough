@@ -2,6 +2,12 @@
 
 This file lists all notable changes to the project.
 
+## Unreleased
+
+### Changed
+
+- The install steps say to install the plugin from Claude Code in a terminal, not from the IDE extension or the desktop app.
+
 ## 0.3.1 (2026-09-29)
 
 ### Changed
