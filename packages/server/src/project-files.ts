@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 const GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
 .env
+.env.*
+!.env.example
 sessions/
 runs/
 config.local.yaml

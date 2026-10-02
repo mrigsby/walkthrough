@@ -10,7 +10,8 @@ import { MASK, type SecretStore } from '../guards/secrets.js';
 import { trace } from '../log.js';
 import type { VideoHooks } from '../video/recording.js';
 import { stableSelector } from './selectors.js';
-import { tokenizeUnique, withUnique } from './unique.js';
+import { TokenResolver } from './tokens.js';
+import { tokenizeUnique } from './unique.js';
 
 export const ACTIONS = [
   'click',
@@ -103,6 +104,8 @@ export interface ActContext {
   log: ActionRecord[];
   // The value of {{unique}} for this run.
   unique: string;
+  // Values for {{var:NAME}}.
+  vars?: Record<string, string>;
   // The recordings that watch the page, if any.
   video?: VideoHooks;
 }
@@ -224,8 +227,9 @@ async function perform(
       const t = need();
       if (input.value === undefined)
         throw new ToolError('The fill action needs a "value".', 'bad_input');
-      const hasSecret = ctx.secrets.hasTokens(input.value);
-      const shown = withUnique(input.value, ctx.unique);
+      // A var can hold a secret, so look for secrets after the vars go in.
+      const shown = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input.value);
+      const hasSecret = ctx.secrets.hasTokens(shown);
       const real = ctx.secrets.resolve(shown);
       // A video must never show the secret, so the field is hidden before it goes in.
       if (hasSecret && ctx.video) await ctx.video.maskSecret(t.handle);
@@ -240,7 +244,7 @@ async function perform(
           'The select action needs a "value" (the option value or text).',
           'bad_input',
         );
-      const wanted = withUnique(input.value, ctx.unique);
+      const wanted = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input.value);
       const chosen = await selectOption(t.handle, wanted);
       return `Selected "${wanted}" in ${t.label}${chosen !== wanted ? ` (value "${chosen}")` : ''}.`;
     }

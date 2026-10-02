@@ -8,12 +8,13 @@ import type { Context } from '../context.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { describeRule } from '../devtools/mock-schema.js';
 import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
-import { startUrl } from '../environments.js';
+import { describeEnvironment, rebaseToEnvironment, startUrl } from '../environments.js';
 import { ToolError } from '../errors.js';
 import { scrubText } from '../evidence/scrub.js';
 import { checkMediaPath, checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
+import { buildVars, varNames } from '../page/tokens.js';
 import { newUnique } from '../page/unique.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
@@ -168,7 +169,7 @@ function describeA11y(step: PlanStep): string {
   return `accessibility check${extra.length ? ` (${extra.join('; ')})` : ''}`;
 }
 
-function stepList(plan: Plan, mode: Mode): string {
+function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) => t): string {
   return plan.steps
     .map((step, i) => {
       const id = step.id ?? `step-${i + 1}`;
@@ -184,8 +185,8 @@ function stepList(plan: Plan, mode: Mode): string {
         .filter(Boolean)
         .join(', ');
       const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
-      if (step.expect) lines.push(`   Expect: ${step.expect}`);
-      if (step.caption) lines.push(`   Caption: ${step.caption}`);
+      if (step.expect) lines.push(`   Expect: ${show(step.expect)}`);
+      if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       if (step.cookies)
         lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join('; ')}`);
@@ -301,11 +302,17 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           .boolean()
           .optional()
           .describe("Record the whole run as a video. The plan's video key does the same."),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'Run in this environment, like "staging". It also switches the session. Without it, the session, the plan, or the default environment chooses.',
+          ),
       },
     },
-    ({ plan: planName, name, mode: modeArg, video: videoArg }) =>
+    ({ plan: planName, name, mode: modeArg, video: videoArg, environment }, extra) =>
       runTool(ctx, 'run_start', async () => {
-        const config = await ctx.refresh();
+        let config = await ctx.refresh();
         if (ctx.run?.run.status === 'running') {
           throw new ToolError(
             `The run "${ctx.run.run.name}" is still going. Call run_finish first.`,
@@ -331,6 +338,29 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
               'screenshot_blocked',
             );
           }
+        }
+        // The tool argument, then the session, then the plan, then the default environment.
+        const envName =
+          environment ?? ctx.sessionEnv?.name ?? plan?.environment ?? config.defaultEnvironment;
+        if (plan?.environments && !plan.environments.includes(envName)) {
+          throw new ToolError(
+            `The plan "${plan.name}" may run only in these environments: ${plan.environments.join(', ')}. This run would use "${envName}". Choose one of them with the "environment" argument, or add "${envName}" to the plan's "environments" list.`,
+            'environment_not_allowed',
+          );
+        }
+        const envLines = await ctx.useEnvironment(envName, {
+          source: environment ? 'tool' : undefined,
+        });
+        config = await ctx.config();
+        ctx.vars = buildVars(config, plan?.vars);
+        const missingVars = plan
+          ? varNames(JSON.stringify(plan)).filter((n) => ctx.vars[n] === undefined)
+          : [];
+        if (missingVars.length) {
+          throw new ToolError(
+            `The plan uses {{var:${missingVars.join('}}, {{var:')}}}, but the "${envName}" environment has no value for ${missingVars.length === 1 ? 'it' : 'them'}. Add the values to "vars" in the plan, in .walkthrough/config.yaml, or in the environment.`,
+            'var_missing',
+          );
         }
         // A video of the whole run. Its settings are checked before the browser opens.
         const videoPlan =
@@ -360,7 +390,11 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           );
         }
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
-        const baseUrl = startUrl(plan?.baseUrl, config.baseUrl);
+        // A plan written for one environment starts at the same page on this one.
+        const planStart = plan?.baseUrl
+          ? rebaseToEnvironment(ctx.display(plan.baseUrl), config)
+          : undefined;
+        const baseUrl = startUrl(planStart, config.baseUrl);
 
         // A new {{unique}} value and a new Lighthouse flow for each run.
         ctx.unique = newUnique();
@@ -376,6 +410,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           emulation,
           // Lighthouse results must not depend on earlier runs, like a warm cache.
           fresh: lhSteps,
+          signal: extra.signal,
+          requestId: extra.requestId,
         });
         const driver = ctx.requireDriver();
         // Start clean: earlier actions and page errors are not part of this run.
@@ -396,6 +432,22 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
           lighthouse: config.lighthouse,
           freshBrowser: lhSteps ? driver.mode === 'launched' : undefined,
+          environment: {
+            name: config.environment.name,
+            label: config.environment.label,
+            color: config.environment.color,
+            baseUrl: config.environment.baseUrl,
+            protected: config.environment.protected,
+          },
+          vars:
+            plan?.vars ||
+            Object.keys(config.vars).length ||
+            Object.keys(config.environment.vars).length
+              ? Object.fromEntries(
+                  Object.entries(ctx.vars).filter(([k]) => k !== 'environment' && k !== 'baseUrl'),
+                )
+              : undefined,
+          show: (text) => ctx.display(text),
         });
         const lh = ctx.run.run.lhPlan;
 
@@ -403,8 +455,17 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         await stopRing(ctx);
         if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
         else await startRing(ctx);
+        const userVars = Object.entries(ctx.run.run.vars ?? {});
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+          `Environment: ${describeEnvironment(config.environment)}${config.environment.protected ? ', protected' : ''}.`,
+          ...envLines,
+          ...(userVars.length
+            ? [
+                `Values for {{var:NAME}}: ${userVars.map(([k, v]) => `${k} = "${v}"`).join(', ')}.`,
+                "In act and navigate, pass the {{var:NAME}} token from the step, not its value. Then a replay in another environment uses that environment's value.",
+              ]
+            : []),
           ...(videoPlan ? ['Walkthrough records this run as a video. run_finish saves it.'] : []),
           `Run folder: ${ctx.run.relativeDir}`,
           `{{unique}} in this run: ${ctx.unique}`,
@@ -434,7 +495,11 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             );
           lines.push('');
         }
-        if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
+        if (plan)
+          lines.push(
+            `Steps (${plan.steps.length}):`,
+            stepList(plan, mode, (t) => ctx.display(t)),
+          );
         else
           lines.push(
             'This run has no plan. Use run_step or ask_developer with a title for each step you do.',

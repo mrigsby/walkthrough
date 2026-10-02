@@ -16,6 +16,15 @@ export interface Question {
   step?: number;
   total?: number;
   stepId?: string;
+  // A confirm question has two buttons: confirmLabel (pass) and Cancel (stop).
+  kind?: 'step' | 'confirm';
+  confirmLabel?: string;
+  color?: string;
+}
+
+export interface EnvironmentBadge {
+  label: string;
+  color: string;
 }
 
 export interface Answer {
@@ -58,6 +67,7 @@ export class DeveloperPanel {
   // "lighthouse" while Lighthouse measures, "video" while Walkthrough records.
   private suppressed = new Map<string, Set<string>>();
   private recordWaiter?: (outcome: RecordOutcome) => void;
+  private env: EnvironmentBadge | null = null;
 
   async attach(page: Page, tabId: string): Promise<void> {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
@@ -103,6 +113,7 @@ export class DeveloperPanel {
       recording: this.recorder
         ? { count: this.recorder.steps.length, last: this.recorder.lastLabel }
         : null,
+      env: this.env,
       question: q
         ? {
             id: q.id,
@@ -112,6 +123,9 @@ export class DeveloperPanel {
             expected: q.expected,
             step: q.step,
             total: q.total,
+            kind: q.kind ?? 'step',
+            confirmLabel: q.confirmLabel,
+            color: q.color,
           }
         : null,
     };
@@ -296,6 +310,12 @@ export class DeveloperPanel {
     this.finishRecording('stopped');
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+
+  // The environment badge in every tab. Null hides it.
+  async setEnvironment(badge: EnvironmentBadge | null): Promise<void> {
+    this.env = badge;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
 
   // Shows the same state again, for example after the active tab changes.

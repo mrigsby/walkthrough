@@ -6,12 +6,20 @@ export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../
 
 // Starts the demo shop on a port the system picks, so two test files never share one.
 // With "site", it serves a copy of the demo site from that folder.
+// "args" can make a copy for another environment, like ['--env-name', 'staging'].
 export async function startDemoServer(
   site?: string,
+  args: string[] = [],
 ): Promise<{ base: string; port: number; stop: () => void }> {
   const child: ChildProcess = spawn(
     process.execPath,
-    [join(repoRoot, 'scripts/demo-server.mjs'), '--port', '0', ...(site ? ['--site', site] : [])],
+    [
+      join(repoRoot, 'scripts/demo-server.mjs'),
+      '--port',
+      '0',
+      ...(site ? ['--site', site] : []),
+      ...args,
+    ],
     { stdio: ['ignore', 'pipe', 'ignore'] },
   );
   const base = await new Promise<string>((resolve, reject) => {
@@ -19,7 +27,7 @@ export async function startDemoServer(
     const timer = setTimeout(() => reject(new Error('Demo server did not start')), 10_000);
     child.stdout?.on('data', (chunk: Buffer) => {
       output += chunk.toString();
-      const match = /http:\/\/localhost:(\d+)/.exec(output);
+      const match = /http:\/\/[a-z0-9.-]+:(\d+)/.exec(output);
       if (match) {
         clearTimeout(timer);
         resolve(match[0]);

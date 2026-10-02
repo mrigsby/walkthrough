@@ -80,6 +80,8 @@ const ENV_EXAMPLE = `# Secrets for test plans. Copy this file to .env in the sam
 
 const GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
 .env
+.env.*
+!.env.example
 sessions/
 runs/
 config.local.yaml

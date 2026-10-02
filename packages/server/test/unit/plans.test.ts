@@ -128,12 +128,7 @@ describe('environment keys', () => {
     );
     if (!result.ok) throw new Error(JSON.stringify(result.problems));
     expect(result.plan.vars).toEqual({ shopper: 'Demo Shopper', count: 2 });
-    // They work in a later update. Until then a run stops with a clear message.
-    expect(laterFeatures(result.plan)).toEqual([
-      '"environment" (comes in a later update)',
-      '"environments" (comes in a later update)',
-      '"vars" (comes in a later update)',
-    ]);
+    expect(laterFeatures(result.plan)).toEqual([]);
   });
 
   it('explains bad environment keys', () => {

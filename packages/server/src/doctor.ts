@@ -6,6 +6,7 @@ import type { Config } from './config.js';
 import { SELF } from './downloads/cache.js';
 import { findFfmpeg } from './downloads/ffmpeg.js';
 import { findLighthouse } from './downloads/lighthouse.js';
+import { describeEnvironment } from './environments.js';
 import type { SecretStore } from './guards/secrets.js';
 import { MIN_NODE, nodeVersionOk, VERSION } from './version.js';
 
@@ -14,6 +15,8 @@ export async function doctorReport(
   config: Config,
   secrets: SecretStore,
   driver?: Driver,
+  // The MCP client, when the report comes from the doctor tool.
+  client?: { name?: string; canAsk: boolean },
 ): Promise<string> {
   const ok = (text: string) => `OK    ${text}`;
   const fix = (text: string) => `FIX   ${text}`;
@@ -44,6 +47,19 @@ export async function doctorReport(
   );
   for (const warning of config.warnings) lines.push(fix(warning));
 
+  const envs = Object.values(config.environments);
+  lines.push(
+    info(
+      `Environment: ${describeEnvironment(config.environment)}${config.environment.protected ? ', protected' : ''}`,
+    ),
+  );
+  if (envs.length > 1) {
+    lines.push(
+      info(
+        `Environments: ${envs.map((e) => `${e.name}${e.protected ? ' (protected)' : ''}`).join(', ')}. Default: ${config.defaultEnvironment}.`,
+      ),
+    );
+  }
   lines.push(info(`Allowed sites: ${config.allowedOrigins.join(', ')}`));
   if (config.baseUrl) lines.push(info(`Base URL: ${config.baseUrl}`));
   lines.push(
@@ -62,11 +78,23 @@ export async function doctorReport(
     lines.push(
       info(`Screenshot folders outside the project: ${config.screenshotRoots.join(', ')}`),
     );
+  const envName = config.environment.name;
+  const files =
+    envName === 'development'
+      ? '.walkthrough/.env'
+      : `.walkthrough/.env.${envName}${config.environment.protected ? '' : ' and .walkthrough/.env'}`;
   lines.push(
     secrets.names.length > 0
-      ? ok(`Secrets in .walkthrough/.env: ${secrets.names.join(', ')}`)
-      : info('No secrets in .walkthrough/.env.'),
+      ? ok(`Secrets in ${files}: ${secrets.names.join(', ')}`)
+      : info(`No secrets in ${files}.`),
   );
+  if (client) {
+    lines.push(
+      info(
+        `MCP client: ${client.name ?? 'unknown'}. ${client.canAsk ? 'It can ask the developer to confirm a protected environment when the browser panel is not there.' : 'It cannot ask the developer questions, so the browser panel asks to confirm a protected environment.'}`,
+      ),
+    );
+  }
 
   const lighthouse = findLighthouse();
   lines.push(

@@ -121,6 +121,68 @@ export function startUrl(
   return new URL(planBase, envBase).href;
 }
 
+// Moves a URL from one environment to the same place on another one.
+// Returns undefined when the URL is not on the first environment.
+export function rebaseUrl(url: string, fromBase?: string, toBase?: string): string | undefined {
+  if (!fromBase || !toBase) return undefined;
+  let here: URL;
+  let from: URL;
+  let to: URL;
+  try {
+    here = new URL(url);
+    from = new URL(fromBase);
+    to = new URL(toBase);
+  } catch {
+    return undefined;
+  }
+  if (here.origin !== from.origin) return undefined;
+  // A base path, like /app/, moves too.
+  const fromPath = from.pathname.replace(/\/+$/, '');
+  const toPath = to.pathname.replace(/\/+$/, '');
+  let path = here.pathname;
+  if (fromPath && (path === fromPath || path.startsWith(`${fromPath}/`))) {
+    path = toPath + path.slice(fromPath.length);
+  } else if (fromPath) {
+    return undefined;
+  }
+  return `${to.origin}${path || '/'}${here.search}${here.hash}`;
+}
+
+// Moves a URL from any other environment to the one these settings are for.
+// The longest base URL that matches wins. Other URLs stay as they are.
+export function rebaseToEnvironment(
+  url: string,
+  config: Pick<Config, 'environment' | 'environments'>,
+): string {
+  const target = config.environment.baseUrl;
+  const others = Object.values(config.environments)
+    .filter((env) => env.name !== config.environment.name && env.baseUrl)
+    .sort((a, b) => (b.baseUrl?.length ?? 0) - (a.baseUrl?.length ?? 0));
+  for (const env of others) {
+    const moved = rebaseUrl(url, env.baseUrl, target);
+    if (moved) return moved;
+  }
+  return url;
+}
+
+// What the secret store needs to know about an environment.
+export function secretScope(env: Environment): {
+  name: string;
+  protected: boolean;
+  rename: Record<string, string>;
+} {
+  return { name: env.name, protected: env.protected, rename: env.secrets };
+}
+
+// The badge in the panel. None when the project has only development.
+export function environmentBadge(
+  config: Pick<Config, 'environment' | 'environments'>,
+): { label: string; color: string } | null {
+  const only = Object.keys(config.environments).length === 1;
+  if (only && config.environment.name === DEVELOPMENT) return null;
+  return { label: config.environment.label, color: config.environment.color };
+}
+
 // Sites that stay blocked: the other environments, and a protected one that is not confirmed.
 export function deniedOrigins(
   config: Pick<Config, 'environment' | 'environments'>,

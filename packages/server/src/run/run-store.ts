@@ -88,6 +88,10 @@ export interface Run {
   startedAt: string;
   endedAt?: string;
   baseUrl?: string;
+  // The environment of the run. Runs from before 0.4.0 have none: they are development.
+  environment?: RunEnvironment;
+  // The values that {{var:NAME}} had in this run.
+  vars?: Record<string, string>;
   chrome?: string;
   summary?: string;
   // Screen, color scheme, network, and saved login used for the run.
@@ -115,6 +119,14 @@ export interface Run {
   videos?: RunVideo[];
   // Why a video of the run is missing.
   videoNote?: string;
+}
+
+export interface RunEnvironment {
+  name: string;
+  label: string;
+  color: string;
+  baseUrl?: string;
+  protected: boolean;
 }
 
 // One accessibility check of one page. Fields after "violations" are optional,
@@ -185,9 +197,17 @@ export class RunStore {
       // Lighthouse settings from config.yaml, for a plan that names none.
       lighthouse?: { device: string; categories: string[] };
       freshBrowser?: boolean;
+      environment?: RunEnvironment;
+      vars?: Record<string, string>;
+      // Fills in {{var:NAME}} and {{unique}} in text that people read.
+      show?: (text: string) => string;
     },
   ): RunStore {
-    const id = `${stamp()}-${slug(input.name, 40, 'run')}-${randomBytes(2).toString('hex')}`;
+    // The date stays first, so ids sort by time. Other environments add their name.
+    const env = input.environment?.name;
+    const envPart = env && env !== 'development' ? `-${env}` : '';
+    const id = `${stamp()}-${slug(input.name, 40, 'run')}${envPart}-${randomBytes(2).toString('hex')}`;
+    const show = input.show ?? ((text: string) => text);
     const dir = join(ensureWalkthroughDir(projectDir), 'runs', id);
     mkdirSync(join(dir, 'screenshots'), { recursive: true });
     const settings = input.plan?.accessibility;
@@ -199,14 +219,14 @@ export class RunStore {
     const steps: RunStep[] = (input.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
-      title: step.do,
-      expect: step.expect,
+      title: show(step.do),
+      expect: step.expect === undefined ? undefined : show(step.expect),
       confirm: needsConfirm(input.mode, step.checkpoint),
       status: 'pending',
       screenshots: [],
       actions: [],
       ...(step.cookies ? { cookies: step.cookies } : {}),
-      ...(step.caption ? { caption: step.caption } : {}),
+      ...(step.caption ? { caption: show(step.caption) } : {}),
       ...(step.lighthouse
         ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } }
         : {}),
@@ -232,6 +252,8 @@ export class RunStore {
       status: 'running',
       startedAt: new Date().toISOString(),
       baseUrl: input.baseUrl,
+      ...(input.environment ? { environment: input.environment } : {}),
+      ...(input.vars && Object.keys(input.vars).length ? { vars: input.vars } : {}),
       chrome: input.chrome,
       setup: input.setup,
       emulation: input.emulation,

@@ -97157,6 +97157,9 @@ function originOf(url2) {
     return void 0;
   }
 }
+function describeEnvironment(env2) {
+  return env2.baseUrl ? `${env2.name} (${env2.baseUrl})` : env2.name;
+}
 function startUrl(planBase, envBase) {
   if (!planBase) return envBase;
   if (!planBase.startsWith("/")) return planBase;
@@ -97167,6 +97170,73 @@ function startUrl(planBase, envBase) {
     );
   }
   return new URL(planBase, envBase).href;
+}
+function rebaseUrl(url2, fromBase, toBase) {
+  if (!fromBase || !toBase) return void 0;
+  let here;
+  let from2;
+  let to;
+  try {
+    here = new URL(url2);
+    from2 = new URL(fromBase);
+    to = new URL(toBase);
+  } catch {
+    return void 0;
+  }
+  if (here.origin !== from2.origin) return void 0;
+  const fromPath = from2.pathname.replace(/\/+$/, "");
+  const toPath = to.pathname.replace(/\/+$/, "");
+  let path14 = here.pathname;
+  if (fromPath && (path14 === fromPath || path14.startsWith(`${fromPath}/`))) {
+    path14 = toPath + path14.slice(fromPath.length);
+  } else if (fromPath) {
+    return void 0;
+  }
+  return `${to.origin}${path14 || "/"}${here.search}${here.hash}`;
+}
+function rebaseToEnvironment(url2, config3) {
+  const target2 = config3.environment.baseUrl;
+  const others = Object.values(config3.environments).filter((env2) => env2.name !== config3.environment.name && env2.baseUrl).sort((a2, b2) => (b2.baseUrl?.length ?? 0) - (a2.baseUrl?.length ?? 0));
+  for (const env2 of others) {
+    const moved = rebaseUrl(url2, env2.baseUrl, target2);
+    if (moved) return moved;
+  }
+  return url2;
+}
+function secretScope(env2) {
+  return { name: env2.name, protected: env2.protected, rename: env2.secrets };
+}
+function environmentBadge(config3) {
+  const only = Object.keys(config3.environments).length === 1;
+  if (only && config3.environment.name === DEVELOPMENT) return null;
+  return { label: config3.environment.label, color: config3.environment.color };
+}
+function deniedOrigins(config3, confirmed = /* @__PURE__ */ new Set()) {
+  const active = config3.environment;
+  const here = originOf(active.baseUrl);
+  const out = /* @__PURE__ */ new Map();
+  for (const env2 of Object.values(config3.environments)) {
+    const origin = originOf(env2.baseUrl);
+    if (!origin || out.has(origin)) continue;
+    if (env2.name === active.name) {
+      if (env2.protected && !confirmed.has(env2.name)) {
+        out.set(
+          origin,
+          `"${env2.name}" is a protected environment, and the developer has not confirmed it yet. Call the environment tool with action "use" and name "${env2.name}". The developer confirms it in the browser.`
+        );
+      }
+      continue;
+    }
+    if (origin === here) continue;
+    out.set(
+      origin,
+      `${origin} is the site of the "${env2.name}" environment, and this session uses "${active.name}". To test ${env2.name}, call the environment tool with action "use" and name "${env2.name}".`
+    );
+  }
+  return [...out].map(([origin, reason]) => ({ origin, reason }));
+}
+function environmentGuard(config3, confirmed = /* @__PURE__ */ new Set()) {
+  return new OriginGuard(config3.allowedOrigins, deniedOrigins(config3, confirmed));
 }
 
 // packages/server/src/lighthouse/categories.ts
@@ -97763,7 +97833,7 @@ function nodeVersionOk(version2 = process.versions.node) {
 }
 
 // packages/server/src/doctor.ts
-async function doctorReport(config3, secrets, driver) {
+async function doctorReport(config3, secrets, driver, client) {
   const ok = (text) => `OK    ${text}`;
   const fix = (text) => `FIX   ${text}`;
   const info = (text) => `INFO  ${text}`;
@@ -97785,6 +97855,19 @@ async function doctorReport(config3, secrets, driver) {
     existsSync7(configFile) ? ok("Settings file: .walkthrough/config.yaml") : info("No .walkthrough/config.yaml. Walkthrough uses the default settings.")
   );
   for (const warning of config3.warnings) lines.push(fix(warning));
+  const envs = Object.values(config3.environments);
+  lines.push(
+    info(
+      `Environment: ${describeEnvironment(config3.environment)}${config3.environment.protected ? ", protected" : ""}`
+    )
+  );
+  if (envs.length > 1) {
+    lines.push(
+      info(
+        `Environments: ${envs.map((e) => `${e.name}${e.protected ? " (protected)" : ""}`).join(", ")}. Default: ${config3.defaultEnvironment}.`
+      )
+    );
+  }
   lines.push(info(`Allowed sites: ${config3.allowedOrigins.join(", ")}`));
   if (config3.baseUrl) lines.push(info(`Base URL: ${config3.baseUrl}`));
   lines.push(
@@ -97803,9 +97886,18 @@ async function doctorReport(config3, secrets, driver) {
     lines.push(
       info(`Screenshot folders outside the project: ${config3.screenshotRoots.join(", ")}`)
     );
+  const envName = config3.environment.name;
+  const files = envName === "development" ? ".walkthrough/.env" : `.walkthrough/.env.${envName}${config3.environment.protected ? "" : " and .walkthrough/.env"}`;
   lines.push(
-    secrets.names.length > 0 ? ok(`Secrets in .walkthrough/.env: ${secrets.names.join(", ")}`) : info("No secrets in .walkthrough/.env.")
+    secrets.names.length > 0 ? ok(`Secrets in ${files}: ${secrets.names.join(", ")}`) : info(`No secrets in ${files}.`)
   );
+  if (client) {
+    lines.push(
+      info(
+        `MCP client: ${client.name ?? "unknown"}. ${client.canAsk ? "It can ask the developer to confirm a protected environment when the browser panel is not there." : "It cannot ask the developer questions, so the browser panel asks to confirm a protected environment."}`
+      )
+    );
+  }
   const lighthouse = findLighthouse();
   lines.push(
     lighthouse ? ok(`Lighthouse ${lighthouse.version}: ${lighthouse.dir}`) : info(`Lighthouse is not installed. For performance reports, run: ${SELF} setup lighthouse`)
@@ -98247,11 +98339,7 @@ function stepCapture(plan, step) {
   }
   return capture;
 }
-var LATER_KEYS = {
-  environment: "a later update",
-  environments: "a later update",
-  vars: "a later update"
-};
+var LATER_KEYS = {};
 var LATER_STEP_KEYS = {};
 function planJsonSchema() {
   return {
@@ -98334,6 +98422,8 @@ var ENV_EXAMPLE = `# Secrets for test plans. Copy this file to .env in the same 
 `;
 var GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
 .env
+.env.*
+!.env.example
 sessions/
 runs/
 config.local.yaml
@@ -106928,6 +107018,10 @@ var PANEL_CSS = `
 .card.collapsed .header { border-bottom: none; }
 .brand { font-weight: 700; }
 .step { color: var(--muted); font-size: 12px; flex: 1; }
+.env { padding: 1px 7px; border-radius: 4px; color: #ffffff; font-size: 11px; font-weight: 700; }
+.env[hidden] { display: none; }
+.buttons.two { grid-template-columns: 1fr 1fr; }
+.buttons button[hidden], .question [hidden] { display: none; }
 .icon { background: none; border: none; color: var(--fg); font-size: 16px; width: 26px; height: 26px;
   border-radius: 6px; cursor: pointer; }
 .icon:hover { background: var(--btn); }
@@ -107002,12 +107096,13 @@ function panelMain(opts, candidates) {
   const card = el("section", "card");
   const header = el("header", "header");
   const brand = el("span", "brand", "Walkthrough");
+  const envBadge = el("span", "env");
   const stepBadge = el("span", "step");
   const moveButton = el("button", "icon", "\u21C4");
   moveButton.title = "Move to another corner";
   const collapseButton = el("button", "icon", "\u2212");
   collapseButton.title = "Collapse";
-  header.append(brand, stepBadge, moveButton, collapseButton);
+  header.append(brand, envBadge, stepBadge, moveButton, collapseButton);
   const body = el("div", "body");
   const status = el("p", "status");
   const title = el("h2", "title");
@@ -107043,6 +107138,7 @@ function panelMain(opts, candidates) {
   card.append(header, body);
   root.append(pulse, pulseLabel, annotation, card);
   let question = null;
+  let env2 = null;
   let recording = null;
   let addingExpect = false;
   let corner = "bottom-right";
@@ -107054,6 +107150,17 @@ function panelMain(opts, candidates) {
     card.dataset.corner = corner;
   };
   const render = () => {
+    envBadge.hidden = !env2;
+    envBadge.textContent = env2?.label ?? "";
+    envBadge.style.background = env2?.color ?? "";
+    const confirm = question?.kind === "confirm";
+    card.classList.toggle("confirming", confirm);
+    card.style.borderColor = confirm && question?.color ? question.color : "";
+    for (const node3 of [didLabel, expectLabel, expectText, notes, error62, bugButton, skipButton])
+      node3.hidden = confirm;
+    buttons.classList.toggle("two", confirm);
+    passButton.textContent = confirm ? question?.confirmLabel ?? "Continue" : "Pass";
+    stopButton.textContent = confirm ? "Cancel" : "Stop";
     card.classList.toggle("collapsed", collapsed);
     card.classList.toggle("asking", Boolean(question));
     card.classList.toggle("recording-on", Boolean(recording));
@@ -107070,7 +107177,7 @@ function panelMain(opts, candidates) {
     collapseButton.textContent = collapsed ? "+" : "\u2212";
     collapseButton.title = collapsed ? "Expand" : "Collapse";
     if (question) {
-      stepBadge.textContent = question.step ? `Step ${question.step}${question.total ? ` of ${question.total}` : ""}` : "Check";
+      stepBadge.textContent = confirm ? "Confirm" : question.step ? `Step ${question.step}${question.total ? ` of ${question.total}` : ""}` : "Check";
       title.textContent = question.title;
       didText.textContent = question.didWhat;
       expectText.textContent = question.expected;
@@ -107101,12 +107208,17 @@ function panelMain(opts, candidates) {
       return;
     }
     send({ type: "answer", id: question.id, nonce: question.nonce, result, note });
+    const confirmed = question.kind === "confirm";
     question = null;
     notes.value = "";
     error62.textContent = "";
-    setStatus(
-      `Sent: ${result === "pass" ? "Pass" : result === "bug" ? "Bug" : result === "skip" ? "Skip" : "Stop"}. The agent is working.`
-    );
+    if (confirmed) {
+      setStatus(result === "pass" ? "Confirmed. The agent is working." : "Canceled.");
+    } else {
+      setStatus(
+        `Sent: ${result === "pass" ? "Pass" : result === "bug" ? "Bug" : result === "skip" ? "Skip" : "Stop"}. The agent is working.`
+      );
+    }
     render();
   };
   onTrusted(expectButton, () => {
@@ -107201,6 +107313,7 @@ function panelMain(opts, candidates) {
           error62.textContent = "";
         }
         question = next;
+        env2 = msg.env ?? null;
         recording = msg.recording ?? null;
         if (!recording) addingExpect = false;
         setStatus(msg.status ?? "The agent is working.");
@@ -107496,6 +107609,7 @@ var DeveloperPanel = class {
   // "lighthouse" while Lighthouse measures, "video" while Walkthrough records.
   suppressed = /* @__PURE__ */ new Map();
   recordWaiter;
+  env = null;
   async attach(page, tabId) {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
     if (bridge) this.bridges.set(tabId, bridge);
@@ -107533,6 +107647,7 @@ var DeveloperPanel = class {
       status: this.status,
       corner: this.corner,
       recording: this.recorder ? { count: this.recorder.steps.length, last: this.recorder.lastLabel } : null,
+      env: this.env,
       question: q2 ? {
         id: q2.id,
         nonce: q2.nonce,
@@ -107540,7 +107655,10 @@ var DeveloperPanel = class {
         didWhat: q2.didWhat,
         expected: q2.expected,
         step: q2.step,
-        total: q2.total
+        total: q2.total,
+        kind: q2.kind ?? "step",
+        confirmLabel: q2.confirmLabel,
+        color: q2.color
       } : null
     };
   }
@@ -107703,6 +107821,11 @@ var DeveloperPanel = class {
     this.finishRecording("stopped");
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+  // The environment badge in every tab. Null hides it.
+  async setEnvironment(badge) {
+    this.env = badge;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
   // Shows the same state again, for example after the active tab changes.
   async refresh(tabId) {
@@ -108062,6 +108185,8 @@ var Driver = class _Driver {
   active;
   dialogPolicy;
   closedReason;
+  // Protected environments that the developer confirmed for this browser.
+  confirmedEnvs = /* @__PURE__ */ new Set();
   tabCounter = 0;
   notes = [];
   pendingDialogs = /* @__PURE__ */ new Map();
@@ -108494,6 +108619,11 @@ var Driver = class _Driver {
     await this.refreshRouters();
     return before - this.mocks.length;
   }
+  // Uses the settings of another environment, such as its time limit.
+  applyEnvironment(config3) {
+    this.options.config = config3;
+    for (const tab of this.tabs.values()) tab.page.setDefaultTimeout(config3.actionTimeoutMs);
+  }
   async refreshRouters() {
     for (const tab of this.tabs.values()) await this.refreshRouter(tab);
   }
@@ -108561,11 +108691,76 @@ function tokenizeUnique(text, unique2) {
   return text.replace(/%7B%7B\s*unique\s*%7D%7D/gi, UNIQUE_TOKEN).split(unique2).join(UNIQUE_TOKEN);
 }
 
+// packages/server/src/page/tokens.ts
+var VAR = /\{\{\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g;
+var ENCODED_VAR = /%7B%7B\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*%7D%7D/gi;
+function hasVars(text) {
+  VAR.lastIndex = 0;
+  return VAR.test(text);
+}
+function varNames(text) {
+  return [...new Set([...text.matchAll(VAR)].map((m) => m[1]))];
+}
+function buildVars(config3, planVars) {
+  return {
+    ...config3.vars,
+    ...stringValues(planVars),
+    ...config3.environment.vars,
+    environment: config3.environment.name,
+    baseUrl: config3.environment.baseUrl ?? ""
+  };
+}
+var TokenResolver = class {
+  constructor(unique2, vars, secrets) {
+    this.unique = unique2;
+    this.vars = vars;
+    this.secrets = secrets;
+  }
+  unique;
+  vars;
+  secrets;
+  fillVars(text) {
+    return text.replace(VAR, (_all, name) => {
+      const value = this.vars[name];
+      if (value === void 0) {
+        const defined = Object.keys(this.vars).join(", ");
+        throw new ToolError(
+          `{{var:${name}}} has no value. Defined values: ${defined}. Add "${name}" to "vars" in the plan or in .walkthrough/config.yaml. An environment can change it in its own "vars".`,
+          "var_missing"
+        );
+      }
+      return value;
+    });
+  }
+  // The real value. Vars go first, so a var can hold {{unique}} or a secret.
+  apply(text) {
+    const filled = withUnique(this.fillVars(text), this.unique);
+    return this.secrets ? this.secrets.resolve(filled) : filled;
+  }
+  // The value for people and the agent. Secret tokens stay as they are.
+  display(text) {
+    return withUnique(this.fillVars(text), this.unique);
+  }
+  // Puts tokens back, so a record can run again with other values.
+  tokenizeForLog(text) {
+    let out = text.replace(ENCODED_VAR, (_all, name) => `{{var:${name}}}`);
+    for (const [name, value] of Object.entries(this.vars)) {
+      if (!RESERVED_VARS.includes(name) && value.length >= 4 && out === value) {
+        out = `{{var:${name}}}`;
+        break;
+      }
+    }
+    return tokenizeUnique(out, this.unique);
+  }
+};
+
 // packages/server/src/project-files.ts
 import { existsSync as existsSync10, mkdirSync as mkdirSync5, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join15 } from "node:path";
 var GITIGNORE2 = `# Created by Walkthrough. These files stay on this computer.
 .env
+.env.*
+!.env.example
 sessions/
 runs/
 config.local.yaml
@@ -108601,12 +108796,16 @@ function fileStamp(label2) {
 
 // packages/server/src/context.ts
 var Context = class {
-  constructor(roots, clientName = () => void 0) {
+  constructor(roots, clientName = () => void 0, elicit) {
     this.roots = roots;
     this.clientName = clientName;
+    this.elicit = elicit;
+    const fromEnv = process.env.UIWALK_ENV?.trim();
+    if (fromEnv) this.sessionEnv = { name: fromEnv, source: "UIWALK_ENV" };
   }
   roots;
   clientName;
+  elicit;
   lock = new Mutex3();
   actionLog = [];
   stepAnswers = [];
@@ -108626,18 +108825,201 @@ var Context = class {
   forgetRing;
   // Fields hidden while anything records. They show again when all recordings stop.
   videoMasks = [];
+  // The environment that the developer or a tool chose for this session.
+  sessionEnv;
+  // Values for {{var:NAME}}: config and environment, plus the plan during a run.
+  vars = {};
   loaded;
+  // A switch to a protected environment that waits for the developer.
+  // Tabs move, or the session goes back, after the answer.
+  pendingSwitch;
   // Reads the project folder, settings, and secrets again.
-  async refresh(projectDirArg) {
+  // It keeps the environment in use, unless "environment" names another one.
+  async refresh(projectDirArg, environment2) {
     const roots = projectDirArg ? [] : await this.roots().catch(() => []);
     const { dir, source: source2 } = resolveProjectDir({ argument: projectDirArg, roots });
-    const config3 = loadConfig(dir, source2);
+    const loadedHere = this.loaded?.config.projectDir === dir ? this.loaded.config.environment.name : void 0;
+    const name = environment2 ?? this.sessionEnv?.name ?? loadedHere;
+    let config3;
+    try {
+      config3 = loadConfig(dir, source2, name);
+    } catch (error62) {
+      if (environment2 || !name || error62.code !== "environment_unknown") throw error62;
+      log.warn(`the environment "${name}" is not in the settings any more`);
+      this.sessionEnv = void 0;
+      config3 = loadConfig(dir, source2);
+      config3.warnings.push(
+        `The session used the environment "${name}", but the settings do not have it now. Walkthrough uses "${config3.environment.name}".`
+      );
+    }
     this.loaded = {
       config: config3,
-      secrets: SecretStore.forProject(dir),
-      guard: new OriginGuard(config3.allowedOrigins)
+      secrets: SecretStore.forProject(dir, secretScope(config3.environment)),
+      guard: environmentGuard(config3, this.driver?.confirmedEnvs)
     };
+    this.vars = buildVars(config3);
+    if (this.driver?.alive) {
+      this.driver.applyEnvironment(config3);
+      await this.driver.panel?.setEnvironment(environmentBadge(config3));
+    }
     return config3;
+  }
+  // Builds the guard again, for example after the developer confirms an environment.
+  rebuildGuard() {
+    if (!this.loaded) return;
+    this.loaded.guard = environmentGuard(this.loaded.config, this.driver?.confirmedEnvs);
+  }
+  // Fills in {{var:NAME}}, {{unique}}, and secrets.
+  async tokens() {
+    return new TokenResolver(this.unique, this.vars, await this.secrets());
+  }
+  // Fills in {{var:NAME}} and {{unique}}. Secrets stay as tokens.
+  display(text) {
+    return new TokenResolver(this.unique, this.vars).display(text);
+  }
+  // Switches the session to another environment. Open tabs on the old one move to the same page,
+  // after the developer confirms a protected environment. Returns lines for the reply.
+  async useEnvironment(name, how = {}) {
+    const before = await this.config();
+    const session = this.sessionEnv;
+    if (before.environment.name === name) {
+      if (how.source) this.sessionEnv = { name, source: how.source };
+      return [];
+    }
+    this.checkCanSwitch();
+    if (this.driver?.panel?.pending?.kind === "confirm") await this.driver.panel.clear();
+    this.pendingSwitch = void 0;
+    const config3 = await this.refresh(how.projectDir, name);
+    if (how.source) this.sessionEnv = { name, source: how.source };
+    const lines = [
+      `The session uses the "${name}" environment now: ${describeEnvironment(config3.environment)}.`
+    ];
+    if (config3.environment.protected && !this.driver?.confirmedEnvs.has(name)) {
+      this.pendingSwitch = { from: before, session };
+      return lines;
+    }
+    lines.push(...await this.moveTabs(before, config3));
+    return lines;
+  }
+  // After the developer answers: move the tabs, or go back to the environment from before.
+  async finishSwitch(confirmed) {
+    const pending = this.pendingSwitch;
+    this.pendingSwitch = void 0;
+    if (!pending) return [];
+    if (confirmed) return this.moveTabs(pending.from, await this.config());
+    const back = pending.from.environment.name;
+    await this.refresh(pending.from.projectDir, back);
+    this.sessionEnv = pending.session;
+    return [`The session goes back to the "${back}" environment.`];
+  }
+  checkCanSwitch() {
+    const busy = this.run?.run.status === "running" ? `the run "${this.run.run.name}" is still going. Call run_finish first` : this.driver?.panel?.recording ? 'recording is on. Call record with action "stop" first' : this.video?.capture.recording ? 'a video is recording. Call video with action "stop" first' : this.driver?.panel?.pending && this.driver.panel.pending.kind !== "confirm" ? "a question is open in the panel" : void 0;
+    if (busy) {
+      throw new ToolError(
+        `Walkthrough cannot change the environment now, because ${busy}.`,
+        "busy"
+      );
+    }
+  }
+  // Moves tabs on the old environment to the same page on the new one.
+  async moveTabs(before, after) {
+    const driver = this.driver?.alive ? this.driver : void 0;
+    if (!driver) return [];
+    const lines = [];
+    for (const tab of driver.tabs.values()) {
+      const url2 = tab.page.url();
+      const moved = rebaseUrl(url2, before.environment.baseUrl, after.environment.baseUrl);
+      if (moved) {
+        await tab.page.goto(moved, { waitUntil: "load" }).catch((error62) => {
+          lines.push(`Tab ${tab.id} could not open ${moved}: ${error62.message}`);
+        });
+        lines.push(`Tab ${tab.id} moved to ${moved}.`);
+      } else if (/^https?:/.test(url2) && !(await this.guard()).isAllowed(url2)) {
+        lines.push(`Tab ${tab.id} is on ${url2}, which this environment does not allow.`);
+      }
+    }
+    return lines;
+  }
+  // Asks the developer to confirm a protected environment, once for each browser.
+  // Only a person can confirm: in the panel, in the client, or with UIWALK_ALLOW_PROTECTED.
+  async confirmEnvironment(options) {
+    const config3 = await this.config();
+    const env2 = config3.environment;
+    const driver = this.driver?.alive ? this.driver : void 0;
+    if (!env2.protected || driver?.confirmedEnvs.has(env2.name)) return { status: "confirmed" };
+    const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? "").split(",").map((s) => s.trim());
+    const confirm = () => {
+      driver?.confirmedEnvs.add(env2.name);
+      this.rebuildGuard();
+      return { status: "confirmed" };
+    };
+    if (allowed.includes(env2.name)) return confirm();
+    if (!driver) {
+      return {
+        status: "waiting",
+        text: `"${env2.name}" is a protected environment. Open the browser with browser_open, and the developer confirms it there.`
+      };
+    }
+    const timeoutMs = (config3.askTimeoutSec ?? (this.clientName() === "claude-code" ? 300 : 50)) * 1e3;
+    const message = `Use the "${env2.name}" environment (${env2.baseUrl})? The agent can create real data there.`;
+    const panel = driver.panel;
+    const tab = driver.hasActiveTab ? driver.activeTab({ allowDialog: true }) : await driver.reopenTab();
+    if (panel && await panel.waitReady(tab.id)) {
+      const open4 = panel.pending;
+      if (!(options.resume && open4?.kind === "confirm" && open4.stepId === env2.name)) {
+        await panel.ask({
+          tabId: tab.id,
+          kind: "confirm",
+          title: `Use ${env2.label}?`,
+          didWhat: message,
+          expected: "",
+          stepId: env2.name,
+          confirmLabel: `Use ${env2.label}`,
+          color: env2.color
+        });
+      }
+      const outcome = await panel.waitForAnswer(timeoutMs, options.signal);
+      if (outcome.kind === "answer") {
+        if (outcome.answer.result === "pass") return confirm();
+        return {
+          status: "canceled",
+          text: `The developer did not confirm the "${env2.name}" environment. Walkthrough blocks its site.`
+        };
+      }
+      if (outcome.kind === "timeout") {
+        return {
+          status: "waiting",
+          text: `The developer has not confirmed the "${env2.name}" environment yet. The question is still in the panel. Call the environment tool with action "use", name "${env2.name}", and resume: true to keep waiting.`
+        };
+      }
+      return {
+        status: "canceled",
+        text: `Walkthrough stopped waiting for the developer (${outcome.kind}).`
+      };
+    }
+    const elicit = this.elicit?.();
+    if (elicit) {
+      const answer = await elicit(message, {
+        timeoutMs,
+        signal: options.signal,
+        relatedRequestId: options.requestId
+      });
+      if (answer === "yes") return confirm();
+      if (answer === "timeout") {
+        return {
+          status: "waiting",
+          text: `The developer has not confirmed the "${env2.name}" environment yet. Call the environment tool with action "use" and name "${env2.name}" again.`
+        };
+      }
+      return {
+        status: "canceled",
+        text: `The developer did not confirm the "${env2.name}" environment. Walkthrough blocks its site.`
+      };
+    }
+    throw new ToolError(
+      `"${env2.name}" is a protected environment. Walkthrough cannot ask the developer to confirm it, because the panel is not available and the client cannot ask questions. Use a visible browser, or start the server with UIWALK_ALLOW_PROTECTED=${env2.name}.`,
+      "protected_unconfirmed"
+    );
   }
   async ensureLoaded() {
     if (!this.loaded) await this.refresh();
@@ -108673,6 +109055,8 @@ var Context = class {
       // Look up the guard each time, so a config reload takes effect.
       isAllowed: (url2) => (this.loaded?.guard ?? guard).isAllowed(url2)
     });
+    this.rebuildGuard();
+    await this.driver.panel?.setEnvironment(environmentBadge(config3));
     return this.driver;
   }
 };
@@ -109863,7 +110247,10 @@ var RunStore = class _RunStore {
   run;
   projectDir;
   static create(projectDir, input3) {
-    const id = `${stamp2()}-${slug(input3.name, 40, "run")}-${randomBytes6(2).toString("hex")}`;
+    const env2 = input3.environment?.name;
+    const envPart = env2 && env2 !== "development" ? `-${env2}` : "";
+    const id = `${stamp2()}-${slug(input3.name, 40, "run")}${envPart}-${randomBytes6(2).toString("hex")}`;
+    const show = input3.show ?? ((text) => text);
     const dir = join17(ensureWalkthroughDir(projectDir), "runs", id);
     mkdirSync7(join17(dir, "screenshots"), { recursive: true });
     const settings = input3.plan?.accessibility;
@@ -109872,14 +110259,14 @@ var RunStore = class _RunStore {
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
-      title: step.do,
-      expect: step.expect,
+      title: show(step.do),
+      expect: step.expect === void 0 ? void 0 : show(step.expect),
       confirm: needsConfirm(input3.mode, step.checkpoint),
       status: "pending",
       screenshots: [],
       actions: [],
       ...step.cookies ? { cookies: step.cookies } : {},
-      ...step.caption ? { caption: step.caption } : {},
+      ...step.caption ? { caption: show(step.caption) } : {},
       ...step.lighthouse ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } } : {},
       ...step.a11y ? {
         a11y: {
@@ -109897,6 +110284,8 @@ var RunStore = class _RunStore {
       status: "running",
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       baseUrl: input3.baseUrl,
+      ...input3.environment ? { environment: input3.environment } : {},
+      ...input3.vars && Object.keys(input3.vars).length ? { vars: input3.vars } : {},
       chrome: input3.chrome,
       setup: input3.setup,
       emulation: input3.emulation,
@@ -112354,6 +112743,11 @@ function fullUrl(input3, current, baseUrl) {
   }
   return new URL(input3, base).href;
 }
+function loggedUrl(input3, full, from2, baseUrl, tokens) {
+  if (!hasVars(input3)) return tokens.tokenizeForLog(full);
+  if (/^\s*\{\{\s*var:/.test(input3)) return input3;
+  return tokens.tokenizeForLog(fullUrl(input3, from2, baseUrl));
+}
 async function settle3(tab) {
   await tab.page.waitForNetworkIdle({ idleTime: 300, timeout: 3e3 }).catch(() => void 0);
 }
@@ -112378,7 +112772,6 @@ async function goTo(tab, url2) {
 }
 async function openBrowser(ctx, options) {
   const config3 = await ctx.config();
-  const guard = await ctx.guard();
   const lines = [];
   if (options.fresh && ctx.driver?.alive) {
     if (ctx.driver.mode === "attached") {
@@ -112407,6 +112800,23 @@ async function openBrowser(ctx, options) {
     lines.push("No tab was open, so Walkthrough opened a new one.");
   }
   const tab = driver.activeTab();
+  const confirm = await ctx.confirmEnvironment({
+    signal: options.signal,
+    requestId: options.requestId,
+    resume: options.resume
+  });
+  if (confirm.status !== "confirmed") {
+    if (confirm.status === "canceled") lines.push(...await ctx.finishSwitch(false));
+    if (!options.allowWaiting) {
+      throw new ToolError(
+        `${confirm.text} Then try again.`,
+        confirm.status === "waiting" ? "confirm_waiting" : "protected_unconfirmed"
+      );
+    }
+    lines.push(confirm.text, await pageSummary(tab));
+    return { text: [`status: ${confirm.status}`, ...lines].join("\n"), tab, confirmed: false };
+  }
+  lines.push(...await ctx.finishSwitch(true));
   if (options.emulation && Object.keys(options.emulation).length > 0) {
     await driver.setEmulation(options.emulation, { reload: false });
   }
@@ -112417,14 +112827,14 @@ async function openBrowser(ctx, options) {
   const goAgain = Boolean(options.session) || !alreadyOpen || reopened || options.alwaysGo;
   const target2 = options.url ?? (goAgain ? config3.baseUrl ?? (options.session ? tab.page.url() : void 0) : void 0);
   if (target2) {
-    const full = fullUrl(withUnique(target2, ctx.unique), tab.page.url(), config3.baseUrl);
-    guard.check(full);
+    const full = fullUrl(ctx.display(target2), tab.page.url(), config3.baseUrl);
+    (await ctx.guard()).check(full);
     const problem = await goTo(tab, full);
     if (problem) lines.push(problem);
   }
   lines.push(await pageSummary(tab));
   lines.push("Next, take a snapshot to see the page.");
-  return { text: lines.join("\n"), tab };
+  return { text: lines.join("\n"), tab, confirmed: true };
 }
 function registerBrowserTools(server, ctx) {
   server.registerTool(
@@ -112438,7 +112848,10 @@ function registerBrowserTools(server, ctx) {
     },
     ({ projectDir }) => runTool(ctx, "doctor", async () => {
       const config3 = await ctx.refresh(projectDir);
-      return doctorReport(config3, await ctx.secrets(), ctx.driver);
+      return doctorReport(config3, await ctx.secrets(), ctx.driver, {
+        name: ctx.clientName(),
+        canAsk: Boolean(ctx.elicit?.())
+      });
     })
   );
   server.registerTool(
@@ -112452,12 +112865,28 @@ function registerBrowserTools(server, ctx) {
           'Connect to a running Chrome instead of starting one. Example: "http://127.0.0.1:9222".'
         ),
         session: external_exports.string().optional().describe("A saved login to use, from the session tool."),
+        environment: external_exports.string().optional().describe(
+          'Switch the session to this environment first, like "staging". Only when the developer asks for it.'
+        ),
+        resume: external_exports.boolean().optional().describe(
+          "Keep waiting for the developer to confirm a protected environment, after a reply with status: waiting."
+        ),
         projectDir: external_exports.string().optional().describe("Project folder. Leave empty to find it automatically.")
       }
     },
-    ({ url: url2, attach, session, projectDir }) => runTool(ctx, "browser_open", async () => {
+    ({ url: url2, attach, session, environment: environment2, resume, projectDir }, extra) => runTool(ctx, "browser_open", async () => {
       await ctx.refresh(projectDir);
-      return (await openBrowser(ctx, { url: url2, attach, session })).text;
+      const lines = environment2 ? await ctx.useEnvironment(environment2, { source: "tool", projectDir }) : [];
+      const opened = await openBrowser(ctx, {
+        url: url2,
+        attach,
+        session,
+        signal: extra.signal,
+        requestId: extra.requestId,
+        allowWaiting: true,
+        resume
+      });
+      return [...lines, opened.text].join("\n");
     })
   );
   server.registerTool(
@@ -112493,18 +112922,19 @@ function registerBrowserTools(server, ctx) {
       const tab = action2 === "reload" ? reloadableTab(driver) : driver.activeTab();
       let problem;
       if (url2) {
-        const full = fullUrl(withUnique(url2, ctx.unique), tab.page.url(), config3.baseUrl);
+        const full = fullUrl(ctx.display(url2), tab.page.url(), config3.baseUrl);
         guard.check(full);
         const from2 = tab.page.url();
         problem = await goTo(tab, full);
+        const tokens = await ctx.tokens();
         ctx.actionLog.push({
           at: (/* @__PURE__ */ new Date()).toISOString(),
           tabId: tab.id,
           tab: tab.name,
           action: "navigate",
           label: full,
-          value: tokenizeUnique(full, ctx.unique),
-          url: tokenizeUnique(from2, ctx.unique)
+          value: loggedUrl(url2, full, from2, config3.baseUrl, tokens),
+          url: tokens.tokenizeForLog(from2)
         });
       } else if (action2 === "back") {
         await tab.page.goBack({ waitUntil: "load" });
@@ -112555,7 +112985,8 @@ function registerBrowserTools(server, ctx) {
         const guard = await ctx.guard();
         const from2 = driver.activeId ? driver.tabs.get(driver.activeId)?.page.url() ?? "" : "";
         const target2 = url2 ?? (session ? config3.baseUrl : void 0);
-        const full = target2 ? fullUrl(withUnique(target2, ctx.unique), from2, config3.baseUrl) : void 0;
+        const full = target2 ? fullUrl(ctx.display(target2), from2, config3.baseUrl) : void 0;
+        const tokens = await ctx.tokens();
         if (full) guard.check(full);
         const loginChoice = isolated === true ? true : isolated ? isolated : void 0;
         const tab = await driver.newTab({ name, isolated: loginChoice });
@@ -112571,7 +113002,7 @@ function registerBrowserTools(server, ctx) {
             name: tab.name,
             login: tab.login,
             isolated: loginChoice,
-            url: full ? tokenizeUnique(full, ctx.unique) : void 0,
+            url: full && target2 ? loggedUrl(target2, full, from2, config3.baseUrl, tokens) : void 0,
             session
           }),
           url: ""
@@ -114249,7 +114680,7 @@ function describeA11y(step) {
   ].filter(Boolean);
   return `accessibility check${extra.length ? ` (${extra.join("; ")})` : ""}`;
 }
-function stepList(plan, mode) {
+function stepList(plan, mode, show = (t) => t) {
   return plan.steps.map((step, i) => {
     const id = step.id ?? `step-${i + 1}`;
     const flags = [
@@ -114262,8 +114693,8 @@ function stepList(plan, mode) {
       step.lighthouse ? `Lighthouse ${step.lighthouse}` : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
-    if (step.expect) lines.push(`   Expect: ${step.expect}`);
-    if (step.caption) lines.push(`   Caption: ${step.caption}`);
+    if (step.expect) lines.push(`   Expect: ${show(step.expect)}`);
+    if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
     if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
     if (step.cookies)
       lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join("; ")}`);
@@ -114349,11 +114780,14 @@ function registerRunTools(server, ctx) {
         plan: external_exports.string().optional().describe('Plan name, like "checkout".'),
         name: external_exports.string().optional().describe("Name for an ad hoc run without a plan."),
         mode: external_exports.enum(MODES).optional().describe("Overrides the mode in the plan. The default is checkpoints."),
-        video: external_exports.boolean().optional().describe("Record the whole run as a video. The plan's video key does the same.")
+        video: external_exports.boolean().optional().describe("Record the whole run as a video. The plan's video key does the same."),
+        environment: external_exports.string().optional().describe(
+          'Run in this environment, like "staging". It also switches the session. Without it, the session, the plan, or the default environment chooses.'
+        )
       }
     },
-    ({ plan: planName, name, mode: modeArg, video: videoArg }) => runTool(ctx, "run_start", async () => {
-      const config3 = await ctx.refresh();
+    ({ plan: planName, name, mode: modeArg, video: videoArg, environment: environment2 }, extra) => runTool(ctx, "run_start", async () => {
+      let config3 = await ctx.refresh();
       if (ctx.run?.run.status === "running") {
         throw new ToolError(
           `The run "${ctx.run.run.name}" is still going. Call run_finish first.`,
@@ -114381,6 +114815,25 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           );
         }
       }
+      const envName = environment2 ?? ctx.sessionEnv?.name ?? plan?.environment ?? config3.defaultEnvironment;
+      if (plan?.environments && !plan.environments.includes(envName)) {
+        throw new ToolError(
+          `The plan "${plan.name}" may run only in these environments: ${plan.environments.join(", ")}. This run would use "${envName}". Choose one of them with the "environment" argument, or add "${envName}" to the plan's "environments" list.`,
+          "environment_not_allowed"
+        );
+      }
+      const envLines = await ctx.useEnvironment(envName, {
+        source: environment2 ? "tool" : void 0
+      });
+      config3 = await ctx.config();
+      ctx.vars = buildVars(config3, plan?.vars);
+      const missingVars = plan ? varNames(JSON.stringify(plan)).filter((n) => ctx.vars[n] === void 0) : [];
+      if (missingVars.length) {
+        throw new ToolError(
+          `The plan uses {{var:${missingVars.join("}}, {{var:")}}}, but the "${envName}" environment has no value for ${missingVars.length === 1 ? "it" : "them"}. Add the values to "vars" in the plan, in .walkthrough/config.yaml, or in the environment.`,
+          "var_missing"
+        );
+      }
       const videoPlan = plan?.video === false ? void 0 : typeof plan?.video === "object" ? plan.video : plan?.video || videoArg ? {} : void 0;
       if (videoPlan) {
         if (ctx.video?.capture.recording) {
@@ -114401,7 +114854,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         );
       }
       const mode = modeArg ?? plan?.mode ?? "checkpoints";
-      const baseUrl = startUrl(plan?.baseUrl, config3.baseUrl);
+      const planStart = plan?.baseUrl ? rebaseToEnvironment(ctx.display(plan.baseUrl), config3) : void 0;
+      const baseUrl = startUrl(planStart, config3.baseUrl);
       ctx.unique = newUnique();
       ctx.lhFlow = void 0;
       const emulation = { ...plan?.emulate };
@@ -114414,7 +114868,9 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         session: plan?.session,
         emulation,
         // Lighthouse results must not depend on earlier runs, like a warm cache.
-        fresh: lhSteps
+        fresh: lhSteps,
+        signal: extra.signal,
+        requestId: extra.requestId
       });
       const driver = ctx.requireDriver();
       ctx.actionCursor = ctx.actionLog.length;
@@ -114432,14 +114888,32 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         session: plan?.session,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c]),
         lighthouse: config3.lighthouse,
-        freshBrowser: lhSteps ? driver.mode === "launched" : void 0
+        freshBrowser: lhSteps ? driver.mode === "launched" : void 0,
+        environment: {
+          name: config3.environment.name,
+          label: config3.environment.label,
+          color: config3.environment.color,
+          baseUrl: config3.environment.baseUrl,
+          protected: config3.environment.protected
+        },
+        vars: plan?.vars || Object.keys(config3.vars).length || Object.keys(config3.environment.vars).length ? Object.fromEntries(
+          Object.entries(ctx.vars).filter(([k]) => k !== "environment" && k !== "baseUrl")
+        ) : void 0,
+        show: (text) => ctx.display(text)
       });
       const lh = ctx.run.run.lhPlan;
       await stopRing(ctx);
       if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
       else await startRing(ctx);
+      const userVars = Object.entries(ctx.run.run.vars ?? {});
       const lines = [
         `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+        `Environment: ${describeEnvironment(config3.environment)}${config3.environment.protected ? ", protected" : ""}.`,
+        ...envLines,
+        ...userVars.length ? [
+          `Values for {{var:NAME}}: ${userVars.map(([k, v2]) => `${k} = "${v2}"`).join(", ")}.`,
+          "In act and navigate, pass the {{var:NAME}} token from the step, not its value. Then a replay in another environment uses that environment's value."
+        ] : [],
         ...videoPlan ? ["Walkthrough records this run as a video. run_finish saves it."] : [],
         `Run folder: ${ctx.run.relativeDir}`,
         `{{unique}} in this run: ${ctx.unique}`,
@@ -114467,7 +114941,11 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           );
         lines.push("");
       }
-      if (plan) lines.push(`Steps (${plan.steps.length}):`, stepList(plan, mode));
+      if (plan)
+        lines.push(
+          `Steps (${plan.steps.length}):`,
+          stepList(plan, mode, (t) => ctx.display(t))
+        );
       else
         lines.push(
           "This run has no plan. Use run_step or ask_developer with a title for each step you do."
@@ -115428,8 +115906,8 @@ async function perform(ctx, tab, input3, target2) {
       const t = need();
       if (input3.value === void 0)
         throw new ToolError('The fill action needs a "value".', "bad_input");
-      const hasSecret = ctx.secrets.hasTokens(input3.value);
-      const shown = withUnique(input3.value, ctx.unique);
+      const shown = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
+      const hasSecret = ctx.secrets.hasTokens(shown);
       const real = ctx.secrets.resolve(shown);
       if (hasSecret && ctx.video) await ctx.video.maskSecret(t.handle);
       await t.handle.asLocator().setTimeout(timeout2).fill(real);
@@ -115443,7 +115921,7 @@ async function perform(ctx, tab, input3, target2) {
           'The select action needs a "value" (the option value or text).',
           "bad_input"
         );
-      const wanted = withUnique(input3.value, ctx.unique);
+      const wanted = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
       const chosen = await selectOption(t.handle, wanted);
       return `Selected "${wanted}" in ${t.label}${chosen !== wanted ? ` (value "${chosen}")` : ""}.`;
     }
@@ -116022,6 +116500,89 @@ async function storageAction(tab, input3, show, resolve12, keep, isAllowed) {
     default:
       throw new ToolError(`The ${input3.action} action works only for cookies.`, "bad_input");
   }
+}
+
+// packages/server/src/tools/environment-tools.ts
+function envLine(env2, current, confirmed) {
+  const marks = [
+    env2.name === current ? "current" : "",
+    env2.protected ? confirmed.has(env2.name) ? "protected, confirmed" : "protected" : ""
+  ].filter(Boolean);
+  return `- ${env2.name}${marks.length ? ` (${marks.join(", ")})` : ""}: ${env2.baseUrl ?? "no baseUrl"}. Label "${env2.label}". From ${env2.source}.`;
+}
+function registerEnvironmentTools(server, ctx) {
+  server.registerTool(
+    "environment",
+    {
+      title: "Environments",
+      description: [
+        "List the environments of the app, like development, staging, and production. Show the one that this session uses, or switch to another one.",
+        "After a switch, tools and plans use the base URL, sites, values, and secrets of that environment. Open tabs move to the same page there.",
+        "A protected environment, like production, needs the developer to confirm it in the browser first. Only switch when the developer asks for it."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["list", "show", "use"]).default("list"),
+        name: external_exports.string().optional().describe('For use: the environment, like "staging".'),
+        resume: external_exports.boolean().optional().describe(
+          "For use: keep waiting for the developer to confirm a protected environment, after a reply with status: waiting."
+        ),
+        projectDir: external_exports.string().optional().describe("Project folder. Leave empty to find it automatically.")
+      }
+    },
+    ({ action: action2, name, resume, projectDir }, extra) => runTool(ctx, "environment", async () => {
+      const confirmed = ctx.driver?.alive ? ctx.driver.confirmedEnvs : /* @__PURE__ */ new Set();
+      if (action2 === "list") {
+        const config3 = await ctx.refresh(projectDir);
+        const session = ctx.sessionEnv;
+        return [
+          `Environments (${Object.keys(config3.environments).length}):`,
+          ...Object.values(config3.environments).map(
+            (e) => envLine(e, config3.environment.name, confirmed)
+          ),
+          `Default: ${config3.defaultEnvironment}.`,
+          session ? `This session uses "${session.name}" (chosen by ${session.source === "tool" ? "a tool call" : "UIWALK_ENV"}).` : `This session uses "${config3.environment.name}".`,
+          'Plans can choose an environment with the "environment" key, and a tool call can choose one with its "environment" argument.'
+        ].join("\n");
+      }
+      if (action2 === "show") {
+        const config3 = await ctx.refresh(projectDir);
+        const env2 = config3.environment;
+        const secrets = await ctx.secrets();
+        const vars = Object.entries(ctx.vars);
+        return [
+          `Environment: ${env2.name} (${env2.label})`,
+          `Base URL: ${env2.baseUrl ?? "none"}`,
+          `Protected: ${env2.protected ? confirmed.has(env2.name) ? "yes, confirmed for this browser" : "yes, not confirmed yet" : "no"}`,
+          `Allowed sites: ${config3.allowedOrigins.join(", ")}`,
+          `Values for {{var:NAME}}: ${vars.length ? vars.map(([k, v2]) => `${k} = "${v2}"`).join(", ") : "none"}`,
+          `Secrets it can read: ${secrets.names.length ? secrets.names.join(", ") : "none"} (from .walkthrough/.env.${env2.name}${env2.protected ? "" : " and .walkthrough/.env"}, and the environment variables)`,
+          ...Object.keys(env2.secrets).length ? [
+            `Secrets read under another name: ${Object.entries(env2.secrets).map(([k, v2]) => `${k} as ${v2}`).join(", ")}`
+          ] : [],
+          ...Object.keys(env2.headers).length ? [`Extra request headers: ${Object.keys(env2.headers).join(", ")}`] : [],
+          ...env2.httpCredentials ? [`Basic auth as "${env2.httpCredentials.username}"`] : [],
+          ...env2.ignoreHttpsErrors ? ["Ignores HTTPS certificate errors."] : [],
+          `Action time limit: ${config3.actionTimeoutMs} ms`
+        ].join("\n");
+      }
+      if (!name)
+        throw new ToolError('Give the name of the environment, like "staging".', "bad_input");
+      const lines = await ctx.useEnvironment(name, { source: "tool", projectDir });
+      const result = await ctx.confirmEnvironment({
+        signal: extra.signal,
+        requestId: extra.requestId,
+        resume
+      });
+      if (result.status === "waiting")
+        return ["status: waiting", ...lines, result.text].join("\n");
+      if (result.status === "canceled") {
+        return ["status: canceled", result.text, ...await ctx.finishSwitch(false)].join("\n");
+      }
+      lines.push(...await ctx.finishSwitch(true));
+      if (lines.length === 0) lines.push(`The session already uses the "${name}" environment.`);
+      return lines.join("\n");
+    })
+  );
 }
 
 // packages/server/src/tools/lighthouse-tools.ts
@@ -116939,6 +117500,7 @@ ${outline}`),
           secrets: await ctx.secrets(),
           log: ctx.actionLog,
           unique: ctx.unique,
+          vars: ctx.vars,
           video: videoHooks(ctx)
         },
         input3
@@ -119639,8 +120201,32 @@ function createServer2() {
     const { roots: list2 } = await server.server.listRoots();
     return list2.map((root) => root.uri.startsWith("file:") ? fileURLToPath4(root.uri) : root.uri);
   };
-  const ctx = new Context(roots, () => server.server.getClientVersion()?.name);
+  const elicit = () => {
+    if (!server.server.getClientCapabilities()?.elicitation?.form) return void 0;
+    return async (message, { timeoutMs, signal, relatedRequestId }) => {
+      try {
+        const result = await server.server.elicitInput(
+          {
+            message,
+            requestedSchema: {
+              type: "object",
+              properties: { confirm: { type: "boolean", title: "Confirm", description: message } },
+              required: ["confirm"]
+            }
+          },
+          { timeout: timeoutMs, signal, relatedRequestId }
+        );
+        return result.action === "accept" && result.content?.confirm === true ? "yes" : "no";
+      } catch (error62) {
+        if (error62 instanceof McpError && error62.code === ErrorCode.RequestTimeout) return "timeout";
+        if (signal?.aborted) return "no";
+        throw error62;
+      }
+    };
+  };
+  const ctx = new Context(roots, () => server.server.getClientVersion()?.name, elicit);
   registerBrowserTools(server, ctx);
+  registerEnvironmentTools(server, ctx);
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
   registerRunTools(server, ctx);
@@ -119778,8 +120364,9 @@ No download is needed.
 }
 async function doctor() {
   const { dir, source: source2 } = resolveProjectDir();
-  const config3 = loadConfig(dir, source2);
-  process.stdout.write(`${await doctorReport(config3, SecretStore.forProject(dir))}
+  const config3 = loadConfig(dir, source2, process.env.UIWALK_ENV?.trim() || void 0);
+  const secrets = SecretStore.forProject(dir, secretScope(config3.environment));
+  process.stdout.write(`${await doctorReport(config3, secrets)}
 `);
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) {

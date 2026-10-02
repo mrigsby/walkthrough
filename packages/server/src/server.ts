@@ -1,12 +1,14 @@
 import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Context } from './context.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+import { Context, type Elicit } from './context.js';
 import { onShutdown } from './lifecycle.js';
 import { log } from './log.js';
 import { registerA11yTools } from './tools/a11y-tools.js';
 import { registerBrowserTools } from './tools/browser-tools.js';
 import { registerDeveloperTools } from './tools/developer-tools.js';
 import { registerDevtoolsTools } from './tools/devtools-tools.js';
+import { registerEnvironmentTools } from './tools/environment-tools.js';
 import { registerLighthouseTools } from './tools/lighthouse-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
 import { registerProjectTools } from './tools/project-tools.js';
@@ -27,8 +29,34 @@ export function createServer(): { server: McpServer; ctx: Context } {
     return list.map((root) => (root.uri.startsWith('file:') ? fileURLToPath(root.uri) : root.uri));
   };
 
-  const ctx = new Context(roots, () => server.server.getClientVersion()?.name);
+  // A yes-or-no question in the client, for when the browser panel is not there.
+  const elicit = (): Elicit | undefined => {
+    if (!server.server.getClientCapabilities()?.elicitation?.form) return undefined;
+    return async (message, { timeoutMs, signal, relatedRequestId }) => {
+      try {
+        const result = await server.server.elicitInput(
+          {
+            message,
+            requestedSchema: {
+              type: 'object',
+              properties: { confirm: { type: 'boolean', title: 'Confirm', description: message } },
+              required: ['confirm'],
+            },
+          },
+          { timeout: timeoutMs, signal, relatedRequestId },
+        );
+        return result.action === 'accept' && result.content?.confirm === true ? 'yes' : 'no';
+      } catch (error) {
+        if (error instanceof McpError && error.code === ErrorCode.RequestTimeout) return 'timeout';
+        if (signal?.aborted) return 'no';
+        throw error;
+      }
+    };
+  };
+
+  const ctx = new Context(roots, () => server.server.getClientVersion()?.name, elicit);
   registerBrowserTools(server, ctx);
+  registerEnvironmentTools(server, ctx);
   registerPageTools(server, ctx);
   registerDeveloperTools(server, ctx);
   registerRunTools(server, ctx);

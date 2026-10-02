@@ -94,6 +94,8 @@ export class Driver {
   private active?: string;
   dialogPolicy: DialogPolicy;
   closedReason?: 'browser_closed' | 'closed_by_agent';
+  // Protected environments that the developer confirmed for this browser.
+  readonly confirmedEnvs = new Set<string>();
 
   private tabCounter = 0;
   private notes: string[] = [];
@@ -616,7 +618,13 @@ export class Driver {
     return before - this.mocks.length;
   }
 
-  private async refreshRouters(): Promise<void> {
+  // Uses the settings of another environment, such as its time limit.
+  applyEnvironment(config: Config): void {
+    this.options.config = config;
+    for (const tab of this.tabs.values()) tab.page.setDefaultTimeout(config.actionTimeoutMs);
+  }
+
+  async refreshRouters(): Promise<void> {
     for (const tab of this.tabs.values()) await this.refreshRouter(tab);
   }
 

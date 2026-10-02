@@ -1,17 +1,40 @@
 import { Driver } from './browser/driver.js';
 import { type Config, loadConfig, resolveProjectDir } from './config.js';
+import {
+  describeEnvironment,
+  environmentBadge,
+  environmentGuard,
+  rebaseUrl,
+  secretScope,
+} from './environments.js';
 import { ToolError } from './errors.js';
-import { OriginGuard } from './guards/origins.js';
+import type { OriginGuard } from './guards/origins.js';
 import { SecretStore } from './guards/secrets.js';
 import type { LhFlow } from './lighthouse/flow.js';
+import { log } from './log.js';
 import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
+import { buildVars, TokenResolver } from './page/tokens.js';
 import { newUnique } from './page/unique.js';
 import { adhocEvidenceDir } from './project-files.js';
 import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
 import type { VideoCapture } from './video/capture.js';
 import type { VideoRecording } from './video/recording.js';
+
+// Asks the developer a yes-or-no question through the MCP client, if it can.
+export type Elicit = (
+  message: string,
+  options: { timeoutMs: number; signal?: AbortSignal; relatedRequestId?: string | number },
+) => Promise<'yes' | 'no' | 'timeout'>;
+
+// Who chose the session environment. A plan's own choice is not kept for the session.
+export type EnvSource = 'tool' | 'UIWALK_ENV';
+
+export type ConfirmResult =
+  | { status: 'confirmed' }
+  | { status: 'waiting'; text: string }
+  | { status: 'canceled'; text: string };
 
 // Shared state for all tools in one server.
 export class Context {
@@ -34,25 +57,244 @@ export class Context {
   forgetRing?: () => void;
   // Fields hidden while anything records. They show again when all recordings stop.
   videoMasks: Array<() => Promise<void>> = [];
+  // The environment that the developer or a tool chose for this session.
+  sessionEnv?: { name: string; source: EnvSource };
+  // Values for {{var:NAME}}: config and environment, plus the plan during a run.
+  vars: Record<string, string> = {};
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
+  // A switch to a protected environment that waits for the developer.
+  // Tabs move, or the session goes back, after the answer.
+  private pendingSwitch?: { from: Config; session?: Context['sessionEnv'] };
 
   constructor(
     private readonly roots: () => Promise<string[]>,
     // The name of the MCP client, such as "claude-code".
     readonly clientName: () => string | undefined = () => undefined,
-  ) {}
+    // Undefined when the client cannot ask the developer a question.
+    readonly elicit?: () => Elicit | undefined,
+  ) {
+    const fromEnv = process.env.UIWALK_ENV?.trim();
+    if (fromEnv) this.sessionEnv = { name: fromEnv, source: 'UIWALK_ENV' };
+  }
 
   // Reads the project folder, settings, and secrets again.
-  async refresh(projectDirArg?: string): Promise<Config> {
+  // It keeps the environment in use, unless "environment" names another one.
+  async refresh(projectDirArg?: string, environment?: string): Promise<Config> {
     const roots = projectDirArg ? [] : await this.roots().catch(() => []);
     const { dir, source } = resolveProjectDir({ argument: projectDirArg, roots });
-    const config = loadConfig(dir, source);
+    // The environment in use stays until something changes it on purpose.
+    const loadedHere =
+      this.loaded?.config.projectDir === dir ? this.loaded.config.environment.name : undefined;
+    const name = environment ?? this.sessionEnv?.name ?? loadedHere;
+    let config: Config;
+    try {
+      config = loadConfig(dir, source, name);
+    } catch (error) {
+      // The session environment is gone from the settings. Use the default one.
+      if (environment || !name || (error as ToolError).code !== 'environment_unknown') throw error;
+      log.warn(`the environment "${name}" is not in the settings any more`);
+      this.sessionEnv = undefined;
+      config = loadConfig(dir, source);
+      config.warnings.push(
+        `The session used the environment "${name}", but the settings do not have it now. Walkthrough uses "${config.environment.name}".`,
+      );
+    }
     this.loaded = {
       config,
-      secrets: SecretStore.forProject(dir),
-      guard: new OriginGuard(config.allowedOrigins),
+      secrets: SecretStore.forProject(dir, secretScope(config.environment)),
+      guard: environmentGuard(config, this.driver?.confirmedEnvs),
     };
+    this.vars = buildVars(config);
+    if (this.driver?.alive) {
+      this.driver.applyEnvironment(config);
+      await this.driver.panel?.setEnvironment(environmentBadge(config));
+    }
     return config;
+  }
+
+  // Builds the guard again, for example after the developer confirms an environment.
+  private rebuildGuard(): void {
+    if (!this.loaded) return;
+    this.loaded.guard = environmentGuard(this.loaded.config, this.driver?.confirmedEnvs);
+  }
+
+  // Fills in {{var:NAME}}, {{unique}}, and secrets.
+  async tokens(): Promise<TokenResolver> {
+    return new TokenResolver(this.unique, this.vars, await this.secrets());
+  }
+
+  // Fills in {{var:NAME}} and {{unique}}. Secrets stay as tokens.
+  display(text: string): string {
+    return new TokenResolver(this.unique, this.vars).display(text);
+  }
+
+  // Switches the session to another environment. Open tabs on the old one move to the same page,
+  // after the developer confirms a protected environment. Returns lines for the reply.
+  async useEnvironment(
+    name: string,
+    how: { source?: EnvSource; projectDir?: string } = {},
+  ): Promise<string[]> {
+    const before = await this.config();
+    const session = this.sessionEnv;
+    if (before.environment.name === name) {
+      if (how.source) this.sessionEnv = { name, source: how.source };
+      return [];
+    }
+    this.checkCanSwitch();
+    // An open confirm question was for the old choice.
+    if (this.driver?.panel?.pending?.kind === 'confirm') await this.driver.panel.clear();
+    this.pendingSwitch = undefined;
+    const config = await this.refresh(how.projectDir, name);
+    if (how.source) this.sessionEnv = { name, source: how.source };
+    const lines = [
+      `The session uses the "${name}" environment now: ${describeEnvironment(config.environment)}.`,
+    ];
+    if (config.environment.protected && !this.driver?.confirmedEnvs.has(name)) {
+      this.pendingSwitch = { from: before, session };
+      return lines;
+    }
+    lines.push(...(await this.moveTabs(before, config)));
+    return lines;
+  }
+
+  // After the developer answers: move the tabs, or go back to the environment from before.
+  async finishSwitch(confirmed: boolean): Promise<string[]> {
+    const pending = this.pendingSwitch;
+    this.pendingSwitch = undefined;
+    if (!pending) return [];
+    if (confirmed) return this.moveTabs(pending.from, await this.config());
+    const back = pending.from.environment.name;
+    await this.refresh(pending.from.projectDir, back);
+    this.sessionEnv = pending.session;
+    return [`The session goes back to the "${back}" environment.`];
+  }
+
+  private checkCanSwitch(): void {
+    const busy =
+      this.run?.run.status === 'running'
+        ? `the run "${this.run.run.name}" is still going. Call run_finish first`
+        : this.driver?.panel?.recording
+          ? 'recording is on. Call record with action "stop" first'
+          : this.video?.capture.recording
+            ? 'a video is recording. Call video with action "stop" first'
+            : this.driver?.panel?.pending && this.driver.panel.pending.kind !== 'confirm'
+              ? 'a question is open in the panel'
+              : undefined;
+    if (busy) {
+      throw new ToolError(
+        `Walkthrough cannot change the environment now, because ${busy}.`,
+        'busy',
+      );
+    }
+  }
+
+  // Moves tabs on the old environment to the same page on the new one.
+  private async moveTabs(before: Config, after: Config): Promise<string[]> {
+    const driver = this.driver?.alive ? this.driver : undefined;
+    if (!driver) return [];
+    const lines: string[] = [];
+    for (const tab of driver.tabs.values()) {
+      const url = tab.page.url();
+      const moved = rebaseUrl(url, before.environment.baseUrl, after.environment.baseUrl);
+      if (moved) {
+        await tab.page.goto(moved, { waitUntil: 'load' }).catch((error: Error) => {
+          lines.push(`Tab ${tab.id} could not open ${moved}: ${error.message}`);
+        });
+        lines.push(`Tab ${tab.id} moved to ${moved}.`);
+      } else if (/^https?:/.test(url) && !(await this.guard()).isAllowed(url)) {
+        lines.push(`Tab ${tab.id} is on ${url}, which this environment does not allow.`);
+      }
+    }
+    return lines;
+  }
+
+  // Asks the developer to confirm a protected environment, once for each browser.
+  // Only a person can confirm: in the panel, in the client, or with UIWALK_ALLOW_PROTECTED.
+  async confirmEnvironment(options: {
+    signal?: AbortSignal;
+    requestId?: string | number;
+    resume?: boolean;
+  }): Promise<ConfirmResult> {
+    const config = await this.config();
+    const env = config.environment;
+    const driver = this.driver?.alive ? this.driver : undefined;
+    if (!env.protected || driver?.confirmedEnvs.has(env.name)) return { status: 'confirmed' };
+    const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? '').split(',').map((s) => s.trim());
+    const confirm = (): ConfirmResult => {
+      driver?.confirmedEnvs.add(env.name);
+      this.rebuildGuard();
+      return { status: 'confirmed' };
+    };
+    if (allowed.includes(env.name)) return confirm();
+    if (!driver) {
+      return {
+        status: 'waiting',
+        text: `"${env.name}" is a protected environment. Open the browser with browser_open, and the developer confirms it there.`,
+      };
+    }
+    const timeoutMs =
+      (config.askTimeoutSec ?? (this.clientName() === 'claude-code' ? 300 : 50)) * 1000;
+    const message = `Use the "${env.name}" environment (${env.baseUrl})? The agent can create real data there.`;
+    const panel = driver.panel;
+    const tab = driver.hasActiveTab
+      ? driver.activeTab({ allowDialog: true })
+      : await driver.reopenTab();
+    if (panel && (await panel.waitReady(tab.id))) {
+      const open = panel.pending;
+      if (!(options.resume && open?.kind === 'confirm' && open.stepId === env.name)) {
+        await panel.ask({
+          tabId: tab.id,
+          kind: 'confirm',
+          title: `Use ${env.label}?`,
+          didWhat: message,
+          expected: '',
+          stepId: env.name,
+          confirmLabel: `Use ${env.label}`,
+          color: env.color,
+        });
+      }
+      const outcome = await panel.waitForAnswer(timeoutMs, options.signal);
+      if (outcome.kind === 'answer') {
+        if (outcome.answer.result === 'pass') return confirm();
+        return {
+          status: 'canceled',
+          text: `The developer did not confirm the "${env.name}" environment. Walkthrough blocks its site.`,
+        };
+      }
+      if (outcome.kind === 'timeout') {
+        return {
+          status: 'waiting',
+          text: `The developer has not confirmed the "${env.name}" environment yet. The question is still in the panel. Call the environment tool with action "use", name "${env.name}", and resume: true to keep waiting.`,
+        };
+      }
+      return {
+        status: 'canceled',
+        text: `Walkthrough stopped waiting for the developer (${outcome.kind}).`,
+      };
+    }
+    const elicit = this.elicit?.();
+    if (elicit) {
+      const answer = await elicit(message, {
+        timeoutMs,
+        signal: options.signal,
+        relatedRequestId: options.requestId,
+      });
+      if (answer === 'yes') return confirm();
+      if (answer === 'timeout') {
+        return {
+          status: 'waiting',
+          text: `The developer has not confirmed the "${env.name}" environment yet. Call the environment tool with action "use" and name "${env.name}" again.`,
+        };
+      }
+      return {
+        status: 'canceled',
+        text: `The developer did not confirm the "${env.name}" environment. Walkthrough blocks its site.`,
+      };
+    }
+    throw new ToolError(
+      `"${env.name}" is a protected environment. Walkthrough cannot ask the developer to confirm it, because the panel is not available and the client cannot ask questions. Use a visible browser, or start the server with UIWALK_ALLOW_PROTECTED=${env.name}.`,
+      'protected_unconfirmed',
+    );
   }
 
   private async ensureLoaded() {
@@ -97,6 +339,9 @@ export class Context {
       // Look up the guard each time, so a config reload takes effect.
       isAllowed: (url) => (this.loaded?.guard ?? guard).isAllowed(url),
     });
+    // A new browser has no confirmed environments.
+    this.rebuildGuard();
+    await this.driver.panel?.setEnvironment(environmentBadge(config));
     return this.driver;
   }
 }

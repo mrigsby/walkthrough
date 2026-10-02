@@ -6,6 +6,7 @@ import { loadConfig, resolveProjectDir } from './config.js';
 import { doctorReport } from './doctor.js';
 import { findFfmpeg, installFfmpeg } from './downloads/ffmpeg.js';
 import { findLighthouse, installLighthouse, LIGHTHOUSE_VERSION } from './downloads/lighthouse.js';
+import { secretScope } from './environments.js';
 import { SecretStore } from './guards/secrets.js';
 import { initProject } from './init.js';
 import { installShutdownHandlers } from './lifecycle.js';
@@ -97,8 +98,9 @@ async function setupFfmpeg(): Promise<void> {
 
 async function doctor(): Promise<void> {
   const { dir, source } = resolveProjectDir();
-  const config = loadConfig(dir, source);
-  process.stdout.write(`${await doctorReport(config, SecretStore.forProject(dir))}\n`);
+  const config = loadConfig(dir, source, process.env.UIWALK_ENV?.trim() || undefined);
+  const secrets = SecretStore.forProject(dir, secretScope(config.environment));
+  process.stdout.write(`${await doctorReport(config, secrets)}\n`);
 
   // Prove that Chrome starts.
   const chrome = await findChrome(config.browser.executablePath);

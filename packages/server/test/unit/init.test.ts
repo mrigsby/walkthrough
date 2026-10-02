@@ -23,7 +23,8 @@ describe('initProject', () => {
     expect(config.warnings).toEqual([]);
     const plan = validatePlanText(readFileSync(join(dir, '.walkthrough/plans/smoke.yaml'), 'utf8'));
     expect(plan.ok).toBe(true);
-    expect(readFileSync(join(dir, '.walkthrough/.gitignore'), 'utf8')).toContain('.env');
+    const ignore = readFileSync(join(dir, '.walkthrough/.gitignore'), 'utf8');
+    expect(ignore).toContain('.env\n.env.*\n!.env.example\n');
   });
 
   it('keeps files that exist, but updates the schema', () => {

@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { ElicitRequestSchema, type ElicitResult } from '@modelcontextprotocol/sdk/types.js';
 import { repoRoot } from './demo-server.js';
 
 export const bundle = join(repoRoot, 'plugins/walkthrough/server/uiwalk.mjs');
@@ -12,9 +13,11 @@ export interface ToolReply {
 }
 
 // Starts the bundled server over stdio, like Claude Code does.
+// With "elicit", the client can answer questions from the server, like Claude Code can.
 export async function startClient(
   env: Record<string, string>,
   serverFile = bundle,
+  options: { elicit?: (message: string) => ElicitResult | Promise<ElicitResult> } = {},
 ): Promise<{
   call: (
     name: string,
@@ -24,7 +27,14 @@ export async function startClient(
   client: Client;
   close: () => Promise<void>;
 }> {
-  const client = new Client({ name: 'uiwalk-test', version: '0.0.0' });
+  const client = new Client(
+    { name: 'uiwalk-test', version: '0.0.0' },
+    options.elicit ? { capabilities: { elicitation: { form: {} } } } : {},
+  );
+  const elicit = options.elicit;
+  if (elicit) {
+    client.setRequestHandler(ElicitRequestSchema, (request) => elicit(request.params.message));
+  }
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,

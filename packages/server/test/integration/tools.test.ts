@@ -57,6 +57,7 @@ describe('uiwalk tools', () => {
         'browser_open',
         'dialog',
         'emulate',
+        'environment',
         'export_script',
         'doctor',
         'evaluate',

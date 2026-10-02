@@ -21,6 +21,13 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     expected: string;
     step?: number;
     total?: number;
+    kind?: 'step' | 'confirm';
+    confirmLabel?: string;
+    color?: string;
+  }
+  interface Badge {
+    label: string;
+    color: string;
   }
   interface Rect {
     x: number;
@@ -67,12 +74,13 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const card = el('section', 'card');
   const header = el('header', 'header');
   const brand = el('span', 'brand', 'Walkthrough');
+  const envBadge = el('span', 'env');
   const stepBadge = el('span', 'step');
   const moveButton = el('button', 'icon', '⇄');
   moveButton.title = 'Move to another corner';
   const collapseButton = el('button', 'icon', '\u2212');
   collapseButton.title = 'Collapse';
-  header.append(brand, stepBadge, moveButton, collapseButton);
+  header.append(brand, envBadge, stepBadge, moveButton, collapseButton);
 
   const body = el('div', 'body');
   const status = el('p', 'status');
@@ -113,6 +121,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
 
   // ---------- State ----------
   let question: Question | null = null;
+  let env: Badge | null = null;
   let recording: { count: number; last: string } | null = null;
   let addingExpect = false;
   let corner: Corner = 'bottom-right';
@@ -126,6 +135,17 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   };
 
   const render = (): void => {
+    envBadge.hidden = !env;
+    envBadge.textContent = env?.label ?? '';
+    envBadge.style.background = env?.color ?? '';
+    const confirm = question?.kind === 'confirm';
+    card.classList.toggle('confirming', confirm);
+    card.style.borderColor = confirm && question?.color ? question.color : '';
+    for (const node of [didLabel, expectLabel, expectText, notes, error, bugButton, skipButton])
+      node.hidden = confirm;
+    buttons.classList.toggle('two', confirm);
+    passButton.textContent = confirm ? (question?.confirmLabel ?? 'Continue') : 'Pass';
+    stopButton.textContent = confirm ? 'Cancel' : 'Stop';
     card.classList.toggle('collapsed', collapsed);
     card.classList.toggle('asking', Boolean(question));
     card.classList.toggle('recording-on', Boolean(recording));
@@ -144,9 +164,11 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     collapseButton.textContent = collapsed ? '+' : '\u2212';
     collapseButton.title = collapsed ? 'Expand' : 'Collapse';
     if (question) {
-      stepBadge.textContent = question.step
-        ? `Step ${question.step}${question.total ? ` of ${question.total}` : ''}`
-        : 'Check';
+      stepBadge.textContent = confirm
+        ? 'Confirm'
+        : question.step
+          ? `Step ${question.step}${question.total ? ` of ${question.total}` : ''}`
+          : 'Check';
       title.textContent = question.title;
       didText.textContent = question.didWhat;
       expectText.textContent = question.expected;
@@ -181,12 +203,17 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       return;
     }
     send({ type: 'answer', id: question.id, nonce: question.nonce, result, note });
+    const confirmed = question.kind === 'confirm';
     question = null;
     notes.value = '';
     error.textContent = '';
-    setStatus(
-      `Sent: ${result === 'pass' ? 'Pass' : result === 'bug' ? 'Bug' : result === 'skip' ? 'Skip' : 'Stop'}. The agent is working.`,
-    );
+    if (confirmed) {
+      setStatus(result === 'pass' ? 'Confirmed. The agent is working.' : 'Canceled.');
+    } else {
+      setStatus(
+        `Sent: ${result === 'pass' ? 'Pass' : result === 'bug' ? 'Bug' : result === 'skip' ? 'Skip' : 'Stop'}. The agent is working.`,
+      );
+    }
     render();
   };
 
@@ -297,6 +324,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
           error.textContent = '';
         }
         question = next;
+        env = (msg.env as Badge | null) ?? null;
         recording = (msg.recording as { count: number; last: string } | null) ?? null;
         if (!recording) addingExpect = false;
         setStatus((msg.status as string) ?? 'The agent is working.');

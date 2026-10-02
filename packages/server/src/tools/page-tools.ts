@@ -89,6 +89,7 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
             secrets: await ctx.secrets(),
             log: ctx.actionLog,
             unique: ctx.unique,
+            vars: ctx.vars,
             video: videoHooks(ctx),
           },
           input,

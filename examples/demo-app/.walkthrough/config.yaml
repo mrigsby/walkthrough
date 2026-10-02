@@ -7,6 +7,24 @@ baseUrl: http://localhost:4321
 allowedOrigins:
   - http://localhost:4321
 
+# Values for {{var:NAME}} in plans. An environment can change them.
+vars:
+  userName: Demo User
+
+# Other copies of the shop, to run the same plans there.
+# Start them with "npm run demo:staging" and "npm run demo:production".
+# Put their passwords in .walkthrough/.env.staging and .walkthrough/.env.production.
+environments:
+  staging:
+    baseUrl: http://staging.localhost:4322
+    vars:
+      userName: Staging User
+  production:
+    baseUrl: http://prod.localhost:4323
+    # Production is protected: Walkthrough asks you before it works there.
+    vars:
+      userName: Production User
+
 # How to answer confirm and prompt dialogs: ask (default), accept, or dismiss.
 dialogs: ask
 

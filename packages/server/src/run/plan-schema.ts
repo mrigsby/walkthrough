@@ -327,11 +327,8 @@ export function stepCapture(
 }
 
 // Keys that a later update makes work. Until then, a run stops with a clear message.
-export const LATER_KEYS: Record<string, string> = {
-  environment: 'a later update',
-  environments: 'a later update',
-  vars: 'a later update',
-};
+// Empty now. A future version can list new keys here before they work.
+export const LATER_KEYS: Record<string, string> = {};
 export const LATER_STEP_KEYS: Record<string, string> = {};
 
 // JSON Schema for editors, from the same rules.

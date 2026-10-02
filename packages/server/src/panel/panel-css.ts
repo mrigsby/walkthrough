@@ -25,6 +25,10 @@ export const PANEL_CSS = `
 .card.collapsed .header { border-bottom: none; }
 .brand { font-weight: 700; }
 .step { color: var(--muted); font-size: 12px; flex: 1; }
+.env { padding: 1px 7px; border-radius: 4px; color: #ffffff; font-size: 11px; font-weight: 700; }
+.env[hidden] { display: none; }
+.buttons.two { grid-template-columns: 1fr 1fr; }
+.buttons button[hidden], .question [hidden] { display: none; }
 .icon { background: none; border: none; color: var(--fg); font-size: 16px; width: 26px; height: 26px;
   border-radius: 6px; cursor: pointer; }
 .icon:hover { background: var(--btn); }

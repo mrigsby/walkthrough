@@ -7,7 +7,8 @@ import type { Context } from '../context.js';
 import { doctorReport } from '../doctor.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
-import { tokenizeUnique, withUnique } from '../page/unique.js';
+import { hasVars, type TokenResolver } from '../page/tokens.js';
+import { tokenizeUnique } from '../page/unique.js';
 import { runTool } from './util.js';
 
 export async function pageSummary(tab: Tab): Promise<string> {
@@ -26,6 +27,20 @@ export function fullUrl(input: string, current: string, baseUrl?: string): strin
     );
   }
   return new URL(input, base).href;
+}
+
+// The URL to keep in the action log. Tokens stay, so a replay in another environment
+// uses its own values. A URL that is all one var stays as it was typed.
+export function loggedUrl(
+  input: string,
+  full: string,
+  from: string,
+  baseUrl: string | undefined,
+  tokens: TokenResolver,
+): string {
+  if (!hasVars(input)) return tokens.tokenizeForLog(full);
+  if (/^\s*\{\{\s*var:/.test(input)) return input;
+  return tokens.tokenizeForLog(fullUrl(input, from, baseUrl));
 }
 
 // Many apps draw the page after "load". Wait a moment for their requests to finish.
@@ -64,10 +79,16 @@ export async function openBrowser(
     emulation?: Emulation;
     // Start a new browser with an empty profile, even if one is open.
     fresh?: boolean;
+    // For the confirm question of a protected environment.
+    signal?: AbortSignal;
+    requestId?: string | number;
+    // Return "waiting" instead of an error when the developer has not confirmed yet.
+    allowWaiting?: boolean;
+    // Keep waiting for a confirm question that is open already.
+    resume?: boolean;
   },
-): Promise<{ text: string; tab: Tab }> {
+): Promise<{ text: string; tab: Tab; confirmed: boolean }> {
   const config = await ctx.config();
-  const guard = await ctx.guard();
   const lines: string[] = [];
 
   if (options.fresh && ctx.driver?.alive) {
@@ -102,6 +123,26 @@ export async function openBrowser(
     lines.push('No tab was open, so Walkthrough opened a new one.');
   }
   const tab = driver.activeTab();
+
+  // A protected environment needs the developer's OK before any page of it opens.
+  const confirm = await ctx.confirmEnvironment({
+    signal: options.signal,
+    requestId: options.requestId,
+    resume: options.resume,
+  });
+  if (confirm.status !== 'confirmed') {
+    if (confirm.status === 'canceled') lines.push(...(await ctx.finishSwitch(false)));
+    if (!options.allowWaiting) {
+      throw new ToolError(
+        `${confirm.text} Then try again.`,
+        confirm.status === 'waiting' ? 'confirm_waiting' : 'protected_unconfirmed',
+      );
+    }
+    lines.push(confirm.text, await pageSummary(tab));
+    return { text: [`status: ${confirm.status}`, ...lines].join('\n'), tab, confirmed: false };
+  }
+  lines.push(...(await ctx.finishSwitch(true)));
+
   if (options.emulation && Object.keys(options.emulation).length > 0) {
     // No reload here. The page loads next anyway.
     await driver.setEmulation(options.emulation, { reload: false });
@@ -117,14 +158,14 @@ export async function openBrowser(
     options.url ??
     (goAgain ? (config.baseUrl ?? (options.session ? tab.page.url() : undefined)) : undefined);
   if (target) {
-    const full = fullUrl(withUnique(target, ctx.unique), tab.page.url(), config.baseUrl);
-    guard.check(full);
+    const full = fullUrl(ctx.display(target), tab.page.url(), config.baseUrl);
+    (await ctx.guard()).check(full);
     const problem = await goTo(tab, full);
     if (problem) lines.push(problem);
   }
   lines.push(await pageSummary(tab));
   lines.push('Next, take a snapshot to see the page.');
-  return { text: lines.join('\n'), tab };
+  return { text: lines.join('\n'), tab, confirmed: true };
 }
 
 export function registerBrowserTools(server: McpServer, ctx: Context): void {
@@ -144,7 +185,10 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
     ({ projectDir }) =>
       runTool(ctx, 'doctor', async () => {
         const config = await ctx.refresh(projectDir);
-        return doctorReport(config, await ctx.secrets(), ctx.driver);
+        return doctorReport(config, await ctx.secrets(), ctx.driver, {
+          name: ctx.clientName(),
+          canAsk: Boolean(ctx.elicit?.()),
+        });
       }),
   );
 
@@ -166,16 +210,40 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
             'Connect to a running Chrome instead of starting one. Example: "http://127.0.0.1:9222".',
           ),
         session: z.string().optional().describe('A saved login to use, from the session tool.'),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'Switch the session to this environment first, like "staging". Only when the developer asks for it.',
+          ),
+        resume: z
+          .boolean()
+          .optional()
+          .describe(
+            'Keep waiting for the developer to confirm a protected environment, after a reply with status: waiting.',
+          ),
         projectDir: z
           .string()
           .optional()
           .describe('Project folder. Leave empty to find it automatically.'),
       },
     },
-    ({ url, attach, session, projectDir }) =>
+    ({ url, attach, session, environment, resume, projectDir }, extra) =>
       runTool(ctx, 'browser_open', async () => {
         await ctx.refresh(projectDir);
-        return (await openBrowser(ctx, { url, attach, session })).text;
+        const lines = environment
+          ? await ctx.useEnvironment(environment, { source: 'tool', projectDir })
+          : [];
+        const opened = await openBrowser(ctx, {
+          url,
+          attach,
+          session,
+          signal: extra.signal,
+          requestId: extra.requestId,
+          allowWaiting: true,
+          resume,
+        });
+        return [...lines, opened.text].join('\n');
       }),
   );
 
@@ -221,19 +289,20 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
         const tab = action === 'reload' ? reloadableTab(driver) : driver.activeTab();
         let problem: string | undefined;
         if (url) {
-          const full = fullUrl(withUnique(url, ctx.unique), tab.page.url(), config.baseUrl);
+          const full = fullUrl(ctx.display(url), tab.page.url(), config.baseUrl);
           guard.check(full);
           const from = tab.page.url();
           problem = await goTo(tab, full);
           // Keep it with the actions, for reports and script export.
+          const tokens = await ctx.tokens();
           ctx.actionLog.push({
             at: new Date().toISOString(),
             tabId: tab.id,
             tab: tab.name,
             action: 'navigate',
             label: full,
-            value: tokenizeUnique(full, ctx.unique),
-            url: tokenizeUnique(from, ctx.unique),
+            value: loggedUrl(url, full, from, config.baseUrl, tokens),
+            url: tokens.tokenizeForLog(from),
           });
         } else if (action === 'back') {
           await tab.page.goBack({ waitUntil: 'load' });
@@ -303,9 +372,8 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
           const guard = await ctx.guard();
           const from = driver.activeId ? (driver.tabs.get(driver.activeId)?.page.url() ?? '') : '';
           const target = url ?? (session ? config.baseUrl : undefined);
-          const full = target
-            ? fullUrl(withUnique(target, ctx.unique), from, config.baseUrl)
-            : undefined;
+          const full = target ? fullUrl(ctx.display(target), from, config.baseUrl) : undefined;
+          const tokens = await ctx.tokens();
           if (full) guard.check(full);
           const loginChoice = isolated === true ? true : isolated ? isolated : undefined;
           const tab = await driver.newTab({ name, isolated: loginChoice });
@@ -321,7 +389,8 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
               name: tab.name,
               login: tab.login,
               isolated: loginChoice,
-              url: full ? tokenizeUnique(full, ctx.unique) : undefined,
+              url:
+                full && target ? loggedUrl(target, full, from, config.baseUrl, tokens) : undefined,
               session,
             }),
             url: '',

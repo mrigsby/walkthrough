@@ -21,6 +21,8 @@
     "format": "biome format --write .",
     "check:text": "node scripts/check-text.mjs",
     "demo": "node scripts/demo-server.mjs",
+    "demo:staging": "node scripts/demo-server.mjs --port 4322 --host staging.localhost --env-name staging --password stage123",
+    "demo:production": "node scripts/demo-server.mjs --port 4323 --host prod.localhost --env-name production --password prod123",
     "check:bundle": "npm run build:plugin && git diff --exit-code -- plugins/walkthrough schemas examples/demo-app/.walkthrough/plan.schema.json"
   },
   "devDependencies": {

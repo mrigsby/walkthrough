@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../plan.schema.json
 name: Log in
-description: Logs in with the demo account. Before you run it, copy .walkthrough/.env.example to .walkthrough/.env.
+description: Logs in with the demo account. Before you run it, copy .walkthrough/.env.example to .walkthrough/.env. It runs in every environment of the demo, like "run the login plan on staging".
 mode: interactive
 steps:
   - id: open-login
@@ -21,4 +21,4 @@ steps:
   - id: submit
     do: Click "Log in"
     action: { click: { role: button, name: Log in } }
-    expect: The Account page says "Logged in as Demo User".
+    expect: The Account page says "Logged in as {{var:userName}}".
