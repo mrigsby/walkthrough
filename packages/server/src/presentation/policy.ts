@@ -32,6 +32,7 @@ export function checkPresentationPolicy(
   if (!presentation?.active) return;
   // A switch would move the audience's tabs to another environment.
   if (ALLOWED.has(tool) && !(tool === 'environment' && action === 'use')) return;
+  if (tool === 'tabs' && action === 'list') return;
   throw new ToolError(
     `A presentation is going, so Walkthrough does not run ${tool}${action ? ` with action "${action}"` : ''} now. Tools that only read the page still work, such as snapshot and read. Call present with action "stop" to end the presentation.`,
     'presentation_active',

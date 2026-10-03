@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes14, createHash: createHash7 } = __require("crypto");
+    var { randomBytes: randomBytes15, createHash: createHash7 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key2 = randomBytes14(16).toString("base64");
+      const key2 = randomBytes15(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join43 } = await import("node:path");
+    const { join: join44 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join43(userDataDir, "DevToolsActivePort");
+    const portPath = join44(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname14, join as join42 } from "node:path";
+import { dirname as dirname15, join as join43 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -98759,7 +98759,7 @@ function installShutdownHandlers() {
 }
 
 // packages/server/src/server.ts
-import { fileURLToPath as fileURLToPath4 } from "node:url";
+import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -108544,6 +108544,8 @@ var Driver = class _Driver {
   inflight = /* @__PURE__ */ new Set();
   // A tab that newTab is making. The new-tab event waits for it.
   newTabWork;
+  // Logins of our own windows, like the presenter window. Their pages never become tabs.
+  foreign = /* @__PURE__ */ new WeakSet();
   static async start(options) {
     let driver;
     if (options.attach) {
@@ -108604,9 +108606,15 @@ var Driver = class _Driver {
       }
     });
   }
+  // Marks a login as our own, before it opens a page. The tools never see its pages.
+  addForeign(context2) {
+    this.foreign.add(context2);
+  }
   // A new tab or popup opened.
   async onTarget(target2) {
     if (target2.type() !== "page") return;
+    const context2 = target2.browserContext();
+    if (context2 && this.foreign.has(context2)) return;
     const page = await target2.page().catch(() => null);
     if (!page) return;
     if (this.newTabWork) await this.newTabWork.catch(() => void 0);
@@ -112228,6 +112236,7 @@ var ALLOWED = /* @__PURE__ */ new Set([
 function checkPresentationPolicy(presentation, tool, action2) {
   if (!presentation?.active) return;
   if (ALLOWED.has(tool) && !(tool === "environment" && action2 === "use")) return;
+  if (tool === "tabs" && action2 === "list") return;
   throw new ToolError(
     `A presentation is going, so Walkthrough does not run ${tool}${action2 ? ` with action "${action2}"` : ""} now. Tools that only read the page still work, such as snapshot and read. Call present with action "stop" to end the presentation.`,
     "presentation_active"
@@ -113506,110 +113515,120 @@ function registerBrowserTools(server, ctx) {
         session: external_exports.string().optional().describe("For new: a saved login to load into the tab, from the session tool.")
       }
     },
-    ({ action: action2, id, url: url2, name, isolated, session }) => runTool(ctx, "tabs", async () => {
-      const driver = ctx.requireDriver();
-      if (action2 === "new") {
-        const config3 = await ctx.config();
-        const guard = await ctx.guard();
-        const from2 = driver.activeId ? driver.tabs.get(driver.activeId)?.page.url() ?? "" : "";
-        const target2 = url2 ?? (session ? config3.baseUrl : void 0);
-        const full = target2 ? fullUrl(ctx.display(target2), from2, config3.baseUrl) : void 0;
-        const tokens = await ctx.tokens();
-        if (full) guard.check(full);
-        const loginChoice = isolated === true ? true : isolated ? isolated : void 0;
-        const tab = await driver.newTab({ name, isolated: loginChoice });
-        if (session)
-          await restoreSession(
-            tab,
-            loadSession(config3.projectDir, session, config3.environment.name)
-          );
-        const problem = full ? await goTo(tab, full) : void 0;
-        ctx.actionLog.push({
-          at: (/* @__PURE__ */ new Date()).toISOString(),
-          tabId: tab.id,
-          tab: tab.name,
-          action: "tab-new",
-          label: `Open a new tab "${tab.name}"${tab.login === "main" ? "" : ` with the login "${tab.login}"`}${full ? ` at ${full}` : ""}`,
-          value: JSON.stringify({
-            name: tab.name,
-            login: tab.login,
-            isolated: loginChoice,
-            url: full && target2 ? loggedUrl(target2, full, from2, config3.baseUrl, tokens) : void 0,
-            session
-          }),
-          url: ""
-        });
-        return [
-          `Opened tab ${tab.id}${tab.name === tab.id ? "" : ` "${tab.name}"`}. It is the active tab now.`,
-          tab.login === "main" ? "It uses the main login." : `Its login is "${tab.login}". It has its own cookies and storage.${loginChoice === true ? ` To open more tabs with this login, use isolated: "${tab.login}".` : ""}`,
-          config3.browser.headless || tab.login === "main" ? "" : "Chrome shows a separate login in its own window.",
-          session ? `Loaded the saved login "${session}".` : "",
-          problem ?? "",
-          await pageSummary(tab),
-          "Take a snapshot to see the page."
-        ].filter(Boolean).join("\n");
-      }
-      if (action2 === "switch") {
-        if (!id) throw new ToolError("Give the id or name of the tab to switch to.", "bad_input");
-        const found = driver.tabByRef(id);
-        if (found && name) {
-          driver.checkTabName(name, found);
-          found.name = name;
+    ({ action: action2, id, url: url2, name, isolated, session }) => runTool(
+      ctx,
+      "tabs",
+      async () => {
+        const driver = ctx.requireDriver();
+        if (action2 === "new") {
+          const config3 = await ctx.config();
+          const guard = await ctx.guard();
+          const from2 = driver.activeId ? driver.tabs.get(driver.activeId)?.page.url() ?? "" : "";
+          const target2 = url2 ?? (session ? config3.baseUrl : void 0);
+          const full = target2 ? fullUrl(ctx.display(target2), from2, config3.baseUrl) : void 0;
+          const tokens = await ctx.tokens();
+          if (full) guard.check(full);
+          const loginChoice = isolated === true ? true : isolated ? isolated : void 0;
+          const tab = await driver.newTab({ name, isolated: loginChoice });
+          if (session)
+            await restoreSession(
+              tab,
+              loadSession(config3.projectDir, session, config3.environment.name)
+            );
+          const problem = full ? await goTo(tab, full) : void 0;
+          ctx.actionLog.push({
+            at: (/* @__PURE__ */ new Date()).toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: "tab-new",
+            label: `Open a new tab "${tab.name}"${tab.login === "main" ? "" : ` with the login "${tab.login}"`}${full ? ` at ${full}` : ""}`,
+            value: JSON.stringify({
+              name: tab.name,
+              login: tab.login,
+              isolated: loginChoice,
+              url: full && target2 ? loggedUrl(target2, full, from2, config3.baseUrl, tokens) : void 0,
+              session
+            }),
+            url: ""
+          });
+          return [
+            `Opened tab ${tab.id}${tab.name === tab.id ? "" : ` "${tab.name}"`}. It is the active tab now.`,
+            tab.login === "main" ? "It uses the main login." : `Its login is "${tab.login}". It has its own cookies and storage.${loginChoice === true ? ` To open more tabs with this login, use isolated: "${tab.login}".` : ""}`,
+            config3.browser.headless || tab.login === "main" ? "" : "Chrome shows a separate login in its own window.",
+            session ? `Loaded the saved login "${session}".` : "",
+            problem ?? "",
+            await pageSummary(tab),
+            "Take a snapshot to see the page."
+          ].filter(Boolean).join("\n");
         }
-        const tab = driver.switchTo(found?.id ?? id);
-        const opener = tab.openerId ? driver.tabs.get(tab.openerId)?.name : void 0;
-        ctx.actionLog.push({
-          at: (/* @__PURE__ */ new Date()).toISOString(),
-          tabId: tab.id,
-          tab: tab.name,
-          action: "tab-switch",
-          label: `Switch to the tab "${tab.name}"`,
-          value: JSON.stringify({ name: tab.name, opener, newest: id === "newest" || void 0 }),
-          url: tokenizeUnique(tab.page.url(), ctx.unique)
-        });
-        return `Switched to tab ${tab.id}.
+        if (action2 === "switch") {
+          if (!id)
+            throw new ToolError("Give the id or name of the tab to switch to.", "bad_input");
+          const found = driver.tabByRef(id);
+          if (found && name) {
+            driver.checkTabName(name, found);
+            found.name = name;
+          }
+          const tab = driver.switchTo(found?.id ?? id);
+          const opener = tab.openerId ? driver.tabs.get(tab.openerId)?.name : void 0;
+          ctx.actionLog.push({
+            at: (/* @__PURE__ */ new Date()).toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: "tab-switch",
+            label: `Switch to the tab "${tab.name}"`,
+            value: JSON.stringify({
+              name: tab.name,
+              opener,
+              newest: id === "newest" || void 0
+            }),
+            url: tokenizeUnique(tab.page.url(), ctx.unique)
+          });
+          return `Switched to tab ${tab.id}.
 ${await pageSummary(tab)}
 Take a snapshot to see the page.`;
-      }
-      if (action2 === "close") {
-        if (!id) throw new ToolError("Give the id or name of the tab to close.", "bad_input");
-        const tab = driver.tabByRef(id);
-        if (!tab) throw new ToolError(`There is no tab "${id}".`, "no_tab");
-        if (driver.tabs.size === 1)
-          throw new ToolError("This is the last tab. Use browser_close instead.", "bad_input");
-        await tab.page.close();
-        ctx.actionLog.push({
-          at: (/* @__PURE__ */ new Date()).toISOString(),
-          tabId: tab.id,
-          tab: tab.name,
-          action: "tab-close",
-          label: `Close the tab "${tab.name}"`,
-          value: JSON.stringify({ name: tab.name }),
-          url: ""
-        });
-        return `Closed tab ${tab.id}. The active tab is ${driver.activeId}.`;
-      }
-      if (driver.tabs.size === 0)
-        return 'No tab is open. Call browser_open, or tabs with action "new", to open one.';
-      const rows = [];
-      for (const tab of driver.tabs.values()) {
-        const title = await tab.page.title().catch(() => "");
-        const settings = describeEmulation(withoutDefaults(tab.emulation), true);
-        const flags = [
-          tab.id === driver.activeId ? "active" : "",
-          tab.login === "main" ? "" : `login ${tab.login}`,
-          tab.openerId ? `opened by ${tab.openerId}` : "",
-          settings,
-          driver.pendingDialog(tab.id) ? "dialog open" : "",
-          tab.crashed ? "crashed" : ""
-        ].filter(Boolean);
-        const label2 = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
-        rows.push(
-          `${label2}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
-        );
-      }
-      return untrusted(rows.join("\n"));
-    })
+        }
+        if (action2 === "close") {
+          if (!id) throw new ToolError("Give the id or name of the tab to close.", "bad_input");
+          const tab = driver.tabByRef(id);
+          if (!tab) throw new ToolError(`There is no tab "${id}".`, "no_tab");
+          if (driver.tabs.size === 1)
+            throw new ToolError("This is the last tab. Use browser_close instead.", "bad_input");
+          await tab.page.close();
+          ctx.actionLog.push({
+            at: (/* @__PURE__ */ new Date()).toISOString(),
+            tabId: tab.id,
+            tab: tab.name,
+            action: "tab-close",
+            label: `Close the tab "${tab.name}"`,
+            value: JSON.stringify({ name: tab.name }),
+            url: ""
+          });
+          return `Closed tab ${tab.id}. The active tab is ${driver.activeId}.`;
+        }
+        if (driver.tabs.size === 0)
+          return 'No tab is open. Call browser_open, or tabs with action "new", to open one.';
+        const rows = [];
+        for (const tab of driver.tabs.values()) {
+          const title = await tab.page.title().catch(() => "");
+          const settings = describeEmulation(withoutDefaults(tab.emulation), true);
+          const flags = [
+            tab.id === driver.activeId ? "active" : "",
+            tab.login === "main" ? "" : `login ${tab.login}`,
+            tab.openerId ? `opened by ${tab.openerId}` : "",
+            settings,
+            driver.pendingDialog(tab.id) ? "dialog open" : "",
+            tab.crashed ? "crashed" : ""
+          ].filter(Boolean);
+          const label2 = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
+          rows.push(
+            `${label2}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
+          );
+        }
+        return untrusted(rows.join("\n"));
+      },
+      { action: action2 ?? "list" }
+    )
   );
   server.registerTool(
     "dialog",
@@ -118427,511 +118446,12 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 }
 
 // packages/server/src/presentation/live-stage.ts
-import { randomBytes as randomBytes11 } from "node:crypto";
+import { randomBytes as randomBytes12 } from "node:crypto";
 import { readFileSync as readFileSync22 } from "node:fs";
 import { extname as extname8 } from "node:path";
 
-// packages/server/src/stage/stage-css.ts
-var STAGE_CSS = `
-:host {
-  all: initial !important; position: fixed !important; inset: 0 !important;
-  width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important;
-  margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible !important;
-  background: transparent !important; pointer-events: none !important; color-scheme: normal !important;
-}
-* { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-[hidden] { display: none !important; }
-
-.slide { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 3vh; padding: 6vh 8vw; background: #111827; color: #ffffff; text-align: center; }
-.slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.slide h1 { margin: 0; font-size: clamp(32px, 8vh, 112px); font-weight: 700; line-height: 1.1; }
-.slide p { margin: 0; font-size: clamp(18px, 3.6vh, 48px); line-height: 1.4; white-space: pre-wrap; opacity: 0.9; }
-
-.spot { position: fixed; border-radius: 8px; box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.55);
-  outline: 3px solid #fbbf24; outline-offset: 4px; transition: all 250ms ease; }
-
-.zoom { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80vw; max-height: 70vh;
-  padding: 6px; border-radius: 12px; background: #ffffff; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
-.zoom .lens { position: relative; overflow: hidden; border-radius: 8px; background: #111827; }
-.zoom img { position: absolute; display: block; max-width: none; max-height: none; }
-
-.caption { position: fixed; left: 0; right: 0; bottom: 0; padding: 2.2vh 4vw;
-  background: rgba(17, 24, 39, 0.86); color: #ffffff; font-size: max(16px, 3.2vh); font-weight: 600;
-  line-height: 1.3; text-align: center; }
-
-.pointer { position: fixed; left: 0; top: 0; width: 28px; height: 28px;
-  transition-property: transform; transition-timing-function: ease-in-out;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
-.ripple { position: fixed; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
-  border: 3px solid #fbbf24; opacity: 0; }
-.ripple.go { animation: uiwalk-ripple 500ms ease-out; }
-@keyframes uiwalk-ripple { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
-
-.cover { position: fixed; inset: 0; background: #000000; display: flex; align-items: center; justify-content: center;
-  color: #9ca3af; font-size: max(18px, 3vh); }
-`;
-
-// packages/server/src/stage/stage-script.ts
-function stageMain(opts) {
-  if (window !== window.top) return;
-  const w2 = window;
-  if (w2.__uiwalkStage) return;
-  const send = (msg) => {
-    const fn = w2[opts.binding];
-    if (typeof fn === "function") fn(JSON.stringify(msg));
-  };
-  const host = document.createElement("uiwalk-stage");
-  host.setAttribute("aria-hidden", "true");
-  host.setAttribute("popover", "manual");
-  const root = host.attachShadow({ mode: "closed" });
-  const sheet = new CSSStyleSheet();
-  sheet.replaceSync(opts.css);
-  root.adoptedStyleSheets = [sheet];
-  const el = (tag, className) => {
-    const node3 = document.createElement(tag);
-    node3.className = className;
-    node3.hidden = true;
-    return node3;
-  };
-  const slide = el("div", "slide");
-  const spot = el("div", "spot");
-  const zoom = el("div", "zoom");
-  const lens = document.createElement("div");
-  lens.className = "lens";
-  const zoomImage = document.createElement("img");
-  zoomImage.alt = "";
-  lens.append(zoomImage);
-  zoom.append(lens);
-  const caption = el("div", "caption");
-  const ripple = el("div", "ripple");
-  const pointer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  pointer.setAttribute("class", "pointer");
-  pointer.setAttribute("viewBox", "0 0 24 24");
-  const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  arrow.setAttribute("d", "M3 2l7 19 2.5-7.5L20 11z");
-  arrow.setAttribute("fill", "#111827");
-  arrow.setAttribute("stroke", "#ffffff");
-  arrow.setAttribute("stroke-width", "1.5");
-  pointer.append(arrow);
-  pointer.style.display = "none";
-  const cover = el("div", "cover");
-  root.append(slide, spot, zoom, caption, pointer, ripple, cover);
-  let keys = false;
-  let mask = [];
-  let pointerOn = true;
-  let at = { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight * 0.8) };
-  const showSlide = (s) => {
-    slide.replaceChildren();
-    slide.hidden = !s;
-    if (!s) return;
-    slide.style.background = s.background ?? (s.kind === "image" ? "#000000" : "#111827");
-    if (s.kind === "image") {
-      const img = document.createElement("img");
-      img.alt = "";
-      img.src = s.src;
-      img.style.objectFit = s.fit === "cover" ? "cover" : "contain";
-      slide.append(img);
-      return;
-    }
-    slide.style.color = s.color ?? "#ffffff";
-    const title = document.createElement("h1");
-    title.textContent = s.title;
-    slide.append(title);
-    if (s.text) {
-      const text = document.createElement("p");
-      text.textContent = s.text;
-      slide.append(text);
-    }
-  };
-  const place = (node3, r, pad) => {
-    Object.assign(node3.style, {
-      left: `${r.x - pad}px`,
-      top: `${r.y - pad}px`,
-      width: `${r.width + pad * 2}px`,
-      height: `${r.height + pad * 2}px`
-    });
-  };
-  const movePointer = (x2, y, ms) => {
-    if (!pointerOn) return;
-    pointer.style.display = "";
-    pointer.style.transitionDuration = `${ms}ms`;
-    pointer.style.transform = `translate(${x2 - 4}px, ${y - 2}px)`;
-    at = { x: x2, y };
-  };
-  const applyMask = () => {
-    for (const selector of mask) {
-      let found;
-      try {
-        found = document.querySelectorAll(selector);
-      } catch {
-        continue;
-      }
-      for (const node3 of found) {
-        node3.style.setProperty("filter", "blur(8px)", "important");
-      }
-    }
-  };
-  let maskQueued = false;
-  new MutationObserver(() => {
-    if (!mask.length || maskQueued) return;
-    maskQueued = true;
-    requestAnimationFrame(() => {
-      maskQueued = false;
-      applyMask();
-    });
-  }).observe(document, { childList: true, subtree: true });
-  const receive = (msg) => {
-    switch (msg.type) {
-      case "state": {
-        keys = Boolean(msg.keys);
-        pointerOn = msg.pointer !== false;
-        if (!pointerOn) pointer.style.display = "none";
-        mask = Array.isArray(msg.mask) ? msg.mask : [];
-        applyMask();
-        showSlide(msg.slide ?? null);
-        const text = msg.caption;
-        caption.hidden = !text;
-        caption.textContent = text ?? "";
-        const mode = msg.cover;
-        cover.hidden = !mode || mode === "none";
-        cover.textContent = mode === "curtain" ? "One moment" : "";
-        break;
-      }
-      case "cover": {
-        const mode = msg.mode;
-        cover.hidden = mode === "none";
-        cover.textContent = mode === "curtain" ? "One moment" : "";
-        break;
-      }
-      case "spot": {
-        const r = msg.rect;
-        spot.hidden = !r;
-        if (r) place(spot, r, 6);
-        break;
-      }
-      case "zoom": {
-        const src = msg.src;
-        const r = msg.rect;
-        zoom.hidden = !src || !r;
-        if (!src || !r) break;
-        const pad = 24;
-        const w3 = r.width + pad * 2;
-        const h = r.height + pad * 2;
-        const k = Math.min(
-          Number(msg.zoom) || 2,
-          (window.innerWidth * 0.8 - 12) / w3,
-          (window.innerHeight * 0.7 - 12) / h
-        );
-        lens.style.width = `${w3 * k}px`;
-        lens.style.height = `${h * k}px`;
-        Object.assign(zoomImage.style, {
-          width: `${window.innerWidth * k}px`,
-          height: `${window.innerHeight * k}px`,
-          left: `${-(r.x - pad) * k}px`,
-          top: `${-(r.y - pad) * k}px`
-        });
-        zoomImage.src = src;
-        break;
-      }
-      case "glide":
-        movePointer(msg.x, msg.y, msg.ms ?? 400);
-        break;
-      case "ripple":
-        if (!pointerOn) break;
-        ripple.hidden = false;
-        ripple.style.left = `${at.x}px`;
-        ripple.style.top = `${at.y}px`;
-        ripple.classList.remove("go");
-        void ripple.offsetWidth;
-        ripple.classList.add("go");
-        break;
-    }
-  };
-  const KEYS = /* @__PURE__ */ new Set([
-    "ArrowRight",
-    "ArrowLeft",
-    "PageDown",
-    "PageUp",
-    " ",
-    "b",
-    "B",
-    ".",
-    "Escape"
-  ]);
-  window.addEventListener(
-    "keydown",
-    (event) => {
-      if (!keys || !event.isTrusted || !KEYS.has(event.key)) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      send({ type: "key", key: event.key });
-    },
-    true
-  );
-  w2.__uiwalkStage = { receive };
-  const raise = () => {
-    try {
-      if (host.matches(":popover-open")) host.hidePopover();
-      host.showPopover();
-    } catch {
-    }
-  };
-  const mount = () => {
-    const parent = document.documentElement;
-    if (parent && host.parentNode !== parent) {
-      parent.appendChild(host);
-      raise();
-    }
-  };
-  const start = () => {
-    mount();
-    new MutationObserver(() => {
-      if (!host.isConnected) mount();
-    }).observe(document.documentElement, { childList: true });
-    document.addEventListener(
-      "toggle",
-      (event) => event.target !== host && queueMicrotask(raise),
-      true
-    );
-    new MutationObserver(() => queueMicrotask(raise)).observe(document.documentElement, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["open"]
-    });
-    send({ type: "hello", width: window.innerWidth, height: window.innerHeight });
-  };
-  if (document.documentElement) start();
-  else {
-    const wait3 = new MutationObserver(() => {
-      if (document.documentElement) {
-        wait3.disconnect();
-        start();
-      }
-    });
-    wait3.observe(document, { childList: true });
-  }
-}
-
-// packages/server/src/presentation/live-stage.ts
-var TOKEN4 = randomBytes11(6).toString("hex");
-var BINDING2 = `__uiwalkStage_${TOKEN4}`;
-var SCRIPT3 = {
-  world: `uiwalk-stage-${TOKEN4}`,
-  binding: BINDING2,
-  receiver: "__uiwalkStage",
-  source: `(${stageMain.toString()})(${JSON.stringify({ binding: BINDING2, css: STAGE_CSS })});`
-};
-var IMAGE_TYPES = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml"
-};
-var ON_SCREEN_MS = 12e3;
-var LiveStage = class {
-  constructor(tab, session, options) {
-    this.tab = tab;
-    this.session = session;
-    this.options = options;
-  }
-  tab;
-  session;
-  options;
-  bridge;
-  engine;
-  shown = null;
-  stepCaption = null;
-  curtainOn = false;
-  gateShown = false;
-  answer;
-  lastAnswered = 0;
-  answerTimer;
-  sent = "";
-  stopWatch;
-  images = /* @__PURE__ */ new Map();
-  // The engine finds the element of a step for the spotlight. It comes after the stage.
-  useEngine(engine) {
-    this.engine = engine;
-  }
-  async install() {
-    await this.tab.page.setBypassCSP(true).catch(() => void 0);
-    await this.tab.cdp?.send("Emulation.setScrollbarsHidden", { hidden: true }).catch(() => void 0);
-    this.bridge = await IsolatedBridge.install(
-      this.tab.page,
-      SCRIPT3,
-      (msg) => void this.onMessage(msg)
-    );
-    this.stopWatch = this.session.watch(() => void this.sync());
-    if (this.options.fullscreen) await this.fullscreen().catch(() => void 0);
-  }
-  dispose() {
-    this.stopWatch?.();
-    if (this.answerTimer) clearTimeout(this.answerTimer);
-  }
-  async onMessage(msg) {
-    if (msg.type === "hello") {
-      this.sent = "";
-      await this.sync();
-      return;
-    }
-    if (msg.type === "key" && typeof msg.key === "string") this.onKey(msg.key);
-  }
-  // Keys from a clicker or the keyboard in the audience window.
-  onKey(key2) {
-    const s = this.session;
-    if (key2 === "b" || key2 === "B" || key2 === ".") {
-      s.setBlank(!s.blank);
-      return;
-    }
-    if (key2 === "Escape") {
-      if (s.info.kiosk) s.stop();
-      return;
-    }
-    let command2;
-    if (key2 === "ArrowRight" || key2 === "PageDown" || key2 === " ") {
-      command2 = s.state === "title" ? { type: "start" } : { type: "continue" };
-    } else if (key2 === "ArrowLeft" || key2 === "PageUp") {
-      command2 = { type: "back" };
-    }
-    if (command2 && !s.check(command2)) s.command(command2);
-  }
-  async image(path14) {
-    const cached2 = this.images.get(path14);
-    if (cached2) return cached2;
-    try {
-      const real = checkSlideImage(path14, this.options.projectDir);
-      const type = IMAGE_TYPES[extname8(real).toLowerCase()] ?? "application/octet-stream";
-      const src = `data:${type};base64,${readFileSync22(real).toString("base64")}`;
-      this.images.set(path14, src);
-      return src;
-    } catch (error62) {
-      log.warn("a slide image cannot show", error62);
-      return void 0;
-    }
-  }
-  async show(slide) {
-    if (!slide) return null;
-    if ("image" in slide) {
-      const src = await this.image(slide.image);
-      return src ? { kind: "image", src, fit: slide.fit, background: slide.background } : { kind: "text", title: this.options.planName };
-    }
-    return {
-      kind: "text",
-      title: slide.title,
-      text: slide.text,
-      background: slide.background,
-      color: slide.color
-    };
-  }
-  // Sends the state to the page, and sets what a new page shows before its first paint.
-  async sync() {
-    const bridge = this.bridge;
-    if (!bridge) return;
-    const s = this.session;
-    if (this.gateShown && s.state !== "gate") {
-      this.gateShown = false;
-      await bridge.send({ type: "spot", rect: null });
-      await bridge.send({ type: "zoom", src: null });
-    }
-    const latest2 = [...s.chat].reverse().find((c) => c.onScreen && c.answer && c.answeredAt);
-    if (latest2?.answeredAt && latest2.answeredAt > this.lastAnswered) {
-      this.lastAnswered = latest2.answeredAt;
-      this.answer = { text: latest2.answer, until: Date.now() + ON_SCREEN_MS };
-      if (this.answerTimer) clearTimeout(this.answerTimer);
-      this.answerTimer = setTimeout(() => void this.sync(), ON_SCREEN_MS + 50);
-    }
-    const answer = this.answer && this.answer.until > Date.now() ? this.answer.text : null;
-    const cover = s.blank ? "blank" : this.curtainOn ? "curtain" : "none";
-    const state = {
-      type: "state",
-      slide: this.shown,
-      caption: answer ?? (this.options.captions ? this.stepCaption : null),
-      cover,
-      keys: s.active && s.state !== "manual",
-      pointer: this.options.pointer,
-      mask: this.options.mask
-    };
-    const text = JSON.stringify(state);
-    if (text === this.sent) return;
-    this.sent = text;
-    await bridge.setOnLoad("cover", cover === "none" ? void 0 : { type: "cover", mode: cover });
-    await bridge.send(state);
-  }
-  // ---------- The audience screen ----------
-  async title() {
-    this.shown = await this.show(this.options.title);
-    await this.sync();
-  }
-  async slide(step) {
-    this.shown = await this.show(step.slide);
-    this.stepCaption = step.caption ?? null;
-    await this.sync();
-  }
-  async end() {
-    this.shown = await this.show(
-      this.options.end ?? { title: this.options.planName, text: "Questions?" }
-    );
-    this.stepCaption = null;
-    await this.sync();
-  }
-  async clear() {
-    this.shown = null;
-    await this.sync();
-  }
-  async curtain(on) {
-    this.curtainOn = on;
-    await this.sync();
-  }
-  // Before an action: the spotlight on its element, a bigger picture of it, and the pointer.
-  async gate(step, ops) {
-    const bridge = this.bridge;
-    const rect = await this.engine?.targetRect(ops);
-    if (!bridge || !rect || this.session.state !== "gate") return;
-    const src = step.zoom ? await this.engine?.viewImage() : void 0;
-    this.gateShown = true;
-    if (step.spotlight) await bridge.send({ type: "spot", rect });
-    if (src) await bridge.send({ type: "zoom", src, rect, zoom: step.zoom });
-    this.glide(this.tab, rect, 600);
-  }
-  // ---------- The replay's stage ----------
-  stepStart(text) {
-    this.stepCaption = text;
-    void this.sync();
-  }
-  glide(tab, rect, ms) {
-    if (tab.id !== this.tab.id) return;
-    void this.bridge?.send({
-      type: "glide",
-      x: Math.round(rect.x + rect.width / 2),
-      y: Math.round(rect.y + rect.height / 2),
-      ms
-    });
-  }
-  async point(tab, kind) {
-    if (tab.id !== this.tab.id) return;
-    if (["click", "dblclick", "check", "uncheck", "select", "upload"].includes(kind))
-      await this.bridge?.send({ type: "ripple" });
-  }
-  // ---------- The window ----------
-  async fullscreen() {
-    const cdp = await this.tab.page.createCDPSession();
-    try {
-      const { windowId } = await cdp.send("Browser.getWindowForTarget");
-      await cdp.send("Browser.setWindowBounds", {
-        windowId,
-        bounds: { windowState: "fullscreen" }
-      });
-    } finally {
-      await cdp.detach().catch(() => void 0);
-    }
-  }
-};
-
 // packages/server/src/replay/engine.ts
-import { randomBytes as randomBytes12 } from "node:crypto";
+import { randomBytes as randomBytes11 } from "node:crypto";
 var INSTANT = { typeMs: 0, glideMs: 0, holdMs: 0 };
 var MAX_TYPE_MS = 3e3;
 var StepError = class extends Error {
@@ -118996,7 +118516,7 @@ var ReplayEngine = class {
   // Mock rules of the replay, by their id in the run.
   mocks = /* @__PURE__ */ new Map();
   restores = [];
-  key = randomBytes12(2).toString("hex");
+  key = randomBytes11(2).toString("hex");
   before;
   // True when the main tab is a tab of the browser, like the audience window.
   mainAdopted = false;
@@ -119482,6 +119002,1047 @@ var ReplayEngine = class {
   }
 };
 
+// packages/server/src/stage/stage-css.ts
+var STAGE_CSS = `
+:host {
+  all: initial !important; position: fixed !important; inset: 0 !important;
+  width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible !important;
+  background: transparent !important; pointer-events: none !important; color-scheme: normal !important;
+}
+* { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+
+.slide { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3vh; padding: 6vh 8vw; background: #111827; color: #ffffff; text-align: center; }
+.slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.slide h1 { margin: 0; font-size: clamp(32px, 8vh, 112px); font-weight: 700; line-height: 1.1; }
+.slide p { margin: 0; font-size: clamp(18px, 3.6vh, 48px); line-height: 1.4; white-space: pre-wrap; opacity: 0.9; }
+
+.spot { position: fixed; border-radius: 8px; box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.55);
+  outline: 3px solid #fbbf24; outline-offset: 4px; transition: all 250ms ease; }
+
+.zoom { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80vw; max-height: 70vh;
+  padding: 6px; border-radius: 12px; background: #ffffff; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.zoom .lens { position: relative; overflow: hidden; border-radius: 8px; background: #111827; }
+.zoom img { position: absolute; display: block; max-width: none; max-height: none; }
+
+.caption { position: fixed; left: 0; right: 0; bottom: 0; padding: 2.2vh 4vw;
+  background: rgba(17, 24, 39, 0.86); color: #ffffff; font-size: max(16px, 3.2vh); font-weight: 600;
+  line-height: 1.3; text-align: center; }
+
+.pointer { position: fixed; left: 0; top: 0; width: 28px; height: 28px;
+  transition-property: transform; transition-timing-function: ease-in-out;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+.ripple { position: fixed; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  border: 3px solid #fbbf24; opacity: 0; }
+.ripple.go { animation: uiwalk-ripple 500ms ease-out; }
+@keyframes uiwalk-ripple { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+
+.cover { position: fixed; inset: 0; background: #000000; display: flex; align-items: center; justify-content: center;
+  color: #9ca3af; font-size: max(18px, 3vh); }
+`;
+
+// packages/server/src/stage/stage-script.ts
+function stageMain(opts) {
+  if (window !== window.top) return;
+  const w2 = window;
+  if (w2.__uiwalkStage) return;
+  const send = (msg) => {
+    const fn = w2[opts.binding];
+    if (typeof fn === "function") fn(JSON.stringify(msg));
+  };
+  const host = document.createElement("uiwalk-stage");
+  host.setAttribute("aria-hidden", "true");
+  host.setAttribute("popover", "manual");
+  const root = host.attachShadow({ mode: "closed" });
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(opts.css);
+  root.adoptedStyleSheets = [sheet];
+  const el = (tag, className) => {
+    const node3 = document.createElement(tag);
+    node3.className = className;
+    node3.hidden = true;
+    return node3;
+  };
+  const slide = el("div", "slide");
+  const spot = el("div", "spot");
+  const zoom = el("div", "zoom");
+  const lens = document.createElement("div");
+  lens.className = "lens";
+  const zoomImage = document.createElement("img");
+  zoomImage.alt = "";
+  lens.append(zoomImage);
+  zoom.append(lens);
+  const caption = el("div", "caption");
+  const ripple = el("div", "ripple");
+  const pointer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  pointer.setAttribute("class", "pointer");
+  pointer.setAttribute("viewBox", "0 0 24 24");
+  const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  arrow.setAttribute("d", "M3 2l7 19 2.5-7.5L20 11z");
+  arrow.setAttribute("fill", "#111827");
+  arrow.setAttribute("stroke", "#ffffff");
+  arrow.setAttribute("stroke-width", "1.5");
+  pointer.append(arrow);
+  pointer.style.display = "none";
+  const cover = el("div", "cover");
+  root.append(slide, spot, zoom, caption, pointer, ripple, cover);
+  let keys = false;
+  let mask = [];
+  let pointerOn = true;
+  let at = { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight * 0.8) };
+  const showSlide = (s) => {
+    slide.replaceChildren();
+    slide.hidden = !s;
+    if (!s) return;
+    slide.style.background = s.background ?? (s.kind === "image" ? "#000000" : "#111827");
+    if (s.kind === "image") {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.src = s.src;
+      img.style.objectFit = s.fit === "cover" ? "cover" : "contain";
+      slide.append(img);
+      return;
+    }
+    slide.style.color = s.color ?? "#ffffff";
+    const title = document.createElement("h1");
+    title.textContent = s.title;
+    slide.append(title);
+    if (s.text) {
+      const text = document.createElement("p");
+      text.textContent = s.text;
+      slide.append(text);
+    }
+  };
+  const place = (node3, r, pad) => {
+    Object.assign(node3.style, {
+      left: `${r.x - pad}px`,
+      top: `${r.y - pad}px`,
+      width: `${r.width + pad * 2}px`,
+      height: `${r.height + pad * 2}px`
+    });
+  };
+  const movePointer = (x2, y, ms) => {
+    if (!pointerOn) return;
+    pointer.style.display = "";
+    pointer.style.transitionDuration = `${ms}ms`;
+    pointer.style.transform = `translate(${x2 - 4}px, ${y - 2}px)`;
+    at = { x: x2, y };
+  };
+  const applyMask = () => {
+    for (const selector of mask) {
+      let found;
+      try {
+        found = document.querySelectorAll(selector);
+      } catch {
+        continue;
+      }
+      for (const node3 of found) {
+        node3.style.setProperty("filter", "blur(8px)", "important");
+      }
+    }
+  };
+  let maskQueued = false;
+  new MutationObserver(() => {
+    if (!mask.length || maskQueued) return;
+    maskQueued = true;
+    requestAnimationFrame(() => {
+      maskQueued = false;
+      applyMask();
+    });
+  }).observe(document, { childList: true, subtree: true });
+  const receive = (msg) => {
+    switch (msg.type) {
+      case "state": {
+        keys = Boolean(msg.keys);
+        pointerOn = msg.pointer !== false;
+        if (!pointerOn) pointer.style.display = "none";
+        mask = Array.isArray(msg.mask) ? msg.mask : [];
+        applyMask();
+        showSlide(msg.slide ?? null);
+        const text = msg.caption;
+        caption.hidden = !text;
+        caption.textContent = text ?? "";
+        const mode = msg.cover;
+        cover.hidden = !mode || mode === "none";
+        cover.textContent = mode === "curtain" ? "One moment" : "";
+        break;
+      }
+      case "cover": {
+        const mode = msg.mode;
+        cover.hidden = mode === "none";
+        cover.textContent = mode === "curtain" ? "One moment" : "";
+        break;
+      }
+      case "spot": {
+        const r = msg.rect;
+        spot.hidden = !r;
+        if (r) place(spot, r, 6);
+        break;
+      }
+      case "zoom": {
+        const src = msg.src;
+        const r = msg.rect;
+        zoom.hidden = !src || !r;
+        if (!src || !r) break;
+        const pad = 24;
+        const w3 = r.width + pad * 2;
+        const h = r.height + pad * 2;
+        const k = Math.min(
+          Number(msg.zoom) || 2,
+          (window.innerWidth * 0.8 - 12) / w3,
+          (window.innerHeight * 0.7 - 12) / h
+        );
+        lens.style.width = `${w3 * k}px`;
+        lens.style.height = `${h * k}px`;
+        Object.assign(zoomImage.style, {
+          width: `${window.innerWidth * k}px`,
+          height: `${window.innerHeight * k}px`,
+          left: `${-(r.x - pad) * k}px`,
+          top: `${-(r.y - pad) * k}px`
+        });
+        zoomImage.src = src;
+        break;
+      }
+      case "glide":
+        movePointer(msg.x, msg.y, msg.ms ?? 400);
+        break;
+      case "ripple":
+        if (!pointerOn) break;
+        ripple.hidden = false;
+        ripple.style.left = `${at.x}px`;
+        ripple.style.top = `${at.y}px`;
+        ripple.classList.remove("go");
+        void ripple.offsetWidth;
+        ripple.classList.add("go");
+        break;
+    }
+  };
+  const KEYS = /* @__PURE__ */ new Set([
+    "ArrowRight",
+    "ArrowLeft",
+    "PageDown",
+    "PageUp",
+    " ",
+    "b",
+    "B",
+    ".",
+    "Escape"
+  ]);
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!keys || !event.isTrusted || !KEYS.has(event.key)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      send({ type: "key", key: event.key });
+    },
+    true
+  );
+  w2.__uiwalkStage = { receive };
+  const raise = () => {
+    try {
+      if (host.matches(":popover-open")) host.hidePopover();
+      host.showPopover();
+    } catch {
+    }
+  };
+  const mount = () => {
+    const parent = document.documentElement;
+    if (parent && host.parentNode !== parent) {
+      parent.appendChild(host);
+      raise();
+    }
+  };
+  const start = () => {
+    mount();
+    new MutationObserver(() => {
+      if (!host.isConnected) mount();
+    }).observe(document.documentElement, { childList: true });
+    document.addEventListener(
+      "toggle",
+      (event) => event.target !== host && queueMicrotask(raise),
+      true
+    );
+    new MutationObserver(() => queueMicrotask(raise)).observe(document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open"]
+    });
+    send({ type: "hello", width: window.innerWidth, height: window.innerHeight });
+  };
+  if (document.documentElement) start();
+  else {
+    const wait3 = new MutationObserver(() => {
+      if (document.documentElement) {
+        wait3.disconnect();
+        start();
+      }
+    });
+    wait3.observe(document, { childList: true });
+  }
+}
+
+// packages/server/src/presentation/live-stage.ts
+var TOKEN4 = randomBytes12(6).toString("hex");
+var BINDING2 = `__uiwalkStage_${TOKEN4}`;
+var SCRIPT3 = {
+  world: `uiwalk-stage-${TOKEN4}`,
+  binding: BINDING2,
+  receiver: "__uiwalkStage",
+  source: `(${stageMain.toString()})(${JSON.stringify({ binding: BINDING2, css: STAGE_CSS })});`
+};
+var IMAGE_TYPES = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml"
+};
+var ON_SCREEN_MS = 12e3;
+var LiveStage = class {
+  constructor(tab, session, options) {
+    this.tab = tab;
+    this.session = session;
+    this.options = options;
+  }
+  tab;
+  session;
+  options;
+  bridge;
+  engine;
+  shown = null;
+  stepCaption = null;
+  curtainOn = false;
+  gateShown = false;
+  answer;
+  lastShown = 0;
+  titleSlide;
+  answerTimer;
+  sent = "";
+  stopWatch;
+  images = /* @__PURE__ */ new Map();
+  // The engine finds the element of a step for the spotlight. It comes after the stage.
+  useEngine(engine) {
+    this.engine = engine;
+  }
+  async install() {
+    await this.tab.page.setBypassCSP(true).catch(() => void 0);
+    await this.tab.cdp?.send("Emulation.setScrollbarsHidden", { hidden: true }).catch(() => void 0);
+    this.bridge = await IsolatedBridge.install(
+      this.tab.page,
+      SCRIPT3,
+      (msg) => void this.onMessage(msg)
+    );
+    this.stopWatch = this.session.watch(() => void this.sync());
+    if (this.options.fullscreen) await this.fullscreen().catch(() => void 0);
+  }
+  dispose() {
+    this.stopWatch?.();
+    if (this.answerTimer) clearTimeout(this.answerTimer);
+  }
+  async onMessage(msg) {
+    if (msg.type === "hello") {
+      this.sent = "";
+      await this.sync();
+      return;
+    }
+    if (msg.type === "key" && typeof msg.key === "string") this.onKey(msg.key);
+  }
+  // Keys from a clicker or the keyboard in the audience window.
+  onKey(key2) {
+    const s = this.session;
+    if (key2 === "b" || key2 === "B" || key2 === ".") {
+      s.setBlank(!s.blank);
+      return;
+    }
+    if (key2 === "Escape") {
+      if (s.info.kiosk) s.stop();
+      return;
+    }
+    let command2;
+    if (key2 === "ArrowRight" || key2 === "PageDown" || key2 === " ") {
+      command2 = s.state === "title" ? { type: "start" } : { type: "continue" };
+    } else if (key2 === "ArrowLeft" || key2 === "PageUp") {
+      command2 = { type: "back" };
+    }
+    if (command2 && !s.check(command2)) s.command(command2);
+  }
+  async image(path14) {
+    const cached2 = this.images.get(path14);
+    if (cached2) return cached2;
+    try {
+      const real = checkSlideImage(path14, this.options.projectDir);
+      const type = IMAGE_TYPES[extname8(real).toLowerCase()] ?? "application/octet-stream";
+      const src = `data:${type};base64,${readFileSync22(real).toString("base64")}`;
+      this.images.set(path14, src);
+      return src;
+    } catch (error62) {
+      log.warn("a slide image cannot show", error62);
+      return void 0;
+    }
+  }
+  async show(slide) {
+    if (!slide) return null;
+    if ("image" in slide) {
+      const src = await this.image(slide.image);
+      return src ? { kind: "image", src, fit: slide.fit, background: slide.background } : { kind: "text", title: this.options.planName };
+    }
+    return {
+      kind: "text",
+      title: slide.title,
+      text: slide.text,
+      background: slide.background,
+      color: slide.color
+    };
+  }
+  // Sends the state to the page, and sets what a new page shows before its first paint.
+  async sync() {
+    const bridge = this.bridge;
+    if (!bridge) return;
+    const s = this.session;
+    if (this.gateShown && s.state !== "gate") {
+      this.gateShown = false;
+      await bridge.send({ type: "spot", rect: null });
+      await bridge.send({ type: "zoom", src: null });
+    }
+    const latest2 = s.chat.filter((c) => c.answer && c.shownAt).sort((a2, b2) => (b2.shownAt ?? 0) - (a2.shownAt ?? 0))[0];
+    if (latest2?.shownAt && latest2.shownAt > this.lastShown) {
+      this.lastShown = latest2.shownAt;
+      this.answer = { text: latest2.answer, until: Date.now() + ON_SCREEN_MS };
+      if (this.answerTimer) clearTimeout(this.answerTimer);
+      this.answerTimer = setTimeout(() => void this.sync(), ON_SCREEN_MS + 50);
+    }
+    const answer = this.answer && this.answer.until > Date.now() ? this.answer.text : null;
+    const cover = s.blank ? "blank" : this.curtainOn ? "curtain" : "none";
+    if (s.titleShown && this.titleSlide === void 0)
+      this.titleSlide = await this.show(this.options.title ?? { title: this.options.planName });
+    const state = {
+      type: "state",
+      slide: s.titleShown ? this.titleSlide ?? this.shown : this.shown,
+      caption: answer ?? (this.options.captions ? this.stepCaption : null),
+      cover,
+      keys: s.active && s.state !== "manual",
+      pointer: this.options.pointer,
+      mask: this.options.mask
+    };
+    const text = JSON.stringify(state);
+    if (text === this.sent) return;
+    this.sent = text;
+    await bridge.setOnLoad("cover", cover === "none" ? void 0 : { type: "cover", mode: cover });
+    await bridge.send(state);
+  }
+  // ---------- The audience screen ----------
+  async title() {
+    this.shown = await this.show(this.options.title);
+    await this.sync();
+  }
+  async slide(step) {
+    this.shown = await this.show(step.slide);
+    this.stepCaption = step.caption ?? null;
+    await this.sync();
+  }
+  async end() {
+    this.shown = await this.show(
+      this.options.end ?? { title: this.options.planName, text: "Questions?" }
+    );
+    this.stepCaption = null;
+    await this.sync();
+  }
+  async clear() {
+    this.shown = null;
+    await this.sync();
+  }
+  async curtain(on) {
+    this.curtainOn = on;
+    await this.sync();
+  }
+  // Before an action: the spotlight on its element, a bigger picture of it, and the pointer.
+  async gate(step, ops) {
+    const bridge = this.bridge;
+    const rect = await this.engine?.targetRect(ops);
+    if (!bridge || !rect || this.session.state !== "gate") return;
+    const src = step.zoom ? await this.engine?.viewImage() : void 0;
+    this.gateShown = true;
+    if (step.spotlight) await bridge.send({ type: "spot", rect });
+    if (src) await bridge.send({ type: "zoom", src, rect, zoom: step.zoom });
+    this.glide(this.tab, rect, 600);
+  }
+  // ---------- The replay's stage ----------
+  stepStart(text) {
+    this.stepCaption = text;
+    void this.sync();
+  }
+  glide(tab, rect, ms) {
+    if (tab.id !== this.tab.id) return;
+    void this.bridge?.send({
+      type: "glide",
+      x: Math.round(rect.x + rect.width / 2),
+      y: Math.round(rect.y + rect.height / 2),
+      ms
+    });
+  }
+  async point(tab, kind) {
+    if (tab.id !== this.tab.id) return;
+    if (["click", "dblclick", "check", "uncheck", "select", "upload"].includes(kind))
+      await this.bridge?.send({ type: "ripple" });
+  }
+  // ---------- The window ----------
+  async withWindow(fn) {
+    const cdp = await this.tab.page.createCDPSession();
+    try {
+      const { windowId } = await cdp.send("Browser.getWindowForTarget");
+      await fn(cdp, windowId);
+    } finally {
+      await cdp.detach().catch(() => void 0);
+    }
+  }
+  fullscreen() {
+    return this.withWindow(async (cdp, windowId) => {
+      await cdp.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: { windowState: "fullscreen" }
+      });
+    });
+  }
+  // Fullscreen on and off, from the presenter window.
+  toggleFullscreen() {
+    return this.withWindow(async (cdp, windowId) => {
+      const { bounds } = await cdp.send("Browser.getWindowBounds", { windowId });
+      await cdp.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: { windowState: bounds.windowState === "fullscreen" ? "normal" : "fullscreen" }
+      });
+    });
+  }
+  // Moves the audience window to another screen, in fullscreen.
+  moveToScreen(screen) {
+    return this.withWindow(async (cdp, windowId) => {
+      const bounds = async () => (await cdp.send("Browser.getWindowBounds", { windowId })).bounds;
+      if ((await bounds()).windowState !== "normal") {
+        await cdp.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
+        for (let i = 0; i < 30 && (await bounds()).windowState !== "normal"; i++) await sleep(150);
+        await sleep(800);
+      }
+      const now = await bounds();
+      const width = Math.min(now.width ?? 1280, screen.width);
+      const height = Math.min(now.height ?? 800, screen.height);
+      await cdp.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: {
+          left: screen.left + Math.round((screen.width - width) / 2),
+          top: screen.top + Math.round((screen.height - height) / 2),
+          width,
+          height
+        }
+      });
+      await sleep(300);
+      await cdp.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: { windowState: "fullscreen" }
+      });
+    });
+  }
+};
+
+// packages/server/src/presentation/presenter-window.ts
+import { randomBytes as randomBytes13 } from "node:crypto";
+
+// packages/server/src/presentation/presenter-source.ts
+import { dirname as dirname12, join as join38 } from "node:path";
+import { fileURLToPath as fileURLToPath4 } from "node:url";
+var built2;
+async function presenterSource() {
+  if (true) return '"use strict";(()=>{var A=`\n:root { color-scheme: dark; --bg: #0b1020; --panel: #131b2f; --line: #26314d; --text: #e5e7eb;\n  --muted: #94a3b8; --accent: #3b82f6; --warn: #f59e0b; --bad: #ef4444; --good: #22c55e; }\n* { box-sizing: border-box; }\n[hidden] { display: none !important; }\nhtml, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);\n  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }\nbody { display: flex; flex-direction: column; overflow: hidden; }\nbutton { font: inherit; color: var(--text); background: #1e293b; border: 1px solid var(--line);\n  border-radius: 8px; padding: 8px 14px; cursor: pointer; }\nbutton:hover { background: #26324a; }\nbutton:disabled { opacity: 0.6; cursor: default; }\nbutton.primary { background: var(--accent); border-color: var(--accent); color: #fff; }\nbutton.danger { border-color: #7f1d1d; color: #fecaca; }\nbutton.danger.big, .dialog button.danger { background: #991b1b; color: #fff; }\nbutton.big { font-size: 20px; padding: 14px 28px; }\nbutton.small { padding: 2px 8px; font-size: 13px; }\nbutton.on { background: var(--warn); border-color: var(--warn); color: #111827; }\nheader { display: flex; justify-content: space-between; align-items: center; gap: 16px;\n  padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }\nheader .title { display: flex; align-items: center; gap: 10px; min-width: 0; }\nheader .name { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.env { padding: 2px 10px; border-radius: 999px; color: #fff; font-weight: 600; font-size: 13px; }\n.url { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.clocks { display: flex; gap: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n.clocks .clock { color: var(--muted); }\n.near { color: var(--warn); }\n.over { color: var(--bad); font-weight: 700; }\nmain { flex: 1; display: grid; grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); gap: 16px;\n  padding: 16px 18px; min-height: 0; }\n.left, .right { display: flex; flex-direction: column; gap: 12px; min-height: 0; }\n.now { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }\n.nowbar { display: flex; justify-content: space-between; align-items: center; }\n.now h1 { margin: 6px 0 0; font-size: 26px; line-height: 1.25; }\n.chip { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px;\n  border-radius: 6px; background: #1e293b; }\n.chip.gate { background: #1d4ed8; }\n.chip.running { background: #15803d; }\n.chip.failed { background: var(--bad); }\n.chip.manual, .chip.end { background: #7c3aed; }\n.steptime { font-variant-numeric: tabular-nums; }\n.failure { background: #3f1d1d; border: 1px solid var(--bad); border-radius: 12px; padding: 12px 16px; }\n.failure p { margin: 6px 0 10px; white-space: pre-wrap; }\n.manual { background: #2e1065; border: 1px solid #7c3aed; border-radius: 12px; padding: 12px 16px; }\n.notes { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.notesbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line);\n  color: var(--muted); }\n.notesbar span { flex: 1; }\n.notes-text { flex: 1; overflow: auto; padding: 8px 16px; }\n.notes-text p { margin: 0 0 0.6em; }\n.notes-text ul { margin: 0 0 0.6em; padding-left: 1.2em; }\n.notes-text code { background: #1e293b; padding: 0 4px; border-radius: 4px; }\n.muted { color: var(--muted); }\n.next { color: var(--muted); font-size: 16px; }\n.controls { display: flex; flex-direction: column; gap: 8px; }\n.row, .primary-row { display: flex; flex-wrap: wrap; gap: 8px; }\n.mirror { background: #000; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;\n  aspect-ratio: 16 / 10; flex: none; }\n.mirror img { width: 100%; height: 100%; object-fit: contain; display: block; }\n.jumpbar:empty { display: none; }\n.jumpbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #172554;\n  border: 1px solid var(--accent); border-radius: 10px; padding: 8px 12px; }\n.jumpbar span { flex: 1 1 200px; }\n.steps { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 30vh; flex: none;\n  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }\n.steps li { display: flex; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); }\n.steps li:last-child { border-bottom: 0; }\n.steps li.can-jump { cursor: pointer; }\n.steps li.can-jump:hover { background: #1e293b; }\n.steps li.here { background: #172554; }\n.steps li.done .label { color: var(--muted); }\n.steps .mark { width: 1.6em; text-align: center; color: var(--muted); }\n.steps li.done .mark { color: var(--good); }\n.steps .label { flex: 1; }\n.steps .spent { color: var(--muted); font-variant-numeric: tabular-nums; }\n.chat { flex: 1; min-height: 160px; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.chathead { padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--muted); }\n.chatlog { flex: 1; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }\n.msg { padding: 8px 12px; border-radius: 10px; max-width: 90%; white-space: pre-wrap; }\n.msg.q { align-self: flex-end; background: #1d4ed8; }\n.msg.a { align-self: flex-start; background: #1e293b; }\n.msgbar { margin-top: 6px; }\n.shown { color: var(--good); font-size: 13px; }\n.chatstatus { padding: 4px 12px; font-size: 13px; color: var(--muted); }\n.chatstatus.thinking { color: var(--warn); }\n.chatstatus.ok { color: var(--good); }\n.chatform { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }\n.chatform textarea { flex: 1; resize: none; font: inherit; color: var(--text); background: var(--bg);\n  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }\n.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center;\n  justify-content: center; z-index: 10; }\n.dialog { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px;\n  max-width: 520px; display: flex; flex-direction: column; gap: 12px; }\n.dialog h2 { margin: 0; }\n.dialog p { margin: 0; color: var(--muted); }\n.screens { display: flex; flex-direction: column; gap: 8px; }\n.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b;\n  border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; z-index: 11; }\n@media (max-width: 900px) { main { grid-template-columns: 1fr; overflow: auto; } }\n`;var z=window,D=z.__uiwalkPresenterBoot;function p(e){let t=z[D.binding];typeof t=="function"&&t(JSON.stringify({nonce:D.nonce,msg:e}))}function n(e,t={},...a){let s=document.createElement(e);for(let[o,i]of Object.entries(t))o==="class"?s.className=i:s.setAttribute(o,i);return s.append(...a),s}function V(e,t){e.addEventListener("click",a=>{a.isTrusted&&t()})}function r(e,t,a,s=""){let o=n("button",{type:"button",class:s,"data-act":t},e);return V(o,a),o}function h(e){let t=Math.max(0,Math.floor(e/1e3)),a=Math.floor(t/3600),s=Math.floor(t%3600/60),o=String(t%60).padStart(2,"0");return a?`${a}:${String(s).padStart(2,"0")}:${o}`:`${s}:${o}`}function R(e){let t=[],a=/(\\*\\*[^*]+\\*\\*|\\*[^*\\s][^*]*\\*|_[^_\\s][^_]*_|`[^`]+`|\\[[^\\]]+\\]\\([^)\\s]+\\))/g,s=0;for(let o of e.matchAll(a)){let i=o.index??0;i>s&&t.push(document.createTextNode(e.slice(s,i)));let d=o[0];if(d.startsWith("**"))t.push(n("strong",{},d.slice(2,-2)));else if(d.startsWith("`"))t.push(n("code",{},d.slice(1,-1)));else if(d.startsWith("[")){let[,x,ce]=/^\\[([^\\]]+)\\]\\(([^)\\s]+)\\)$/.exec(d)??[];t.push(document.createTextNode(`${x} (${ce})`))}else t.push(n("em",{},d.slice(1,-1)));s=i+d.length}return s<e.length&&t.push(document.createTextNode(e.slice(s))),t}function pe(e){let t=[],a=/^\\s*[-*]\\s+/;for(let s of e.trim().split(/\\n\\s*\\n/)){let o,i;for(let d of s.split(`\n`)){if(a.test(d)){i=void 0,o||(o=n("ul"),t.push(o)),o.append(n("li",{},...R(d.replace(a,""))));continue}o=void 0,i?i.append(n("br")):(i=n("p"),t.push(i)),i.append(...R(d))}}return t}var q=document.createElement("style");q.textContent=A;document.head.append(q);var J=n("b",{class:"name"}),E=n("span",{class:"env"}),O=n("span",{class:"url"}),U=n("span",{class:"stepno"}),$=n("span",{class:"elapsed","data-part":"elapsed"}),K=n("span",{class:"clock"}),ue=n("header",{},n("div",{class:"title"},J,E,O),n("div",{class:"clocks"},U,$,K)),P=n("span",{class:"chip","data-part":"state"}),W=n("h1",{"data-part":"step-title"}),y=n("span",{class:"steptime","data-part":"step-time"}),me=n("div",{class:"now"},n("div",{class:"nowbar"},P,y),W),X=n("p",{"data-part":"failure-text"}),F=n("div",{class:"failure","data-part":"failure"},n("b",{},"This step did not work."),X,n("div",{class:"row"},r("Retry","retry",()=>c({type:"retry"}),"primary"),r("Skip","skip-failed",()=>c({type:"skip"})),r("I will do it by hand","manual",()=>c({type:"manual"})))),G=n("div",{class:"manual","data-part":"manual"},"Use the app in the audience window. Then click Continue."),k=22,v=n("div",{class:"notes-text","data-part":"notes"}),fe=n("div",{class:"notes"},n("div",{class:"notesbar"},n("span",{},"Notes"),r("A-","smaller",()=>N(k-2),"small"),r("A+","bigger",()=>N(k+2),"small")),v);function N(e){k=Math.min(48,Math.max(12,e)),v.style.fontSize=`${k}px`}N(k);var Y=n("div",{class:"next","data-part":"next"}),Q=n("div",{class:"primary-row"}),Z=r("Back","back",()=>c({type:"back"})),ee=r("Skip","skip",()=>c({type:"skip"})),B=r("Blank","blank",()=>p({type:"blank"})),M=r("Title","title",()=>p({type:"title"})),ge=r("Fullscreen","fullscreen",()=>p({type:"fullscreen"})),xe=r("Other screen","screen",()=>{Te()}),te=r("Go to end","end",()=>c({type:"end"}),"danger"),he=n("div",{class:"controls"},Q,n("div",{class:"row"},Z,ee,te),n("div",{class:"row"},B,M,ge,xe)),be=n("section",{class:"left"},me,F,G,fe,Y,he),ne=n("img",{alt:"The audience screen","data-part":"mirror"}),ae=n("div",{class:"mirror"},ne),se=n("ol",{class:"steps","data-part":"steps"}),b=n("div",{class:"jumpbar","data-part":"jump"}),m=n("div",{class:"chatlog","data-part":"chat"}),L=n("div",{class:"chatstatus","data-part":"chat-status"}),T=n("textarea",{rows:"2",maxlength:"500",placeholder:"Ask Claude about the app. Enter sends.","data-part":"chat-input"}),we=r("Ask","ask",()=>ie(),"primary"),ke=n("div",{class:"chat"},n("div",{class:"chathead"},"Chat"),m,L,n("div",{class:"chatform"},T,we)),ye=n("aside",{class:"right"},ae,b,se,ke),ve=n("main",{},be,ye),re=n("h2"),H=n("div",{class:"modal","data-part":"confirm"},n("div",{class:"dialog"},re,n("p",{},"This is a protected environment. The steps can create real data there. The app opens after you confirm."),n("div",{class:"row"},r("Present here","confirm",()=>p({type:"confirm"}),"danger"),r("Cancel","cancel",()=>p({type:"cancel"}))))),oe=n("div",{class:"screens"}),g=n("div",{class:"modal","data-part":"screens"},n("div",{class:"dialog"},n("h2",{},"Send the audience window to a screen"),oe,n("div",{class:"row"},r("Cancel","screens-cancel",()=>f(g))))),w=n("div",{class:"toast","data-part":"notice"});document.body.append(ue,ve,H,g,w);f(H);f(g);f(w);function f(e){e.hidden=!0}function u(e,t=!0){e.hidden=!t}var C;function j(e){w.textContent=e,u(w),C&&clearTimeout(C),C=window.setTimeout(()=>f(w),4e3)}var l;function c(e){l?.can.includes(e.type)&&p({type:"command",command:e})}function ie(){let e=T.value.trim();e&&(p({type:"ask",text:e}),T.value="")}T.addEventListener("keydown",e=>{e.isTrusted&&e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),ie())});async function Te(){let e=[];try{e=(await window.getScreenDetails()).screens}catch{j("Chrome did not list the screens. Drag the audience window to the other screen.");return}if(e.length<2){j("Only one screen is connected.");return}oe.replaceChildren(...e.map((t,a)=>r(`${t.label||`Screen ${a+1}`}: ${t.width} x ${t.height}${t.isPrimary?" (main)":""}`,`screen-${a+1}`,()=>{f(g),p({type:"screen",left:t.left,top:t.top,width:t.width,height:t.height})}))),u(g)}function Se(e){if(!l)return;let t=e.index-1<l.current;b.replaceChildren(n("span",{},t?`Go back to step ${e.index}? The app starts over in a new login. The steps before it run at full speed.`:`Jump to step ${e.index}? The steps before it run at full speed.`),r("Jump","jump-go",()=>{b.replaceChildren(),c({type:"jump",step:e.index})},"primary"),r("Cancel","jump-cancel",()=>b.replaceChildren()))}window.addEventListener("keydown",e=>{if(!e.isTrusted||!l)return;let t=e.target;if(t&&(t.tagName==="TEXTAREA"||t.tagName==="INPUT"))return;let a=e.key;if(a==="Escape"){f(g),b.replaceChildren();return}l.confirmNeeded||(a==="ArrowRight"||a==="PageDown"||a===" "?(e.preventDefault(),p({type:"next"})):a==="ArrowLeft"||a==="PageUp"?(e.preventDefault(),c({type:"back"})):(a==="b"||a==="B"||a===".")&&(e.preventDefault(),p({type:"blank"})))});var Ce={title:"Title",gate:"Waiting",running:"Playing",failed:"Failed",manual:"By hand",end:"End screen",stopped:"Ended"},le=0;function Ee(e){return e.stepElapsedMs+(e.stepClockRunning?Date.now()-le:0)}function _(e,t){return t?e>t*1e3?"over":e>t*800?"near":"":""}function de(){let e=new Date;if(K.textContent=`${String(e.getHours()).padStart(2,"0")}:${String(e.getMinutes()).padStart(2,"0")}`,!l)return;let t=l.startedAt?Date.now()-l.startedAt:0;$.textContent=`${h(t)}${l.timeBudgetSec?` of ${h(l.timeBudgetSec*1e3)}`:""}`,$.className=`elapsed ${_(t,l.timeBudgetSec)}`;let a=l.steps[l.current];if(a&&l.state!=="title"){let s=Ee(l);y.textContent=`${h(s)}${a.timeBudgetSec?` of ${h(a.timeBudgetSec*1e3)}`:""}`,y.className=`steptime ${_(s,a.timeBudgetSec)}`}else y.textContent=""}var I=new Map;function S(e,t){let a=JSON.stringify(t);return I.get(e)===a?!1:(I.set(e,a),!0)}function $e(e){if(!S("primary",e.state))return;let t=[];e.state==="title"?t.push(r("Start","start",()=>c({type:"start"}),"primary big")):e.state==="gate"||e.state==="manual"?t.push(r("Continue","continue",()=>c({type:"continue"}),"primary big")):e.state==="running"?t.push(n("button",{type:"button",class:"primary big",disabled:""},"Playing")):e.state==="end"&&t.push(r("Back to app","back-to-app",()=>c({type:"manual"}),"big"),r("Close presentation","close",()=>c({type:"end"}),"danger big")),Q.replaceChildren(...t)}function Pe(e){let t=e.steps.map(s=>{let o=s.index-1;return{step:s,done:o<e.current,here:o===e.current&&e.state!=="title"&&e.state!=="end",spent:s.spentMs>=1e3?h(s.spentMs):""}}),a=e.can.includes("jump");S("steps",[t.map(s=>[s.done,s.here,s.spent]),a])&&se.replaceChildren(...t.map(({step:s,done:o,here:i,spent:d})=>{let x=n("li",{class:`${o?"done":""} ${i?"here":""}`,"data-step":String(s.index)},n("span",{class:"mark"},o?"\\u2713":i?"\\u25B6":String(s.index)),n("span",{class:"label"},`${s.slide?"[Slide] ":""}${s.title}`),n("span",{class:"spent"},d));return a&&(x.classList.add("can-jump"),V(x,()=>Se(s))),x}))}function Ne(e){let t=[];if(e.question&&t.push(n("div",{class:"msg q"},e.question)),e.answer){let a=n("div",{class:"msg a","data-answer":e.id},e.question?"":"Note: ",e.answer);a.append(n("div",{class:"msgbar"},e.onScreen?n("span",{class:"shown"},"On the screen"):r("Show on screen",`show-${e.id}`,()=>p({type:"show",id:e.id}),"small"))),t.push(a)}return t}function Be(e){if(S("chat",e.chat)){let s=m.scrollHeight-m.scrollTop-m.clientHeight<40;m.replaceChildren(...e.chat.flatMap(Ne)),s&&(m.scrollTop=m.scrollHeight)}let t=e.chat.some(s=>s.state==="thinking"),a=e.chat.some(s=>s.state==="waiting");L.textContent=t?"Claude is thinking.":a?"Claude is not listening now. Your question waits.":e.listening?"Claude is listening.":"Claude is not listening now.",L.className=`chatstatus ${t?"thinking":e.listening?"ok":"off"}`}function Me(e){l=e,le=Date.now(),document.title=`Presenter: ${e.name}`,J.textContent=e.name,E.textContent=e.environment.label,E.style.background=e.environment.color,O.textContent=e.environment.baseUrl??"";let t=e.steps[e.current];U.textContent=e.state==="title"?`${e.steps.length} steps`:t?`Step ${t.index} of ${e.steps.length}`:"End",P.textContent=Ce[e.state]??e.state,P.className=`chip ${e.state}`,W.textContent=e.state==="title"?"The title shows. Click Start.":e.state==="end"||!t?"The end screen shows.":t.title,u(F,e.state==="failed"),X.textContent=e.failure?`Step ${e.failure.step}: ${e.failure.message}`:"",u(G,e.state==="manual");let a=e.state==="title"?e.steps[0]:t;S("notes",a?.notes??"")&&(v.replaceChildren(...a?.notes?pe(a.notes):[n("p",{class:"muted"},"No notes.")]),v.scrollTop=0);let s=e.state==="title"?e.steps[0]:e.steps[e.current+1];Y.textContent=e.state==="end"?"":s?`Next: step ${s.index}, ${s.title}`:"Next: the end screen",$e(e),u(Z,e.can.includes("back")),u(ee,e.state==="gate"),u(te,e.state!=="end"&&e.can.includes("end")),B.classList.toggle("on",e.blank),B.textContent=e.blank?"Show screen":"Blank",M.classList.toggle("on",e.titleShown),M.textContent=e.titleShown?"Hide title":"Title",u(ae,e.mirror),Pe(e),Be(e),re.textContent=e.confirmNeeded?`Present on ${e.confirmNeeded.label}?`:"",u(H,!!e.confirmNeeded),de()}function Le(e){e.type==="view"?Me(e.view):e.type==="frame"?ne.src=e.src:e.type==="notice"&&j(e.text)}z.__uiwalkPresenter={receive:Le};setInterval(de,500);p({type:"hello"});})();\n';
+  if (built2) return built2;
+  const esbuild = await import("esbuild");
+  const result = await esbuild.build({
+    entryPoints: [join38(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
+    bundle: true,
+    format: "iife",
+    platform: "browser",
+    target: "chrome120",
+    minify: true,
+    write: false,
+    legalComments: "none"
+  });
+  built2 = result.outputFiles[0]?.text ?? "";
+  return built2;
+}
+
+// packages/server/src/presentation/session.ts
+var COMMANDS_IN = {
+  title: ["start", "jump", "end"],
+  gate: ["continue", "skip", "back", "jump", "end"],
+  running: ["end"],
+  failed: ["retry", "skip", "manual", "back", "jump", "end"],
+  manual: ["continue", "back", "jump", "end"],
+  end: ["manual", "back", "jump", "end"],
+  stopped: []
+};
+var PresentationSession = class {
+  constructor(steps, info, abort = new AbortController()) {
+    this.steps = steps;
+    this.info = info;
+    this.abort = abort;
+  }
+  steps;
+  info;
+  abort;
+  state = "title";
+  // The step at the gate, playing, or failed, from 0. steps.length means the end screen.
+  current = 0;
+  // The audience screen shows black.
+  blank = false;
+  // The audience screen shows the title slide over the app.
+  titleShown = false;
+  // A protected environment that the presenter must confirm before the app opens.
+  confirmNeeded;
+  presenterOpen = false;
+  openedAt = Date.now();
+  // When the presenter clicked Start.
+  startedAt;
+  failure;
+  // Time spent on each step, in milliseconds, by index from 0.
+  stepTimes = /* @__PURE__ */ new Map();
+  chat = [];
+  stepSince;
+  commands = [];
+  commandWaiter;
+  events = [];
+  listener;
+  idle = /* @__PURE__ */ new Set();
+  watchers = /* @__PURE__ */ new Set();
+  get active() {
+    return this.state !== "stopped";
+  }
+  // True while a listen call waits for an event. The presenter window shows it.
+  get listening() {
+    return Boolean(this.listener);
+  }
+  // Calls fn after each change, for the presenter window. Returns a way to stop.
+  watch(fn) {
+    this.watchers.add(fn);
+    return () => this.watchers.delete(fn);
+  }
+  changed() {
+    for (const fn of this.watchers) {
+      try {
+        fn();
+      } catch {
+      }
+    }
+  }
+  setState(state, current2 = this.current) {
+    if (current2 !== this.current || state === "end" || state === "stopped") this.closeStepTime();
+    if (this.stepSince === void 0 && state !== "title" && state !== "stopped")
+      this.stepSince = Date.now();
+    this.state = state;
+    this.current = current2;
+    if (state !== "running") {
+      for (const done of this.idle) done();
+      this.idle.clear();
+    }
+    this.changed();
+  }
+  closeStepTime() {
+    if (this.stepSince === void 0) return;
+    this.stepTimes.set(
+      this.current,
+      (this.stepTimes.get(this.current) ?? 0) + Date.now() - this.stepSince
+    );
+    this.stepSince = void 0;
+  }
+  // The time on the step that shows now, in milliseconds.
+  stepElapsed() {
+    return (this.stepTimes.get(this.current) ?? 0) + (this.stepSince === void 0 ? 0 : Date.now() - this.stepSince);
+  }
+  setBlank(on) {
+    this.blank = on;
+    this.changed();
+  }
+  setTitleShown(on) {
+    this.titleShown = on;
+    this.changed();
+  }
+  setPresenterOpen(on) {
+    this.presenterOpen = on;
+    this.changed();
+  }
+  // The presenter confirmed the protected environment, and the app is open.
+  confirmed() {
+    this.confirmNeeded = void 0;
+    this.changed();
+  }
+  // Waits until no step plays, so a tool can read the page without a race.
+  settled(ms = 5e3) {
+    if (this.state !== "running") return Promise.resolve();
+    return new Promise((resolve12) => {
+      const done = () => {
+        clearTimeout(timer2);
+        this.idle.delete(done);
+        resolve12();
+      };
+      const timer2 = setTimeout(done, ms);
+      this.idle.add(done);
+    });
+  }
+  // Returns a reason when the command cannot run now.
+  check(command2) {
+    if (this.confirmNeeded && command2.type !== "end") {
+      return `The presenter must first confirm the protected environment "${this.confirmNeeded.name}" in the presenter window.`;
+    }
+    if (!COMMANDS_IN[this.state].includes(command2.type)) {
+      return `The presentation is at "${this.state}", so "${command2.type}" does not work now. It can: ${COMMANDS_IN[this.state].join(", ") || "nothing"}.`;
+    }
+    if (command2.type === "jump" && (command2.step < 1 || command2.step > this.steps.length)) {
+      return `There is no step ${command2.step}. The steps are 1 to ${this.steps.length}.`;
+    }
+    return void 0;
+  }
+  // A command from the presenter or the agent. The runner takes it at its next stop.
+  command(command2) {
+    const waiter = this.commandWaiter;
+    if (waiter) {
+      this.commandWaiter = void 0;
+      waiter(command2);
+    } else {
+      this.commands.push(command2);
+    }
+  }
+  // The next command for the runner. A stop gives "end".
+  nextCommand() {
+    const queued = this.commands.shift();
+    if (queued) return Promise.resolve(queued);
+    if (this.abort.signal.aborted) return Promise.resolve({ type: "end" });
+    return new Promise((resolve12) => {
+      this.commandWaiter = resolve12;
+    });
+  }
+  // A question from the presenter, for the agent.
+  ask(text) {
+    const entry = {
+      id: `q${this.chat.length + 1}`,
+      question: text,
+      askedAt: Date.now()
+    };
+    this.chat.push(entry);
+    this.push({ type: "question", id: entry.id, text });
+    this.changed();
+    return entry;
+  }
+  // The agent's answer. Without an id, it is a note, such as about a failed step.
+  answer(id, text, onScreen = false) {
+    let entry = id ? this.chat.find((c) => c.id === id) : void 0;
+    if (id && !entry) throw new Error(`There is no question "${id}".`);
+    if (!entry) {
+      entry = { id: `n${this.chat.length + 1}`, askedAt: Date.now() };
+      this.chat.push(entry);
+    }
+    entry.answer = text;
+    entry.answeredAt = Date.now();
+    entry.onScreen = onScreen;
+    if (onScreen) entry.shownAt = entry.answeredAt;
+    this.changed();
+    return entry;
+  }
+  // The presenter puts an answer on the audience screen.
+  showOnScreen(id) {
+    const entry = this.chat.find((c) => c.id === id);
+    if (!entry?.answer) return;
+    entry.onScreen = true;
+    entry.shownAt = Date.now();
+    this.changed();
+  }
+  // A listen call has the event now. The presenter window shows that the agent works on it.
+  taken(event) {
+    if (event.type !== "question") return;
+    const entry = this.chat.find((c) => c.id === event.id);
+    if (entry) entry.takenAt = Date.now();
+  }
+  push(event) {
+    const listener = this.listener;
+    if (listener) {
+      this.listener = void 0;
+      this.taken(event);
+      listener({ kind: "event", event });
+    } else {
+      this.events.push(event);
+    }
+  }
+  // Waits for the next event. A newer call ends this one.
+  listen(timeoutMs, signal) {
+    const queued = this.events.shift();
+    if (queued) {
+      this.taken(queued);
+      this.changed();
+      return Promise.resolve({ kind: "event", event: queued });
+    }
+    this.listener?.({ kind: "superseded" });
+    return new Promise((resolve12) => {
+      const finish = (outcome) => {
+        clearTimeout(timer2);
+        signal?.removeEventListener("abort", onAbort);
+        if (this.listener === finish) this.listener = void 0;
+        this.changed();
+        resolve12(outcome);
+      };
+      const onAbort = () => finish({ kind: "canceled" });
+      const timer2 = setTimeout(() => finish({ kind: "timeout" }), timeoutMs);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      this.listener = finish;
+      this.changed();
+    });
+  }
+  // Ends the presentation. The runner stops, and a listen call hears "ended".
+  stop() {
+    if (this.state === "stopped") return;
+    this.setState("stopped");
+    this.abort.abort();
+    this.command({ type: "end" });
+    this.push({ type: "ended" });
+  }
+};
+
+// packages/server/src/presentation/presenter-window.ts
+var PRESENTER_ORIGIN = "http://uiwalk-presenter.localhost";
+var PRESENTER_URL = `${PRESENTER_ORIGIN}/`;
+function presenterView(session, options) {
+  return {
+    name: session.info.name,
+    runId: session.info.runId,
+    environment: { ...session.info.environment, protected: options.protectedEnv },
+    state: session.state,
+    current: session.current,
+    blank: session.blank,
+    titleShown: session.titleShown,
+    ...session.confirmNeeded ? { confirmNeeded: session.confirmNeeded } : {},
+    ...session.startedAt ? { startedAt: session.startedAt } : {},
+    ...session.info.timeBudgetSec ? { timeBudgetSec: session.info.timeBudgetSec } : {},
+    stepElapsedMs: session.stepElapsed(),
+    stepClockRunning: session.state !== "title" && session.state !== "stopped",
+    steps: session.steps.map((step, i) => ({
+      index: step.index,
+      title: step.title,
+      ...step.notes ? { notes: step.notes } : {},
+      hasAction: step.hasAction,
+      pause: step.pause,
+      slide: Boolean(step.slide),
+      ...step.timeBudgetSec ? { timeBudgetSec: step.timeBudgetSec } : {},
+      spentMs: i === session.current ? session.stepElapsed() : session.stepTimes.get(i) ?? 0
+    })),
+    ...session.failure ? { failure: { step: session.failure.step, message: session.failure.message } } : {},
+    chat: session.chat.map((c) => ({
+      id: c.id,
+      ...c.question ? { question: c.question } : {},
+      ...c.answer ? { answer: c.answer } : {},
+      state: c.answer ? "answered" : c.takenAt ? "thinking" : "waiting",
+      onScreen: Boolean(c.shownAt)
+    })),
+    listening: session.listening,
+    can: session.confirmNeeded ? ["end"] : [...COMMANDS_IN[session.state]],
+    mirror: options.mirror
+  };
+}
+function pageHtml(source2, boot) {
+  const safe = (text) => text.replace(/<\/(script)/gi, "<\\/$1");
+  return [
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    "<title>Presenter</title></head><body>",
+    `<script>window.__uiwalkPresenterBoot = ${safe(JSON.stringify(boot))};</script>`,
+    `<script>${safe(source2)}</script>`,
+    "</body></html>"
+  ].join("");
+}
+var PresenterWindow = class _PresenterWindow {
+  constructor(session, context2, page, nonce, options) {
+    this.session = session;
+    this.context = context2;
+    this.page = page;
+    this.nonce = nonce;
+    this.options = options;
+  }
+  session;
+  context;
+  page;
+  nonce;
+  options;
+  closed = false;
+  stopWatch;
+  viewTimer;
+  mirrorCdp;
+  latestFrame;
+  sendingFrames = false;
+  get isOpen() {
+    return !this.closed;
+  }
+  static async open(driver, session, options) {
+    const context2 = await driver.browser.createBrowserContext();
+    driver.addForeign(context2);
+    const browserCdp = await driver.browser.target().createCDPSession();
+    await browserCdp.send("Browser.grantPermissions", {
+      permissions: ["windowManagement"],
+      origin: PRESENTER_ORIGIN,
+      browserContextId: context2.id
+    }).catch((error62) => log.warn("the presenter window cannot list the screens", error62));
+    await browserCdp.detach().catch(() => void 0);
+    const page = await context2.newPage({ type: "window" });
+    const nonce = randomBytes13(16).toString("hex");
+    const binding = `__uiwalkPresenter_${randomBytes13(6).toString("hex")}`;
+    const html = pageHtml(await presenterSource(), { binding, nonce });
+    const win = new _PresenterWindow(session, context2, page, nonce, options);
+    await page.setRequestInterception(true);
+    page.on("request", (request3) => {
+      const url2 = request3.url();
+      if (url2 === PRESENTER_URL) {
+        void request3.respond({ status: 200, contentType: "text/html; charset=utf-8", body: html });
+      } else if (request3.isNavigationRequest() && request3.frame() === page.mainFrame()) {
+        void request3.respond({ status: 204, body: "" });
+      } else {
+        void request3.abort("blockedbyclient");
+      }
+    });
+    await page.exposeFunction(binding, (payload) => win.onPayload(payload));
+    page.once("close", () => win.onClosed());
+    await page.goto(PRESENTER_URL);
+    win.stopWatch = session.watch(() => win.queueView());
+    if (options.mirror) await win.startMirror().catch((error62) => log.warn("no mirror", error62));
+    session.setPresenterOpen(true);
+    return win;
+  }
+  onClosed() {
+    if (this.closed) return;
+    this.closed = true;
+    this.stopWatch?.();
+    if (this.viewTimer) clearTimeout(this.viewTimer);
+    void this.mirrorCdp?.detach().catch(() => void 0);
+    this.session.setPresenterOpen(false);
+  }
+  async close() {
+    this.onClosed();
+    await this.context.close().catch(() => void 0);
+  }
+  async post(msg) {
+    if (this.closed) return;
+    await this.page.evaluate((m) => {
+      const target2 = window.__uiwalkPresenter;
+      target2?.receive?.(m);
+    }, msg).catch(() => void 0);
+  }
+  notice(text) {
+    void this.post({ type: "notice", text });
+  }
+  // Many changes can come at once. Send the view once for them.
+  queueView() {
+    if (this.closed || this.viewTimer) return;
+    this.viewTimer = setTimeout(() => {
+      this.viewTimer = void 0;
+      void this.post({ type: "view", view: this.view() });
+    }, 30);
+  }
+  view() {
+    return presenterView(this.session, {
+      protectedEnv: this.options.protectedEnv,
+      mirror: this.options.mirror
+    });
+  }
+  // ---------- Messages from the page ----------
+  onPayload(payload) {
+    let parsed;
+    try {
+      parsed = JSON.parse(payload);
+    } catch {
+      return;
+    }
+    if (parsed.nonce !== this.nonce || !parsed.msg) return;
+    void this.onMessage(parsed.msg).catch((error62) => {
+      log.warn("a presenter action did not work", error62);
+      this.notice(`That did not work: ${error62.message}`);
+    });
+  }
+  async onMessage(msg) {
+    const s = this.session;
+    switch (msg.type) {
+      case "hello":
+        await this.post({ type: "view", view: this.view() });
+        return;
+      case "command": {
+        const problem = s.check(msg.command);
+        if (problem) this.notice(problem);
+        else s.command(msg.command);
+        return;
+      }
+      case "next": {
+        const next = s.state === "title" ? { type: "start" } : { type: "continue" };
+        if (!s.check(next)) s.command(next);
+        return;
+      }
+      case "confirm":
+        await this.options.controls.confirm();
+        return;
+      case "cancel":
+        this.options.controls.cancel();
+        return;
+      case "blank":
+        s.setBlank(!s.blank);
+        return;
+      case "title":
+        s.setTitleShown(!s.titleShown);
+        return;
+      case "fullscreen":
+        await this.options.controls.toggleFullscreen();
+        return;
+      case "screen":
+        this.notice("The audience window moves to the screen.");
+        await this.options.controls.moveToScreen(msg);
+        return;
+      case "ask": {
+        const text = String(msg.text ?? "").trim().slice(0, 500);
+        if (text) s.ask(text);
+        return;
+      }
+      case "show":
+        s.showOnScreen(String(msg.id));
+        return;
+    }
+  }
+  // ---------- The mirror ----------
+  // A live picture of the audience screen, from its own screencast.
+  async startMirror() {
+    const cdp = await this.options.audience.createCDPSession();
+    this.mirrorCdp = cdp;
+    cdp.on("Page.screencastFrame", ({ data, sessionId }) => {
+      void cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => void 0);
+      this.latestFrame = `data:image/jpeg;base64,${data}`;
+      void this.sendFrames();
+    });
+    await cdp.send("Page.startScreencast", {
+      format: "jpeg",
+      quality: 60,
+      maxWidth: 960,
+      maxHeight: 600
+    });
+  }
+  // Sends the newest frame, about ten times a second at most. Older frames are dropped.
+  async sendFrames() {
+    if (this.sendingFrames) return;
+    this.sendingFrames = true;
+    try {
+      while (this.latestFrame && !this.closed) {
+        const src = this.latestFrame;
+        this.latestFrame = void 0;
+        await this.post({ type: "frame", src });
+        await sleep(100);
+      }
+    } finally {
+      this.sendingFrames = false;
+    }
+  }
+};
+
 // packages/server/src/replay/stage.ts
 var NullStage = class {
   stepStart() {
@@ -119743,199 +120304,6 @@ var PresentationRunner = class {
   }
 };
 
-// packages/server/src/presentation/session.ts
-var COMMANDS_IN = {
-  title: ["start", "jump", "end"],
-  gate: ["continue", "skip", "back", "jump", "end"],
-  running: ["end"],
-  failed: ["retry", "skip", "manual", "back", "jump", "end"],
-  manual: ["continue", "back", "jump", "end"],
-  end: ["manual", "back", "jump", "end"],
-  stopped: []
-};
-var PresentationSession = class {
-  constructor(steps, info, abort = new AbortController()) {
-    this.steps = steps;
-    this.info = info;
-    this.abort = abort;
-  }
-  steps;
-  info;
-  abort;
-  state = "title";
-  // The step at the gate, playing, or failed, from 0. steps.length means the end screen.
-  current = 0;
-  // The audience screen shows black.
-  blank = false;
-  openedAt = Date.now();
-  // When the presenter clicked Start.
-  startedAt;
-  failure;
-  // Time spent on each step, in milliseconds, by index from 0.
-  stepTimes = /* @__PURE__ */ new Map();
-  chat = [];
-  stepSince;
-  commands = [];
-  commandWaiter;
-  events = [];
-  listener;
-  idle = /* @__PURE__ */ new Set();
-  watchers = /* @__PURE__ */ new Set();
-  get active() {
-    return this.state !== "stopped";
-  }
-  // True while a listen call waits for an event. The presenter window shows it.
-  get listening() {
-    return Boolean(this.listener);
-  }
-  // Calls fn after each change, for the presenter window. Returns a way to stop.
-  watch(fn) {
-    this.watchers.add(fn);
-    return () => this.watchers.delete(fn);
-  }
-  changed() {
-    for (const fn of this.watchers) {
-      try {
-        fn();
-      } catch {
-      }
-    }
-  }
-  setState(state, current2 = this.current) {
-    if (current2 !== this.current || state === "end" || state === "stopped") this.closeStepTime();
-    if (this.stepSince === void 0 && state !== "title" && state !== "stopped")
-      this.stepSince = Date.now();
-    this.state = state;
-    this.current = current2;
-    if (state !== "running") {
-      for (const done of this.idle) done();
-      this.idle.clear();
-    }
-    this.changed();
-  }
-  closeStepTime() {
-    if (this.stepSince === void 0) return;
-    this.stepTimes.set(
-      this.current,
-      (this.stepTimes.get(this.current) ?? 0) + Date.now() - this.stepSince
-    );
-    this.stepSince = void 0;
-  }
-  // The time on the step that shows now, in milliseconds.
-  stepElapsed() {
-    return (this.stepTimes.get(this.current) ?? 0) + (this.stepSince === void 0 ? 0 : Date.now() - this.stepSince);
-  }
-  setBlank(on) {
-    this.blank = on;
-    this.changed();
-  }
-  // Waits until no step plays, so a tool can read the page without a race.
-  settled(ms = 5e3) {
-    if (this.state !== "running") return Promise.resolve();
-    return new Promise((resolve12) => {
-      const done = () => {
-        clearTimeout(timer2);
-        this.idle.delete(done);
-        resolve12();
-      };
-      const timer2 = setTimeout(done, ms);
-      this.idle.add(done);
-    });
-  }
-  // Returns a reason when the command cannot run now.
-  check(command2) {
-    if (!COMMANDS_IN[this.state].includes(command2.type)) {
-      return `The presentation is at "${this.state}", so "${command2.type}" does not work now. It can: ${COMMANDS_IN[this.state].join(", ") || "nothing"}.`;
-    }
-    if (command2.type === "jump" && (command2.step < 1 || command2.step > this.steps.length)) {
-      return `There is no step ${command2.step}. The steps are 1 to ${this.steps.length}.`;
-    }
-    return void 0;
-  }
-  // A command from the presenter or the agent. The runner takes it at its next stop.
-  command(command2) {
-    const waiter = this.commandWaiter;
-    if (waiter) {
-      this.commandWaiter = void 0;
-      waiter(command2);
-    } else {
-      this.commands.push(command2);
-    }
-  }
-  // The next command for the runner. A stop gives "end".
-  nextCommand() {
-    const queued = this.commands.shift();
-    if (queued) return Promise.resolve(queued);
-    if (this.abort.signal.aborted) return Promise.resolve({ type: "end" });
-    return new Promise((resolve12) => {
-      this.commandWaiter = resolve12;
-    });
-  }
-  // A question from the presenter, for the agent.
-  ask(text) {
-    const entry = {
-      id: `q${this.chat.length + 1}`,
-      question: text,
-      askedAt: Date.now()
-    };
-    this.chat.push(entry);
-    this.push({ type: "question", id: entry.id, text });
-    this.changed();
-    return entry;
-  }
-  // The agent's answer. Without an id, it is a note, such as about a failed step.
-  answer(id, text, onScreen = false) {
-    let entry = id ? this.chat.find((c) => c.id === id) : void 0;
-    if (id && !entry) throw new Error(`There is no question "${id}".`);
-    if (!entry) {
-      entry = { id: `n${this.chat.length + 1}`, askedAt: Date.now() };
-      this.chat.push(entry);
-    }
-    entry.answer = text;
-    entry.answeredAt = Date.now();
-    entry.onScreen = onScreen;
-    this.changed();
-    return entry;
-  }
-  push(event) {
-    const listener = this.listener;
-    if (listener) {
-      this.listener = void 0;
-      listener({ kind: "event", event });
-    } else {
-      this.events.push(event);
-    }
-  }
-  // Waits for the next event. A newer call ends this one.
-  listen(timeoutMs, signal) {
-    const queued = this.events.shift();
-    if (queued) return Promise.resolve({ kind: "event", event: queued });
-    this.listener?.({ kind: "superseded" });
-    return new Promise((resolve12) => {
-      const finish = (outcome) => {
-        clearTimeout(timer2);
-        signal?.removeEventListener("abort", onAbort);
-        if (this.listener === finish) this.listener = void 0;
-        this.changed();
-        resolve12(outcome);
-      };
-      const onAbort = () => finish({ kind: "canceled" });
-      const timer2 = setTimeout(() => finish({ kind: "timeout" }), timeoutMs);
-      signal?.addEventListener("abort", onAbort, { once: true });
-      this.listener = finish;
-      this.changed();
-    });
-  }
-  // Ends the presentation. The runner stops, and a listen call hears "ended".
-  stop() {
-    if (this.state === "stopped") return;
-    this.setState("stopped");
-    this.abort.abort();
-    this.command({ type: "end" });
-    this.push({ type: "ended" });
-  }
-};
-
 // packages/server/src/replay/rebase.ts
 var Rebaser = class _Rebaser {
   constructor(from2, to) {
@@ -119988,7 +120356,7 @@ var Rebaser = class _Rebaser {
 
 // packages/server/src/replay/replayer.ts
 import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync23, writeFileSync as writeFileSync16 } from "node:fs";
-import { dirname as dirname12, join as join38, relative as relative16 } from "node:path";
+import { dirname as dirname13, join as join39, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
   normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
@@ -120063,8 +120431,8 @@ async function replayRun(ctx, input3) {
     try {
       const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
       preview = Buffer.from(shot).toString("base64");
-      const file2 = join38(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
-      mkdirSync15(dirname12(file2), { recursive: true });
+      const file2 = join39(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      mkdirSync15(dirname13(file2), { recursive: true });
       writeFileSync16(file2, shot);
       lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
     } catch {
@@ -120093,7 +120461,7 @@ async function replayRun(ctx, input3) {
       { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
     ];
     const lines = [];
-    const videoDir = join38(store.dir, "video");
+    const videoDir = join39(store.dir, "video");
     mkdirSync15(videoDir, { recursive: true });
     const stamp3 = fileStamp("replay");
     let preview;
@@ -120116,13 +120484,13 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync23(join38(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync23(join39(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
         samples,
         format: format3,
-        outFile: join38(videoDir, `${stamp3}.${format3}`),
+        outFile: join39(videoDir, `${stamp3}.${format3}`),
         title: input3.titleCard ?? true ? run.name : void 0,
         width: format3 === "gif" ? config3.video.gifWidth : width
       });
@@ -120132,7 +120500,7 @@ async function replayRun(ctx, input3) {
       if (out.note) lines.push(out.note);
       const copies = [];
       for (const target2 of targets.filter((t) => t.format === out.format)) {
-        mkdirSync15(dirname12(target2.path), { recursive: true });
+        mkdirSync15(dirname13(target2.path), { recursive: true });
         copyFileSync2(out.file, target2.path);
         copies.push(target2.display);
         lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -120184,6 +120552,8 @@ var COMMANDS = [
   "back",
   "jump",
   "blank",
+  "title",
+  "presenter",
   "end"
 ];
 function clock(ms) {
@@ -120202,7 +120572,13 @@ function statusText(session) {
   const budget = session.info.timeBudgetSec;
   return [
     `Presentation: ${session.info.name}. Environment: ${env2.name}${env2.baseUrl ? ` (${env2.baseUrl})` : ""}. Rehearsal: ${session.info.runId}.`,
-    `State: ${session.state}, at ${session.state === "title" ? "the title slide" : stepLine(session, session.current)}.${session.blank ? " The audience screen is blank." : ""}`,
+    `State: ${session.state}, at ${session.state === "title" ? "the title slide" : stepLine(session, session.current)}.${session.blank ? " The audience screen is blank." : ""}${session.titleShown ? " The title slide shows." : ""}`,
+    ...session.confirmNeeded ? [
+      `Waiting: the presenter must confirm the protected environment "${session.confirmNeeded.name}" in the presenter window.`
+    ] : [],
+    ...session.info.kiosk ? [] : [
+      session.presenterOpen ? "The presenter window is open." : 'The presenter window is closed. Use control "presenter" to open it again.'
+    ],
     ...step?.notes && session.state !== "title" ? [`Notes: ${step.notes}`] : [],
     ...next && session.state !== "end" ? [`Next: step ${next.index} "${next.title}".`] : [],
     ...session.failure ? [`Failed: step ${session.failure.step}: ${session.failure.message}`] : [],
@@ -120312,11 +120688,14 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
       );
     }
   }
+  const settings = plan.presentation ?? {};
+  const kiosk = Boolean(input3.kiosk ?? settings.kiosk);
   let confirmed = !env2.protected;
   const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? "").split(",").map((s) => s.trim());
   if (!confirmed && allowed.includes(env2.name)) confirmed = true;
+  const presenterConfirms = !confirmed && !kiosk;
   const ask = ctx.elicit?.();
-  if (!confirmed && ask) {
+  if (!confirmed && !presenterConfirms && ask) {
     const answer = await ask(
       `Present on the "${env2.name}" environment (${env2.baseUrl})? The presentation can create real data there.`,
       { timeoutMs: 3e5, signal: extra.signal, relatedRequestId: extra.requestId }
@@ -120330,15 +120709,13 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     }
     confirmed = true;
   }
-  if (!confirmed) {
+  if (!confirmed && !presenterConfirms) {
     await ctx.finishSwitch(false);
     throw new ToolError(
-      `"${env2.name}" is a protected environment. A presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env2.name}.`,
+      `"${env2.name}" is a protected environment. A kiosk presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env2.name}.`,
       "protected_unconfirmed"
     );
   }
-  const settings = plan.presentation ?? {};
-  const kiosk = Boolean(input3.kiosk ?? settings.kiosk);
   if (ctx.driver?.alive) await ctx.driver.close();
   const zoom = settings.pageZoom && settings.pageZoom !== 1 && !settings.device ? { factor: settings.pageZoom, hosts: appHosts(config3) } : void 0;
   const driver = await ctx.startDriver(void 0, {
@@ -120350,7 +120727,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     },
     panel: false
   });
-  ctx.confirmFor(env2.name);
+  if (confirmed) ctx.confirmFor(env2.name);
   await ctx.finishSwitch(true);
   const audience = driver.activeTab();
   const ops = opsByStep(buildOps(run));
@@ -120395,6 +120772,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     },
     abort
   );
+  if (presenterConfirms) session.confirmNeeded = { name: env2.name, label: env2.label };
   const stage = new LiveStage(audience, session, {
     projectDir: config3.projectDir,
     planName: plan.name,
@@ -120408,12 +120786,45 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   stage.useEngine(engine);
   engine.stage = stage;
   await stage.install();
-  await engine.open({
+  const openApp = () => engine.open({
     mainTab: audience,
     emulation: settings.device ? run.emulation : void 0,
     session: run.session,
     startUrl: run.baseUrl ?? config3.baseUrl
   });
+  if (!presenterConfirms) await openApp();
+  let presenter;
+  let confirming = false;
+  const controls = {
+    confirm: async () => {
+      if (!session.confirmNeeded || confirming) return;
+      confirming = true;
+      try {
+        ctx.confirmFor(env2.name);
+        await openApp();
+        session.confirmed();
+      } catch (error62) {
+        presenter?.notice(`The app did not open: ${error62.message}`);
+        session.stop();
+      } finally {
+        confirming = false;
+      }
+    },
+    cancel: () => session.stop(),
+    toggleFullscreen: () => stage.toggleFullscreen(),
+    moveToScreen: (screen) => stage.moveToScreen(screen)
+  };
+  const openPresenter = async () => {
+    presenter = await PresenterWindow.open(driver, session, {
+      audience: audience.page,
+      mirror: settings.mirror ?? true,
+      protectedEnv: env2.protected,
+      controls
+    });
+  };
+  if (!kiosk) await openPresenter();
+  audience.page.once("close", () => session.stop());
+  driver.emitter.once("closed", () => session.stop());
   ctx.presentation = session;
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
@@ -120427,17 +120838,27 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     } : {}
   });
   const done = runner.run().catch((error62) => log.error("the presentation stopped", error62)).finally(async () => {
+    await presenter?.close();
     stage.dispose();
     await engine.dispose().catch(() => void 0);
     await driver.close().catch(() => void 0);
     if (ctx.presentation === session) ctx.presentation = void 0;
   });
-  current = { session, done };
+  current = {
+    session,
+    done,
+    kiosk,
+    presenterOpen: () => Boolean(presenter?.isOpen),
+    openPresenter
+  };
   return [
     ...lines,
     `The presentation "${plan.name}" is ready on ${describeEnvironment(env2)}. It plays the rehearsal ${run.id}.`,
     `It has ${steps.length} step(s).${kiosk ? " It runs by itself (kiosk)." : " It waits for the presenter before each step."}`,
-    kiosk ? 'Call present with action "stop" to end it.' : 'The audience window shows the title. The presenter starts it. When the presenter asks you, use present with action "control".',
+    ...presenterConfirms ? [
+      `"${env2.name}" is a protected environment. The presenter must confirm it in the presenter window before the app opens.`
+    ] : [],
+    kiosk ? 'Call present with action "stop" to end it.' : 'The audience window shows the title. The presenter window has the controls, the notes, and the chat. When the presenter asks you, use present with action "control".',
     'Now call present with action "listen", and answer each question with action "answer". Keep listening until listen says "ended".'
   ].join("\n");
 }
@@ -120477,7 +120898,7 @@ function registerPresentTools(server, ctx) {
         ),
         kiosk: external_exports.boolean().optional().describe("For start: run without a presenter. Each step holds for a few seconds."),
         command: external_exports.enum(COMMANDS).optional().describe(
-          "For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), or end."
+          "For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), title (the title slide, on or off), presenter (open the presenter window again), or end."
         ),
         step: external_exports.number().int().min(1).optional().describe("For control jump: the step number."),
         id: external_exports.string().optional().describe('For answer: the question id, like "q2". Leave it out for a note.'),
@@ -120529,6 +120950,19 @@ No question after ${timeoutSec} seconds. Call present with action "listen" again
           return `The audience screen is ${session.blank ? "blank" : "back"}.
 ${statusText(session)}`;
         }
+        if (input3.command === "title") {
+          session.setTitleShown(!session.titleShown);
+          return `The title slide ${session.titleShown ? "shows" : "is gone"}.
+${statusText(session)}`;
+        }
+        if (input3.command === "presenter") {
+          const live = current;
+          if (!live || live.kiosk)
+            throw new ToolError("A kiosk presentation has no presenter window.", "bad_command");
+          if (live.presenterOpen()) return "The presenter window is open already.";
+          await live.openPresenter();
+          return "The presenter window is open again.";
+        }
         const command2 = input3.command === "jump" ? { type: "jump", step: input3.step ?? 0 } : { type: input3.command };
         if (command2.type === "jump" && !input3.step)
           throw new ToolError("Give the step number for jump.", "bad_input");
@@ -120549,7 +120983,7 @@ ${statusText(session)}`;
 
 // packages/server/src/tools/project-tools.ts
 import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync24 } from "node:fs";
-import { join as join39 } from "node:path";
+import { join as join40 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -120587,16 +121021,16 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join39(projectDir, ".walkthrough", "runs");
+      const dir = join40(projectDir, ".walkthrough", "runs");
       if (!existsSync24(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync14(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join39(dir, id, "run.json");
+        const file2 = join40(dir, id, "run.json");
         if (!existsSync24(file2)) continue;
         try {
           const run = JSON.parse(readFileSync24(file2, "utf8"));
-          const report = existsSync24(join39(dir, id, "report.html")) ? `report written${existsSync24(join39(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join39(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
+          const report = existsSync24(join40(dir, id, "report.html")) ? `report written${existsSync24(join40(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join40(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
             `- ${id}: "${run.name}"${env2 === "development" ? "" : ` on ${env2}`}, ${run.status}, ${resultLine(run) || "no steps"} (${report})`
@@ -120611,9 +121045,9 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { randomBytes as randomBytes13 } from "node:crypto";
+import { randomBytes as randomBytes14 } from "node:crypto";
 import { existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync25, writeFileSync as writeFileSync17 } from "node:fs";
-import { basename as basename7, dirname as dirname13, extname as extname9, join as join40, relative as relative17 } from "node:path";
+import { basename as basename7, dirname as dirname14, extname as extname9, join as join41, relative as relative17 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -120981,7 +121415,7 @@ function registerQualityTools(server, ctx) {
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
-      const baselinePath = join40(
+      const baselinePath = join41(
         config3.projectDir,
         ".walkthrough",
         "baselines",
@@ -120997,7 +121431,7 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync25(baselinePath) || input3.updateBaseline) {
         const existed = existsSync25(baselinePath);
-        mkdirSync16(dirname13(baselinePath), { recursive: true });
+        mkdirSync16(dirname14(baselinePath), { recursive: true });
         writeFileSync17(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
@@ -121011,7 +121445,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join40(dir, `${stamp3}-actual.png`);
+      const actualPath = join41(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -121034,7 +121468,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join40(dir, `${stamp3}-diff.png`);
+          const diffPath = join41(dir, `${stamp3}-diff.png`);
           writeFileSync17(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
@@ -121110,7 +121544,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         label2 = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
         if (label2 && isPlainCss(label2)) scope = label2;
         else {
-          const mark = randomBytes13(4).toString("hex");
+          const mark = randomBytes14(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
           marked = target2.handle;
           scope = `[data-uiwalk-a11y="${mark}"]`;
@@ -121128,7 +121562,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.
-            root: dirname13(ctx.evidenceDir(config3.projectDir)),
+            root: dirname14(ctx.evidenceDir(config3.projectDir)),
             sub: "a11y",
             max: config3.accessibility.maxScreenshots
           }
@@ -121148,7 +121582,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative17(config3.projectDir, join40(dirname13(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative17(config3.projectDir, join41(dirname14(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -121157,7 +121591,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 
 // packages/server/src/tools/share-tools.ts
 import { existsSync as existsSync26, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
-import { join as join41, relative as relative18 } from "node:path";
+import { join as join42, relative as relative18 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -122408,9 +122842,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join41(projectDir, ".walkthrough", "exports");
+      const dir = join42(projectDir, ".walkthrough", "exports");
       mkdirSync17(dir, { recursive: true });
-      const file2 = join41(dir, `${name}.mjs`);
+      const file2 = join42(dir, `${name}.mjs`);
       const existed = existsSync26(file2);
       let target2;
       if (environment2) {
@@ -122473,9 +122907,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync26(join41(store.dir, "report.md")) ? { markdown: relative18(projectDir, join41(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative18(projectDir, join41(store.dir, s)));
-      const files = (step.files ?? []).map((f) => relative18(projectDir, join41(store.dir, f)));
+      const reports = existsSync26(join42(store.dir, "report.md")) ? { markdown: relative18(projectDir, join42(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative18(projectDir, join42(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative18(projectDir, join42(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, {
@@ -122483,15 +122917,15 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         screenshots,
         files
       });
-      const bodyFile = join41(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      const bodyFile = join42(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
       writeFileSync18(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
         `Body file: ${relative18(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join41(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join42(projectDir, s)}`).join("\n")}` : " none"}`,
         ...files.length ? [`Other files to attach:
-${files.map((f) => `- ${join41(projectDir, f)}`).join("\n")}`] : [],
+${files.map((f) => `- ${join42(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -122622,7 +123056,7 @@ function createServer2() {
   const roots = async () => {
     if (!server.server.getClientCapabilities()?.roots) return [];
     const { roots: list2 } = await server.server.listRoots();
-    return list2.map((root) => root.uri.startsWith("file:") ? fileURLToPath4(root.uri) : root.uri);
+    return list2.map((root) => root.uri.startsWith("file:") ? fileURLToPath5(root.uri) : root.uri);
   };
   const elicit = () => {
     if (!server.server.getClientCapabilities()?.elicitation?.form) return void 0;
@@ -122782,7 +123216,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join42(dirname14(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join43(dirname15(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

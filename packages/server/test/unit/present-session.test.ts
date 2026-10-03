@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { presenterView } from '../../src/presentation/presenter-window.js';
 import { PresentationSession, type PresentStep } from '../../src/presentation/session.js';
 
 const step = (index: number): PresentStep => ({
@@ -92,5 +93,31 @@ describe('PresentationSession', () => {
     s.setState('gate', 1);
     expect(s.stepTimes.get(0)).toBeGreaterThanOrEqual(25);
     expect(s.stepElapsed()).toBeLessThan(25);
+  });
+
+  it('tells the presenter window when the agent has a question, and what shows on screen', async () => {
+    const s = session();
+    const q = s.ask('Where does the count come from?');
+    const view = () => presenterView(s, { protectedEnv: false, mirror: true });
+    expect(view().chat[0]?.state).toBe('waiting');
+    await s.listen(1000);
+    expect(view().chat[0]?.state).toBe('thinking');
+    s.answer(q.id, 'From the cart.');
+    expect(view().chat[0]).toMatchObject({ state: 'answered', onScreen: false });
+    s.showOnScreen(q.id);
+    expect(view().chat[0]?.onScreen).toBe(true);
+    expect(s.chat[0]?.shownAt).toBeGreaterThan(0);
+  });
+
+  it('allows only "end" until the presenter confirms a protected environment', () => {
+    const s = session();
+    s.confirmNeeded = { name: 'production', label: 'Production' };
+    expect(s.check({ type: 'start' })).toMatch(
+      /must first confirm the protected environment "production"/,
+    );
+    expect(s.check({ type: 'end' })).toBeUndefined();
+    expect(presenterView(s, { protectedEnv: true, mirror: false }).can).toEqual(['end']);
+    s.confirmed();
+    expect(s.check({ type: 'start' })).toBeUndefined();
   });
 });

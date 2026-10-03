@@ -64,6 +64,10 @@ export interface ChatEntry {
   answeredAt?: number;
   // The answer shows on the audience screen too.
   onScreen?: boolean;
+  // When a listen call took the question. Before that, the agent has not seen it.
+  takenAt?: number;
+  // When the answer last went on the audience screen.
+  shownAt?: number;
 }
 
 // A presentation that is going: its state, the commands from the presenter, and the chat.
@@ -73,6 +77,11 @@ export class PresentationSession implements LivePresentation {
   current = 0;
   // The audience screen shows black.
   blank = false;
+  // The audience screen shows the title slide over the app.
+  titleShown = false;
+  // A protected environment that the presenter must confirm before the app opens.
+  confirmNeeded?: { name: string; label: string };
+  presenterOpen = false;
   readonly openedAt = Date.now();
   // When the presenter clicked Start.
   startedAt?: number;
@@ -161,6 +170,22 @@ export class PresentationSession implements LivePresentation {
     this.changed();
   }
 
+  setTitleShown(on: boolean): void {
+    this.titleShown = on;
+    this.changed();
+  }
+
+  setPresenterOpen(on: boolean): void {
+    this.presenterOpen = on;
+    this.changed();
+  }
+
+  // The presenter confirmed the protected environment, and the app is open.
+  confirmed(): void {
+    this.confirmNeeded = undefined;
+    this.changed();
+  }
+
   // Waits until no step plays, so a tool can read the page without a race.
   settled(ms = 5000): Promise<void> {
     if (this.state !== 'running') return Promise.resolve();
@@ -177,6 +202,9 @@ export class PresentationSession implements LivePresentation {
 
   // Returns a reason when the command cannot run now.
   check(command: Command): string | undefined {
+    if (this.confirmNeeded && command.type !== 'end') {
+      return `The presenter must first confirm the protected environment "${this.confirmNeeded.name}" in the presenter window.`;
+    }
     if (!COMMANDS_IN[this.state].includes(command.type)) {
       return `The presentation is at "${this.state}", so "${command.type}" does not work now. It can: ${COMMANDS_IN[this.state].join(', ') || 'nothing'}.`;
     }
@@ -231,14 +259,32 @@ export class PresentationSession implements LivePresentation {
     entry.answer = text;
     entry.answeredAt = Date.now();
     entry.onScreen = onScreen;
+    if (onScreen) entry.shownAt = entry.answeredAt;
     this.changed();
     return entry;
+  }
+
+  // The presenter puts an answer on the audience screen.
+  showOnScreen(id: string): void {
+    const entry = this.chat.find((c) => c.id === id);
+    if (!entry?.answer) return;
+    entry.onScreen = true;
+    entry.shownAt = Date.now();
+    this.changed();
+  }
+
+  // A listen call has the event now. The presenter window shows that the agent works on it.
+  private taken(event: PresentEvent): void {
+    if (event.type !== 'question') return;
+    const entry = this.chat.find((c) => c.id === event.id);
+    if (entry) entry.takenAt = Date.now();
   }
 
   push(event: PresentEvent): void {
     const listener = this.listener;
     if (listener) {
       this.listener = undefined;
+      this.taken(event);
       listener({ kind: 'event', event });
     } else {
       this.events.push(event);
@@ -248,7 +294,11 @@ export class PresentationSession implements LivePresentation {
   // Waits for the next event. A newer call ends this one.
   listen(timeoutMs: number, signal?: AbortSignal): Promise<ListenOutcome> {
     const queued = this.events.shift();
-    if (queued) return Promise.resolve({ kind: 'event', event: queued });
+    if (queued) {
+      this.taken(queued);
+      this.changed();
+      return Promise.resolve({ kind: 'event', event: queued });
+    }
     this.listener?.({ kind: 'superseded' });
     return new Promise((resolve) => {
       const finish = (outcome: ListenOutcome) => {

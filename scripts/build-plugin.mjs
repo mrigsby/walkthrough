@@ -25,6 +25,20 @@ const encoder = await esbuild.build({
   logLevel: 'warning',
 });
 
+// The presenter window of a presentation is our own page. It goes in as text too.
+const presenter = await esbuild.build({
+  absWorkingDir: root,
+  entryPoints: [join(root, 'packages/server/src/presentation/presenter-page/main.ts')],
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'chrome120',
+  minify: true,
+  write: false,
+  legalComments: 'none',
+  logLevel: 'warning',
+});
+
 // Some dependencies use require(). This lets them work in an ES module file.
 const banner = [
   '#!/usr/bin/env node',
@@ -50,10 +64,11 @@ const options = {
       await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8'),
     ),
     __UIWALK_ENCODER_SOURCE__: JSON.stringify(encoder.outputFiles[0].text),
+    __UIWALK_PRESENTER_SOURCE__: JSON.stringify(presenter.outputFiles[0].text),
   },
   // Optional speed-ups for ws. The ws package loads them only if they exist.
   // Everything else must be inside the bundle: an installed plugin has no node_modules.
-  // esbuild only builds the encoder when running from source.
+  // esbuild only builds the encoder and the presenter page when running from source.
   external: ['bufferutil', 'utf-8-validate', 'esbuild'],
   legalComments: 'none',
   metafile: true,

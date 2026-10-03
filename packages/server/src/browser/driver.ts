@@ -112,6 +112,8 @@ export class Driver {
   private inflight = new Set<Promise<unknown>>();
   // A tab that newTab is making. The new-tab event waits for it.
   private newTabWork?: Promise<unknown>;
+  // Logins of our own windows, like the presenter window. Their pages never become tabs.
+  private readonly foreign = new WeakSet<BrowserContext>();
 
   private constructor(
     readonly browser: Browser,
@@ -196,9 +198,16 @@ export class Driver {
     });
   }
 
+  // Marks a login as our own, before it opens a page. The tools never see its pages.
+  addForeign(context: BrowserContext): void {
+    this.foreign.add(context);
+  }
+
   // A new tab or popup opened.
   private async onTarget(target: Target): Promise<void> {
     if (target.type() !== 'page') return;
+    const context = target.browserContext();
+    if (context && this.foreign.has(context)) return;
     const page = await target.page().catch(() => null);
     if (!page) return;
     // newTab adds its own tab. Wait for it, then skip that tab here.

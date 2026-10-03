@@ -10,6 +10,7 @@ import { untrusted } from '../guards/untrusted.js';
 import { log } from '../log.js';
 import { TokenResolver } from '../page/tokens.js';
 import { LiveStage } from '../presentation/live-stage.js';
+import { type PresenterControls, PresenterWindow } from '../presentation/presenter-window.js';
 import {
   executionHash,
   findRehearsal,
@@ -50,7 +51,15 @@ function appHosts(config: Config): string[] {
 }
 
 // The presentation of this server, and the work that ends it.
-let current: { session: PresentationSession; done: Promise<void> } | undefined;
+let current:
+  | {
+      session: PresentationSession;
+      done: Promise<void>;
+      kiosk: boolean;
+      presenterOpen: () => boolean;
+      openPresenter: () => Promise<void>;
+    }
+  | undefined;
 
 const COMMANDS = [
   'start',
@@ -61,6 +70,8 @@ const COMMANDS = [
   'back',
   'jump',
   'blank',
+  'title',
+  'presenter',
   'end',
 ] as const;
 
@@ -83,7 +94,19 @@ function statusText(session: PresentationSession): string {
   const budget = session.info.timeBudgetSec;
   return [
     `Presentation: ${session.info.name}. Environment: ${env.name}${env.baseUrl ? ` (${env.baseUrl})` : ''}. Rehearsal: ${session.info.runId}.`,
-    `State: ${session.state}, at ${session.state === 'title' ? 'the title slide' : stepLine(session, session.current)}.${session.blank ? ' The audience screen is blank.' : ''}`,
+    `State: ${session.state}, at ${session.state === 'title' ? 'the title slide' : stepLine(session, session.current)}.${session.blank ? ' The audience screen is blank.' : ''}${session.titleShown ? ' The title slide shows.' : ''}`,
+    ...(session.confirmNeeded
+      ? [
+          `Waiting: the presenter must confirm the protected environment "${session.confirmNeeded.name}" in the presenter window.`,
+        ]
+      : []),
+    ...(session.info.kiosk
+      ? []
+      : [
+          session.presenterOpen
+            ? 'The presenter window is open.'
+            : 'The presenter window is closed. Use control "presenter" to open it again.',
+        ]),
     ...(step?.notes && session.state !== 'title' ? [`Notes: ${step.notes}`] : []),
     ...(next && session.state !== 'end' ? [`Next: step ${next.index} "${next.title}".`] : []),
     ...(session.failure
@@ -206,12 +229,17 @@ async function startPresentation(
     }
   }
 
-  // A protected environment needs a person's OK first.
+  const settings = plan.presentation ?? {};
+  const kiosk = Boolean(input.kiosk ?? settings.kiosk);
+
+  // A protected environment needs a person's OK first. In a talk, the presenter gives it in
+  // the presenter window, before the app opens. A kiosk has nobody there, so it asks now.
   let confirmed = !env.protected;
   const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? '').split(',').map((s) => s.trim());
   if (!confirmed && allowed.includes(env.name)) confirmed = true;
+  const presenterConfirms = !confirmed && !kiosk;
   const ask = ctx.elicit?.();
-  if (!confirmed && ask) {
+  if (!confirmed && !presenterConfirms && ask) {
     const answer = await ask(
       `Present on the "${env.name}" environment (${env.baseUrl})? The presentation can create real data there.`,
       { timeoutMs: 300_000, signal: extra.signal, relatedRequestId: extra.requestId },
@@ -225,17 +253,15 @@ async function startPresentation(
     }
     confirmed = true;
   }
-  if (!confirmed) {
+  if (!confirmed && !presenterConfirms) {
     await ctx.finishSwitch(false);
     throw new ToolError(
-      `"${env.name}" is a protected environment. A presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env.name}.`,
+      `"${env.name}" is a protected environment. A kiosk presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env.name}.`,
       'protected_unconfirmed',
     );
   }
 
   // A new Chrome, with the audience window first.
-  const settings = plan.presentation ?? {};
-  const kiosk = Boolean(input.kiosk ?? settings.kiosk);
   if (ctx.driver?.alive) await ctx.driver.close();
   const zoom =
     settings.pageZoom && settings.pageZoom !== 1 && !settings.device
@@ -250,7 +276,7 @@ async function startPresentation(
     },
     panel: false,
   });
-  ctx.confirmFor(env.name);
+  if (confirmed) ctx.confirmFor(env.name);
   await ctx.finishSwitch(true);
   const audience = driver.activeTab();
 
@@ -296,6 +322,7 @@ async function startPresentation(
     },
     abort,
   );
+  if (presenterConfirms) session.confirmNeeded = { name: env.name, label: env.label };
   // The audience screen draws slides, the pointer, and the spotlight.
   const stage = new LiveStage(audience, session, {
     projectDir: config.projectDir,
@@ -310,12 +337,49 @@ async function startPresentation(
   stage.useEngine(engine);
   engine.stage = stage;
   await stage.install();
-  await engine.open({
-    mainTab: audience,
-    emulation: settings.device ? run.emulation : undefined,
-    session: run.session,
-    startUrl: run.baseUrl ?? config.baseUrl,
-  });
+  const openApp = () =>
+    engine.open({
+      mainTab: audience,
+      emulation: settings.device ? run.emulation : undefined,
+      session: run.session,
+      startUrl: run.baseUrl ?? config.baseUrl,
+    });
+  if (!presenterConfirms) await openApp();
+
+  // The presenter window: controls, notes, the time, a mirror, and the chat.
+  let presenter: PresenterWindow | undefined;
+  let confirming = false;
+  const controls: PresenterControls = {
+    confirm: async () => {
+      if (!session.confirmNeeded || confirming) return;
+      confirming = true;
+      try {
+        ctx.confirmFor(env.name);
+        await openApp();
+        session.confirmed();
+      } catch (error) {
+        presenter?.notice(`The app did not open: ${(error as Error).message}`);
+        session.stop();
+      } finally {
+        confirming = false;
+      }
+    },
+    cancel: () => session.stop(),
+    toggleFullscreen: () => stage.toggleFullscreen(),
+    moveToScreen: (screen) => stage.moveToScreen(screen),
+  };
+  const openPresenter = async () => {
+    presenter = await PresenterWindow.open(driver, session, {
+      audience: audience.page,
+      mirror: settings.mirror ?? true,
+      protectedEnv: env.protected,
+      controls,
+    });
+  };
+  if (!kiosk) await openPresenter();
+  // Closing the audience window, or Chrome, ends the presentation.
+  audience.page.once('close', () => session.stop());
+  driver.emitter.once('closed', () => session.stop());
 
   ctx.presentation = session;
   const runner = new PresentationRunner(session, engine, ops, {
@@ -336,20 +400,32 @@ async function startPresentation(
     .run()
     .catch((error) => log.error('the presentation stopped', error))
     .finally(async () => {
+      await presenter?.close();
       stage.dispose();
       await engine.dispose().catch(() => undefined);
       await driver.close().catch(() => undefined);
       if (ctx.presentation === session) ctx.presentation = undefined;
     });
-  current = { session, done };
+  current = {
+    session,
+    done,
+    kiosk,
+    presenterOpen: () => Boolean(presenter?.isOpen),
+    openPresenter,
+  };
 
   return [
     ...lines,
     `The presentation "${plan.name}" is ready on ${describeEnvironment(env)}. It plays the rehearsal ${run.id}.`,
     `It has ${steps.length} step(s).${kiosk ? ' It runs by itself (kiosk).' : ' It waits for the presenter before each step.'}`,
+    ...(presenterConfirms
+      ? [
+          `"${env.name}" is a protected environment. The presenter must confirm it in the presenter window before the app opens.`,
+        ]
+      : []),
     kiosk
       ? 'Call present with action "stop" to end it.'
-      : 'The audience window shows the title. The presenter starts it. When the presenter asks you, use present with action "control".',
+      : 'The audience window shows the title. The presenter window has the controls, the notes, and the chat. When the presenter asks you, use present with action "control".',
     'Now call present with action "listen", and answer each question with action "answer". Keep listening until listen says "ended".',
   ].join('\n');
 }
@@ -406,7 +482,7 @@ export function registerPresentTools(server: McpServer, ctx: Context): void {
           .enum(COMMANDS)
           .optional()
           .describe(
-            'For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), or end.',
+            'For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), title (the title slide, on or off), presenter (open the presenter window again), or end.',
           ),
         step: z.number().int().min(1).optional().describe('For control jump: the step number.'),
         id: z
@@ -472,6 +548,18 @@ export function registerPresentTools(server: McpServer, ctx: Context): void {
           if (input.command === 'blank') {
             session.setBlank(!session.blank);
             return `The audience screen is ${session.blank ? 'blank' : 'back'}.\n${statusText(session)}`;
+          }
+          if (input.command === 'title') {
+            session.setTitleShown(!session.titleShown);
+            return `The title slide ${session.titleShown ? 'shows' : 'is gone'}.\n${statusText(session)}`;
+          }
+          if (input.command === 'presenter') {
+            const live = current;
+            if (!live || live.kiosk)
+              throw new ToolError('A kiosk presentation has no presenter window.', 'bad_command');
+            if (live.presenterOpen()) return 'The presenter window is open already.';
+            await live.openPresenter();
+            return 'The presenter window is open again.';
           }
           const command = (
             input.command === 'jump'

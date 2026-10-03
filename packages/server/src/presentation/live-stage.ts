@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
+import type { CDPSession } from 'puppeteer-core';
 import type { Tab } from '../browser/driver.js';
 import {
   type BridgeMessage,
@@ -10,7 +11,7 @@ import {
 import { checkSlideImage } from '../guards/paths.js';
 import { log } from '../log.js';
 import type { Rect } from '../panel/controller.js';
-import type { ReplayEngine } from '../replay/engine.js';
+import { type ReplayEngine, sleep } from '../replay/engine.js';
 import type { StepOps } from '../replay/ops.js';
 import type { Stage } from '../replay/stage.js';
 import type { Slide } from '../run/plan-schema.js';
@@ -65,7 +66,8 @@ export class LiveStage implements Stage, AudienceScreen {
   private curtainOn = false;
   private gateShown = false;
   private answer?: { text: string; until: number };
-  private lastAnswered = 0;
+  private lastShown = 0;
+  private titleSlide?: Shown | null;
   private answerTimer?: NodeJS.Timeout;
   private sent = '';
   private stopWatch?: () => void;
@@ -176,18 +178,23 @@ export class LiveStage implements Stage, AudienceScreen {
       await bridge.send({ type: 'zoom', src: null });
     }
     // A new answer for the screen shows for a while, in the caption band.
-    const latest = [...s.chat].reverse().find((c) => c.onScreen && c.answer && c.answeredAt);
-    if (latest?.answeredAt && latest.answeredAt > this.lastAnswered) {
-      this.lastAnswered = latest.answeredAt;
+    const latest = s.chat
+      .filter((c) => c.answer && c.shownAt)
+      .sort((a, b) => (b.shownAt ?? 0) - (a.shownAt ?? 0))[0];
+    if (latest?.shownAt && latest.shownAt > this.lastShown) {
+      this.lastShown = latest.shownAt;
       this.answer = { text: latest.answer as string, until: Date.now() + ON_SCREEN_MS };
       if (this.answerTimer) clearTimeout(this.answerTimer);
       this.answerTimer = setTimeout(() => void this.sync(), ON_SCREEN_MS + 50);
     }
     const answer = this.answer && this.answer.until > Date.now() ? this.answer.text : null;
     const cover = s.blank ? 'blank' : this.curtainOn ? 'curtain' : 'none';
+    // The presenter can show the title slide again, for example during questions.
+    if (s.titleShown && this.titleSlide === undefined)
+      this.titleSlide = await this.show(this.options.title ?? { title: this.options.planName });
     const state = {
       type: 'state',
-      slide: this.shown,
+      slide: s.titleShown ? (this.titleSlide ?? this.shown) : this.shown,
       caption: answer ?? (this.options.captions ? this.stepCaption : null),
       cover,
       keys: s.active && s.state !== 'manual',
@@ -269,16 +276,70 @@ export class LiveStage implements Stage, AudienceScreen {
 
   // ---------- The window ----------
 
-  private async fullscreen(): Promise<void> {
+  private async withWindow(
+    fn: (cdp: CDPSession, windowId: number) => Promise<void>,
+  ): Promise<void> {
     const cdp = await this.tab.page.createCDPSession();
     try {
       const { windowId } = await cdp.send('Browser.getWindowForTarget');
+      await fn(cdp, windowId);
+    } finally {
+      await cdp.detach().catch(() => undefined);
+    }
+  }
+
+  private fullscreen(): Promise<void> {
+    return this.withWindow(async (cdp, windowId) => {
       await cdp.send('Browser.setWindowBounds', {
         windowId,
         bounds: { windowState: 'fullscreen' },
       });
-    } finally {
-      await cdp.detach().catch(() => undefined);
-    }
+    });
+  }
+
+  // Fullscreen on and off, from the presenter window.
+  toggleFullscreen(): Promise<void> {
+    return this.withWindow(async (cdp, windowId) => {
+      const { bounds } = await cdp.send('Browser.getWindowBounds', { windowId });
+      await cdp.send('Browser.setWindowBounds', {
+        windowId,
+        bounds: { windowState: bounds.windowState === 'fullscreen' ? 'normal' : 'fullscreen' },
+      });
+    });
+  }
+
+  // Moves the audience window to another screen, in fullscreen.
+  moveToScreen(screen: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }): Promise<void> {
+    return this.withWindow(async (cdp, windowId) => {
+      const bounds = async () => (await cdp.send('Browser.getWindowBounds', { windowId })).bounds;
+      if ((await bounds()).windowState !== 'normal') {
+        await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+        for (let i = 0; i < 30 && (await bounds()).windowState !== 'normal'; i++) await sleep(150);
+        // On macOS, the window says "normal" before the animation ends.
+        await sleep(800);
+      }
+      const now = await bounds();
+      const width = Math.min(now.width ?? 1280, screen.width);
+      const height = Math.min(now.height ?? 800, screen.height);
+      await cdp.send('Browser.setWindowBounds', {
+        windowId,
+        bounds: {
+          left: screen.left + Math.round((screen.width - width) / 2),
+          top: screen.top + Math.round((screen.height - height) / 2),
+          width,
+          height,
+        },
+      });
+      await sleep(300);
+      await cdp.send('Browser.setWindowBounds', {
+        windowId,
+        bounds: { windowState: 'fullscreen' },
+      });
+    });
   }
 }

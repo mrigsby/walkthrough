@@ -20,6 +20,7 @@ presentation:
   title: { image: .walkthrough/slides/title.svg }
   mask: ['.card .price']
   pageZoom: 1.25
+  mirror: false
 steps:
   - id: agenda
     do: Show the agenda
