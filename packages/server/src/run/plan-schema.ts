@@ -111,6 +111,175 @@ const screenshot = z
     'Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists.',
   );
 
+// A time like "45s", "10m", or "1h30m".
+const DURATION = /^(?=\d)(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
+const duration = z.string().regex(DURATION, 'Use a time like "45s", "10m", or "1h30m".');
+
+export function durationSeconds(text: string): number {
+  const m = DURATION.exec(text);
+  if (!m) return 0;
+  return Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
+}
+
+const hexColor = z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#000000".');
+
+// Images that a slide can show.
+export const SLIDE_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'] as const;
+
+const imageSlide = z
+  .object({
+    image: z
+      .string()
+      .min(1)
+      .describe('An image file from the project folder, like ".walkthrough/slides/title.png".'),
+    fit: z
+      .enum(['contain', 'cover'])
+      .optional()
+      .describe(
+        'contain shows all of the image (default). cover fills the window and can cut the edges.',
+      ),
+    background: hexColor.optional().describe('The color around the image. The default is black.'),
+  })
+  .strict();
+
+const textSlide = z
+  .object({
+    title: z.string().min(1).max(120).describe('Big text in the middle of the screen.'),
+    text: z.string().max(1000).optional().describe('Smaller text under the title.'),
+    background: hexColor.optional().describe('The color of the slide. The default is dark gray.'),
+    color: hexColor.optional().describe('The color of the text. The default is white.'),
+  })
+  .strict();
+
+export const slideSchema = z
+  .union([imageSlide, textSlide], {
+    error: 'A slide has an "image", or a "title" with an optional "text".',
+  })
+  .describe('A slide that fills the audience window: an image, or a title with text.');
+export type Slide = z.infer<typeof slideSchema>;
+
+// How a plan plays as a live presentation. See docs/presentations.md.
+export const presentationSchema = z
+  .object({
+    title: slideSchema
+      .optional()
+      .describe(
+        'A slide before the presentation starts. It shows until the presenter clicks Start.',
+      ),
+    end: slideSchema
+      .optional()
+      .describe(
+        'The last screen. Without it, the end screen shows the plan name and "Questions?".',
+      ),
+    pause: z
+      .enum(['before', 'none'])
+      .optional()
+      .describe(
+        'before (default): wait for the presenter before each step. none: go on by itself.',
+      ),
+    pace: z
+      .enum(['slow', 'normal', 'fast'])
+      .optional()
+      .describe('How fast the pointer moves and the text types. The default is normal.'),
+    pointer: z
+      .boolean()
+      .optional()
+      .describe('Show a pointer that moves to each element. Default: true.'),
+    spotlight: z
+      .boolean()
+      .optional()
+      .describe(
+        'During a pause, dim the page except the element of the next action. Default: true.',
+      ),
+    captions: z
+      .boolean()
+      .optional()
+      .describe(
+        'Show the caption of each step at the bottom of the audience screen. Default: true.',
+      ),
+    window: z
+      .object({
+        width: z.number().int().min(640).max(3840),
+        height: z.number().int().min(480).max(2160),
+      })
+      .strict()
+      .optional()
+      .describe('The size of the audience window, like { width: 1920, height: 1080 }.'),
+    pageZoom: z
+      .number()
+      .min(0.5)
+      .max(3)
+      .optional()
+      .describe('Make the page bigger, like 1.25, so people at the back of the room can read it.'),
+    fullscreen: z.boolean().optional().describe('Start the audience window in fullscreen.'),
+    device: z
+      .boolean()
+      .optional()
+      .describe(
+        'Use the device of the plan, like mobile, on the audience screen. Default: the page fills the window.',
+      ),
+    mirror: z
+      .boolean()
+      .optional()
+      .describe(
+        'Show a small live picture of the audience screen in the presenter window. Default: true.',
+      ),
+    timeBudget: duration
+      .optional()
+      .describe(
+        'The time for the whole presentation, like "10m". The presenter window warns when it is over.',
+      ),
+    mask: z
+      .array(z.string().min(1))
+      .optional()
+      .describe(
+        'CSS selectors of things to blur on the audience screen, like customer names. Secret fields are always blurred.',
+      ),
+    record: z
+      .union([
+        z.boolean(),
+        z
+          .object({
+            format: z.enum(VIDEO_FORMATS).optional().describe('mp4, webm, or gif.'),
+            path: z
+              .string()
+              .min(1)
+              .regex(/\.(mp4|webm|gif)$/i, 'End the path with .mp4, .webm, or .gif.')
+              .optional()
+              .describe('Also save the video to this file, from the project folder.'),
+          })
+          .strict(),
+      ])
+      .optional()
+      .describe('Record the audience screen as a video.'),
+    kiosk: z
+      .object({
+        holdSeconds: z
+          .number()
+          .min(1)
+          .max(600)
+          .optional()
+          .describe('How long each step and slide shows. The default is 6.'),
+        loop: z.boolean().optional().describe('Start again at the title after the end screen.'),
+        loops: z
+          .number()
+          .int()
+          .min(1)
+          .max(1000)
+          .optional()
+          .describe('Stop after this many loops. The default is 100.'),
+      })
+      .strict()
+      .optional()
+      .describe('Run without a presenter, such as on a screen at a booth.'),
+  })
+  .strict()
+  .refine((p) => !(p.kiosk && p.record), {
+    message: 'A kiosk presentation cannot record a video. Remove "record" or "kiosk".',
+    path: ['record'],
+  });
+export type PresentationSettings = z.infer<typeof presentationSchema>;
+
 export const stepSchema = z
   .object({
     id: z
@@ -179,6 +348,39 @@ export const stepSchema = z
       .describe(
         'Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.',
       ),
+    notes: z
+      .string()
+      .max(4000)
+      .optional()
+      .describe('Notes for the presenter. Only the presenter window shows them.'),
+    pause: z
+      .boolean()
+      .optional()
+      .describe(
+        'In a presentation, wait for the presenter before this step. false goes on by itself. The default comes from presentation.pause.',
+      ),
+    slide: slideSchema
+      .optional()
+      .describe(
+        'A slide before the action of this step, or the whole step when it has no action. Test runs skip a step that is only a slide.',
+      ),
+    spotlight: z
+      .boolean()
+      .optional()
+      .describe(
+        'In a presentation, dim the page except the element of this step during the pause.',
+      ),
+    zoom: z
+      .number()
+      .min(1.25)
+      .max(4)
+      .optional()
+      .describe(
+        'In a presentation, show the area of the next action this many times bigger during the pause.',
+      ),
+    timeBudget: duration
+      .optional()
+      .describe('The time for this step in a presentation, like "45s".'),
   })
   .strict()
   .refine((step) => step.lighthouse !== 'navigation' || Boolean(step.action?.navigate), {
@@ -289,6 +491,9 @@ export const planSchema = z
       ])
       .optional()
       .describe('Record the whole run as a video. The report shows it.'),
+    presentation: presentationSchema
+      .optional()
+      .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict()

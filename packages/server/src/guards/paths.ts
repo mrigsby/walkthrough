@@ -1,7 +1,7 @@
 import { existsSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { ToolError } from '../errors.js';
-import { IMAGE_EXTENSIONS } from '../run/plan-schema.js';
+import { IMAGE_EXTENSIONS, SLIDE_IMAGE_EXTENSIONS } from '../run/plan-schema.js';
 import { VIDEO_EXTENSIONS } from '../video/formats.js';
 
 const BLOCKED_NAMES = new Set(['config.local.yaml', 'config.local.yml']);
@@ -134,4 +134,52 @@ export function checkMediaPath(
   extraRoots: string[] = [],
 ): { path: string; display: string } {
   return checkOutputPath(file, projectDir, extraRoots, VIDEO);
+}
+
+// The largest slide image. Slides go to the page as data, so a huge file slows it down.
+export const MAX_SLIDE_BYTES = 15 * 1024 * 1024;
+
+// Checks an image for a presentation slide. Returns the full, real path.
+// It must be in the project. Hidden folders are blocked, except .walkthrough, but not its
+// saved logins and runs.
+export function checkSlideImage(file: string, projectDir: string): string {
+  const full = isAbsolute(file) ? file : resolve(projectDir, file);
+  const ext = extname(full).toLowerCase();
+  if (!(SLIDE_IMAGE_EXTENSIONS as readonly string[]).includes(ext)) {
+    throw new ToolError(
+      `A slide image ends with ${SLIDE_IMAGE_EXTENSIONS.join(', ')}. ${file} does not.`,
+      'slide_blocked',
+    );
+  }
+  let real: string;
+  try {
+    real = realpathSync(full);
+  } catch {
+    throw new ToolError(`The slide image ${file} does not exist.`, 'slide_blocked');
+  }
+  if (!statSync(real).isFile()) throw new ToolError(`${file} is not a file.`, 'slide_blocked');
+  const project = realpathSync(projectDir);
+  if (!inside(project, real)) {
+    throw new ToolError(
+      `A slide image must be in the project folder. ${file} is outside.`,
+      'slide_blocked',
+    );
+  }
+  const parts = relative(project, real).split(sep);
+  const hidden = parts
+    .slice(0, -1)
+    .some((p, i) => p.startsWith('.') && !(i === 0 && p === '.walkthrough'));
+  if (hidden || (parts[0] === '.walkthrough' && ['sessions', 'runs'].includes(parts[1] ?? ''))) {
+    throw new ToolError(
+      `Walkthrough does not show images from hidden or private folders. ${file} is blocked.`,
+      'slide_blocked',
+    );
+  }
+  if (statSync(real).size > MAX_SLIDE_BYTES) {
+    throw new ToolError(
+      `The slide image ${file} is larger than 15 MB. Use a smaller image.`,
+      'slide_blocked',
+    );
+  }
+  return real;
 }

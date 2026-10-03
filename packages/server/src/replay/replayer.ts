@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import type { Config } from '../config.js';
 import type { Context } from '../context.js';
@@ -7,7 +7,7 @@ import { checkMediaPath } from '../guards/paths.js';
 import { buildVars } from '../page/tokens.js';
 import { fileStamp } from '../project-files.js';
 import type { Plan } from '../run/plan-schema.js';
-import { loadPlan } from '../run/plans.js';
+import { loadRunPlan } from '../run/plans.js';
 import { latestRunId, type Run, RunStore } from '../run/run-store.js';
 import { openBrowser } from '../tools/browser-tools.js';
 import { VideoCapture } from '../video/capture.js';
@@ -60,14 +60,8 @@ export function replayVars(run: Run, config: Config): Record<string, string> {
   return { ...run.vars, ...buildVars(config, planOf(run, config)?.vars) };
 }
 
-// The plan of a run, if its file is still there and valid.
 function planOf(run: Run, config: Config): Plan | undefined {
-  if (!run.planFile || !existsSync(join(config.projectDir, run.planFile))) return undefined;
-  try {
-    return loadPlan(config.projectDir, join(config.projectDir, run.planFile)).plan;
-  } catch {
-    return undefined;
-  }
+  return loadRunPlan(config.projectDir, run.planFile);
 }
 
 // Records a finished run again in a new login, at an even pace, and saves the video.

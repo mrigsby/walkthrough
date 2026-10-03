@@ -164,3 +164,13 @@ export function savePlan(
   writeFileSync(file, text.startsWith('# yaml-language-server') ? text : header + text);
   return file;
 }
+
+// The plan of a run, if its file is still there and valid.
+export function loadRunPlan(projectDir: string, planFile?: string): Plan | undefined {
+  if (!planFile || !existsSync(join(projectDir, planFile))) return undefined;
+  try {
+    return loadPlan(projectDir, join(projectDir, planFile)).plan;
+  } catch {
+    return undefined;
+  }
+}

@@ -337,6 +337,270 @@
         }
       ]
     },
+    "presentation": {
+      "description": "Settings to play this plan as a live presentation. See docs/presentations.md.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "description": "A slide before the presentation starts. It shows until the presenter clicks Start.",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "An image file from the project folder, like \".walkthrough/slides/title.png\"."
+                },
+                "fit": {
+                  "description": "contain shows all of the image (default). cover fills the window and can cut the edges.",
+                  "type": "string",
+                  "enum": [
+                    "contain",
+                    "cover"
+                  ]
+                },
+                "background": {
+                  "description": "The color around the image. The default is black.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120,
+                  "description": "Big text in the middle of the screen."
+                },
+                "text": {
+                  "description": "Smaller text under the title.",
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "background": {
+                  "description": "The color of the slide. The default is dark gray.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                },
+                "color": {
+                  "description": "The color of the text. The default is white.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "end": {
+          "description": "The last screen. Without it, the end screen shows the plan name and \"Questions?\".",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "An image file from the project folder, like \".walkthrough/slides/title.png\"."
+                },
+                "fit": {
+                  "description": "contain shows all of the image (default). cover fills the window and can cut the edges.",
+                  "type": "string",
+                  "enum": [
+                    "contain",
+                    "cover"
+                  ]
+                },
+                "background": {
+                  "description": "The color around the image. The default is black.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120,
+                  "description": "Big text in the middle of the screen."
+                },
+                "text": {
+                  "description": "Smaller text under the title.",
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "background": {
+                  "description": "The color of the slide. The default is dark gray.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                },
+                "color": {
+                  "description": "The color of the text. The default is white.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "pause": {
+          "description": "before (default): wait for the presenter before each step. none: go on by itself.",
+          "type": "string",
+          "enum": [
+            "before",
+            "none"
+          ]
+        },
+        "pace": {
+          "description": "How fast the pointer moves and the text types. The default is normal.",
+          "type": "string",
+          "enum": [
+            "slow",
+            "normal",
+            "fast"
+          ]
+        },
+        "pointer": {
+          "description": "Show a pointer that moves to each element. Default: true.",
+          "type": "boolean"
+        },
+        "spotlight": {
+          "description": "During a pause, dim the page except the element of the next action. Default: true.",
+          "type": "boolean"
+        },
+        "captions": {
+          "description": "Show the caption of each step at the bottom of the audience screen. Default: true.",
+          "type": "boolean"
+        },
+        "window": {
+          "description": "The size of the audience window, like { width: 1920, height: 1080 }.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 640,
+              "maximum": 3840
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 480,
+              "maximum": 2160
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "pageZoom": {
+          "description": "Make the page bigger, like 1.25, so people at the back of the room can read it.",
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 3
+        },
+        "fullscreen": {
+          "description": "Start the audience window in fullscreen.",
+          "type": "boolean"
+        },
+        "device": {
+          "description": "Use the device of the plan, like mobile, on the audience screen. Default: the page fills the window.",
+          "type": "boolean"
+        },
+        "mirror": {
+          "description": "Show a small live picture of the audience screen in the presenter window. Default: true.",
+          "type": "boolean"
+        },
+        "timeBudget": {
+          "description": "The time for the whole presentation, like \"10m\". The presenter window warns when it is over.",
+          "type": "string",
+          "pattern": "^(?=\\d)(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$"
+        },
+        "mask": {
+          "description": "CSS selectors of things to blur on the audience screen, like customer names. Secret fields are always blurred.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "record": {
+          "description": "Record the audience screen as a video.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "format": {
+                  "description": "mp4, webm, or gif.",
+                  "type": "string",
+                  "enum": [
+                    "mp4",
+                    "webm",
+                    "gif"
+                  ]
+                },
+                "path": {
+                  "description": "Also save the video to this file, from the project folder.",
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\.(mp4|webm|gif)$"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "kiosk": {
+          "description": "Run without a presenter, such as on a screen at a booth.",
+          "type": "object",
+          "properties": {
+            "holdSeconds": {
+              "description": "How long each step and slide shows. The default is 6.",
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "loop": {
+              "description": "Start again at the title after the end screen.",
+              "type": "boolean"
+            },
+            "loops": {
+              "description": "Stop after this many loops. The default is 100.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -1078,6 +1342,92 @@
               "timespan",
               "snapshot"
             ]
+          },
+          "notes": {
+            "description": "Notes for the presenter. Only the presenter window shows them.",
+            "type": "string",
+            "maxLength": 4000
+          },
+          "pause": {
+            "description": "In a presentation, wait for the presenter before this step. false goes on by itself. The default comes from presentation.pause.",
+            "type": "boolean"
+          },
+          "slide": {
+            "description": "A slide before the action of this step, or the whole step when it has no action. Test runs skip a step that is only a slide.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "An image file from the project folder, like \".walkthrough/slides/title.png\"."
+                  },
+                  "fit": {
+                    "description": "contain shows all of the image (default). cover fills the window and can cut the edges.",
+                    "type": "string",
+                    "enum": [
+                      "contain",
+                      "cover"
+                    ]
+                  },
+                  "background": {
+                    "description": "The color around the image. The default is black.",
+                    "type": "string",
+                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "description": "Big text in the middle of the screen."
+                  },
+                  "text": {
+                    "description": "Smaller text under the title.",
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "background": {
+                    "description": "The color of the slide. The default is dark gray.",
+                    "type": "string",
+                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                  },
+                  "color": {
+                    "description": "The color of the text. The default is white.",
+                    "type": "string",
+                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "spotlight": {
+            "description": "In a presentation, dim the page except the element of this step during the pause.",
+            "type": "boolean"
+          },
+          "zoom": {
+            "description": "In a presentation, show the area of the next action this many times bigger during the pause.",
+            "type": "number",
+            "minimum": 1.25,
+            "maximum": 4
+          },
+          "timeBudget": {
+            "description": "The time for this step in a presentation, like \"45s\".",
+            "type": "string",
+            "pattern": "^(?=\\d)(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$"
           }
         },
         "required": [

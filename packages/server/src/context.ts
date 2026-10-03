@@ -18,6 +18,7 @@ import { Mutex } from './mutex.js';
 import type { ActionRecord } from './page/actions.js';
 import { buildVars, TokenResolver } from './page/tokens.js';
 import { newUnique } from './page/unique.js';
+import type { LivePresentation } from './presentation/policy.js';
 import { adhocEvidenceDir } from './project-files.js';
 import type { RunStore } from './run/run-store.js';
 import type { StepAnswer } from './tools/developer-tools.js';
@@ -65,6 +66,8 @@ export class Context {
   vars: Record<string, string> = {};
   // Headers and a login for the environment's site, with secrets filled in.
   network?: EnvNetwork;
+  // The presentation that is going, if any. Most tools wait until it ends.
+  presentation?: LivePresentation;
   private loaded?: { config: Config; secrets: SecretStore; guard: OriginGuard };
   // A switch to a protected environment that waits for the developer.
   // Tabs move, or the session goes back, after the answer.

@@ -34,6 +34,8 @@ Commands:
 async function serve(): Promise<void> {
   const { server } = createServer();
   installShutdownHandlers();
+  // Work in the background, like a presentation, must never stop the server.
+  process.on('unhandledRejection', (reason) => log.error('a background task failed', reason));
   await server.connect(new StdioServerTransport());
   log.info(`server ${VERSION} is ready`);
 }

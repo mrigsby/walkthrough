@@ -95,6 +95,8 @@ export interface Run {
   environment?: RunEnvironment;
   // The values that {{var:NAME}} had in this run.
   vars?: Record<string, string>;
+  // What the run did, from executionHash. A presentation reuses a rehearsal with the same hash.
+  planHash?: string;
   chrome?: string;
   summary?: string;
   // Screen, color scheme, network, and saved login used for the run.
@@ -202,6 +204,7 @@ export class RunStore {
       freshBrowser?: boolean;
       environment?: RunEnvironment;
       vars?: Record<string, string>;
+      planHash?: string;
       // Fills in {{var:NAME}} and {{unique}} in text that people read.
       show?: (text: string) => string;
     },
@@ -238,7 +241,10 @@ export class RunStore {
       expect: step.expect === undefined ? undefined : show(step.expect),
       ...template(step),
       confirm: needsConfirm(input.mode, step.checkpoint),
-      status: 'pending',
+      // A step that is only a slide has nothing to test.
+      ...(step.slide && !step.action
+        ? { status: 'skip' as const, notes: 'A slide for presentations. Nothing to test.' }
+        : { status: 'pending' as const }),
       screenshots: [],
       actions: [],
       ...(step.cookies ? { cookies: step.cookies } : {}),
@@ -270,6 +276,7 @@ export class RunStore {
       baseUrl: input.baseUrl,
       ...(input.environment ? { environment: input.environment } : {}),
       ...(input.vars && Object.keys(input.vars).length ? { vars: input.vars } : {}),
+      ...(input.planHash ? { planHash: input.planHash } : {}),
       chrome: input.chrome,
       setup: input.setup,
       emulation: input.emulation,

@@ -3,6 +3,7 @@ import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
 import { log } from '../log.js';
+import { checkPresentationPolicy } from '../presentation/policy.js';
 import { liveCaptures } from '../video/recording.js';
 
 export type Content = CallToolResult['content'][number];
@@ -30,16 +31,26 @@ export async function withEnvironment(
   return { ...out, content: [{ type: 'text', text: head }, ...out.content] };
 }
 
+export interface RunToolOptions {
+  // false runs the tool next to the others, without the lock. Only for tools that wait for
+  // a person or only read state, like the present actions listen and status.
+  exclusive?: boolean;
+  // The action of the tool, for the presentation rules.
+  action?: string;
+}
+
 // Runs a tool: one at a time, with clear errors, and with secrets removed from the output.
 export async function runTool(
   ctx: Context,
   name: string,
   fn: () => Promise<CallToolResult | string>,
+  options: RunToolOptions = {},
 ): Promise<CallToolResult> {
-  return ctx.lock.run(async () => {
+  const work = async (): Promise<CallToolResult> => {
     let result: CallToolResult;
     const began = Date.now();
     try {
+      checkPresentationPolicy(ctx.presentation, name, options.action);
       const out = await fn();
       result = typeof out === 'string' ? textResult(out) : out;
     } catch (error) {
@@ -54,7 +65,8 @@ export async function runTool(
     if (PAGE_TOOLS.has(name)) for (const capture of liveCaptures(ctx)) capture.activity(began);
 
     // Add things that happened in the browser, like dialogs and new tabs.
-    const notes = ctx.driver?.drainNotes() ?? [];
+    // A tool without the lock leaves them for the next tool.
+    const notes = options.exclusive === false ? [] : (ctx.driver?.drainNotes() ?? []);
     if (notes.length > 0) {
       result.content.push({
         type: 'text',
@@ -69,5 +81,6 @@ export async function runTool(
       }
     }
     return result;
-  });
+  };
+  return options.exclusive === false ? work() : ctx.lock.run(work);
 }

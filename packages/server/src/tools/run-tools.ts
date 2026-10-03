@@ -16,6 +16,13 @@ import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { buildVars, varNames } from '../page/tokens.js';
 import { newUnique } from '../page/unique.js';
+import {
+  executionHash,
+  isSlideOnly,
+  REHEARSAL_MAX_AGE_MS,
+  rehearsalProblems,
+  slideProblems,
+} from '../presentation/rehearsal.js';
 import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
 import { CATEGORY_LABELS } from '../report/lh-report.js';
@@ -26,6 +33,7 @@ import {
   laterFeatures,
   listPlans,
   loadPlan,
+  loadRunPlan,
   savePlan,
   validatePlanText,
 } from '../run/plans.js';
@@ -173,6 +181,9 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
   return plan.steps
     .map((step, i) => {
       const id = step.id ?? `step-${i + 1}`;
+      if (isSlideOnly(step)) {
+        return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${step.do}`;
+      }
       const flags = [
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
         describeCapture(plan, step),
@@ -262,7 +273,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const { file, plan } = loadPlan(projectDir, name);
         const later = laterFeatures(plan);
         if (action === 'validate') {
-          const shots = screenshotProblems(plan, projectDir, screenshotRoots);
+          const shots = [
+            ...screenshotProblems(plan, projectDir, screenshotRoots),
+            ...slideProblems(plan, projectDir),
+          ];
           if (shots.length) {
             return [
               `The plan ${relative(projectDir, file)} has file paths that Walkthrough cannot use:`,
@@ -432,6 +446,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
           lighthouse: config.lighthouse,
           freshBrowser: lhSteps ? driver.mode === 'launched' : undefined,
+          planHash: plan ? executionHash(plan) : undefined,
           environment: {
             name: config.environment.name,
             label: config.environment.label,
@@ -456,8 +471,20 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
         else await startRing(ctx);
         const userVars = Object.entries(ctx.run.run.vars ?? {});
+        const slides = plan ? slideProblems(plan, config.projectDir) : [];
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+          ...(plan?.presentation
+            ? [
+                'This plan is a presentation. This run is its rehearsal: check every step. Steps that are only a slide are skipped.',
+              ]
+            : []),
+          ...(slides.length
+            ? [
+                'A presentation of this plan cannot show these slides:',
+                ...slides.map((p) => `- ${p}`),
+              ]
+            : []),
           `Environment: ${describeEnvironment(config.environment)}${config.environment.protected ? ', protected' : ''}.`,
           ...envLines,
           ...(userVars.length
@@ -634,6 +661,22 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         }
         const paths = writeReports(store, await ctx.secrets());
         const problems = store.run.steps.filter(isProblem);
+        // A run of a presentation plan is its rehearsal.
+        const plan = loadRunPlan(projectDir, store.run.planFile);
+        if (plan?.presentation) {
+          const blockers = rehearsalProblems(store.run, plan);
+          notes.push(
+            ...(blockers.length
+              ? [
+                  'This run is not ready for a presentation:',
+                  ...blockers.map((b) => `- ${b}`),
+                  'Fix the plan or the app, and run it again.',
+                ]
+              : [
+                  `This run is a good rehearsal. /walkthrough:present can use it for ${Math.round(REHEARSAL_MAX_AGE_MS / 3_600_000)} hours.`,
+                ]),
+          );
+        }
         return [
           `The run "${store.run.name}" is ${store.run.status}. Result: ${resultLine(store.run) || 'no steps'}.`,
           `Reports: ${paths.markdown} and ${paths.html}`,

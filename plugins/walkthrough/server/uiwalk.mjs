@@ -26280,7 +26280,7 @@ var init_ActionDispatcher = __esm({
       }
       async #dispatchPointerMoveAction(source2, keyState, action2) {
         const { x: startX, y: startY, subtype: pointerType } = source2;
-        const { width, height, pressure, twist, tangentialPressure, x: offsetX, y: offsetY, origin = "viewport", duration: duration4 = this.#tickDuration } = action2;
+        const { width, height, pressure, twist, tangentialPressure, x: offsetX, y: offsetY, origin = "viewport", duration: duration5 = this.#tickDuration } = action2;
         const { tiltX, tiltY } = getTilt(action2);
         const { radiusX, radiusY } = getRadii(width ?? 1, height ?? 1);
         const { targetX, targetY } = await this.#getCoordinateFromOrigin(origin, offsetX, offsetY, startX, startY);
@@ -26289,7 +26289,7 @@ var init_ActionDispatcher = __esm({
         }
         let last2;
         do {
-          const ratio = duration4 > 0 ? (performance.now() - this.#tickStart) / duration4 : 1;
+          const ratio = duration5 > 0 ? (performance.now() - this.#tickStart) / duration5 : 1;
           last2 = ratio >= 1;
           let x2;
           let y;
@@ -26403,7 +26403,7 @@ var init_ActionDispatcher = __esm({
         return { targetX, targetY };
       }
       async #dispatchScrollAction(_source, keyState, action2) {
-        const { deltaX: targetDeltaX, deltaY: targetDeltaY, x: offsetX, y: offsetY, origin = "viewport", duration: duration4 = this.#tickDuration } = action2;
+        const { deltaX: targetDeltaX, deltaY: targetDeltaY, x: offsetX, y: offsetY, origin = "viewport", duration: duration5 = this.#tickDuration } = action2;
         if (origin === "pointer") {
           throw new InvalidArgumentException('"pointer" origin is invalid for scrolling.');
         }
@@ -26415,7 +26415,7 @@ var init_ActionDispatcher = __esm({
         let currentDeltaY = 0;
         let last2;
         do {
-          const ratio = duration4 > 0 ? (performance.now() - this.#tickStart) / duration4 : 1;
+          const ratio = duration5 > 0 ? (performance.now() - this.#tickStart) / duration5 : 1;
           last2 = ratio >= 1;
           let deltaX;
           let deltaY;
@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes13, createHash: createHash6 } = __require("crypto");
+    var { randomBytes: randomBytes13, createHash: createHash7 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45562,7 +45562,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash6("sha1").update(key2 + GUID).digest("base64");
+        const digest = createHash7("sha1").update(key2 + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -45931,7 +45931,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter5 = __require("events");
     var http2 = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash6 } = __require("crypto");
+    var { createHash: createHash7 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -46238,7 +46238,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash6("sha1").update(key2 + GUID).digest("base64");
+        const digest = createHash7("sha1").update(key2 + GUID).digest("base64");
         const headers2 = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -50356,8 +50356,8 @@ function debugTimeEnd(label2, logger) {
   if (!start) {
     return;
   }
-  const duration4 = end[0] * 1e3 + end[1] / 1e6 - (start[0] * 1e3 + start[1] / 1e6);
-  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label2}: ${duration4}ms`);
+  const duration5 = end[0] * 1e3 + end[1] / 1e6 - (start[0] * 1e3 + start[1] / 1e6);
+  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label2}: ${duration5}ms`);
 }
 async function installWithProviders(options) {
   if (!options.platform) {
@@ -98361,6 +98361,78 @@ var screenshot = external_exports.union(
 ).describe(
   "Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists."
 );
+var DURATION = /^(?=\d)(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
+var duration3 = external_exports.string().regex(DURATION, 'Use a time like "45s", "10m", or "1h30m".');
+var hexColor = external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#000000".');
+var SLIDE_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"];
+var imageSlide = external_exports.object({
+  image: external_exports.string().min(1).describe('An image file from the project folder, like ".walkthrough/slides/title.png".'),
+  fit: external_exports.enum(["contain", "cover"]).optional().describe(
+    "contain shows all of the image (default). cover fills the window and can cut the edges."
+  ),
+  background: hexColor.optional().describe("The color around the image. The default is black.")
+}).strict();
+var textSlide = external_exports.object({
+  title: external_exports.string().min(1).max(120).describe("Big text in the middle of the screen."),
+  text: external_exports.string().max(1e3).optional().describe("Smaller text under the title."),
+  background: hexColor.optional().describe("The color of the slide. The default is dark gray."),
+  color: hexColor.optional().describe("The color of the text. The default is white.")
+}).strict();
+var slideSchema = external_exports.union([imageSlide, textSlide], {
+  error: 'A slide has an "image", or a "title" with an optional "text".'
+}).describe("A slide that fills the audience window: an image, or a title with text.");
+var presentationSchema = external_exports.object({
+  title: slideSchema.optional().describe(
+    "A slide before the presentation starts. It shows until the presenter clicks Start."
+  ),
+  end: slideSchema.optional().describe(
+    'The last screen. Without it, the end screen shows the plan name and "Questions?".'
+  ),
+  pause: external_exports.enum(["before", "none"]).optional().describe(
+    "before (default): wait for the presenter before each step. none: go on by itself."
+  ),
+  pace: external_exports.enum(["slow", "normal", "fast"]).optional().describe("How fast the pointer moves and the text types. The default is normal."),
+  pointer: external_exports.boolean().optional().describe("Show a pointer that moves to each element. Default: true."),
+  spotlight: external_exports.boolean().optional().describe(
+    "During a pause, dim the page except the element of the next action. Default: true."
+  ),
+  captions: external_exports.boolean().optional().describe(
+    "Show the caption of each step at the bottom of the audience screen. Default: true."
+  ),
+  window: external_exports.object({
+    width: external_exports.number().int().min(640).max(3840),
+    height: external_exports.number().int().min(480).max(2160)
+  }).strict().optional().describe("The size of the audience window, like { width: 1920, height: 1080 }."),
+  pageZoom: external_exports.number().min(0.5).max(3).optional().describe("Make the page bigger, like 1.25, so people at the back of the room can read it."),
+  fullscreen: external_exports.boolean().optional().describe("Start the audience window in fullscreen."),
+  device: external_exports.boolean().optional().describe(
+    "Use the device of the plan, like mobile, on the audience screen. Default: the page fills the window."
+  ),
+  mirror: external_exports.boolean().optional().describe(
+    "Show a small live picture of the audience screen in the presenter window. Default: true."
+  ),
+  timeBudget: duration3.optional().describe(
+    'The time for the whole presentation, like "10m". The presenter window warns when it is over.'
+  ),
+  mask: external_exports.array(external_exports.string().min(1)).optional().describe(
+    "CSS selectors of things to blur on the audience screen, like customer names. Secret fields are always blurred."
+  ),
+  record: external_exports.union([
+    external_exports.boolean(),
+    external_exports.object({
+      format: external_exports.enum(VIDEO_FORMATS).optional().describe("mp4, webm, or gif."),
+      path: external_exports.string().min(1).regex(/\.(mp4|webm|gif)$/i, "End the path with .mp4, .webm, or .gif.").optional().describe("Also save the video to this file, from the project folder.")
+    }).strict()
+  ]).optional().describe("Record the audience screen as a video."),
+  kiosk: external_exports.object({
+    holdSeconds: external_exports.number().min(1).max(600).optional().describe("How long each step and slide shows. The default is 6."),
+    loop: external_exports.boolean().optional().describe("Start again at the title after the end screen."),
+    loops: external_exports.number().int().min(1).max(1e3).optional().describe("Stop after this many loops. The default is 100.")
+  }).strict().optional().describe("Run without a presenter, such as on a screen at a booth.")
+}).strict().refine((p) => !(p.kiosk && p.record), {
+  message: 'A kiosk presentation cannot record a video. Remove "record" or "kiosk".',
+  path: ["record"]
+});
 var stepSchema = external_exports.object({
   id: external_exports.string().regex(
     /^[a-z0-9][a-z0-9-]*$/,
@@ -98389,7 +98461,21 @@ var stepSchema = external_exports.object({
   caption: external_exports.string().min(1).max(120).optional().describe('The text viewers see in a video of this step. Without it, videos show "do".'),
   lighthouse: external_exports.enum(LH_MODES).optional().describe(
     "Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step."
-  )
+  ),
+  notes: external_exports.string().max(4e3).optional().describe("Notes for the presenter. Only the presenter window shows them."),
+  pause: external_exports.boolean().optional().describe(
+    "In a presentation, wait for the presenter before this step. false goes on by itself. The default comes from presentation.pause."
+  ),
+  slide: slideSchema.optional().describe(
+    "A slide before the action of this step, or the whole step when it has no action. Test runs skip a step that is only a slide."
+  ),
+  spotlight: external_exports.boolean().optional().describe(
+    "In a presentation, dim the page except the element of this step during the pause."
+  ),
+  zoom: external_exports.number().min(1.25).max(4).optional().describe(
+    "In a presentation, show the area of the next action this many times bigger during the pause."
+  ),
+  timeBudget: duration3.optional().describe('The time for this step in a presentation, like "45s".')
 }).strict().refine((step) => step.lighthouse !== "navigation" || Boolean(step.action?.navigate), {
   message: "A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.",
   path: ["lighthouse"]
@@ -98441,6 +98527,7 @@ var planSchema = external_exports.object({
       captions: external_exports.boolean().optional().describe("Show step captions at the bottom.")
     }).strict()
   ]).optional().describe("Record the whole run as a video. The report shows it."),
+  presentation: presentationSchema.optional().describe("Settings to play this plan as a live presentation. See docs/presentations.md."),
   steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
 }).strict().refine(
   (plan) => !plan.environment || !plan.environments || plan.environments.includes(plan.environment),
@@ -109046,6 +109133,8 @@ var Context = class {
   vars = {};
   // Headers and a login for the environment's site, with secrets filled in.
   network;
+  // The presentation that is going, if any. Most tools wait until it ends.
+  presentation;
   loaded;
   // A switch to a protected environment that waits for the developer.
   // Tabs move, or the session goes back, after the answer.
@@ -110514,7 +110603,8 @@ var RunStore = class _RunStore {
       expect: step.expect === void 0 ? void 0 : show(step.expect),
       ...template(step),
       confirm: needsConfirm(input3.mode, step.checkpoint),
-      status: "pending",
+      // A step that is only a slide has nothing to test.
+      ...step.slide && !step.action ? { status: "skip", notes: "A slide for presentations. Nothing to test." } : { status: "pending" },
       screenshots: [],
       actions: [],
       ...step.cookies ? { cookies: step.cookies } : {},
@@ -110538,6 +110628,7 @@ var RunStore = class _RunStore {
       baseUrl: input3.baseUrl,
       ...input3.environment ? { environment: input3.environment } : {},
       ...input3.vars && Object.keys(input3.vars).length ? { vars: input3.vars } : {},
+      ...input3.planHash ? { planHash: input3.planHash } : {},
       chrome: input3.chrome,
       setup: input3.setup,
       emulation: input3.emulation,
@@ -111029,7 +111120,7 @@ function reproSteps(run, step) {
   const where3 = env2 === "development" ? "" : ` (the ${env2} environment)`;
   return [...run.baseUrl ? [`Open ${run.baseUrl}${where3}`] : [], ...before, ...own2];
 }
-function duration3(run) {
+function duration4(run) {
   if (!run.endedAt) return "still running";
   const seconds = Math.round((Date.parse(run.endedAt) - Date.parse(run.startedAt)) / 1e3);
   const minutes = Math.floor(seconds / 60);
@@ -112052,6 +112143,29 @@ async function restoreSession(tab, session, options = {}) {
   );
 }
 
+// packages/server/src/presentation/policy.ts
+var ALLOWED = /* @__PURE__ */ new Set([
+  "present",
+  "snapshot",
+  "read",
+  "screenshot",
+  "logs",
+  "network",
+  "runs",
+  "plan",
+  "issue_draft",
+  "export_script",
+  "environment"
+]);
+function checkPresentationPolicy(presentation, tool, action2) {
+  if (!presentation?.active) return;
+  if (ALLOWED.has(tool) && !(tool === "environment" && action2 === "use")) return;
+  throw new ToolError(
+    `A presentation is going, so Walkthrough does not run ${tool}${action2 ? ` with action "${action2}"` : ""} now. Tools that only read the page still work, such as snapshot and read. Call present with action "stop" to end the presentation.`,
+    "presentation_active"
+  );
+}
+
 // packages/server/src/video/recording.ts
 import { copyFileSync, existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync as mkdtempSync3, readFileSync as readFileSync15, rmSync as rmSync8 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
@@ -112147,6 +112261,46 @@ function checkScreenshotPath(file2, projectDir, extraRoots = []) {
 }
 function checkMediaPath(file2, projectDir, extraRoots = []) {
   return checkOutputPath(file2, projectDir, extraRoots, VIDEO);
+}
+var MAX_SLIDE_BYTES = 15 * 1024 * 1024;
+function checkSlideImage(file2, projectDir) {
+  const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
+  const ext = extname3(full).toLowerCase();
+  if (!SLIDE_IMAGE_EXTENSIONS.includes(ext)) {
+    throw new ToolError(
+      `A slide image ends with ${SLIDE_IMAGE_EXTENSIONS.join(", ")}. ${file2} does not.`,
+      "slide_blocked"
+    );
+  }
+  let real;
+  try {
+    real = realpathSync2(full);
+  } catch {
+    throw new ToolError(`The slide image ${file2} does not exist.`, "slide_blocked");
+  }
+  if (!statSync5(real).isFile()) throw new ToolError(`${file2} is not a file.`, "slide_blocked");
+  const project = realpathSync2(projectDir);
+  if (!inside(project, real)) {
+    throw new ToolError(
+      `A slide image must be in the project folder. ${file2} is outside.`,
+      "slide_blocked"
+    );
+  }
+  const parts = relative4(project, real).split(sep4);
+  const hidden = parts.slice(0, -1).some((p, i) => p.startsWith(".") && !(i === 0 && p === ".walkthrough"));
+  if (hidden || parts[0] === ".walkthrough" && ["sessions", "runs"].includes(parts[1] ?? "")) {
+    throw new ToolError(
+      `Walkthrough does not show images from hidden or private folders. ${file2} is blocked.`,
+      "slide_blocked"
+    );
+  }
+  if (statSync5(real).size > MAX_SLIDE_BYTES) {
+    throw new ToolError(
+      `The slide image ${file2} is larger than 15 MB. Use a smaller image.`,
+      "slide_blocked"
+    );
+  }
+  return real;
 }
 
 // packages/server/src/video/capture.ts
@@ -112997,11 +113151,12 @@ async function withEnvironment(ctx, environment2, extra, fn) {
 ${out}`;
   return { ...out, content: [{ type: "text", text: head }, ...out.content] };
 }
-async function runTool(ctx, name, fn) {
-  return ctx.lock.run(async () => {
+async function runTool(ctx, name, fn, options = {}) {
+  const work = async () => {
     let result;
     const began = Date.now();
     try {
+      checkPresentationPolicy(ctx.presentation, name, options.action);
       const out = await fn();
       result = typeof out === "string" ? textResult(out) : out;
     } catch (error62) {
@@ -113010,7 +113165,7 @@ async function runTool(ctx, name, fn) {
       result = { content: [{ type: "text", text: message }], isError: true };
     }
     if (PAGE_TOOLS.has(name)) for (const capture of liveCaptures(ctx)) capture.activity(began);
-    const notes = ctx.driver?.drainNotes() ?? [];
+    const notes = options.exclusive === false ? [] : ctx.driver?.drainNotes() ?? [];
     if (notes.length > 0) {
       result.content.push({
         type: "text",
@@ -113025,7 +113180,8 @@ ${untrusted(notes.map((n) => `- ${n}`).join("\n"))}`
       }
     }
     return result;
-  });
+  };
+  return options.exclusive === false ? work() : ctx.lock.run(work);
 }
 
 // packages/server/src/tools/browser-tools.ts
@@ -113439,6 +113595,429 @@ function reloadableTab(driver) {
 // packages/server/src/tools/run-tools.ts
 import { existsSync as existsSync19, writeFileSync as writeFileSync12 } from "node:fs";
 import { join as join32, relative as relative10 } from "node:path";
+
+// packages/server/src/presentation/rehearsal.ts
+import { createHash as createHash4 } from "node:crypto";
+
+// packages/server/src/page/actions.ts
+var ACTIONS = [
+  "click",
+  "dblclick",
+  "hover",
+  "fill",
+  "select",
+  "check",
+  "uncheck",
+  "press",
+  "scroll",
+  "upload"
+];
+var ACTION_LABELS = {
+  click: "Click",
+  dblclick: "Double-click",
+  hover: "Point",
+  fill: "Type",
+  select: "Choose",
+  check: "Check",
+  uncheck: "Uncheck",
+  press: "Press a key",
+  scroll: "Scroll",
+  upload: "Upload"
+};
+var ELEMENT_ACTIONS = [
+  "click",
+  "dblclick",
+  "hover",
+  "fill",
+  "select",
+  "check",
+  "uncheck",
+  "upload"
+];
+async function resolveTarget(driver, tab, input3) {
+  if (input3.ref) {
+    const { handle, role, name } = await driver.refs.resolve(input3.ref, tab.id, tab.nav);
+    return { handle, role, name, label: `${role}${name ? ` "${name}"` : ""} [${input3.ref}]` };
+  }
+  if (input3.selector) {
+    const handle = await tab.page.$(input3.selector).catch((error62) => {
+      throw new ToolError(
+        `The selector "${input3.selector}" is not valid: ${error62.message}`,
+        "bad_selector"
+      );
+    });
+    if (!handle) {
+      throw new ToolError(
+        `Nothing on the page matches the selector "${input3.selector}". Take a snapshot and use a ref.`,
+        "not_found"
+      );
+    }
+    return { handle, label: `element "${input3.selector}"` };
+  }
+  return void 0;
+}
+async function pressKeys(tab, combo) {
+  const keys = combo.split("+").map((k) => k.trim());
+  const main2 = keys.pop();
+  if (!main2)
+    throw new ToolError('Give a key to press, such as "Enter" or "Control+A".', "bad_input");
+  for (const key2 of keys) await tab.page.keyboard.down(key2);
+  try {
+    await tab.page.keyboard.press(main2);
+  } finally {
+    for (const key2 of keys.reverse()) await tab.page.keyboard.up(key2);
+  }
+}
+async function selectOption(handle, wanted) {
+  const value = await handle.evaluate((el, text) => {
+    if (!(el instanceof HTMLSelectElement)) return null;
+    const option = [...el.options].find(
+      (o) => o.value === text || o.label.trim() === text || o.text.trim() === text
+    );
+    return option ? option.value : void 0;
+  }, wanted);
+  if (value === null)
+    throw new ToolError("The select action only works on a <select> element.", "bad_target");
+  if (value === void 0) throw new ToolError(`The list has no option "${wanted}".`, "not_found");
+  await handle.select(value);
+  return value;
+}
+async function traceClickPoint(tab, t) {
+  const box = await t.handle.boundingBox().catch(() => null);
+  const hit = box ? await tab.page.evaluate(
+    (x2, y) => {
+      const el = document.elementFromPoint(x2, y);
+      return el ? `${el.tagName} ${(el.textContent ?? "").trim().slice(0, 40)}` : null;
+    },
+    box.x + box.width / 2,
+    box.y + box.height / 2
+  ).catch(() => "error") : null;
+  const viewport = await tab.page.evaluate(() => `${innerWidth}x${innerHeight} scroll ${scrollY}`).catch(() => "");
+  trace("click", { label: t.label, box, hit, viewport, url: tab.page.url() });
+}
+async function perform(ctx, tab, input3, target2) {
+  const { action: action2 } = input3;
+  const timeout2 = ctx.config.actionTimeoutMs;
+  const need = () => {
+    if (!target2)
+      throw new ToolError(`The ${action2} action needs a "ref" or a "selector".`, "bad_input");
+    return target2;
+  };
+  switch (action2) {
+    case "click":
+    case "dblclick": {
+      const t = need();
+      if (process.env.UIWALK_TRACE_FILE) await traceClickPoint(tab, t);
+      await t.handle.asLocator().setTimeout(timeout2).click({ count: action2 === "dblclick" ? 2 : 1 });
+      return `${action2 === "click" ? "Clicked" : "Double-clicked"} ${t.label}.`;
+    }
+    case "hover": {
+      const t = need();
+      await t.handle.asLocator().setTimeout(timeout2).hover();
+      return `Moved the mouse over ${t.label}.`;
+    }
+    case "fill": {
+      const t = need();
+      if (input3.value === void 0)
+        throw new ToolError('The fill action needs a "value".', "bad_input");
+      const shown = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
+      const hasSecret = ctx.secrets.hasTokens(shown);
+      const real = ctx.secrets.resolve(shown);
+      if (hasSecret && ctx.video) await ctx.video.maskSecret(t.handle);
+      await t.handle.asLocator().setTimeout(timeout2).fill(real);
+      if (hasSecret) ctx.driver.secretFields.push(t.handle);
+      return `Filled ${t.label} with "${hasSecret ? MASK : shown}".`;
+    }
+    case "select": {
+      const t = need();
+      if (!input3.value)
+        throw new ToolError(
+          'The select action needs a "value" (the option value or text).',
+          "bad_input"
+        );
+      const wanted = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
+      const chosen = await selectOption(t.handle, wanted);
+      return `Selected "${wanted}" in ${t.label}${chosen !== wanted ? ` (value "${chosen}")` : ""}.`;
+    }
+    case "check":
+    case "uncheck": {
+      const t = need();
+      const want = action2 === "check";
+      const now = await t.handle.evaluate((el) => el.checked);
+      if (now !== want) await t.handle.asLocator().setTimeout(timeout2).click();
+      const after = await t.handle.evaluate((el) => el.checked);
+      if (after !== want)
+        throw new ToolError(
+          `${t.label} did not change to ${want ? "checked" : "not checked"}.`,
+          "no_effect"
+        );
+      return `${want ? "Checked" : "Unchecked"} ${t.label}${now === want ? " (it was already in that state)" : ""}.`;
+    }
+    case "press": {
+      if (!input3.value)
+        throw new ToolError(
+          'The press action needs a "value", such as "Enter" or "Control+A".',
+          "bad_input"
+        );
+      if (target2) await target2.handle.focus();
+      await pressKeys(tab, input3.value);
+      return `Pressed ${input3.value}${target2 ? ` in ${target2.label}` : ""}.`;
+    }
+    case "scroll": {
+      if (target2) {
+        await target2.handle.scrollIntoView();
+        return `Scrolled ${target2.label} into view.`;
+      }
+      const amount = input3.value === "up" ? -600 : input3.value === "down" || !input3.value ? 600 : Number(input3.value);
+      if (Number.isNaN(amount))
+        throw new ToolError(
+          'For scroll, "value" is "up", "down", or a number of pixels.',
+          "bad_input"
+        );
+      await tab.page.mouse.wheel({ deltaY: amount });
+      return `Scrolled the page ${amount < 0 ? "up" : "down"} by ${Math.abs(amount)} pixels.`;
+    }
+    case "upload": {
+      const t = need();
+      const files = input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : []);
+      if (files.length === 0) throw new ToolError('The upload action needs "files".', "bad_input");
+      const paths = files.map(
+        (f) => checkUploadPath(f, ctx.config.uploadsRoot, ctx.config.projectDir)
+      );
+      const isFileInput = await t.handle.evaluate(
+        (el) => el instanceof HTMLInputElement && el.type === "file"
+      );
+      if (isFileInput) {
+        await t.handle.uploadFile(...paths);
+      } else {
+        const [chooser] = await Promise.all([
+          tab.page.waitForFileChooser({ timeout: timeout2 }),
+          t.handle.asLocator().setTimeout(timeout2).click()
+        ]);
+        await chooser.accept(paths);
+      }
+      return `Uploaded ${files.join(", ")} to ${t.label}.`;
+    }
+  }
+}
+async function highlightTarget(ctx, tab, target2, action2) {
+  const ms = ctx.config.highlightMs;
+  const panel = ctx.driver.panel;
+  if (!panel || ms <= 0) return;
+  await target2.handle.scrollIntoView().catch(() => void 0);
+  const rect = await elementRect(target2.handle);
+  if (!rect) return;
+  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action2]}`, ms);
+  await new Promise((resolve12) => setTimeout(resolve12, ms));
+}
+async function settle4(tab) {
+  await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2e3 }).catch(() => void 0);
+}
+async function act(ctx, input3) {
+  const tab = ctx.driver.activeTab();
+  const startUrl2 = tab.page.url();
+  if (!ctx.guard.isAllowed(startUrl2)) {
+    throw new ToolError(
+      `${ctx.guard.blockedMessage(startUrl2)}
+Navigate back to an allowed page first.`,
+      "origin_blocked"
+    );
+  }
+  const target2 = await resolveTarget(ctx.driver, tab, input3);
+  if (target2 && await target2.handle.evaluate((el) => Boolean(el.closest("uiwalk-panel")))) {
+    throw new ToolError(
+      "That element is part of the Walkthrough panel. Only the developer uses the panel.",
+      "bad_target"
+    );
+  }
+  const selector = target2 ? await stableSelector(target2.handle, target2) : void 0;
+  if (target2) {
+    ctx.driver.lastTarget = { tabId: tab.id, handle: target2.handle, label: target2.label };
+    await highlightTarget(ctx, tab, target2, input3.action);
+  }
+  if (ctx.video) {
+    await target2?.handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
+    const rect = target2 ? await elementRect(target2.handle) : void 0;
+    ctx.video.action(tab.id, input3.action, rect);
+  }
+  const dialogWatch = ctx.driver.nextDialog(tab.id);
+  const work = perform(ctx, tab, input3, target2);
+  let outcome;
+  try {
+    outcome = await Promise.race([
+      work.then((text) => ({ kind: "done", text })),
+      dialogWatch.promise.then(() => ({ kind: "dialog" }))
+    ]);
+  } finally {
+    dialogWatch.cancel();
+  }
+  ctx.log.push({
+    at: (/* @__PURE__ */ new Date()).toISOString(),
+    tabId: tab.id,
+    tab: tab.name,
+    action: input3.action,
+    selector,
+    label: target2?.label ?? "(page)",
+    // Secrets stay as {{secret:NAME}} here. The real value is never stored.
+    value: ["fill", "select", "press", "scroll"].includes(input3.action) ? input3.value : void 0,
+    files: input3.action === "upload" ? input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : void 0) : void 0,
+    frameUrl: target2 && target2.handle.frame !== tab.page.mainFrame() ? target2.handle.frame.url() : void 0,
+    // {{unique}} stays a token, so an export or replay makes a new value.
+    url: tokenizeUnique(startUrl2, ctx.unique)
+  });
+  const lines = [];
+  if (outcome.kind === "dialog") {
+    ctx.driver.setPendingWork(tab.id, work);
+    const dialog = ctx.driver.pendingDialog(tab.id);
+    lines.push(`Did the ${input3.action} action. It opened a dialog, so the page is waiting.`);
+    if (dialog) lines.push(`dialog_pending: ${dialogOpenMessage(dialog)}`);
+  } else {
+    await settle4(tab);
+    trace("act-done", { action: input3.action, label: target2?.label, url: tab.page.url() });
+    if (["click", "dblclick", "press"].includes(input3.action)) await ctx.driver.settleEvents();
+    lines.push(outcome.text);
+    const endUrl = tab.page.url();
+    if (endUrl !== startUrl2) lines.push(`The page is now ${endUrl}.`);
+  }
+  if (selector) lines.push(`Selector: ${selector}`);
+  return lines.join("\n");
+}
+
+// packages/server/src/replay/ops.ts
+function checkableText(expect) {
+  const found = /* @__PURE__ */ new Set();
+  for (const m of expect.matchAll(/"([^"]{1,80})"/g)) if (m[1]) found.add(m[1]);
+  for (const m of expect.matchAll(/(?:\$|€|£)\d[\d,]*(?:\.\d+)?/g)) found.add(m[0]);
+  return [...found];
+}
+function parseUrl(value) {
+  try {
+    const url2 = JSON.parse(value ?? "{}").url;
+    return typeof url2 === "string" ? url2 : void 0;
+  } catch {
+    return void 0;
+  }
+}
+function buildOps(run) {
+  const steps = [];
+  const missingSelectors = [];
+  let lastUrl = run.baseUrl ?? "";
+  for (const step of run.steps) {
+    const shots = step.captures ?? [];
+    if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
+    const ops = [];
+    for (const action2 of step.actions) {
+      if (action2.url && action2.url !== lastUrl) {
+        ops.push({ type: "reach", url: action2.url });
+        lastUrl = action2.url;
+      }
+      if (!action2.selector && ELEMENT_ACTIONS.includes(action2.action)) {
+        missingSelectors.push(`Step ${step.index}: ${action2.label}`);
+        ops.push({ type: "no-selector", label: action2.label });
+        continue;
+      }
+      ops.push({ type: "action", action: action2 });
+      if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
+      if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
+      if (action2.action === "tab-close") lastUrl = "";
+    }
+    for (const check2 of step.cookies ?? []) ops.push({ type: "cookie", check: check2 });
+    const expect = step.template?.expect ?? step.expect;
+    if (expect) {
+      const texts = checkableText(expect);
+      for (const text of texts) ops.push({ type: "expect", text });
+      if (texts.length === 0) ops.push({ type: "check-by-hand", text: expect });
+    }
+    for (const shot of shots) {
+      if (shot.element && !shot.selector) {
+        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
+        ops.push({ type: "capture-no-selector", shot });
+        continue;
+      }
+      ops.push({ type: "capture", shot });
+    }
+    steps.push({ step, ops });
+  }
+  return { steps, missingSelectors };
+}
+function dialogAnswers(ops, from2 = 0) {
+  const answers = [];
+  for (const op of ops.slice(from2)) {
+    if (op.type !== "action" || op.action.action !== "dialog") continue;
+    let detail = {};
+    try {
+      detail = JSON.parse(op.action.value ?? "{}");
+    } catch {
+    }
+    answers.push({
+      accept: detail.accept !== false,
+      ...typeof detail.text === "string" ? { text: detail.text } : {}
+    });
+  }
+  return answers;
+}
+
+// packages/server/src/presentation/rehearsal.ts
+var REHEARSAL_MAX_AGE_MS = 12 * 60 * 60 * 1e3;
+function isSlideOnly(step) {
+  return Boolean(step.slide) && !step.action;
+}
+function executionHash(plan) {
+  const steps = plan.steps.map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` })).filter(({ step }) => !isSlideOnly(step)).map(({ step, id }) => ({
+    id,
+    action: step.action,
+    expect: step.expect,
+    emulate: step.emulate,
+    mock: step.mock,
+    cookies: step.cookies
+  }));
+  const what = {
+    baseUrl: plan.baseUrl,
+    session: plan.session,
+    device: plan.device,
+    colorScheme: plan.colorScheme,
+    network: plan.network,
+    emulate: plan.emulate,
+    vars: plan.vars,
+    steps
+  };
+  return createHash4("sha256").update(JSON.stringify(what)).digest("hex").slice(0, 16);
+}
+function rehearsalProblems(run, plan) {
+  const problems = [];
+  if (run.status !== "finished") problems.push(`The run is ${run.status}, not finished.`);
+  const slides = new Set(
+    (plan?.steps ?? []).map((step, i) => isSlideOnly(step) ? step.id ?? `step-${i + 1}` : void 0).filter(Boolean)
+  );
+  for (const step of run.steps) {
+    if (step.status === "pass" || step.status === "skip" && slides.has(step.id)) continue;
+    problems.push(`Step ${step.index} "${step.title}" is ${step.status}.`);
+  }
+  for (const missing of buildOps(run).missingSelectors) {
+    problems.push(`${missing} has no stable selector. Give the plan step an exact action.`);
+  }
+  return problems;
+}
+function slideProblems(plan, projectDir) {
+  const problems = [];
+  const check2 = (where3, image2) => {
+    if (!image2) return;
+    try {
+      checkSlideImage(image2, projectDir);
+    } catch (error62) {
+      problems.push(`${where3}: ${error62.message}`);
+    }
+  };
+  const p = plan.presentation;
+  check2("presentation.title", p?.title && "image" in p.title ? p.title.image : void 0);
+  check2("presentation.end", p?.end && "image" in p.end ? p.end.image : void 0);
+  plan.steps.forEach((step, i) => {
+    if (step.slide && "image" in step.slide) {
+      check2(`Step ${i + 1} [${step.id ?? `step-${i + 1}`}]`, step.slide.image);
+    }
+  });
+  return problems;
+}
 
 // packages/server/src/report/html.ts
 import { existsSync as existsSync17, readFileSync as readFileSync16 } from "node:fs";
@@ -113881,7 +114460,7 @@ function htmlReport(run, runDir) {
     ["Status", RUN_STATUS_LABELS[run.status]],
     ["Mode", run.mode],
     ["Started", new Date(run.startedAt).toLocaleString("en-US")],
-    ["Time", duration3(run)]
+    ["Time", duration4(run)]
   ];
   const env2 = runEnvironment(run);
   if (run.planFile) meta3.push(["Plan", run.planFile]);
@@ -114318,7 +114897,7 @@ function markdownReport(run, options = {}) {
     ...run.chrome ? [`- **Browser:** ${run.chrome}`] : [],
     ...run.setup ? [`- **Setup:** ${run.setup}`] : [],
     `- **Started:** ${run.startedAt}`,
-    `- **Time:** ${duration3(run)}`,
+    `- **Time:** ${duration4(run)}`,
     ...options.a11yReport ? ["- **Accessibility report:** accessibility.html and accessibility.md"] : [],
     ...options.lhReport ? ["- **Lighthouse report:** lighthouse.html and lighthouse.md"] : [],
     ...run.lighthouse?.some((c) => c.flow) ? ["- **Lighthouse flow report:** lighthouse/flow.report.html"] : [],
@@ -114494,6 +115073,14 @@ function savePlan(projectDir, name, text, overwrite = false) {
   const header = "# yaml-language-server: $schema=../plan.schema.json\n";
   writeFileSync10(file2, text.startsWith("# yaml-language-server") ? text : header + text);
   return file2;
+}
+function loadRunPlan(projectDir, planFile) {
+  if (!planFile || !existsSync18(join29(projectDir, planFile))) return void 0;
+  try {
+    return loadPlan(projectDir, join29(projectDir, planFile)).plan;
+  } catch {
+    return void 0;
+  }
 }
 
 // packages/server/src/run/record.ts
@@ -115008,6 +115595,9 @@ function describeA11y(step) {
 function stepList(plan, mode, show = (t) => t) {
   return plan.steps.map((step, i) => {
     const id = step.id ?? `step-${i + 1}`;
+    if (isSlideOnly(step)) {
+      return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${step.do}`;
+    }
     const flags = [
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
       describeCapture(plan, step),
@@ -115076,7 +115666,10 @@ function registerRunTools(server, ctx) {
       const { file: file2, plan } = loadPlan(projectDir, name);
       const later = laterFeatures(plan);
       if (action2 === "validate") {
-        const shots = screenshotProblems(plan, projectDir, screenshotRoots);
+        const shots = [
+          ...screenshotProblems(plan, projectDir, screenshotRoots),
+          ...slideProblems(plan, projectDir)
+        ];
         if (shots.length) {
           return [
             `The plan ${relative10(projectDir, file2)} has file paths that Walkthrough cannot use:`,
@@ -115214,6 +115807,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c]),
         lighthouse: config3.lighthouse,
         freshBrowser: lhSteps ? driver.mode === "launched" : void 0,
+        planHash: plan ? executionHash(plan) : void 0,
         environment: {
           name: config3.environment.name,
           label: config3.environment.label,
@@ -115231,8 +115825,16 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
       else await startRing(ctx);
       const userVars = Object.entries(ctx.run.run.vars ?? {});
+      const slides = plan ? slideProblems(plan, config3.projectDir) : [];
       const lines = [
         `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+        ...plan?.presentation ? [
+          "This plan is a presentation. This run is its rehearsal: check every step. Steps that are only a slide are skipped."
+        ] : [],
+        ...slides.length ? [
+          "A presentation of this plan cannot show these slides:",
+          ...slides.map((p) => `- ${p}`)
+        ] : [],
         `Environment: ${describeEnvironment(config3.environment)}${config3.environment.protected ? ", protected" : ""}.`,
         ...envLines,
         ...userVars.length ? [
@@ -115388,6 +115990,19 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       }
       const paths = writeReports(store, await ctx.secrets());
       const problems = store.run.steps.filter(isProblem);
+      const plan = loadRunPlan(projectDir, store.run.planFile);
+      if (plan?.presentation) {
+        const blockers = rehearsalProblems(store.run, plan);
+        notes.push(
+          ...blockers.length ? [
+            "This run is not ready for a presentation:",
+            ...blockers.map((b2) => `- ${b2}`),
+            "Fix the plan or the app, and run it again."
+          ] : [
+            `This run is a good rehearsal. /walkthrough:present can use it for ${Math.round(REHEARSAL_MAX_AGE_MS / 36e5)} hours.`
+          ]
+        );
+      }
       return [
         `The run "${store.run.name}" is ${store.run.status}. Result: ${resultLine(store.run) || "no steps"}.`,
         `Reports: ${paths.markdown} and ${paths.html}`,
@@ -116003,11 +116618,11 @@ async function listenerLines(cdp, nodeId, scripts, ancestors) {
 }
 
 // packages/server/src/devtools/storage.ts
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 function maskValue(value, show) {
   if (value === "") return "(empty)";
   if (show) return JSON.stringify(value.length > 500 ? `${value.slice(0, 500)}...` : value);
-  const id = createHash4("sha256").update(value).digest("hex").slice(0, 4);
+  const id = createHash5("sha256").update(value).digest("hex").slice(0, 4);
   return `**** (${value.length} characters, id ${id})`;
 }
 function loginHosts(driver, tab, guard) {
@@ -116118,290 +116733,6 @@ async function writeStorage(tab, kind, op, key2, value) {
     key2 ?? null,
     value ?? null
   );
-}
-
-// packages/server/src/page/actions.ts
-var ACTIONS = [
-  "click",
-  "dblclick",
-  "hover",
-  "fill",
-  "select",
-  "check",
-  "uncheck",
-  "press",
-  "scroll",
-  "upload"
-];
-var ACTION_LABELS = {
-  click: "Click",
-  dblclick: "Double-click",
-  hover: "Point",
-  fill: "Type",
-  select: "Choose",
-  check: "Check",
-  uncheck: "Uncheck",
-  press: "Press a key",
-  scroll: "Scroll",
-  upload: "Upload"
-};
-var ELEMENT_ACTIONS = [
-  "click",
-  "dblclick",
-  "hover",
-  "fill",
-  "select",
-  "check",
-  "uncheck",
-  "upload"
-];
-async function resolveTarget(driver, tab, input3) {
-  if (input3.ref) {
-    const { handle, role, name } = await driver.refs.resolve(input3.ref, tab.id, tab.nav);
-    return { handle, role, name, label: `${role}${name ? ` "${name}"` : ""} [${input3.ref}]` };
-  }
-  if (input3.selector) {
-    const handle = await tab.page.$(input3.selector).catch((error62) => {
-      throw new ToolError(
-        `The selector "${input3.selector}" is not valid: ${error62.message}`,
-        "bad_selector"
-      );
-    });
-    if (!handle) {
-      throw new ToolError(
-        `Nothing on the page matches the selector "${input3.selector}". Take a snapshot and use a ref.`,
-        "not_found"
-      );
-    }
-    return { handle, label: `element "${input3.selector}"` };
-  }
-  return void 0;
-}
-async function pressKeys(tab, combo) {
-  const keys = combo.split("+").map((k) => k.trim());
-  const main2 = keys.pop();
-  if (!main2)
-    throw new ToolError('Give a key to press, such as "Enter" or "Control+A".', "bad_input");
-  for (const key2 of keys) await tab.page.keyboard.down(key2);
-  try {
-    await tab.page.keyboard.press(main2);
-  } finally {
-    for (const key2 of keys.reverse()) await tab.page.keyboard.up(key2);
-  }
-}
-async function selectOption(handle, wanted) {
-  const value = await handle.evaluate((el, text) => {
-    if (!(el instanceof HTMLSelectElement)) return null;
-    const option = [...el.options].find(
-      (o) => o.value === text || o.label.trim() === text || o.text.trim() === text
-    );
-    return option ? option.value : void 0;
-  }, wanted);
-  if (value === null)
-    throw new ToolError("The select action only works on a <select> element.", "bad_target");
-  if (value === void 0) throw new ToolError(`The list has no option "${wanted}".`, "not_found");
-  await handle.select(value);
-  return value;
-}
-async function traceClickPoint(tab, t) {
-  const box = await t.handle.boundingBox().catch(() => null);
-  const hit = box ? await tab.page.evaluate(
-    (x2, y) => {
-      const el = document.elementFromPoint(x2, y);
-      return el ? `${el.tagName} ${(el.textContent ?? "").trim().slice(0, 40)}` : null;
-    },
-    box.x + box.width / 2,
-    box.y + box.height / 2
-  ).catch(() => "error") : null;
-  const viewport = await tab.page.evaluate(() => `${innerWidth}x${innerHeight} scroll ${scrollY}`).catch(() => "");
-  trace("click", { label: t.label, box, hit, viewport, url: tab.page.url() });
-}
-async function perform(ctx, tab, input3, target2) {
-  const { action: action2 } = input3;
-  const timeout2 = ctx.config.actionTimeoutMs;
-  const need = () => {
-    if (!target2)
-      throw new ToolError(`The ${action2} action needs a "ref" or a "selector".`, "bad_input");
-    return target2;
-  };
-  switch (action2) {
-    case "click":
-    case "dblclick": {
-      const t = need();
-      if (process.env.UIWALK_TRACE_FILE) await traceClickPoint(tab, t);
-      await t.handle.asLocator().setTimeout(timeout2).click({ count: action2 === "dblclick" ? 2 : 1 });
-      return `${action2 === "click" ? "Clicked" : "Double-clicked"} ${t.label}.`;
-    }
-    case "hover": {
-      const t = need();
-      await t.handle.asLocator().setTimeout(timeout2).hover();
-      return `Moved the mouse over ${t.label}.`;
-    }
-    case "fill": {
-      const t = need();
-      if (input3.value === void 0)
-        throw new ToolError('The fill action needs a "value".', "bad_input");
-      const shown = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
-      const hasSecret = ctx.secrets.hasTokens(shown);
-      const real = ctx.secrets.resolve(shown);
-      if (hasSecret && ctx.video) await ctx.video.maskSecret(t.handle);
-      await t.handle.asLocator().setTimeout(timeout2).fill(real);
-      if (hasSecret) ctx.driver.secretFields.push(t.handle);
-      return `Filled ${t.label} with "${hasSecret ? MASK : shown}".`;
-    }
-    case "select": {
-      const t = need();
-      if (!input3.value)
-        throw new ToolError(
-          'The select action needs a "value" (the option value or text).',
-          "bad_input"
-        );
-      const wanted = new TokenResolver(ctx.unique, ctx.vars ?? {}).display(input3.value);
-      const chosen = await selectOption(t.handle, wanted);
-      return `Selected "${wanted}" in ${t.label}${chosen !== wanted ? ` (value "${chosen}")` : ""}.`;
-    }
-    case "check":
-    case "uncheck": {
-      const t = need();
-      const want = action2 === "check";
-      const now = await t.handle.evaluate((el) => el.checked);
-      if (now !== want) await t.handle.asLocator().setTimeout(timeout2).click();
-      const after = await t.handle.evaluate((el) => el.checked);
-      if (after !== want)
-        throw new ToolError(
-          `${t.label} did not change to ${want ? "checked" : "not checked"}.`,
-          "no_effect"
-        );
-      return `${want ? "Checked" : "Unchecked"} ${t.label}${now === want ? " (it was already in that state)" : ""}.`;
-    }
-    case "press": {
-      if (!input3.value)
-        throw new ToolError(
-          'The press action needs a "value", such as "Enter" or "Control+A".',
-          "bad_input"
-        );
-      if (target2) await target2.handle.focus();
-      await pressKeys(tab, input3.value);
-      return `Pressed ${input3.value}${target2 ? ` in ${target2.label}` : ""}.`;
-    }
-    case "scroll": {
-      if (target2) {
-        await target2.handle.scrollIntoView();
-        return `Scrolled ${target2.label} into view.`;
-      }
-      const amount = input3.value === "up" ? -600 : input3.value === "down" || !input3.value ? 600 : Number(input3.value);
-      if (Number.isNaN(amount))
-        throw new ToolError(
-          'For scroll, "value" is "up", "down", or a number of pixels.',
-          "bad_input"
-        );
-      await tab.page.mouse.wheel({ deltaY: amount });
-      return `Scrolled the page ${amount < 0 ? "up" : "down"} by ${Math.abs(amount)} pixels.`;
-    }
-    case "upload": {
-      const t = need();
-      const files = input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : []);
-      if (files.length === 0) throw new ToolError('The upload action needs "files".', "bad_input");
-      const paths = files.map(
-        (f) => checkUploadPath(f, ctx.config.uploadsRoot, ctx.config.projectDir)
-      );
-      const isFileInput = await t.handle.evaluate(
-        (el) => el instanceof HTMLInputElement && el.type === "file"
-      );
-      if (isFileInput) {
-        await t.handle.uploadFile(...paths);
-      } else {
-        const [chooser] = await Promise.all([
-          tab.page.waitForFileChooser({ timeout: timeout2 }),
-          t.handle.asLocator().setTimeout(timeout2).click()
-        ]);
-        await chooser.accept(paths);
-      }
-      return `Uploaded ${files.join(", ")} to ${t.label}.`;
-    }
-  }
-}
-async function highlightTarget(ctx, tab, target2, action2) {
-  const ms = ctx.config.highlightMs;
-  const panel = ctx.driver.panel;
-  if (!panel || ms <= 0) return;
-  await target2.handle.scrollIntoView().catch(() => void 0);
-  const rect = await elementRect(target2.handle);
-  if (!rect) return;
-  await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action2]}`, ms);
-  await new Promise((resolve12) => setTimeout(resolve12, ms));
-}
-async function settle4(tab) {
-  await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2e3 }).catch(() => void 0);
-}
-async function act(ctx, input3) {
-  const tab = ctx.driver.activeTab();
-  const startUrl2 = tab.page.url();
-  if (!ctx.guard.isAllowed(startUrl2)) {
-    throw new ToolError(
-      `${ctx.guard.blockedMessage(startUrl2)}
-Navigate back to an allowed page first.`,
-      "origin_blocked"
-    );
-  }
-  const target2 = await resolveTarget(ctx.driver, tab, input3);
-  if (target2 && await target2.handle.evaluate((el) => Boolean(el.closest("uiwalk-panel")))) {
-    throw new ToolError(
-      "That element is part of the Walkthrough panel. Only the developer uses the panel.",
-      "bad_target"
-    );
-  }
-  const selector = target2 ? await stableSelector(target2.handle, target2) : void 0;
-  if (target2) {
-    ctx.driver.lastTarget = { tabId: tab.id, handle: target2.handle, label: target2.label };
-    await highlightTarget(ctx, tab, target2, input3.action);
-  }
-  if (ctx.video) {
-    await target2?.handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
-    const rect = target2 ? await elementRect(target2.handle) : void 0;
-    ctx.video.action(tab.id, input3.action, rect);
-  }
-  const dialogWatch = ctx.driver.nextDialog(tab.id);
-  const work = perform(ctx, tab, input3, target2);
-  let outcome;
-  try {
-    outcome = await Promise.race([
-      work.then((text) => ({ kind: "done", text })),
-      dialogWatch.promise.then(() => ({ kind: "dialog" }))
-    ]);
-  } finally {
-    dialogWatch.cancel();
-  }
-  ctx.log.push({
-    at: (/* @__PURE__ */ new Date()).toISOString(),
-    tabId: tab.id,
-    tab: tab.name,
-    action: input3.action,
-    selector,
-    label: target2?.label ?? "(page)",
-    // Secrets stay as {{secret:NAME}} here. The real value is never stored.
-    value: ["fill", "select", "press", "scroll"].includes(input3.action) ? input3.value : void 0,
-    files: input3.action === "upload" ? input3.files ?? (input3.value ? input3.value.split(",").map((f) => f.trim()) : void 0) : void 0,
-    frameUrl: target2 && target2.handle.frame !== tab.page.mainFrame() ? target2.handle.frame.url() : void 0,
-    // {{unique}} stays a token, so an export or replay makes a new value.
-    url: tokenizeUnique(startUrl2, ctx.unique)
-  });
-  const lines = [];
-  if (outcome.kind === "dialog") {
-    ctx.driver.setPendingWork(tab.id, work);
-    const dialog = ctx.driver.pendingDialog(tab.id);
-    lines.push(`Did the ${input3.action} action. It opened a dialog, so the page is waiting.`);
-    if (dialog) lines.push(`dialog_pending: ${dialogOpenMessage(dialog)}`);
-  } else {
-    await settle4(tab);
-    trace("act-done", { action: input3.action, label: target2?.label, url: tab.page.url() });
-    if (["click", "dblclick", "press"].includes(input3.action)) await ctx.driver.settleEvents();
-    lines.push(outcome.text);
-    const endUrl = tab.page.url();
-    if (endUrl !== startUrl2) lines.push(`The page is now ${endUrl}.`);
-  }
-  if (selector) lines.push(`Selector: ${selector}`);
-  return lines.join("\n");
 }
 
 // packages/server/src/tools/devtools-tools.ts
@@ -116864,59 +117195,64 @@ function registerEnvironmentTools(server, ctx) {
         projectDir: external_exports.string().optional().describe("Project folder. Leave empty to find it automatically.")
       }
     },
-    ({ action: action2, name, resume, projectDir }, extra) => runTool(ctx, "environment", async () => {
-      const confirmed = ctx.driver?.alive ? ctx.driver.confirmedEnvs : /* @__PURE__ */ new Set();
-      if (action2 === "list") {
-        const config3 = await ctx.refresh(projectDir);
-        const session = ctx.sessionEnv;
-        return [
-          `Environments (${Object.keys(config3.environments).length}):`,
-          ...Object.values(config3.environments).map(
-            (e) => envLine(e, config3.environment.name, confirmed)
-          ),
-          `Default: ${config3.defaultEnvironment}.`,
-          session ? `This session uses "${session.name}" (chosen by ${session.source === "tool" ? "a tool call" : "UIWALK_ENV"}).` : `This session uses "${config3.environment.name}".`,
-          'Plans can choose an environment with the "environment" key, and a tool call can choose one with its "environment" argument.'
-        ].join("\n");
-      }
-      if (action2 === "show") {
-        const config3 = await ctx.refresh(projectDir);
-        const env2 = config3.environment;
-        const secrets = await ctx.secrets();
-        const vars = Object.entries(ctx.vars);
-        return [
-          `Environment: ${env2.name} (${env2.label})`,
-          `Base URL: ${env2.baseUrl ?? "none"}`,
-          `Protected: ${env2.protected ? confirmed.has(env2.name) ? "yes, confirmed for this browser" : "yes, not confirmed yet" : "no"}`,
-          `Allowed sites: ${config3.allowedOrigins.join(", ")}`,
-          `Values for {{var:NAME}}: ${vars.length ? vars.map(([k, v2]) => `${k} = "${v2}"`).join(", ") : "none"}`,
-          `Secrets it can read: ${secrets.names.length ? secrets.names.join(", ") : "none"} (from .walkthrough/.env.${env2.name}${env2.protected ? "" : " and .walkthrough/.env"}, and the environment variables)`,
-          ...Object.keys(env2.secrets).length ? [
-            `Secrets read under another name: ${Object.entries(env2.secrets).map(([k, v2]) => `${k} as ${v2}`).join(", ")}`
-          ] : [],
-          ...Object.keys(env2.headers).length ? [`Extra request headers: ${Object.keys(env2.headers).join(", ")}`] : [],
-          ...env2.httpCredentials ? [`Basic auth as "${env2.httpCredentials.username}"`] : [],
-          ...env2.ignoreHttpsErrors ? ["Ignores HTTPS certificate errors."] : [],
-          `Action time limit: ${config3.actionTimeoutMs} ms`
-        ].join("\n");
-      }
-      if (!name)
-        throw new ToolError('Give the name of the environment, like "staging".', "bad_input");
-      const lines = await ctx.useEnvironment(name, { source: "tool", projectDir });
-      const result = await ctx.confirmEnvironment({
-        signal: extra.signal,
-        requestId: extra.requestId,
-        resume
-      });
-      if (result.status === "waiting")
-        return ["status: waiting", ...lines, result.text].join("\n");
-      if (result.status === "canceled") {
-        return ["status: canceled", result.text, ...await ctx.finishSwitch(false)].join("\n");
-      }
-      lines.push(...await ctx.finishSwitch(true));
-      if (lines.length === 0) lines.push(`The session already uses the "${name}" environment.`);
-      return lines.join("\n");
-    })
+    ({ action: action2, name, resume, projectDir }, extra) => runTool(
+      ctx,
+      "environment",
+      async () => {
+        const confirmed = ctx.driver?.alive ? ctx.driver.confirmedEnvs : /* @__PURE__ */ new Set();
+        if (action2 === "list") {
+          const config3 = await ctx.refresh(projectDir);
+          const session = ctx.sessionEnv;
+          return [
+            `Environments (${Object.keys(config3.environments).length}):`,
+            ...Object.values(config3.environments).map(
+              (e) => envLine(e, config3.environment.name, confirmed)
+            ),
+            `Default: ${config3.defaultEnvironment}.`,
+            session ? `This session uses "${session.name}" (chosen by ${session.source === "tool" ? "a tool call" : "UIWALK_ENV"}).` : `This session uses "${config3.environment.name}".`,
+            'Plans can choose an environment with the "environment" key, and a tool call can choose one with its "environment" argument.'
+          ].join("\n");
+        }
+        if (action2 === "show") {
+          const config3 = await ctx.refresh(projectDir);
+          const env2 = config3.environment;
+          const secrets = await ctx.secrets();
+          const vars = Object.entries(ctx.vars);
+          return [
+            `Environment: ${env2.name} (${env2.label})`,
+            `Base URL: ${env2.baseUrl ?? "none"}`,
+            `Protected: ${env2.protected ? confirmed.has(env2.name) ? "yes, confirmed for this browser" : "yes, not confirmed yet" : "no"}`,
+            `Allowed sites: ${config3.allowedOrigins.join(", ")}`,
+            `Values for {{var:NAME}}: ${vars.length ? vars.map(([k, v2]) => `${k} = "${v2}"`).join(", ") : "none"}`,
+            `Secrets it can read: ${secrets.names.length ? secrets.names.join(", ") : "none"} (from .walkthrough/.env.${env2.name}${env2.protected ? "" : " and .walkthrough/.env"}, and the environment variables)`,
+            ...Object.keys(env2.secrets).length ? [
+              `Secrets read under another name: ${Object.entries(env2.secrets).map(([k, v2]) => `${k} as ${v2}`).join(", ")}`
+            ] : [],
+            ...Object.keys(env2.headers).length ? [`Extra request headers: ${Object.keys(env2.headers).join(", ")}`] : [],
+            ...env2.httpCredentials ? [`Basic auth as "${env2.httpCredentials.username}"`] : [],
+            ...env2.ignoreHttpsErrors ? ["Ignores HTTPS certificate errors."] : [],
+            `Action time limit: ${config3.actionTimeoutMs} ms`
+          ].join("\n");
+        }
+        if (!name)
+          throw new ToolError('Give the name of the environment, like "staging".', "bad_input");
+        const lines = await ctx.useEnvironment(name, { source: "tool", projectDir });
+        const result = await ctx.confirmEnvironment({
+          signal: extra.signal,
+          requestId: extra.requestId,
+          resume
+        });
+        if (result.status === "waiting")
+          return ["status: waiting", ...lines, result.text].join("\n");
+        if (result.status === "canceled") {
+          return ["status: canceled", result.text, ...await ctx.finishSwitch(false)].join("\n");
+        }
+        lines.push(...await ctx.finishSwitch(true));
+        if (lines.length === 0) lines.push(`The session already uses the "${name}" environment.`);
+        return lines.join("\n");
+      },
+      { action: action2 }
+    )
   );
 }
 
@@ -116932,7 +117268,7 @@ import {
 import { join as join36, relative as relative13, resolve as resolve11, sep as sep6 } from "node:path";
 
 // packages/server/src/lighthouse/findings.ts
-import { createHash as createHash5 } from "node:crypto";
+import { createHash as createHash6 } from "node:crypto";
 import { existsSync as existsSync21, readdirSync as readdirSync11, readFileSync as readFileSync19 } from "node:fs";
 import { join as join34 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
@@ -117003,7 +117339,7 @@ function buildLhFindings(checks, options = {}) {
   const categories = [...new Set(current.flatMap((c) => Object.keys(c.scores)))].sort(
     (a2, b2) => (ORDER.get(a2) ?? 99) - (ORDER.get(b2) ?? 99)
   );
-  const digest = createHash5("sha256").update(
+  const digest = createHash6("sha256").update(
     JSON.stringify(findings.map((f) => [f.id, f.audit, f.pages.map((p) => [p.page, p.score])]))
   ).digest("hex").slice(0, 12);
   return { findings, pages, categories, version: current[0]?.version ?? "", digest };
@@ -118604,87 +118940,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync26, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
+import { existsSync as existsSync25, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
 import { join as join40, relative as relative17 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
-
-// packages/server/src/replay/ops.ts
-function checkableText(expect) {
-  const found = /* @__PURE__ */ new Set();
-  for (const m of expect.matchAll(/"([^"]{1,80})"/g)) if (m[1]) found.add(m[1]);
-  for (const m of expect.matchAll(/(?:\$|€|£)\d[\d,]*(?:\.\d+)?/g)) found.add(m[0]);
-  return [...found];
-}
-function parseUrl(value) {
-  try {
-    const url2 = JSON.parse(value ?? "{}").url;
-    return typeof url2 === "string" ? url2 : void 0;
-  } catch {
-    return void 0;
-  }
-}
-function buildOps(run) {
-  const steps = [];
-  const missingSelectors = [];
-  let lastUrl = run.baseUrl ?? "";
-  for (const step of run.steps) {
-    const shots = step.captures ?? [];
-    if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
-    const ops = [];
-    for (const action2 of step.actions) {
-      if (action2.url && action2.url !== lastUrl) {
-        ops.push({ type: "reach", url: action2.url });
-        lastUrl = action2.url;
-      }
-      if (!action2.selector && ELEMENT_ACTIONS.includes(action2.action)) {
-        missingSelectors.push(`Step ${step.index}: ${action2.label}`);
-        ops.push({ type: "no-selector", label: action2.label });
-        continue;
-      }
-      ops.push({ type: "action", action: action2 });
-      if (action2.action === "navigate") lastUrl = action2.value ?? lastUrl;
-      if (action2.action === "tab-new") lastUrl = parseUrl(action2.value) ?? "about:blank";
-      if (action2.action === "tab-close") lastUrl = "";
-    }
-    for (const check2 of step.cookies ?? []) ops.push({ type: "cookie", check: check2 });
-    const expect = step.template?.expect ?? step.expect;
-    if (expect) {
-      const texts = checkableText(expect);
-      for (const text of texts) ops.push({ type: "expect", text });
-      if (texts.length === 0) ops.push({ type: "check-by-hand", text: expect });
-    }
-    for (const shot of shots) {
-      if (shot.element && !shot.selector) {
-        missingSelectors.push(`Step ${step.index}: screenshot of ${shot.element}`);
-        ops.push({ type: "capture-no-selector", shot });
-        continue;
-      }
-      ops.push({ type: "capture", shot });
-    }
-    steps.push({ step, ops });
-  }
-  return { steps, missingSelectors };
-}
-function dialogAnswers(ops, from2 = 0) {
-  const answers = [];
-  for (const op of ops.slice(from2)) {
-    if (op.type !== "action" || op.action.action !== "dialog") continue;
-    let detail = {};
-    try {
-      detail = JSON.parse(op.action.value ?? "{}");
-    } catch {
-    }
-    answers.push({
-      accept: detail.accept !== false,
-      ...typeof detail.text === "string" ? { text: detail.text } : {}
-    });
-  }
-  return answers;
-}
-
-// packages/server/src/export/puppeteer-script.ts
 var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
 var js = (value) => JSON.stringify(value);
 var UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
@@ -119789,7 +120049,7 @@ function actionOf(step) {
 }
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync2, existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync23, writeFileSync as writeFileSync17 } from "node:fs";
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync16, readFileSync as readFileSync23, writeFileSync as writeFileSync17 } from "node:fs";
 import { dirname as dirname13, join as join39, relative as relative16 } from "node:path";
 
 // packages/server/src/replay/engine.ts
@@ -120351,12 +120611,7 @@ function replayVars(run, config3) {
   return { ...run.vars, ...buildVars(config3, planOf(run, config3)?.vars) };
 }
 function planOf(run, config3) {
-  if (!run.planFile || !existsSync25(join39(config3.projectDir, run.planFile))) return void 0;
-  try {
-    return loadPlan(config3.projectDir, join39(config3.projectDir, run.planFile)).plan;
-  } catch {
-    return void 0;
-  }
+  return loadRunPlan(config3.projectDir, run.planFile);
 }
 async function replayRun(ctx, input3) {
   const config3 = await ctx.config();
@@ -120666,7 +120921,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
       const dir = join40(projectDir, ".walkthrough", "exports");
       mkdirSync17(dir, { recursive: true });
       const file2 = join40(dir, `${name}.mjs`);
-      const existed = existsSync26(file2);
+      const existed = existsSync25(file2);
       let target2;
       if (environment2) {
         const other = loadConfig(projectDir, config3.projectDirSource, environment2);
@@ -120728,7 +120983,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync26(join40(store.dir, "report.md")) ? { markdown: relative17(projectDir, join40(store.dir, "report.md")) } : writeReports(store, secrets);
+      const reports = existsSync25(join40(store.dir, "report.md")) ? { markdown: relative17(projectDir, join40(store.dir, "report.md")) } : writeReports(store, secrets);
       const screenshots = step.screenshots.map((s) => relative17(projectDir, join40(store.dir, s)));
       const files = (step.files ?? []).map((f) => relative17(projectDir, join40(store.dir, f)));
       const run = redactDeep(store.run, secrets);
@@ -120972,6 +121227,7 @@ Commands:
 async function serve() {
   const { server } = createServer2();
   installShutdownHandlers();
+  process.on("unhandledRejection", (reason) => log.error("a background task failed", reason));
   await server.connect(new StdioServerTransport());
   log.info(`server ${VERSION} is ready`);
 }
