@@ -118396,6 +118396,22 @@ function buildOps(run) {
   }
   return { steps, missingSelectors };
 }
+function dialogAnswers(ops, from2 = 0) {
+  const answers = [];
+  for (const op of ops.slice(from2)) {
+    if (op.type !== "action" || op.action.action !== "dialog") continue;
+    let detail = {};
+    try {
+      detail = JSON.parse(op.action.value ?? "{}");
+    } catch {
+    }
+    answers.push({
+      accept: detail.accept !== false,
+      ...typeof detail.text === "string" ? { text: detail.text } : {}
+    });
+  }
+  return answers;
+}
 
 // packages/server/src/export/puppeteer-script.ts
 var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
@@ -119674,17 +119690,14 @@ ${files.map((f) => `- ${join39(projectDir, f)}`).join("\n")}`] : [],
 }
 
 // packages/server/src/replay/replayer.ts
-import { randomBytes as randomBytes12 } from "node:crypto";
-import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync22, writeFileSync as writeFileSync18 } from "node:fs";
+import { copyFileSync as copyFileSync2, existsSync as existsSync26, mkdirSync as mkdirSync17, readFileSync as readFileSync22, writeFileSync as writeFileSync18 } from "node:fs";
 import { dirname as dirname13, join as join40, relative as relative17 } from "node:path";
-var PACES = {
-  slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
-  normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
-  fast: { typeMs: 20, glideMs: 200, holdMs: 700 }
-};
-var VIDEO_FPS2 = 15;
+
+// packages/server/src/replay/engine.ts
+import { randomBytes as randomBytes12 } from "node:crypto";
 var MAX_TYPE_MS = 3e3;
-var sleep = (ms) => new Promise((resolve12) => setTimeout(resolve12, ms));
+var StepError = class extends Error {
+};
 var parse6 = (value) => {
   try {
     return JSON.parse(value ?? "{}");
@@ -119692,37 +119705,67 @@ var parse6 = (value) => {
     return {};
   }
 };
+function sleep(ms, signal) {
+  if (ms <= 0 || signal?.aborted) return Promise.resolve();
+  return new Promise((resolve12) => {
+    const timer2 = setTimeout(done, ms);
+    function done() {
+      clearTimeout(timer2);
+      signal?.removeEventListener("abort", done);
+      resolve12();
+    }
+    signal?.addEventListener("abort", done, { once: true });
+  });
+}
 async function centerInView(handle) {
   await handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
 }
-var StepError = class extends Error {
-};
-var Replay = class {
-  constructor(driver, config3, secrets, unique2, pace, capture) {
-    this.driver = driver;
-    this.config = config3;
-    this.secrets = secrets;
-    this.unique = unique2;
-    this.pace = pace;
-    this.capture = capture;
+async function runOps(ops, from2, exec2, signal) {
+  for (let i = from2; i < ops.length; i++) {
+    if (signal?.aborted) {
+      return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
+    }
+    try {
+      await exec2(ops[i]);
+    } catch (error62) {
+      if (signal?.aborted) {
+        return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
+      }
+      return { ok: false, opIndex: i, message: error62.message };
+    }
   }
-  driver;
-  config;
-  secrets;
-  unique;
-  pace;
-  capture;
+  return { ok: true };
+}
+var ReplayEngine = class {
+  constructor(options) {
+    this.options = options;
+    this.pace = options.pace;
+    this.stage = options.stage;
+    this.before = options.driver.activeId;
+  }
+  options;
   // Tabs by their name in the run. The replay has its own tabs.
   tabs = /* @__PURE__ */ new Map();
   current = "main";
+  // A new value for each replay, so a flow that makes data can run again.
+  unique = newUnique();
+  pace;
+  stage;
   // Logins by their name in the run, and the new login that stands for each.
   logins = /* @__PURE__ */ new Map();
-  // Dialog answers of the run, in order.
+  // Dialog answers of the step that is going, in order.
   dialogs = [];
   // Mock rules of the replay, by their id in the run.
   mocks = /* @__PURE__ */ new Map();
   restores = [];
   key = randomBytes12(2).toString("hex");
+  before;
+  get driver() {
+    return this.options.driver;
+  }
+  get config() {
+    return this.options.config;
+  }
   get tab() {
     const tab = this.tabs.get(this.current);
     if (!tab || tab.closed) throw new StepError(`The tab "${this.current}" is not open.`);
@@ -119758,43 +119801,97 @@ var Replay = class {
     this.current = name;
     this.driver.switchTo(this.tab.id);
   }
+  tokens() {
+    return new TokenResolver(this.unique, this.options.vars ?? {}, this.options.secrets);
+  }
+  // The real value, with vars, {{unique}}, and secrets.
   text(value) {
-    return this.secrets.resolve(withUnique(value, this.unique));
+    return this.tokens().apply(value);
+  }
+  // An address of the run, on the environment of the replay.
+  address(value) {
+    return this.options.rebase.url(
+      new TokenResolver(this.unique, this.options.vars ?? {}).display(value)
+    );
+  }
+  // Opens the main tab in a new login, with the run's settings, at the start page.
+  async open(options) {
+    const main2 = await this.openTab("main", "main");
+    const { device, ...rest } = options.emulation ?? {};
+    await this.driver.setEmulation(device ? { ...rest, device } : rest, {
+      tab: main2,
+      reload: false
+    });
+    if (!device && options.width) {
+      await main2.page.setViewport({
+        width: options.width,
+        height: Math.round(options.width * 10 / 16),
+        deviceScaleFactor: 1
+      });
+    }
+    if (options.session)
+      await restoreSession(main2, loadSession(this.config.projectDir, options.session));
+    await main2.page.goto(options.startUrl ? this.address(options.startUrl) : "about:blank", {
+      waitUntil: "load"
+    });
+    return main2;
+  }
+  // Does one step. "fromOp" starts in the middle, to try a failed operation again.
+  async runStep(stepOps, options = {}) {
+    const from2 = options.fromOp ?? 0;
+    this.dialogs = dialogAnswers(stepOps.ops, from2);
+    if (from2 === 0)
+      this.stage.stepStart(options.caption ?? stepOps.step.caption ?? stepOps.step.title);
+    return runOps(
+      stepOps.ops,
+      from2,
+      async (op) => {
+        if (op.type === "reach") await this.reach(op.url);
+        else if (op.type === "action") {
+          await this.act(op.action);
+          await this.tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 3e3, signal: this.options.signal }).catch(() => void 0);
+        } else if (op.type === "expect") await this.expectText(op.text);
+      },
+      this.options.signal
+    );
   }
   async frameOf(frameUrl2) {
     const page = this.tab.page;
     if (!frameUrl2) return page.mainFrame();
     let part = frameUrl2;
     try {
-      part = new URL(withUnique(frameUrl2, this.unique)).pathname;
+      part = new URL(this.address(frameUrl2)).pathname;
     } catch {
     }
     const end = Date.now() + this.config.actionTimeoutMs;
-    while (Date.now() < end) {
+    while (Date.now() < end && !this.options.signal?.aborted) {
       const found = page.frames().find((f) => f.url().includes(part));
       if (found) return found;
-      await sleep(100);
+      await sleep(100, this.options.signal);
     }
     throw new StepError(`There is no frame with the address ${part}.`);
   }
   async find(action2) {
     const frame = await this.frameOf(action2.frameUrl);
-    const handle = await frame.waitForSelector(action2.selector, { timeout: this.config.actionTimeoutMs }).catch(() => null);
+    const handle = await frame.waitForSelector(action2.selector, {
+      timeout: this.config.actionTimeoutMs,
+      signal: this.options.signal
+    }).catch(() => null);
     if (!handle)
       throw new StepError(`Walkthrough did not find ${action2.label} (${action2.selector}).`);
     return handle;
   }
-  // Moves the video's pointer to the element before the action.
+  // Moves the pointer to the element before the action.
   async point(handle, kind) {
     await centerInView(handle);
-    await sleep(this.pace.glideMs);
-    this.capture()?.action(this.tab.id, kind, await elementRect(handle));
+    await sleep(this.pace.glideMs, this.options.signal);
+    await this.stage.point(this.tab, kind, await elementRect(handle));
   }
   // Goes to the address, unless the last action already went there.
   async reach(url2) {
     let want;
     try {
-      want = new URL(withUnique(url2, this.unique));
+      want = new URL(this.address(url2));
     } catch {
       return;
     }
@@ -119805,7 +119902,7 @@ var Replay = class {
     try {
       await page.waitForFunction(
         (path14) => location.pathname + location.search === path14,
-        { timeout: 3e3 },
+        { timeout: 3e3, signal: this.options.signal },
         want.pathname + want.search
       );
     } catch {
@@ -119813,17 +119910,29 @@ var Replay = class {
     }
   }
   async expectText(text) {
-    const found = await this.tab.page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 1e4 }, text).then(() => true).catch(() => false);
-    if (!found) throw new StepError(`The page does not show "${text}".`);
+    const want = new TokenResolver(this.unique, this.options.vars ?? {}).display(text);
+    const found = await this.tab.page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 1e4 }, want).then(() => true).catch(() => false);
+    if (!found) throw new StepError(`The page does not show "${want}".`);
+  }
+  // Types like a person, a few characters at a time, so a stop can come in between.
+  async type(text) {
+    const delay = Math.min(this.pace.typeMs, MAX_TYPE_MS / Math.max(1, text.length));
+    const keyboard = this.tab.page.keyboard;
+    if (delay <= 0) {
+      await keyboard.type(text);
+      return;
+    }
+    for (let i = 0; i < text.length; i += 8) {
+      if (this.options.signal?.aborted) throw new StepError("The replay stopped.");
+      await keyboard.type(text.slice(i, i + 8), { delay });
+    }
   }
   async act(action2) {
     const page = () => this.tab.page;
     const value = action2.value ?? "";
     switch (action2.action) {
       case "navigate":
-        await page().goto(withUnique(action2.value ?? action2.label, this.unique), {
-          waitUntil: "load"
-        });
+        await page().goto(this.address(action2.value ?? action2.label), { waitUntil: "load" });
         return;
       case "click":
       case "dblclick": {
@@ -119841,7 +119950,9 @@ var Replay = class {
       case "fill": {
         const handle = await this.find(action2);
         await this.point(handle, "fill");
-        if (this.secrets.hasTokens(value)) this.restores.push(await maskSecretFields([handle]));
+        const shown = new TokenResolver(this.unique, this.options.vars ?? {}).display(value);
+        if (this.options.secrets.hasTokens(shown))
+          this.restores.push(await maskSecretFields([handle]));
         const text = this.text(value);
         await handle.evaluate((el) => {
           if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
@@ -119852,8 +119963,7 @@ var Replay = class {
           }
         });
         await handle.focus();
-        const delay = Math.min(this.pace.typeMs, MAX_TYPE_MS / Math.max(1, text.length));
-        await page().keyboard.type(text, { delay });
+        await this.type(text);
         return;
       }
       case "select": {
@@ -119873,7 +119983,7 @@ var Replay = class {
       }
       case "press": {
         if (action2.selector) await (await this.find(action2)).focus();
-        this.capture()?.action(this.tab.id, "press");
+        await this.stage.point(this.tab, "press");
         await pressKeys(this.tab, value);
         return;
       }
@@ -119903,7 +120013,7 @@ var Replay = class {
           String(detail.login ?? "main")
         );
         if (typeof detail.url === "string")
-          await tab.page.goto(withUnique(detail.url, this.unique), { waitUntil: "load" });
+          await tab.page.goto(this.address(detail.url), { waitUntil: "load" });
         return;
       }
       case "tab-switch": {
@@ -119917,7 +120027,7 @@ var Replay = class {
         if (!opener) throw new StepError(`The replay does not know how the tab "${name}" opened.`);
         const mine = new Set([...this.tabs.values()].map((t) => t.id));
         const end = Date.now() + 1e4;
-        while (Date.now() < end) {
+        while (Date.now() < end && !this.options.signal?.aborted) {
           const popup = [...this.driver.tabs.values()].find(
             (t) => t.openerId === opener.id && !mine.has(t.id)
           );
@@ -119927,7 +120037,7 @@ var Replay = class {
             this.use(name);
             return;
           }
-          await sleep(100);
+          await sleep(100, this.options.signal);
         }
         throw new StepError(`The tab "${name}" did not open.`);
       }
@@ -119948,9 +120058,11 @@ var Replay = class {
       case "mock": {
         const { tab, id, ...rule } = parse6(action2.value);
         const target2 = typeof tab === "string" ? this.tabs.get(tab) : void 0;
+        const input3 = rule;
+        if (input3.url) input3.url = this.options.rebase.pattern(input3.url);
         const tabIds = target2 ? [target2.id] : [...this.tabs.values()].map((t) => t.id);
         for (const tabId of tabIds) {
-          const added = await this.driver.addMock({ ...rule, tab: tabId });
+          const added = await this.driver.addMock({ ...input3, tab: tabId });
           this.mocks.set(`${String(id ?? added.id)}:${tabId}`, added.id);
         }
         return;
@@ -119993,7 +120105,7 @@ var Replay = class {
       await context2.setCookie({
         name,
         value: text,
-        domain: typeof detail.domain === "string" && detail.domain ? detail.domain : new URL(tab.page.url()).hostname,
+        domain: typeof detail.domain === "string" && detail.domain ? this.options.rebase.host(detail.domain) : new URL(tab.page.url()).hostname,
         path: typeof detail.path === "string" ? detail.path : "/",
         ...typeof detail.httpOnly === "boolean" ? { httpOnly: detail.httpOnly } : {},
         ...typeof detail.secure === "boolean" ? { secure: detail.secure } : {}
@@ -120007,7 +120119,139 @@ var Replay = class {
       }
     }
   }
+  // Starts over in the same window: the other tabs close, the login and site data go,
+  // and {{unique}} gets a new value. The main tab stays, on a blank page.
+  async resetLogin() {
+    await this.removeMocks();
+    const main2 = this.tabs.get("main");
+    for (const [name, tab] of [...this.tabs]) {
+      if (name === "main") continue;
+      this.tabs.delete(name);
+      await tab.page.close().catch(() => void 0);
+    }
+    if (main2 && !main2.closed) {
+      this.current = "main";
+      const origins = /* @__PURE__ */ new Set();
+      for (const url2 of [main2.page.url(), this.options.config.baseUrl]) {
+        try {
+          if (url2 && /^https?:/.test(url2)) origins.add(new URL(url2).origin);
+        } catch {
+        }
+      }
+      const cdp = await main2.page.createCDPSession();
+      try {
+        for (const origin of origins)
+          await cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
+      } finally {
+        await cdp.detach().catch(() => void 0);
+      }
+      const context2 = main2.page.browserContext();
+      for (const cookie of await context2.cookies()) await context2.deleteCookie(cookie);
+      await main2.page.goto("about:blank").catch(() => void 0);
+    }
+    this.unique = newUnique();
+    this.dialogs = [];
+  }
+  async removeMocks() {
+    for (const driverId of this.mocks.values())
+      await this.driver.removeMocks(driverId).catch(() => 0);
+    this.mocks.clear();
+  }
+  // Closes the replay's tabs and logins. The tab from before is active again.
+  async dispose() {
+    await this.removeMocks();
+    for (const restore of this.restores.reverse()) await restore().catch(() => void 0);
+    const logins = this.loginNames;
+    for (const tab of [...this.driver.tabs.values()]) {
+      if (logins.has(tab.login)) await tab.page.close().catch(() => void 0);
+    }
+    if (this.before && this.driver.tabs.has(this.before)) this.driver.switchTo(this.before);
+  }
 };
+
+// packages/server/src/replay/rebase.ts
+var Rebaser = class _Rebaser {
+  constructor(from2, to) {
+    this.to = to;
+    this.from = [...new Set(from2.filter((u) => Boolean(u)))].sort(
+      (a2, b2) => b2.length - a2.length
+    );
+  }
+  to;
+  // Base URLs to move from, longest first, so the most exact one wins.
+  from;
+  // From the run's environment, and any environment in the settings, to the one in use.
+  static forRun(run, config3) {
+    return new _Rebaser(
+      [
+        run.environment?.baseUrl,
+        run.baseUrl,
+        ...Object.values(config3.environments).map((e) => e.baseUrl)
+      ],
+      config3.environment.baseUrl
+    );
+  }
+  url(url2) {
+    for (const base of this.from) {
+      const moved = rebaseUrl(url2, base, this.to);
+      if (moved) return moved;
+    }
+    return url2;
+  }
+  // A cookie domain on the old site moves to the new site.
+  host(host) {
+    if (!this.to) return host;
+    const bare = host.replace(/^\./, "");
+    for (const base of this.from) {
+      try {
+        if (new URL(base).hostname === bare) {
+          const to = new URL(this.to).hostname;
+          return host.startsWith(".") ? `.${to}` : to;
+        }
+      } catch {
+      }
+    }
+    return host;
+  }
+  // A mock URL pattern on the old site, like "https://staging.example.com/api/*".
+  pattern(pattern) {
+    return /^https?:\/\//.test(pattern) ? this.url(pattern) : pattern;
+  }
+};
+
+// packages/server/src/replay/stage.ts
+var VideoStage = class {
+  constructor(capture, captions) {
+    this.capture = capture;
+    this.captions = captions;
+  }
+  capture;
+  captions;
+  stepStart(text) {
+    if (this.captions) this.capture()?.setCaption(text);
+  }
+  async point(tab, kind, rect) {
+    this.capture()?.action(tab.id, kind, rect);
+  }
+};
+
+// packages/server/src/replay/replayer.ts
+var PACES = {
+  slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
+  normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
+  fast: { typeMs: 20, glideMs: 200, holdMs: 700 }
+};
+var VIDEO_FPS2 = 15;
+function replayVars(run, config3) {
+  let planVars;
+  if (run.planFile && existsSync26(join40(config3.projectDir, run.planFile))) {
+    try {
+      planVars = loadPlan(config3.projectDir, join40(config3.projectDir, run.planFile)).plan.vars;
+    } catch {
+    }
+  }
+  return { ...run.vars, ...buildVars(config3, planVars) };
+}
 async function replayRun(ctx, input3) {
   const config3 = await ctx.config();
   if (ctx.run?.run.status === "running") {
@@ -120042,23 +120286,21 @@ async function replayRun(ctx, input3) {
   if (formats.length === 0) formats.push(config3.video.runFormat);
   if (!ctx.driver?.alive) await openBrowser(ctx, {});
   const driver = ctx.requireDriver();
-  const before = driver.activeId;
   const width = input3.width ?? config3.video.width;
   const pace = PACES[input3.pace];
   let capture;
-  const replay = new Replay(driver, config3, await ctx.secrets(), newUnique(), pace, () => capture);
-  for (const { ops } of plan.steps)
-    for (const op of ops) {
-      if (op.type !== "action" || op.action.action !== "dialog") continue;
-      const detail = parse6(op.action.value);
-      replay.dialogs.push({
-        accept: detail.accept !== false,
-        ...typeof detail.text === "string" ? { text: detail.text } : {}
-      });
-    }
-  const failure2 = async (stepTitle, error62) => {
+  const replay = new ReplayEngine({
+    driver,
+    config: config3,
+    secrets: await ctx.secrets(),
+    vars: replayVars(run, config3),
+    pace,
+    stage: new VideoStage(() => capture, input3.captions ?? config3.video.captions),
+    rebase: Rebaser.forRun(run, config3)
+  });
+  const failure2 = async (stepTitle, message) => {
     const lines = [
-      `The replay stopped at step ${stepTitle}: ${error62.message}`,
+      `The replay stopped at step ${stepTitle}: ${message}`,
       "Walkthrough saved no video. Fix the step or the app, and replay again."
     ];
     let preview;
@@ -120074,38 +120316,19 @@ async function replayRun(ctx, input3) {
     return { ok: false, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
   };
   try {
-    const main2 = await replay.openTab("main", "main");
-    const { device, ...rest } = run.emulation ?? {};
-    await driver.setEmulation(device ? { ...rest, device } : rest, {
-      tab: main2,
-      reload: false
+    await replay.open({
+      emulation: run.emulation,
+      width,
+      session: input3.session ?? run.session,
+      startUrl: run.baseUrl ?? config3.baseUrl
     });
-    if (!device)
-      await main2.page.setViewport({
-        width,
-        height: Math.round(width * 10 / 16),
-        deviceScaleFactor: 1
-      });
-    const session = input3.session ?? run.session;
-    if (session) await restoreSession(main2, loadSession(config3.projectDir, session));
-    await main2.page.goto(run.baseUrl ?? config3.baseUrl ?? "about:blank", { waitUntil: "load" });
     capture = new VideoCapture(driver, { maxWidth: width, showPanel: false });
     await capture.start();
-    for (const { step, ops } of plan.steps) {
-      const title = `${step.index} "${step.title}"`;
+    for (const stepOps of plan.steps) {
+      const { step } = stepOps;
       input3.onStep?.(`Step ${step.index}: ${step.title}`);
-      if (input3.captions ?? config3.video.captions) capture.setCaption(step.caption ?? step.title);
-      try {
-        for (const op of ops) {
-          if (op.type === "reach") await replay.reach(op.url);
-          else if (op.type === "action") {
-            await replay.act(op.action);
-            await replay.tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 3e3 }).catch(() => void 0);
-          } else if (op.type === "expect") await replay.expectText(op.text);
-        }
-      } catch (error62) {
-        return await failure2(title, error62);
-      }
+      const outcome = await replay.runStep(stepOps);
+      if (!outcome.ok) return await failure2(`${step.index} "${step.title}"`, outcome.message);
       await sleep(pace.holdMs);
     }
     await capture.stop();
@@ -120174,18 +120397,12 @@ async function replayRun(ctx, input3) {
     );
     return { ok: true, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
   } catch (error62) {
-    if (error62 instanceof StepError) return failure2("(setup)", error62);
+    if (error62 instanceof StepError) return failure2("(setup)", error62.message);
     throw error62;
   } finally {
     await capture?.stop().catch(() => void 0);
     capture?.discard();
-    for (const driverId of replay.mocks.values()) await driver.removeMocks(driverId).catch(() => 0);
-    for (const restore of replay.restores.reverse()) await restore().catch(() => void 0);
-    const logins = replay.loginNames;
-    for (const tab of [...driver.tabs.values()]) {
-      if (logins.has(tab.login)) await tab.page.close().catch(() => void 0);
-    }
-    if (before && driver.tabs.has(before)) driver.switchTo(before);
+    await replay.dispose();
   }
 }
 

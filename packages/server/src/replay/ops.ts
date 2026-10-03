@@ -91,3 +91,31 @@ export function buildOps(run: Run): RunOps {
   }
   return { steps, missingSelectors };
 }
+
+export interface DialogAnswer {
+  accept: boolean;
+  text?: string;
+}
+
+// The dialog answers of a step, in order, from one operation on. A retry from the middle
+// of a step leaves out the dialogs before it.
+export function dialogAnswers(ops: Op[], from = 0): DialogAnswer[] {
+  const answers: DialogAnswer[] = [];
+  for (const op of ops.slice(from)) {
+    if (op.type !== 'action' || op.action.action !== 'dialog') continue;
+    let detail: { accept?: unknown; text?: unknown } = {};
+    try {
+      detail = JSON.parse(op.action.value ?? '{}') as typeof detail;
+    } catch {}
+    answers.push({
+      accept: detail.accept !== false,
+      ...(typeof detail.text === 'string' ? { text: detail.text } : {}),
+    });
+  }
+  return answers;
+}
+
+// The operations of each step, by the step id from the plan.
+export function opsByStep(ops: RunOps): Map<string, StepOps> {
+  return new Map(ops.steps.map((s) => [s.step.id, s]));
+}

@@ -80,6 +80,8 @@ describe('record mode', () => {
       await pause(1700);
       await page.goto(`${demo.base}/login`);
       await waitForPanel(page, 'Recording');
+      // The app draws the form after the page loads.
+      await page.waitForSelector('input[name="username"]');
       await page.type('input[name="username"]', 'demo');
       await page.keyboard.press('Tab');
       await page.type('input[name="password"]', 'demo123');
