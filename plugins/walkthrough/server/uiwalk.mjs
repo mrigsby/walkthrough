@@ -44894,7 +44894,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes13, createHash: createHash7 } = __require("crypto");
+    var { randomBytes: randomBytes14, createHash: createHash7 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -45432,7 +45432,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key2 = randomBytes13(16).toString("base64");
+      const key2 = randomBytes14(16).toString("base64");
       const request3 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -107160,6 +107160,100 @@ import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 // packages/server/src/panel/bridge.ts
 import { randomBytes } from "node:crypto";
 
+// packages/server/src/browser/isolated-bridge.ts
+var IsolatedBridge = class _IsolatedBridge {
+  constructor(cdp, script, onMessage) {
+    this.cdp = cdp;
+    this.script = script;
+    this.onMessage = onMessage;
+  }
+  cdp;
+  script;
+  onMessage;
+  contextId;
+  onLoad = /* @__PURE__ */ new Map();
+  static async install(page, script, onMessage) {
+    try {
+      const cdp = await page.createCDPSession();
+      const bridge = new _IsolatedBridge(cdp, script, onMessage);
+      cdp.on(
+        "Runtime.bindingCalled",
+        (event) => bridge.onBinding(event)
+      );
+      await cdp.send("Runtime.enable");
+      await cdp.send("Runtime.addBinding", {
+        name: script.binding,
+        executionContextName: script.world
+      });
+      await cdp.send("Page.enable");
+      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: script.source,
+        worldName: script.world
+      });
+      const { frameTree } = await cdp.send("Page.getFrameTree");
+      const { executionContextId } = await cdp.send("Page.createIsolatedWorld", {
+        frameId: frameTree.frame.id,
+        worldName: script.world
+      });
+      await cdp.send("Runtime.evaluate", {
+        expression: script.source,
+        contextId: executionContextId
+      });
+      return bridge;
+    } catch (error62) {
+      log.warn("could not add a script to a tab", error62);
+      return void 0;
+    }
+  }
+  onBinding(event) {
+    if (event.name !== this.script.binding) return;
+    let msg;
+    try {
+      msg = JSON.parse(event.payload);
+    } catch {
+      return;
+    }
+    this.contextId = event.executionContextId;
+    this.onMessage(msg);
+  }
+  // Runs a message for the script at the start of each new page, before its first paint.
+  // It runs after the script itself. Undefined removes it.
+  async setOnLoad(key2, msg) {
+    try {
+      const old = this.onLoad.get(key2);
+      if (old) {
+        this.onLoad.delete(key2);
+        await this.cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: old });
+      }
+      if (!msg) return;
+      const { receiver } = this.script;
+      const { identifier } = await this.cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: `window.${receiver} && window.${receiver}.receive(${JSON.stringify(msg)});`,
+        worldName: this.script.world
+      });
+      this.onLoad.set(key2, identifier);
+    } catch {
+    }
+  }
+  get ready() {
+    return this.contextId !== void 0;
+  }
+  // Sends a message to the script. Returns false if it is not ready.
+  async send(msg) {
+    if (this.contextId === void 0) return false;
+    const { receiver } = this.script;
+    try {
+      await this.cdp.send("Runtime.evaluate", {
+        expression: `window.${receiver} && window.${receiver}.receive(${JSON.stringify(msg)})`,
+        contextId: this.contextId
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
 // packages/server/src/page/selectors.ts
 function pageCandidates(el) {
   const out = [];
@@ -107747,86 +107841,29 @@ var TOKEN2 = randomBytes(6).toString("hex");
 var WORLD_NAME = `uiwalk-${TOKEN2}`;
 var BINDING = `__uiwalk_${TOKEN2}`;
 var SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })}, ${pageCandidates.toString()});`;
-var HIDE_SOURCE = `window.__uiwalkPanel && window.__uiwalkPanel.receive({ type: 'hide', hidden: true });`;
 var PanelBridge = class _PanelBridge {
-  constructor(cdp, onMessage) {
-    this.cdp = cdp;
-    this.onMessage = onMessage;
+  constructor(bridge) {
+    this.bridge = bridge;
   }
-  cdp;
-  onMessage;
-  contextId;
-  hideScript;
+  bridge;
   static async install(page, onMessage) {
-    try {
-      const cdp = await page.createCDPSession();
-      const bridge = new _PanelBridge(cdp, onMessage);
-      cdp.on(
-        "Runtime.bindingCalled",
-        (event) => bridge.onBinding(event)
-      );
-      await cdp.send("Runtime.enable");
-      await cdp.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD_NAME });
-      await cdp.send("Page.enable");
-      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
-        source: SOURCE,
-        worldName: WORLD_NAME
-      });
-      const { frameTree } = await cdp.send("Page.getFrameTree");
-      const { executionContextId } = await cdp.send("Page.createIsolatedWorld", {
-        frameId: frameTree.frame.id,
-        worldName: WORLD_NAME
-      });
-      await cdp.send("Runtime.evaluate", { expression: SOURCE, contextId: executionContextId });
-      return bridge;
-    } catch (error62) {
-      log.warn("could not add the panel to a tab", error62);
-      return void 0;
-    }
+    const bridge = await IsolatedBridge.install(
+      page,
+      { world: WORLD_NAME, binding: BINDING, source: SOURCE, receiver: "__uiwalkPanel" },
+      onMessage
+    );
+    return bridge ? new _PanelBridge(bridge) : void 0;
   }
-  onBinding(event) {
-    if (event.name !== BINDING) return;
-    let msg;
-    try {
-      msg = JSON.parse(event.payload);
-    } catch {
-      return;
-    }
-    this.contextId = event.executionContextId;
-    this.onMessage(msg);
-  }
-  // Starts or stops hiding the panel on each new page in this tab.
+  // Starts or stops hiding the panel on each new page in this tab, before its first paint.
   async hideOnLoad(on) {
-    try {
-      if (on && !this.hideScript) {
-        const { identifier } = await this.cdp.send("Page.addScriptToEvaluateOnNewDocument", {
-          source: HIDE_SOURCE,
-          worldName: WORLD_NAME
-        });
-        this.hideScript = identifier;
-      } else if (!on && this.hideScript) {
-        const identifier = this.hideScript;
-        this.hideScript = void 0;
-        await this.cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier });
-      }
-    } catch {
-    }
+    await this.bridge.setOnLoad("hide", on ? { type: "hide", hidden: true } : void 0);
   }
   get ready() {
-    return this.contextId !== void 0;
+    return this.bridge.ready;
   }
   // Sends a message to the panel. Returns false if the panel is not ready.
-  async send(msg) {
-    if (this.contextId === void 0) return false;
-    try {
-      await this.cdp.send("Runtime.evaluate", {
-        expression: `window.__uiwalkPanel && window.__uiwalkPanel.receive(${JSON.stringify(msg)})`,
-        contextId: this.contextId
-      });
-      return true;
-    } catch {
-      return false;
-    }
+  send(msg) {
+    return this.bridge.send(msg);
   }
 };
 
@@ -108386,16 +108423,25 @@ var PROFILE_PREFS = {
   credentials_enable_service: false,
   profile: { password_manager_enabled: false, password_manager_leak_detection: false }
 };
-function writeProfilePrefs(profileDir) {
+function writeProfilePrefs(profileDir, zoom) {
   mkdirSync4(join14(profileDir, "Default"), { recursive: true });
-  writeFileSync3(join14(profileDir, "Default", "Preferences"), JSON.stringify(PROFILE_PREFS));
+  const prefs = zoom ? { ...PROFILE_PREFS, ...zoomPrefs(zoom) } : PROFILE_PREFS;
+  writeFileSync3(join14(profileDir, "Default", "Preferences"), JSON.stringify(prefs));
+}
+function zoomPrefs(zoom) {
+  const level2 = Math.log(zoom.factor) / Math.log(1.2);
+  const modified = String((BigInt(Date.now()) + 11644473600000n) * 1000n);
+  const hosts = Object.fromEntries(
+    zoom.hosts.map((host) => [host, { zoom_level: level2, last_modified: modified }])
+  );
+  return { partition: { per_host_zoom_levels: { x: hosts } } };
 }
 var AUDIENCE_START = "data:text/html,uiwalk-audience";
 async function launchChrome(config3, options = {}) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
   const profileDir = mkdtempSync(join14(tmpdir2(), "uiwalk-profile-"));
-  writeProfilePrefs(profileDir);
+  writeProfilePrefs(profileDir, options.presentation?.zoom);
   const headless = options.background || config3.browser.headless;
   try {
     const browser = await puppeteer_core_default.launch({
@@ -118380,8 +118426,512 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
   );
 }
 
-// packages/server/src/replay/engine.ts
+// packages/server/src/presentation/live-stage.ts
 import { randomBytes as randomBytes11 } from "node:crypto";
+import { readFileSync as readFileSync22 } from "node:fs";
+import { extname as extname8 } from "node:path";
+
+// packages/server/src/stage/stage-css.ts
+var STAGE_CSS = `
+:host {
+  all: initial !important; position: fixed !important; inset: 0 !important;
+  width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible !important;
+  background: transparent !important; pointer-events: none !important; color-scheme: normal !important;
+}
+* { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+
+.slide { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3vh; padding: 6vh 8vw; background: #111827; color: #ffffff; text-align: center; }
+.slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.slide h1 { margin: 0; font-size: clamp(32px, 8vh, 112px); font-weight: 700; line-height: 1.1; }
+.slide p { margin: 0; font-size: clamp(18px, 3.6vh, 48px); line-height: 1.4; white-space: pre-wrap; opacity: 0.9; }
+
+.spot { position: fixed; border-radius: 8px; box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.55);
+  outline: 3px solid #fbbf24; outline-offset: 4px; transition: all 250ms ease; }
+
+.zoom { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80vw; max-height: 70vh;
+  padding: 6px; border-radius: 12px; background: #ffffff; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.zoom .lens { position: relative; overflow: hidden; border-radius: 8px; background: #111827; }
+.zoom img { position: absolute; display: block; max-width: none; max-height: none; }
+
+.caption { position: fixed; left: 0; right: 0; bottom: 0; padding: 2.2vh 4vw;
+  background: rgba(17, 24, 39, 0.86); color: #ffffff; font-size: max(16px, 3.2vh); font-weight: 600;
+  line-height: 1.3; text-align: center; }
+
+.pointer { position: fixed; left: 0; top: 0; width: 28px; height: 28px;
+  transition-property: transform; transition-timing-function: ease-in-out;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+.ripple { position: fixed; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  border: 3px solid #fbbf24; opacity: 0; }
+.ripple.go { animation: uiwalk-ripple 500ms ease-out; }
+@keyframes uiwalk-ripple { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+
+.cover { position: fixed; inset: 0; background: #000000; display: flex; align-items: center; justify-content: center;
+  color: #9ca3af; font-size: max(18px, 3vh); }
+`;
+
+// packages/server/src/stage/stage-script.ts
+function stageMain(opts) {
+  if (window !== window.top) return;
+  const w2 = window;
+  if (w2.__uiwalkStage) return;
+  const send = (msg) => {
+    const fn = w2[opts.binding];
+    if (typeof fn === "function") fn(JSON.stringify(msg));
+  };
+  const host = document.createElement("uiwalk-stage");
+  host.setAttribute("aria-hidden", "true");
+  host.setAttribute("popover", "manual");
+  const root = host.attachShadow({ mode: "closed" });
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(opts.css);
+  root.adoptedStyleSheets = [sheet];
+  const el = (tag, className) => {
+    const node3 = document.createElement(tag);
+    node3.className = className;
+    node3.hidden = true;
+    return node3;
+  };
+  const slide = el("div", "slide");
+  const spot = el("div", "spot");
+  const zoom = el("div", "zoom");
+  const lens = document.createElement("div");
+  lens.className = "lens";
+  const zoomImage = document.createElement("img");
+  zoomImage.alt = "";
+  lens.append(zoomImage);
+  zoom.append(lens);
+  const caption = el("div", "caption");
+  const ripple = el("div", "ripple");
+  const pointer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  pointer.setAttribute("class", "pointer");
+  pointer.setAttribute("viewBox", "0 0 24 24");
+  const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  arrow.setAttribute("d", "M3 2l7 19 2.5-7.5L20 11z");
+  arrow.setAttribute("fill", "#111827");
+  arrow.setAttribute("stroke", "#ffffff");
+  arrow.setAttribute("stroke-width", "1.5");
+  pointer.append(arrow);
+  pointer.style.display = "none";
+  const cover = el("div", "cover");
+  root.append(slide, spot, zoom, caption, pointer, ripple, cover);
+  let keys = false;
+  let mask = [];
+  let pointerOn = true;
+  let at = { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight * 0.8) };
+  const showSlide = (s) => {
+    slide.replaceChildren();
+    slide.hidden = !s;
+    if (!s) return;
+    slide.style.background = s.background ?? (s.kind === "image" ? "#000000" : "#111827");
+    if (s.kind === "image") {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.src = s.src;
+      img.style.objectFit = s.fit === "cover" ? "cover" : "contain";
+      slide.append(img);
+      return;
+    }
+    slide.style.color = s.color ?? "#ffffff";
+    const title = document.createElement("h1");
+    title.textContent = s.title;
+    slide.append(title);
+    if (s.text) {
+      const text = document.createElement("p");
+      text.textContent = s.text;
+      slide.append(text);
+    }
+  };
+  const place = (node3, r, pad) => {
+    Object.assign(node3.style, {
+      left: `${r.x - pad}px`,
+      top: `${r.y - pad}px`,
+      width: `${r.width + pad * 2}px`,
+      height: `${r.height + pad * 2}px`
+    });
+  };
+  const movePointer = (x2, y, ms) => {
+    if (!pointerOn) return;
+    pointer.style.display = "";
+    pointer.style.transitionDuration = `${ms}ms`;
+    pointer.style.transform = `translate(${x2 - 4}px, ${y - 2}px)`;
+    at = { x: x2, y };
+  };
+  const applyMask = () => {
+    for (const selector of mask) {
+      let found;
+      try {
+        found = document.querySelectorAll(selector);
+      } catch {
+        continue;
+      }
+      for (const node3 of found) {
+        node3.style.setProperty("filter", "blur(8px)", "important");
+      }
+    }
+  };
+  let maskQueued = false;
+  new MutationObserver(() => {
+    if (!mask.length || maskQueued) return;
+    maskQueued = true;
+    requestAnimationFrame(() => {
+      maskQueued = false;
+      applyMask();
+    });
+  }).observe(document, { childList: true, subtree: true });
+  const receive = (msg) => {
+    switch (msg.type) {
+      case "state": {
+        keys = Boolean(msg.keys);
+        pointerOn = msg.pointer !== false;
+        if (!pointerOn) pointer.style.display = "none";
+        mask = Array.isArray(msg.mask) ? msg.mask : [];
+        applyMask();
+        showSlide(msg.slide ?? null);
+        const text = msg.caption;
+        caption.hidden = !text;
+        caption.textContent = text ?? "";
+        const mode = msg.cover;
+        cover.hidden = !mode || mode === "none";
+        cover.textContent = mode === "curtain" ? "One moment" : "";
+        break;
+      }
+      case "cover": {
+        const mode = msg.mode;
+        cover.hidden = mode === "none";
+        cover.textContent = mode === "curtain" ? "One moment" : "";
+        break;
+      }
+      case "spot": {
+        const r = msg.rect;
+        spot.hidden = !r;
+        if (r) place(spot, r, 6);
+        break;
+      }
+      case "zoom": {
+        const src = msg.src;
+        const r = msg.rect;
+        zoom.hidden = !src || !r;
+        if (!src || !r) break;
+        const pad = 24;
+        const w3 = r.width + pad * 2;
+        const h = r.height + pad * 2;
+        const k = Math.min(
+          Number(msg.zoom) || 2,
+          (window.innerWidth * 0.8 - 12) / w3,
+          (window.innerHeight * 0.7 - 12) / h
+        );
+        lens.style.width = `${w3 * k}px`;
+        lens.style.height = `${h * k}px`;
+        Object.assign(zoomImage.style, {
+          width: `${window.innerWidth * k}px`,
+          height: `${window.innerHeight * k}px`,
+          left: `${-(r.x - pad) * k}px`,
+          top: `${-(r.y - pad) * k}px`
+        });
+        zoomImage.src = src;
+        break;
+      }
+      case "glide":
+        movePointer(msg.x, msg.y, msg.ms ?? 400);
+        break;
+      case "ripple":
+        if (!pointerOn) break;
+        ripple.hidden = false;
+        ripple.style.left = `${at.x}px`;
+        ripple.style.top = `${at.y}px`;
+        ripple.classList.remove("go");
+        void ripple.offsetWidth;
+        ripple.classList.add("go");
+        break;
+    }
+  };
+  const KEYS = /* @__PURE__ */ new Set([
+    "ArrowRight",
+    "ArrowLeft",
+    "PageDown",
+    "PageUp",
+    " ",
+    "b",
+    "B",
+    ".",
+    "Escape"
+  ]);
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!keys || !event.isTrusted || !KEYS.has(event.key)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      send({ type: "key", key: event.key });
+    },
+    true
+  );
+  w2.__uiwalkStage = { receive };
+  const raise = () => {
+    try {
+      if (host.matches(":popover-open")) host.hidePopover();
+      host.showPopover();
+    } catch {
+    }
+  };
+  const mount = () => {
+    const parent = document.documentElement;
+    if (parent && host.parentNode !== parent) {
+      parent.appendChild(host);
+      raise();
+    }
+  };
+  const start = () => {
+    mount();
+    new MutationObserver(() => {
+      if (!host.isConnected) mount();
+    }).observe(document.documentElement, { childList: true });
+    document.addEventListener(
+      "toggle",
+      (event) => event.target !== host && queueMicrotask(raise),
+      true
+    );
+    new MutationObserver(() => queueMicrotask(raise)).observe(document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open"]
+    });
+    send({ type: "hello", width: window.innerWidth, height: window.innerHeight });
+  };
+  if (document.documentElement) start();
+  else {
+    const wait3 = new MutationObserver(() => {
+      if (document.documentElement) {
+        wait3.disconnect();
+        start();
+      }
+    });
+    wait3.observe(document, { childList: true });
+  }
+}
+
+// packages/server/src/presentation/live-stage.ts
+var TOKEN4 = randomBytes11(6).toString("hex");
+var BINDING2 = `__uiwalkStage_${TOKEN4}`;
+var SCRIPT3 = {
+  world: `uiwalk-stage-${TOKEN4}`,
+  binding: BINDING2,
+  receiver: "__uiwalkStage",
+  source: `(${stageMain.toString()})(${JSON.stringify({ binding: BINDING2, css: STAGE_CSS })});`
+};
+var IMAGE_TYPES = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml"
+};
+var ON_SCREEN_MS = 12e3;
+var LiveStage = class {
+  constructor(tab, session, options) {
+    this.tab = tab;
+    this.session = session;
+    this.options = options;
+  }
+  tab;
+  session;
+  options;
+  bridge;
+  engine;
+  shown = null;
+  stepCaption = null;
+  curtainOn = false;
+  gateShown = false;
+  answer;
+  lastAnswered = 0;
+  answerTimer;
+  sent = "";
+  stopWatch;
+  images = /* @__PURE__ */ new Map();
+  // The engine finds the element of a step for the spotlight. It comes after the stage.
+  useEngine(engine) {
+    this.engine = engine;
+  }
+  async install() {
+    await this.tab.page.setBypassCSP(true).catch(() => void 0);
+    await this.tab.cdp?.send("Emulation.setScrollbarsHidden", { hidden: true }).catch(() => void 0);
+    this.bridge = await IsolatedBridge.install(
+      this.tab.page,
+      SCRIPT3,
+      (msg) => void this.onMessage(msg)
+    );
+    this.stopWatch = this.session.watch(() => void this.sync());
+    if (this.options.fullscreen) await this.fullscreen().catch(() => void 0);
+  }
+  dispose() {
+    this.stopWatch?.();
+    if (this.answerTimer) clearTimeout(this.answerTimer);
+  }
+  async onMessage(msg) {
+    if (msg.type === "hello") {
+      this.sent = "";
+      await this.sync();
+      return;
+    }
+    if (msg.type === "key" && typeof msg.key === "string") this.onKey(msg.key);
+  }
+  // Keys from a clicker or the keyboard in the audience window.
+  onKey(key2) {
+    const s = this.session;
+    if (key2 === "b" || key2 === "B" || key2 === ".") {
+      s.setBlank(!s.blank);
+      return;
+    }
+    if (key2 === "Escape") {
+      if (s.info.kiosk) s.stop();
+      return;
+    }
+    let command2;
+    if (key2 === "ArrowRight" || key2 === "PageDown" || key2 === " ") {
+      command2 = s.state === "title" ? { type: "start" } : { type: "continue" };
+    } else if (key2 === "ArrowLeft" || key2 === "PageUp") {
+      command2 = { type: "back" };
+    }
+    if (command2 && !s.check(command2)) s.command(command2);
+  }
+  async image(path14) {
+    const cached2 = this.images.get(path14);
+    if (cached2) return cached2;
+    try {
+      const real = checkSlideImage(path14, this.options.projectDir);
+      const type = IMAGE_TYPES[extname8(real).toLowerCase()] ?? "application/octet-stream";
+      const src = `data:${type};base64,${readFileSync22(real).toString("base64")}`;
+      this.images.set(path14, src);
+      return src;
+    } catch (error62) {
+      log.warn("a slide image cannot show", error62);
+      return void 0;
+    }
+  }
+  async show(slide) {
+    if (!slide) return null;
+    if ("image" in slide) {
+      const src = await this.image(slide.image);
+      return src ? { kind: "image", src, fit: slide.fit, background: slide.background } : { kind: "text", title: this.options.planName };
+    }
+    return {
+      kind: "text",
+      title: slide.title,
+      text: slide.text,
+      background: slide.background,
+      color: slide.color
+    };
+  }
+  // Sends the state to the page, and sets what a new page shows before its first paint.
+  async sync() {
+    const bridge = this.bridge;
+    if (!bridge) return;
+    const s = this.session;
+    if (this.gateShown && s.state !== "gate") {
+      this.gateShown = false;
+      await bridge.send({ type: "spot", rect: null });
+      await bridge.send({ type: "zoom", src: null });
+    }
+    const latest2 = [...s.chat].reverse().find((c) => c.onScreen && c.answer && c.answeredAt);
+    if (latest2?.answeredAt && latest2.answeredAt > this.lastAnswered) {
+      this.lastAnswered = latest2.answeredAt;
+      this.answer = { text: latest2.answer, until: Date.now() + ON_SCREEN_MS };
+      if (this.answerTimer) clearTimeout(this.answerTimer);
+      this.answerTimer = setTimeout(() => void this.sync(), ON_SCREEN_MS + 50);
+    }
+    const answer = this.answer && this.answer.until > Date.now() ? this.answer.text : null;
+    const cover = s.blank ? "blank" : this.curtainOn ? "curtain" : "none";
+    const state = {
+      type: "state",
+      slide: this.shown,
+      caption: answer ?? (this.options.captions ? this.stepCaption : null),
+      cover,
+      keys: s.active && s.state !== "manual",
+      pointer: this.options.pointer,
+      mask: this.options.mask
+    };
+    const text = JSON.stringify(state);
+    if (text === this.sent) return;
+    this.sent = text;
+    await bridge.setOnLoad("cover", cover === "none" ? void 0 : { type: "cover", mode: cover });
+    await bridge.send(state);
+  }
+  // ---------- The audience screen ----------
+  async title() {
+    this.shown = await this.show(this.options.title);
+    await this.sync();
+  }
+  async slide(step) {
+    this.shown = await this.show(step.slide);
+    this.stepCaption = step.caption ?? null;
+    await this.sync();
+  }
+  async end() {
+    this.shown = await this.show(
+      this.options.end ?? { title: this.options.planName, text: "Questions?" }
+    );
+    this.stepCaption = null;
+    await this.sync();
+  }
+  async clear() {
+    this.shown = null;
+    await this.sync();
+  }
+  async curtain(on) {
+    this.curtainOn = on;
+    await this.sync();
+  }
+  // Before an action: the spotlight on its element, a bigger picture of it, and the pointer.
+  async gate(step, ops) {
+    const bridge = this.bridge;
+    const rect = await this.engine?.targetRect(ops);
+    if (!bridge || !rect || this.session.state !== "gate") return;
+    const src = step.zoom ? await this.engine?.viewImage() : void 0;
+    this.gateShown = true;
+    if (step.spotlight) await bridge.send({ type: "spot", rect });
+    if (src) await bridge.send({ type: "zoom", src, rect, zoom: step.zoom });
+    this.glide(this.tab, rect, 600);
+  }
+  // ---------- The replay's stage ----------
+  stepStart(text) {
+    this.stepCaption = text;
+    void this.sync();
+  }
+  glide(tab, rect, ms) {
+    if (tab.id !== this.tab.id) return;
+    void this.bridge?.send({
+      type: "glide",
+      x: Math.round(rect.x + rect.width / 2),
+      y: Math.round(rect.y + rect.height / 2),
+      ms
+    });
+  }
+  async point(tab, kind) {
+    if (tab.id !== this.tab.id) return;
+    if (["click", "dblclick", "check", "uncheck", "select", "upload"].includes(kind))
+      await this.bridge?.send({ type: "ripple" });
+  }
+  // ---------- The window ----------
+  async fullscreen() {
+    const cdp = await this.tab.page.createCDPSession();
+    try {
+      const { windowId } = await cdp.send("Browser.getWindowForTarget");
+      await cdp.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: { windowState: "fullscreen" }
+      });
+    } finally {
+      await cdp.detach().catch(() => void 0);
+    }
+  }
+};
+
+// packages/server/src/replay/engine.ts
+import { randomBytes as randomBytes12 } from "node:crypto";
 var INSTANT = { typeMs: 0, glideMs: 0, holdMs: 0 };
 var MAX_TYPE_MS = 3e3;
 var StepError = class extends Error {
@@ -118446,7 +118996,7 @@ var ReplayEngine = class {
   // Mock rules of the replay, by their id in the run.
   mocks = /* @__PURE__ */ new Map();
   restores = [];
-  key = randomBytes11(2).toString("hex");
+  key = randomBytes12(2).toString("hex");
   before;
   // True when the main tab is a tab of the browser, like the audience window.
   mainAdopted = false;
@@ -118594,8 +119144,46 @@ var ReplayEngine = class {
   // Moves the pointer to the element before the action.
   async point(handle, kind) {
     await centerInView(handle);
+    const rect = await elementRect(handle);
+    if (rect) this.stage.glide?.(this.tab, rect, this.pace.glideMs);
     await sleep(this.pace.glideMs, this.options.signal);
-    await this.stage.point(this.tab, kind, await elementRect(handle));
+    await this.stage.point(this.tab, kind, rect);
+  }
+  // Where the element of the first action of a step is now, for a spotlight before it.
+  // Undefined when the step has no such element, or it does not show in time.
+  async targetRect(stepOps) {
+    const first2 = stepOps.ops.find(
+      (op) => op.type === "action" && op.action.selector && op.action.action !== "press"
+    );
+    if (first2?.type !== "action") return void 0;
+    try {
+      const frame = await this.frameOf(first2.action.frameUrl);
+      const handle = await frame.waitForSelector(first2.action.selector, {
+        timeout: 3e3,
+        signal: this.options.signal
+      });
+      if (!handle) return void 0;
+      await centerInView(handle);
+      return await elementRect(handle);
+    } catch {
+      return void 0;
+    }
+  }
+  // A picture of the visible page, for the zoom. The stage crops it. A clip is not used,
+  // because a clip resizes the page under Chrome's zoom.
+  async viewImage() {
+    const cdp = this.tab.cdp;
+    if (!cdp) return void 0;
+    try {
+      const { data } = await cdp.send("Page.captureScreenshot", {
+        format: "jpeg",
+        quality: 85,
+        captureBeyondViewport: false
+      });
+      return `data:image/jpeg;base64,${data}`;
+    } catch {
+      return void 0;
+    }
   }
   // Goes to the address, unless the last action already went there.
   async reach(url2) {
@@ -118993,6 +119581,7 @@ var PresentationRunner = class {
     const step = this.steps[i];
     const stepOps = this.opsOf(step);
     if (step.slide) await this.screen.slide(step);
+    else await this.screen.clear();
     if (!this.kiosk && step.pause) {
       this.session.setState("gate", i);
       if (stepOps) await this.screen.gate(step, stepOps);
@@ -119398,7 +119987,7 @@ var Rebaser = class _Rebaser {
 };
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync22, writeFileSync as writeFileSync16 } from "node:fs";
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync23, writeFileSync as writeFileSync16 } from "node:fs";
 import { dirname as dirname12, join as join38, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
@@ -119527,7 +120116,7 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync22(join38(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync23(join38(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
@@ -119574,6 +120163,17 @@ async function replayRun(ctx, input3) {
 }
 
 // packages/server/src/tools/present-tools.ts
+function appHosts(config3) {
+  const hosts = /* @__PURE__ */ new Set();
+  for (const origin of [config3.baseUrl, ...config3.allowedOrigins]) {
+    if (!origin || origin.includes("*")) continue;
+    try {
+      hosts.add(new URL(origin).hostname);
+    } catch {
+    }
+  }
+  return [...hosts];
+}
 var current;
 var COMMANDS = [
   "start",
@@ -119740,8 +120340,14 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   const settings = plan.presentation ?? {};
   const kiosk = Boolean(input3.kiosk ?? settings.kiosk);
   if (ctx.driver?.alive) await ctx.driver.close();
+  const zoom = settings.pageZoom && settings.pageZoom !== 1 && !settings.device ? { factor: settings.pageZoom, hosts: appHosts(config3) } : void 0;
   const driver = await ctx.startDriver(void 0, {
-    launch: { presentation: settings.window ?? { width: 1280, height: 800 } },
+    launch: {
+      presentation: {
+        ...settings.window ?? { width: 1280, height: 800 },
+        ...zoom ? { zoom } : {}
+      }
+    },
     panel: false
   });
   ctx.confirmFor(env2.name);
@@ -119789,6 +120395,19 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     },
     abort
   );
+  const stage = new LiveStage(audience, session, {
+    projectDir: config3.projectDir,
+    planName: plan.name,
+    captions: settings.captions ?? true,
+    pointer: settings.pointer ?? true,
+    mask: settings.mask ?? [],
+    title: settings.title,
+    end: settings.end,
+    fullscreen: settings.fullscreen
+  });
+  stage.useEngine(engine);
+  engine.stage = stage;
+  await stage.install();
   await engine.open({
     mainTab: audience,
     emulation: settings.device ? run.emulation : void 0,
@@ -119798,6 +120417,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   ctx.presentation = session;
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
+    screen: stage,
     ...kiosk ? {
       kiosk: {
         holdMs: (settings.kiosk?.holdSeconds ?? 6) * 1e3,
@@ -119807,6 +120427,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     } : {}
   });
   const done = runner.run().catch((error62) => log.error("the presentation stopped", error62)).finally(async () => {
+    stage.dispose();
     await engine.dispose().catch(() => void 0);
     await driver.close().catch(() => void 0);
     if (ctx.presentation === session) ctx.presentation = void 0;
@@ -119927,7 +120548,7 @@ ${statusText(session)}`;
 }
 
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync23 } from "node:fs";
+import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync24 } from "node:fs";
 import { join as join39 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
@@ -119974,7 +120595,7 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
         const file2 = join39(dir, id, "run.json");
         if (!existsSync24(file2)) continue;
         try {
-          const run = JSON.parse(readFileSync23(file2, "utf8"));
+          const run = JSON.parse(readFileSync24(file2, "utf8"));
           const report = existsSync24(join39(dir, id, "report.html")) ? `report written${existsSync24(join39(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join39(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
@@ -119990,9 +120611,9 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { randomBytes as randomBytes12 } from "node:crypto";
-import { existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync24, writeFileSync as writeFileSync17 } from "node:fs";
-import { basename as basename7, dirname as dirname13, extname as extname8, join as join40, relative as relative17 } from "node:path";
+import { randomBytes as randomBytes13 } from "node:crypto";
+import { existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync25, writeFileSync as writeFileSync17 } from "node:fs";
+import { basename as basename7, dirname as dirname13, extname as extname9, join as join40, relative as relative17 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -120356,7 +120977,7 @@ function registerQualityTools(server, ctx) {
         ref: input3.ref,
         selector: input3.selector
       });
-      const group = ctx.run?.run.planFile ? basename7(ctx.run.run.planFile, extname8(ctx.run.run.planFile)) : "adhoc";
+      const group = ctx.run?.run.planFile ? basename7(ctx.run.run.planFile, extname9(ctx.run.run.planFile)) : "adhoc";
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
@@ -120385,7 +121006,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           [{ type: "image", data: capture.png.toString("base64"), mimeType: "image/png" }]
         );
       }
-      const comparison = comparePng(readFileSync24(baselinePath), capture.png, capture.masks);
+      const comparison = comparePng(readFileSync25(baselinePath), capture.png, capture.masks);
       const limit = input3.maxDiffPercent ?? 0;
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
@@ -120489,7 +121110,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         label2 = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
         if (label2 && isPlainCss(label2)) scope = label2;
         else {
-          const mark = randomBytes12(4).toString("hex");
+          const mark = randomBytes13(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
           marked = target2.handle;
           scope = `[data-uiwalk-a11y="${mark}"]`;

@@ -115,7 +115,9 @@ export class PresentationRunner {
   private async play(i: number): Promise<Next> {
     const step = this.steps[i] as PresentStep;
     const stepOps = this.opsOf(step);
+    // A slide shows with its step. A step without one clears the slide before it.
     if (step.slide) await this.screen.slide(step);
+    else await this.screen.clear();
     if (!this.kiosk && step.pause) {
       this.session.setState('gate', i);
       if (stepOps) await this.screen.gate(step, stepOps);

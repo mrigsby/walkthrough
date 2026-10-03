@@ -12,6 +12,7 @@ import type { SecretStore } from '../guards/secrets.js';
 import { pressKeys, selectOption } from '../page/actions.js';
 import { TokenResolver } from '../page/tokens.js';
 import { newUnique } from '../page/unique.js';
+import type { Rect } from '../panel/controller.js';
 import { type DialogAnswer, dialogAnswers, type Op, type RunAction, type StepOps } from './ops.js';
 import type { Rebaser } from './rebase.js';
 import type { Stage } from './stage.js';
@@ -309,8 +310,48 @@ export class ReplayEngine {
   // Moves the pointer to the element before the action.
   private async point(handle: ElementHandle<Element>, kind: string): Promise<void> {
     await centerInView(handle);
+    const rect = await elementRect(handle);
+    if (rect) this.stage.glide?.(this.tab, rect, this.pace.glideMs);
     await sleep(this.pace.glideMs, this.options.signal);
-    await this.stage.point(this.tab, kind, await elementRect(handle));
+    await this.stage.point(this.tab, kind, rect);
+  }
+
+  // Where the element of the first action of a step is now, for a spotlight before it.
+  // Undefined when the step has no such element, or it does not show in time.
+  async targetRect(stepOps: StepOps): Promise<Rect | undefined> {
+    const first = stepOps.ops.find(
+      (op) => op.type === 'action' && op.action.selector && op.action.action !== 'press',
+    );
+    if (first?.type !== 'action') return undefined;
+    try {
+      const frame = await this.frameOf(first.action.frameUrl);
+      const handle = await frame.waitForSelector(first.action.selector as string, {
+        timeout: 3000,
+        signal: this.options.signal,
+      });
+      if (!handle) return undefined;
+      await centerInView(handle as ElementHandle<Element>);
+      return await elementRect(handle as ElementHandle<Element>);
+    } catch {
+      return undefined;
+    }
+  }
+
+  // A picture of the visible page, for the zoom. The stage crops it. A clip is not used,
+  // because a clip resizes the page under Chrome's zoom.
+  async viewImage(): Promise<string | undefined> {
+    const cdp = this.tab.cdp;
+    if (!cdp) return undefined;
+    try {
+      const { data } = await cdp.send('Page.captureScreenshot', {
+        format: 'jpeg',
+        quality: 85,
+        captureBeyondViewport: false,
+      });
+      return `data:image/jpeg;base64,${data}`;
+    } catch {
+      return undefined;
+    }
   }
 
   // Goes to the address, unless the last action already went there.

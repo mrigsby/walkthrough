@@ -8,6 +8,8 @@ export interface Stage {
   stepStart(text: string): void;
   // The pointer moves to an element, or to the page for a key press.
   point(tab: Tab, kind: string, rect?: Rect): Promise<void>;
+  // A live screen moves its pointer during the wait before an action. A video draws it later.
+  glide?(tab: Tab, rect: Rect, ms: number): void;
 }
 
 // For steps that run at full speed, like a jump ahead in a presentation.

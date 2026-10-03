@@ -2,12 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import type { Config } from '../config.js';
 import type { Context } from '../context.js';
 import { describeEnvironment } from '../environments.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
 import { log } from '../log.js';
 import { TokenResolver } from '../page/tokens.js';
+import { LiveStage } from '../presentation/live-stage.js';
 import {
   executionHash,
   findRehearsal,
@@ -34,6 +36,18 @@ import { startProgress } from './developer-tools.js';
 import { runTool } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+// The hosts of the app, for Chrome's zoom. A wildcard origin cannot have a zoom.
+function appHosts(config: Config): string[] {
+  const hosts = new Set<string>();
+  for (const origin of [config.baseUrl, ...config.allowedOrigins]) {
+    if (!origin || origin.includes('*')) continue;
+    try {
+      hosts.add(new URL(origin).hostname);
+    } catch {}
+  }
+  return [...hosts];
+}
 
 // The presentation of this server, and the work that ends it.
 let current: { session: PresentationSession; done: Promise<void> } | undefined;
@@ -223,8 +237,17 @@ async function startPresentation(
   const settings = plan.presentation ?? {};
   const kiosk = Boolean(input.kiosk ?? settings.kiosk);
   if (ctx.driver?.alive) await ctx.driver.close();
+  const zoom =
+    settings.pageZoom && settings.pageZoom !== 1 && !settings.device
+      ? { factor: settings.pageZoom, hosts: appHosts(config) }
+      : undefined;
   const driver = await ctx.startDriver(undefined, {
-    launch: { presentation: settings.window ?? { width: 1280, height: 800 } },
+    launch: {
+      presentation: {
+        ...(settings.window ?? { width: 1280, height: 800 }),
+        ...(zoom ? { zoom } : {}),
+      },
+    },
     panel: false,
   });
   ctx.confirmFor(env.name);
@@ -273,6 +296,20 @@ async function startPresentation(
     },
     abort,
   );
+  // The audience screen draws slides, the pointer, and the spotlight.
+  const stage = new LiveStage(audience, session, {
+    projectDir: config.projectDir,
+    planName: plan.name,
+    captions: settings.captions ?? true,
+    pointer: settings.pointer ?? true,
+    mask: settings.mask ?? [],
+    title: settings.title,
+    end: settings.end,
+    fullscreen: settings.fullscreen,
+  });
+  stage.useEngine(engine);
+  engine.stage = stage;
+  await stage.install();
   await engine.open({
     mainTab: audience,
     emulation: settings.device ? run.emulation : undefined,
@@ -283,6 +320,7 @@ async function startPresentation(
   ctx.presentation = session;
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
+    screen: stage,
     ...(kiosk
       ? {
           kiosk: {
@@ -298,6 +336,7 @@ async function startPresentation(
     .run()
     .catch((error) => log.error('the presentation stopped', error))
     .finally(async () => {
+      stage.dispose();
       await engine.dispose().catch(() => undefined);
       await driver.close().catch(() => undefined);
       if (ctx.presentation === session) ctx.presentation = undefined;

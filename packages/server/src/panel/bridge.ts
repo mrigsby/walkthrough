@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import type { CDPSession, Page, Protocol } from 'puppeteer-core';
-import { log } from '../log.js';
+import type { Page } from 'puppeteer-core';
+import { type BridgeMessage, IsolatedBridge } from '../browser/isolated-bridge.js';
 import { pageCandidates } from '../page/selectors.js';
 import { PANEL_CSS } from './panel-css.js';
 import { panelMain } from './panel-script.js';
@@ -13,102 +13,35 @@ const BINDING = `__uiwalk_${TOKEN}`;
 // The selector helper goes in too, so the recorder picks targets like the rest of Walkthrough.
 const SOURCE = `(${panelMain.toString()})(${JSON.stringify({ binding: BINDING, css: PANEL_CSS })}, ${pageCandidates.toString()});`;
 
-// Hides the panel on a new page before its first paint. It runs after the panel script.
-const HIDE_SOURCE = `window.__uiwalkPanel && window.__uiwalkPanel.receive({ type: 'hide', hidden: true });`;
-
-export type PanelMessage = Record<string, unknown> & { type: string };
+export type PanelMessage = BridgeMessage;
 
 // Connects the server to the panel in one tab.
 export class PanelBridge {
-  private contextId?: number;
-  private hideScript?: string;
-
-  private constructor(
-    private readonly cdp: CDPSession,
-    private readonly onMessage: (msg: PanelMessage) => void,
-  ) {}
+  private constructor(private readonly bridge: IsolatedBridge) {}
 
   static async install(
     page: Page,
     onMessage: (msg: PanelMessage) => void,
   ): Promise<PanelBridge | undefined> {
-    try {
-      const cdp = await page.createCDPSession();
-      const bridge = new PanelBridge(cdp, onMessage);
-      cdp.on('Runtime.bindingCalled', (event: Protocol.Runtime.BindingCalledEvent) =>
-        bridge.onBinding(event),
-      );
-      await cdp.send('Runtime.enable');
-      // The binding only exists in our isolated world. Page scripts cannot call it.
-      await cdp.send('Runtime.addBinding', { name: BINDING, executionContextName: WORLD_NAME });
-      await cdp.send('Page.enable');
-      await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
-        source: SOURCE,
-        worldName: WORLD_NAME,
-      });
-
-      // Also add the panel to the page that is open now.
-      const { frameTree } = await cdp.send('Page.getFrameTree');
-      const { executionContextId } = await cdp.send('Page.createIsolatedWorld', {
-        frameId: frameTree.frame.id,
-        worldName: WORLD_NAME,
-      });
-      await cdp.send('Runtime.evaluate', { expression: SOURCE, contextId: executionContextId });
-      return bridge;
-    } catch (error) {
-      log.warn('could not add the panel to a tab', error);
-      return undefined;
-    }
+    const bridge = await IsolatedBridge.install(
+      page,
+      { world: WORLD_NAME, binding: BINDING, source: SOURCE, receiver: '__uiwalkPanel' },
+      onMessage,
+    );
+    return bridge ? new PanelBridge(bridge) : undefined;
   }
 
-  private onBinding(event: Protocol.Runtime.BindingCalledEvent): void {
-    if (event.name !== BINDING) return;
-    let msg: PanelMessage;
-    try {
-      msg = JSON.parse(event.payload) as PanelMessage;
-    } catch {
-      return;
-    }
-    // Remember where the panel lives now. It changes after each page load.
-    this.contextId = event.executionContextId;
-    this.onMessage(msg);
-  }
-
-  // Starts or stops hiding the panel on each new page in this tab.
+  // Starts or stops hiding the panel on each new page in this tab, before its first paint.
   async hideOnLoad(on: boolean): Promise<void> {
-    try {
-      if (on && !this.hideScript) {
-        const { identifier } = await this.cdp.send('Page.addScriptToEvaluateOnNewDocument', {
-          source: HIDE_SOURCE,
-          worldName: WORLD_NAME,
-        });
-        this.hideScript = identifier;
-      } else if (!on && this.hideScript) {
-        const identifier = this.hideScript;
-        this.hideScript = undefined;
-        await this.cdp.send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
-      }
-    } catch {
-      // The tab closed.
-    }
+    await this.bridge.setOnLoad('hide', on ? { type: 'hide', hidden: true } : undefined);
   }
 
   get ready(): boolean {
-    return this.contextId !== undefined;
+    return this.bridge.ready;
   }
 
   // Sends a message to the panel. Returns false if the panel is not ready.
-  async send(msg: PanelMessage): Promise<boolean> {
-    if (this.contextId === undefined) return false;
-    try {
-      await this.cdp.send('Runtime.evaluate', {
-        expression: `window.__uiwalkPanel && window.__uiwalkPanel.receive(${JSON.stringify(msg)})`,
-        contextId: this.contextId,
-      });
-      return true;
-    } catch {
-      // The page changed. The new panel will say hello soon.
-      return false;
-    }
+  send(msg: PanelMessage): Promise<boolean> {
+    return this.bridge.send(msg);
   }
 }

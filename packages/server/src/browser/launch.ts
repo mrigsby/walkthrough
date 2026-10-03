@@ -14,9 +14,27 @@ export const PROFILE_PREFS = {
   profile: { password_manager_enabled: false, password_manager_leak_detection: false },
 };
 
-export function writeProfilePrefs(profileDir: string): void {
+export function writeProfilePrefs(profileDir: string, zoom?: PageZoom): void {
   mkdirSync(join(profileDir, 'Default'), { recursive: true });
-  writeFileSync(join(profileDir, 'Default', 'Preferences'), JSON.stringify(PROFILE_PREFS));
+  const prefs = zoom ? { ...PROFILE_PREFS, ...zoomPrefs(zoom) } : PROFILE_PREFS;
+  writeFileSync(join(profileDir, 'Default', 'Preferences'), JSON.stringify(prefs));
+}
+
+export interface PageZoom {
+  factor: number;
+  hosts: string[];
+}
+
+// Chrome's own zoom for these hosts, as if the developer pressed Command and plus. It fills
+// the window, and clicks still hit. A zoom level is a power of 1.2. The time is in
+// microseconds since 1601.
+export function zoomPrefs(zoom: PageZoom): Record<string, unknown> {
+  const level = Math.log(zoom.factor) / Math.log(1.2);
+  const modified = String((BigInt(Date.now()) + 11_644_473_600_000n) * 1000n);
+  const hosts = Object.fromEntries(
+    zoom.hosts.map((host) => [host, { zoom_level: level, last_modified: modified }]),
+  );
+  return { partition: { per_host_zoom_levels: { x: hosts } } };
 }
 
 export interface Launched {
@@ -30,7 +48,7 @@ export interface LaunchOptions {
   background?: boolean;
   // A Chrome for a presentation: the first window is the audience screen. It has no tabs,
   // no address bar, and no "controlled by automated test software" bar.
-  presentation?: { width: number; height: number };
+  presentation?: { width: number; height: number; zoom?: PageZoom };
 }
 
 // The address of the first window of a presentation. The origin guard allows it.
@@ -43,7 +61,7 @@ export async function launchChrome(config: Config, options: LaunchOptions = {}):
 
   // A new profile each time, so two sessions never lock each other.
   const profileDir = mkdtempSync(join(tmpdir(), 'uiwalk-profile-'));
-  writeProfilePrefs(profileDir);
+  writeProfilePrefs(profileDir, options.presentation?.zoom);
   const headless = options.background || config.browser.headless;
   try {
     const browser = await puppeteer.launch({
