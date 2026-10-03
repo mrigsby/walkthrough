@@ -62,6 +62,14 @@ All tools come from the `uiwalk` MCP server.
 | `export_script` | Write a Puppeteer script from a finished run. |
 | `issue_draft` | Write a GitHub issue title and body file from a bug step. |
 
+## Presentations
+
+| Tool | Use it to |
+| --- | --- |
+| `present` | `start` plays a rehearsal of a plan in an audience window, with a presenter window. `listen` waits for a chat question, a failed step, or the end. `answer` replies to a question (`id`) or sends a note (no `id`). `status` shows where it is. `control` sends a command when the developer asks: `start`, `continue`, `skip`, `retry`, `manual`, `back`, `jump` (with `step`), `blank`, `title`, `presenter` (open the presenter window again), or `end`. `stop` ends it and writes the handout. |
+
+While a presentation is going, only these tools work: `present`, `snapshot`, `read`, `screenshot`, `logs`, `network`, `runs`, `plan`, `issue_draft`, `export_script`, `environment` (not `use`), and `tabs` (action `list`).
+
 ## Setup
 
 | Tool | Use it to |
@@ -69,4 +77,4 @@ All tools come from the `uiwalk` MCP server.
 | `init_project` | Make the `.walkthrough` folder with settings and a sample plan. |
 | `doctor` | Check Node, Chrome, the project folder, settings, environments, secrets, Lighthouse, and ffmpeg. |
 
-`browser_open`, `run_start`, `a11y_scan`, `lighthouse`, and `video` (action `replay`) take `environment`. It switches the session first. `export_script` takes `environment` for the default of the script only.
+`browser_open`, `run_start`, `a11y_scan`, `lighthouse`, `video` (action `replay`), and `present` (action `start`) take `environment`. It switches the session first. `export_script` takes `environment` for the default of the script only.

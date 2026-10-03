@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <title>Thank you. Questions?</title>
+  <rect width="1600" height="900" fill="#0f172a"/>
+  <rect x="0" y="888" width="1600" height="12" fill="#3b82f6"/>
+  <text x="800" y="420" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="130" font-weight="700" fill="#ffffff">Thank you</text>
+  <text x="800" y="530" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="56" fill="#93c5fd">Questions?</text>
+</svg>

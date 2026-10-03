@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <title>Checkout tour: from the shop page to a placed order</title>
+  <rect width="1600" height="900" fill="#0f172a"/>
+  <rect x="0" y="0" width="1600" height="12" fill="#3b82f6"/>
+  <text x="120" y="330" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="44" fill="#93c5fd">Demo Shop</text>
+  <text x="120" y="460" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="120" font-weight="700" fill="#ffffff">Checkout tour</text>
+  <text x="120" y="550" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="44" fill="#cbd5e1">From the shop page to a placed order</text>
+  <text x="120" y="800" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="30" fill="#64748b">A live demo with Walkthrough</text>
+</svg>

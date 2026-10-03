@@ -17,13 +17,23 @@ This file lists all notable changes to the project.
 - Saved logins and visual baselines are separate for each environment. Development keeps the paths from before.
 - `doctor` checks that each environment answers, except a protected one, and that Git ignores the secret files of each environment.
 - The demo shop has staging and production copies: `npm run demo:staging` and `npm run demo:production`.
+- Presentations: `/walkthrough:present` shows a flow to an audience as a live demo. It plays a rehearsal run of a plan in an audience window, step by step, and waits for the presenter before each step. See [Presentations](docs/presentations.md).
+- The audience window shows a title screen, an end screen, slides, and captions. Before each step, a spotlight and a bigger picture show the next element. A pointer moves to each element and shows each click. B blanks the screen. `pageZoom` makes the page bigger, and `mask` blurs personal data.
+- The presenter window shows the notes, the time against the budget, and the next step. It also shows a live picture of the audience screen and the list of steps. Its controls start, continue, go back, skip, and jump to a step. Other controls blank the screen, show the title, turn on fullscreen, and move the audience window to another display. The keys work like a presentation clicker.
+- The chat in the presenter window sends questions to the Claude Code session, and the agent answers in a few sentences. **Show on screen** puts an answer on the audience screen.
+- When a step fails during a presentation, the presenter can retry it from the action that failed, skip it, or do it by hand.
+- On a protected environment, the presenter confirms it in the presenter window before the app opens.
+- After a presentation, Walkthrough writes a handout in HTML and Markdown. It has a picture of each step, the notes, the times, and the questions and answers. With `record`, it also saves a video of the audience screen.
+- Kiosk mode plays a presentation by itself, in a loop, for a screen at a booth.
+- Plan key `presentation`, and step keys `notes`, `slide`, `pause`, `spotlight`, `zoom`, and `timeBudget`. Test runs skip the steps that are only a slide. `run_finish` says whether a run is a good rehearsal.
+- The new `present` tool. The server has 38 tools.
+- The demo has a `checkout-tour` plan with slides.
 
 ### Changed
 
 - Plans from `/walkthrough:record` have no `baseUrl`, so they run in any environment.
 - A video replay of a run from another environment goes to the same pages on the environment in use.
 - `/walkthrough:init` adds `.env.*` and `!.env.example` to an older `.walkthrough/.gitignore`.
-
 - The install steps say to install the plugin from Claude Code in a terminal, not from the IDE extension or the desktop app.
 
 ## 0.3.1 (2026-09-29)

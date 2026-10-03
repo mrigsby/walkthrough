@@ -64,6 +64,18 @@ The page under test could try to click **Pass** for you. Walkthrough stops this:
 
 See [Videos](video.md#privacy).
 
+## Presentations
+
+- The presenter window is a page of Walkthrough's own, in its own browser login. No server or port serves it: Chrome gets the page from Walkthrough. The page cannot go to another address, and the tools never see it.
+- The presenter window and the audience window count only real clicks and key presses. A script in the app cannot move the presentation or press **Present here**.
+- On a protected environment, the presenter confirms it in the presenter window before the app opens. The agent cannot confirm it.
+- During a presentation, the agent can use only tools that read. It cannot click, type, or change the page that the audience sees.
+- The audience screen blurs the parts of the page that the plan's `mask` names. Fields with secrets show dots.
+- Chat questions go to the agent as data, between `<page-content>` tags. The handout hides secrets in the chat and the notes, but it shows the questions and answers. Read it before you share it.
+- A recording shows everything else on the audience screen, like a video. See [Videos](#videos).
+
+See [Presentations](presentations.md).
+
 ## Risky tools are off
 
 - The `evaluate` tool runs JavaScript in the page. It is off unless you set `allowEvaluate: true` in `config.local.yaml`.

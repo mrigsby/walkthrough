@@ -101,3 +101,13 @@ Scores on your computer change from run to run. See [Lighthouse reports](../../d
 To see the agent write the plan itself, move `.walkthrough/plans/checkout-demo.yaml` out of the `plans` folder first. Then say the same words.
 
 Each run and each replay places an order in the demo shop. The email address has `{{unique}}`, so each order gets a new one. See [Videos](../../docs/video.md).
+
+## Give a presentation
+
+1. Start the demo shop, and open Claude Code in this folder.
+2. Run `/walkthrough:present checkout-tour`. The agent rehearses the plan, then opens an audience window and a presenter window.
+3. Click **Start** in the presenter window. Before each step, read the notes, then press the right arrow to play the step.
+4. Ask a question in the chat of the presenter window, such as "Where does the cart count come from?". The agent answers in the chat.
+5. At the end screen, click **Close presentation**. The agent tells you where the handout is.
+
+The slides are in `.walkthrough/slides/`. Each rehearsal and each presentation places an order. See [Presentations](../../docs/presentations.md).

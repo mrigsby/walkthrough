@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 37 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 38 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -385,6 +385,32 @@ Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId
 ### `issue_draft`
 
 Writes a GitHub issue title and body from a bug or a failed step. `runId` and `stepId` pick the step. It saves the body to a file. It lists the screenshots and the other files of the step, such as the HAR file and the bug clip. It does not create the issue.
+
+## Presentations
+
+### `present`
+
+Plays a plan as a live presentation for an audience. See [Presentations](presentations.md).
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `start` opens a new Chrome with the audience window and the presenter window, and plays a rehearsal run. It returns at once, and the presentation goes on in the background. `listen` waits for a chat question, a failed step, or the end. `answer` replies in the chat. `status` shows where the presentation is. `control` sends a command. `stop` ends it, and writes the handout. |
+| `plan` | For `start`: the plan, such as `checkout-tour`. |
+| `runId` | For `start`: the rehearsal to play. The default is a good rehearsal of the plan on the same environment from the last 12 hours. A run from another environment goes to the same pages on the environment in use. |
+| `environment` | For `start`: present on this environment, such as `staging`. It switches the session first. |
+| `kiosk` | For `start`: run with no presenter. Each step holds for a few seconds. |
+| `command` | For `control`: `start`, `continue`, `skip`, `retry` (a failed step), `manual` (the presenter does it by hand), `back`, `jump` (with `step`), `blank`, `title`, `presenter` (open the presenter window again), or `end`. |
+| `step` | For `control` with `jump`: the step number. |
+| `id` | For `answer`: the question, such as `q2`. Without it, the answer is a note in the chat. |
+| `text` | For `answer`: 1 to 3 short sentences in plain text. |
+| `onScreen` | For `answer`: also show the answer at the bottom of the audience screen. |
+
+- `start` refuses when no good rehearsal exists. It says how to make one: an `autonomous` run of the plan in which every step passes.
+- On a protected environment, the presenter confirms it in the presenter window before the app opens. A kiosk needs the OK of the MCP client, or `UIWALK_ALLOW_PROTECTED`.
+- `listen` returns `status: question`, `status: step_failed`, or `status: ended`. After `askTimeoutSec` (300 seconds in Claude Code), it returns `status: waiting`, and the agent calls it again. A newer `listen` call ends an older one with `status: superseded`.
+- While a presentation is going, only tools that read work: `present`, `snapshot`, `read`, `screenshot`, `logs`, `network`, `runs`, `plan`, `issue_draft`, `export_script`, `environment` (not `use`), and `tabs` with action `list`. `snapshot` and `read` wait up to 5 seconds for the step that plays to end.
+- `stop` waits until the handout and the video are saved, and gives their paths.
+- Walkthrough cannot present in your own Chrome. Call `browser_close` first.
 
 ## Setup
 

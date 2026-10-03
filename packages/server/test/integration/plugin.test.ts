@@ -40,6 +40,7 @@ describe('plugin files', () => {
       'init.md',
       'lighthouse.md',
       'plan.md',
+      'present.md',
       'record.md',
       'report.md',
       'run.md',

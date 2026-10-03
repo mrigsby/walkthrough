@@ -19,6 +19,7 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 - **Evidence.** Screenshots with a red box on the element, console errors, page errors, and Chrome issues. Bugs also get a HAR file of the network requests and a video clip of the last seconds.
 - **Record mode.** Use the app yourself, and Walkthrough turns your clicks and typing into a draft plan.
 - **Videos.** Ask for "a recording demo of the checkout workflow", and get a clean MP4 and GIF with captions and a pointer. Record part of a session, save GIFs for your docs, or make the video again in CI. See [Videos](docs/video.md).
+- **Live presentations.** Show a flow to your team or your customers. The app plays step by step in an audience window, with a spotlight, a pointer, captions, and slides. You control it from a presenter window with your notes, a timer, and a chat where the agent answers questions about the app. You get a handout and a video. See [Presentations](docs/presentations.md).
 - **Accessibility reports.** Check one page or many with axe-core, a keyboard walk, dark mode, and reflow checks. Get scores, a short explanation and fix for each issue, and a prompt to plan the fixes in a new session. See [Accessibility reports](docs/accessibility.md).
 - **Lighthouse reports.** Check the performance, best practices, and SEO of pages or of a user flow, with an explanation and a fix for each issue. See [Lighthouse reports](docs/lighthouse.md).
 - **DevTools for the agent.** The agent can read network requests and cookies, and see the CSS rules and event listeners of an element. It can also answer API requests with test data.
@@ -90,6 +91,7 @@ The [getting started guide](docs/getting-started.md) has the details.
 | `/walkthrough:a11y [pages or plan]` | Checks pages for accessibility problems and writes an accessibility report. |
 | `/walkthrough:lighthouse [pages or plan]` | Checks pages or a flow with Lighthouse and writes a report with fixes. |
 | `/walkthrough:video <workflow or plan>` | Makes a demo video of a workflow: it writes a plan, runs it, and records a clean replay. |
+| `/walkthrough:present <plan or flow>` | Gives a live presentation of a flow, with a presenter window, notes, and a chat. |
 | `/walkthrough:export [run]` | Turns a finished run into a Puppeteer script for CI. |
 | `/walkthrough:bug [run] [step]` | Drafts a GitHub issue for a bug and opens the issue page for you. |
 | `/walkthrough:doctor` | Checks the setup and explains how to fix problems. |
@@ -119,6 +121,7 @@ You can also ask in plain words. The walkthrough skill loads when you ask the ag
 - [Settings](docs/config.md)
 - [Environments](docs/environments.md)
 - [Videos](docs/video.md)
+- [Presentations](docs/presentations.md)
 - [Accessibility reports](docs/accessibility.md)
 - [Lighthouse reports](docs/lighthouse.md)
 - [Tools](docs/tools.md)

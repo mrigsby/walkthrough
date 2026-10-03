@@ -11,6 +11,7 @@ Walkthrough can make a video or a GIF of your app. Use one to show a feature in 
 | A short video of a bug | [Bug clips](#bug-clips) |
 | A GIF of the screenshots of a run | [Step slideshow](#step-slideshow) |
 | The same demo again, such as after the app changes | [Clean re-recordings](#clean-re-recordings) |
+| A video of a live presentation | [Record a presentation](#record-a-presentation) |
 
 ## Quick start
 
@@ -143,6 +144,18 @@ Walkthrough cuts the waits from those minutes. Then it saves the last 15 seconds
 A slideshow is a GIF of the screenshots of a run. Ask "make a slideshow GIF of the last run". The agent calls `video` with action `slideshow`.
 
 The slideshow starts with a title card that shows the run name. Then it shows each screenshot of the run for 2 seconds, with the step title as the caption. It goes in `video/slideshow.gif` in the run folder. `format` and `path` work like they do for `stop`. A plan that saves a screenshot at each step, such as the `help-shots` plan in the demo, makes a good slideshow.
+
+## Record a presentation
+
+A presentation can record its audience screen. Add `record` to the `presentation` block of the plan:
+
+```yaml
+presentation:
+  record: true                                         # the format from video.runFormat
+  # record: { format: gif, path: docs/images/tour.gif }  # or a format and a file
+```
+
+The video shows what the audience saw: the slides, the spotlight, the pointer, and the captions. Walkthrough draws none of these again. Steps play at normal speed, long pauses become `video.idleSeconds`, and the "One moment" screens of a jump are cut. The video goes in the handout folder, and the handout plays it. See [Presentations](presentations.md#after-the-talk).
 
 ## Clean re-recordings
 

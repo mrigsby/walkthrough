@@ -124,6 +124,7 @@ To make a GitHub issue from it, run `/walkthrough:bug`. The agent shows you the 
 
 - [Environments](environments.md): run the same plans on staging and production
 - [Videos](video.md): demo videos, GIFs for docs, and bug clips
+- [Presentations](presentations.md): live demos with a presenter window, notes, and a chat
 - [Lighthouse reports](lighthouse.md): performance, best practices, and SEO
 - [Accessibility reports](accessibility.md): scores, issues, and fixes
 - [Test plan format](plan-format.md): every plan key, visual checks, and saved logins

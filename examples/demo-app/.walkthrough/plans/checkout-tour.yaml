@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Checkout tour
+description: A live tour of the checkout, for a talk. Present it with /walkthrough:present checkout-tour.
+mode: autonomous
+presentation:
+  title: { image: .walkthrough/slides/title.svg }
+  end: { image: .walkthrough/slides/end.svg }
+  timeBudget: 5m
+steps:
+  - id: agenda
+    do: Show the agenda
+    slide: { title: Today, text: "1. Add a mug to the cart\n2. Check out\n3. Questions" }
+    notes: |
+      Welcome. This is the demo shop that comes with Walkthrough.
+      - Ask: who has bought something online this week?
+
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    caption: The shop
+    expect: The shop shows the "Coffee Mug".
+    notes: The shop lists three products. The page gets them from the server.
+
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    action: { click: { selector: '[data-add="mug"]' } }
+    caption: Add the coffee mug to the cart
+    expect: The cart count in the header goes up by one.
+    zoom: 2
+    timeBudget: 45s
+    notes: |
+      The cart count in the header changes **without a page load**.
+      The cart stays in the browser, in `localStorage`.
+
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    caption: The cart
+    expect: The cart lists the "Coffee Mug".
+    notes: The cart shows each product, its price, and the total.
+
+  - id: checkout-slide
+    do: Show the checkout slide
+    slide: { title: Check out, text: "A name, an email address, an address, and a test card" }
+    notes: Next, the checkout form.
+
+  - id: go-to-checkout
+    do: Click "Checkout"
+    action: { click: { role: button, name: Checkout } }
+    caption: Go to checkout
+    expect: The page shows name, email, and address fields, and a card form.
+    notes: The card form is a frame of its own, like the form of a real payment provider.
+
+  - id: enter-name
+    do: Type "Demo Shopper" in the Full name field
+    action: { fill: { role: textbox, name: Full name, value: Demo Shopper } }
+    caption: Enter the name
+
+  - id: enter-email
+    do: Type a new email address in the Email field
+    action: { fill: { role: textbox, name: Email, value: "demo+{{unique}}@example.com" } }
+    caption: Enter the email address
+    pause: false
+
+  - id: enter-address
+    do: Type the address in the Address field
+    action: { fill: { role: textbox, name: Address, value: "1 Main Street, Springfield" } }
+    caption: Enter the address
+    pause: false
+    notes: Each presentation gets a new email address, so it can place a new order.
+
+  - id: enter-card
+    do: Type the test card 4242 4242 4242 4242 in the Card number field of the payment form
+    action: { fill: { role: textbox, name: Card number, value: "4242 4242 4242 4242" } }
+    caption: Enter a test card
+    zoom: 1.5
+    notes: 4242 4242 4242 4242 is a test card number.
+
+  - id: save-card
+    do: Click "Save card" in the payment form
+    action: { click: { role: button, name: Save card } }
+    caption: Save the card
+    expect: The page says "Card ending in 4242 is ready."
+    pause: false
+
+  - id: place-order
+    do: Click "Place order" and accept the confirm dialog
+    action: { click: { role: button, name: Place order } }
+    caption: Place the order
+    expect: The page says "Thank you".
+    notes: |
+      The shop asks to confirm the order. The presentation answers it like the rehearsal did.
+      Then go to the end screen for questions.

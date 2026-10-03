@@ -43,6 +43,7 @@ steps:
 | `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
 | `lighthouse` | No | Settings for the Lighthouse steps: `device`, `categories`, and `report`. See [Lighthouse flows](#lighthouse-flows). |
 | `video` | No | Record the whole run as a video: `true`, or `{ format, path, showPanel, captions }`. See [Videos](#videos). |
+| `presentation` | No | Settings to play the plan as a live presentation, such as `title`, `end`, `timeBudget`, and `record`. See [Presentations](#presentations). |
 
 ## Step keys
 
@@ -61,6 +62,12 @@ steps:
 | `mock` | No | Mock rules to add before the step, or `off` to remove all rules. See [Mocked requests](#mocked-requests). |
 | `lighthouse` | No | Measure the step with Lighthouse: `navigation`, `timespan`, or `snapshot`. See [Lighthouse flows](#lighthouse-flows). |
 | `caption` | No | The text that viewers see at the bottom of a video during this step. Without it, the video shows `do`. See [Videos](#videos). |
+| `notes` | No | Notes for the presenter of a presentation. Only the presenter window shows them. See [Presentations](#presentations). |
+| `slide` | No | In a presentation, a full-window slide before the action, or the whole step when it has no action. A test run skips a step that is only a slide. |
+| `pause` | No | In a presentation, `false` plays the step without waiting for the presenter. |
+| `spotlight` | No | In a presentation, `false` turns off the spotlight on the next element. |
+| `zoom` | No | In a presentation, show the next element this many times bigger during the pause, from `1.25` to `4`. |
+| `timeBudget` | No | In a presentation, the time for this step, like `45s`. |
 
 ### Write a good `expect`
 
@@ -298,6 +305,29 @@ steps:
 - Walkthrough cuts wait time and question time, hides the panel, and hides typed secrets.
 - `run_finish` saves the video as `video/run.<format>` in the run folder.
 - For a clean demo video, use `/walkthrough:video`. It records the run again with `video` action `replay`: a new login, an even pace, and a title card. See [Videos](video.md).
+
+## Presentations
+
+A plan can also play as a live demo for an audience, with `/walkthrough:present`. It plays a rehearsal run in an audience window, and it waits for the presenter before each step:
+
+```yaml
+presentation:
+  title: { image: .walkthrough/slides/title.svg }
+  timeBudget: 10m
+  record: true
+steps:
+  - id: agenda
+    do: Show the agenda
+    slide: { title: Today, text: "1. Add a mug\n2. Check out" }
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    action: { click: { selector: '[data-add="mug"]' } }
+    caption: Add a mug to the cart
+    notes: The cart count updates without a page load.
+    zoom: 2
+```
+
+Every step that does something needs an exact `action`. Test runs skip the steps that are only a slide, and they ignore the other presentation keys. See [Presentations](presentations.md) for all keys.
 
 ## Saved logins
 

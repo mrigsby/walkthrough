@@ -1,6 +1,6 @@
 ---
 name: walkthrough
-description: Test a web app step by step in a visible browser with the developer. Use it when the developer asks to walk through, click through, or visually test a page or flow. Also use it to confirm UI behavior, report a UI bug, or make a video, GIF, screen recording, or recording demo of a flow.
+description: Test a web app step by step in a visible browser with the developer. Use it when the developer asks to walk through, click through, or visually test a page or flow. Also use it to confirm UI behavior, report a UI bug, or make a video, GIF, screen recording, or recording demo of a flow. Use it to give a live presentation or demo of the app to an audience.
 ---
 
 # Walkthrough
@@ -111,6 +111,14 @@ When the developer asks for a new plan:
 - **Again later:** `video` with action `replay` for the same run makes a new video without a new run. After the app changes, run the plan again first.
 - "Record me" or "record my clicks" means `record`: the developer uses the app, and you get a plan draft. "A recording of X" or "a video of X" means a video.
 
+## Give a presentation
+
+- **A live demo for an audience**, such as "present the checkout to the team": use `/walkthrough:present`, or do the same steps. Follow `references/presentation.md` to write or extend the plan. `present` with action `start` plays a rehearsal run in an audience window, and the presenter controls it from a presenter window.
+- After `start`, call `present` with action `listen` until it says `ended`. Answer each question in 1 to 3 short sentences with action `answer`. Then call `present` with action `stop`, and tell the developer where the handout is.
+- Never confirm a protected environment for a presentation. The presenter does it in the presenter window.
+- During a presentation, only tools that read work. Use `present` action `control` only when the developer asks for a command.
+- "Present", "demo it live", and "show it on the projector" mean a presentation. "A video of X" means `/walkthrough:video`.
+
 ## Record, export, and report bugs
 
 - **Record:** when the developer wants to show a flow instead of describing it, use `record` (`start`, then `wait`). They use the app, and you get a YAML draft. Review it with them, then save it with `plan`.
@@ -125,3 +133,4 @@ When the developer asks for a new plan:
 - `references/a11y-report.md`: how to write the accessibility report text.
 - `references/lighthouse-report.md`: how to write the Lighthouse report text.
 - `references/video.md`: how to write a plan for a demo video.
+- `references/presentation.md`: how to write a presentation plan, rehearse it, and answer the presenter.

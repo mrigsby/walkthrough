@@ -178,6 +178,7 @@ Only a person can confirm, never the agent:
 
 - When the panel is not there, such as with a hidden browser, Walkthrough asks through the MCP client if the client can. `/walkthrough:doctor` shows whether your client can.
 - For automation, start the server with `UIWALK_ALLOW_PROTECTED=production`. Use a list for more than one, like `UIWALK_ALLOW_PROTECTED=production,partner`.
+- A presentation asks in its presenter window, before the app opens. See [Presentations](presentations.md#environments).
 
 A protected environment never reads the plain `.env` file. A test that makes data, such as an order, makes real data there.
 
@@ -237,6 +238,7 @@ Runs from versions before 0.4.0 show as development.
 - **Video replay:** `video` with action `replay` uses the environment in use. With `environment`, it switches first. The replay goes to the same pages on that environment, and uses its values. For example, rehearse on development, and make the video on staging.
 - **Exported scripts:** a script from `/walkthrough:export` tests the environment of the run by default. With `environment`, it tests that one by default. Set `BASE_URL` to test another one. The script lists the other base URLs at the top. Values from `{{var:NAME}}` become `VARS`. Set `VAR_<NAME>`, such as `VAR_SHOPPER`, to change one.
 - **Plans from `/walkthrough:record`** have no `baseUrl`, so they run in any environment.
+- **Presentations:** `present` uses the environment in use, or `environment`. A rehearsal from another environment goes to the same pages there. See [Presentations](presentations.md#rehearsals).
 
 ## Try it with the demo shop
 
