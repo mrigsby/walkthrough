@@ -71,6 +71,7 @@ describe('uiwalk tools', () => {
         'navigate',
         'network',
         'plan',
+        'present',
         'read',
         'record',
         'run_finish',

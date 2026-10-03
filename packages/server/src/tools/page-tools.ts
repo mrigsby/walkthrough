@@ -34,6 +34,8 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
     },
     ({ ref }) =>
       runTool(ctx, 'snapshot', async () => {
+        // During a presentation, wait until no step plays.
+        await ctx.presentation?.settled?.(5000);
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const root = ref ? (await driver.refs.resolve(ref, tab.id, tab.nav)).handle : undefined;
@@ -130,6 +132,8 @@ export function registerPageTools(server: McpServer, ctx: Context): void {
     },
     ({ ref, selector }) =>
       runTool(ctx, 'read', async () => {
+        // During a presentation, wait until no step plays.
+        await ctx.presentation?.settled?.(5000);
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const target = await resolveTarget(driver, tab, { ref, selector });

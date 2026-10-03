@@ -74,6 +74,8 @@ describe('demo shop', () => {
   });
 
   it('has an image without alt text', async () => {
+    // The app draws the products after it loads them.
+    await page.waitForSelector('img:not([alt])');
     const missing = await page.$$eval('img:not([alt])', (imgs) => imgs.length);
     expect(missing).toBe(1);
   });

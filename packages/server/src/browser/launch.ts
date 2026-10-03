@@ -25,12 +25,19 @@ export interface Launched {
   chromePath: string;
 }
 
+export interface LaunchOptions {
+  // A hidden Chrome for work the developer does not watch, like Lighthouse checks.
+  background?: boolean;
+  // A Chrome for a presentation: the first window is the audience screen. It has no tabs,
+  // no address bar, and no "controlled by automated test software" bar.
+  presentation?: { width: number; height: number };
+}
+
+// The address of the first window of a presentation. The origin guard allows it.
+export const AUDIENCE_START = 'data:text/html,uiwalk-audience';
+
 // Starts a new Chrome with a fresh, temporary profile.
-// "background" is a hidden Chrome for work the developer does not watch, like Lighthouse checks.
-export async function launchChrome(
-  config: Config,
-  options: { background?: boolean } = {},
-): Promise<Launched> {
+export async function launchChrome(config: Config, options: LaunchOptions = {}): Promise<Launched> {
   const chrome = await findChrome(config.browser.executablePath);
   if (!chrome) throw new ToolError(NO_CHROME_MESSAGE, 'chrome_missing');
 
@@ -45,8 +52,21 @@ export async function launchChrome(
       slowMo: options.background ? 0 : config.browser.slowMo,
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
-      defaultViewport: headless ? { width: 1280, height: 800 } : null,
-      args: ['--no-first-run', '--no-default-browser-check', '--window-size=1280,900'],
+      defaultViewport: headless
+        ? {
+            width: options.presentation?.width ?? 1280,
+            height: options.presentation?.height ?? 800,
+          }
+        : null,
+      args: [
+        '--no-first-run',
+        '--no-default-browser-check',
+        options.presentation
+          ? `--window-size=${options.presentation.width},${options.presentation.height}`
+          : '--window-size=1280,900',
+        ...(options.presentation && !headless ? [`--app=${AUDIENCE_START}`] : []),
+      ],
+      ...(options.presentation ? { ignoreDefaultArgs: ['--enable-automation'] } : {}),
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,

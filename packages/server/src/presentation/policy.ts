@@ -3,6 +3,8 @@ import { ToolError } from '../errors.js';
 // What the tools need to know about a presentation that is going.
 export interface LivePresentation {
   readonly active: boolean;
+  // Waits until no step plays, so a tool can read the page without a race.
+  settled?(ms?: number): Promise<void>;
 }
 
 // The tools that work while a presentation is going. They only read, so they cannot

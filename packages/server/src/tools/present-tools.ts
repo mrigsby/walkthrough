@@ -1,0 +1,457 @@
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
+import type { Context } from '../context.js';
+import { describeEnvironment } from '../environments.js';
+import { ToolError } from '../errors.js';
+import { untrusted } from '../guards/untrusted.js';
+import { log } from '../log.js';
+import { TokenResolver } from '../page/tokens.js';
+import {
+  executionHash,
+  findRehearsal,
+  rehearsalProblems,
+  slideProblems,
+} from '../presentation/rehearsal.js';
+import { PresentationRunner } from '../presentation/runner.js';
+import {
+  type Command,
+  PresentationSession,
+  type PresentEvent,
+  type PresentStep,
+} from '../presentation/session.js';
+import { ReplayEngine } from '../replay/engine.js';
+import { buildOps, opsByStep } from '../replay/ops.js';
+import { Rebaser } from '../replay/rebase.js';
+import { PACES, replayVars } from '../replay/replayer.js';
+import { NullStage } from '../replay/stage.js';
+import { durationSeconds } from '../run/plan-schema.js';
+import { loadPlan } from '../run/plans.js';
+import { type Run, RunStore } from '../run/run-store.js';
+import { liveCaptures } from '../video/recording.js';
+import { startProgress } from './developer-tools.js';
+import { runTool } from './util.js';
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+// The presentation of this server, and the work that ends it.
+let current: { session: PresentationSession; done: Promise<void> } | undefined;
+
+const COMMANDS = [
+  'start',
+  'continue',
+  'skip',
+  'retry',
+  'manual',
+  'back',
+  'jump',
+  'blank',
+  'end',
+] as const;
+
+function clock(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function stepLine(session: PresentationSession, i: number): string {
+  const step = session.steps[i];
+  return step ? `step ${step.index} of ${session.steps.length}: "${step.title}"` : 'the end screen';
+}
+
+// Where the presentation is, in plain words.
+function statusText(session: PresentationSession): string {
+  const step = session.steps[session.current];
+  const next = session.steps[session.current + 1];
+  const env = session.info.environment;
+  const elapsed = session.startedAt ? Date.now() - session.startedAt : 0;
+  const budget = session.info.timeBudgetSec;
+  return [
+    `Presentation: ${session.info.name}. Environment: ${env.name}${env.baseUrl ? ` (${env.baseUrl})` : ''}. Rehearsal: ${session.info.runId}.`,
+    `State: ${session.state}, at ${session.state === 'title' ? 'the title slide' : stepLine(session, session.current)}.${session.blank ? ' The audience screen is blank.' : ''}`,
+    ...(step?.notes && session.state !== 'title' ? [`Notes: ${step.notes}`] : []),
+    ...(next && session.state !== 'end' ? [`Next: step ${next.index} "${next.title}".`] : []),
+    ...(session.failure
+      ? [`Failed: step ${session.failure.step}: ${session.failure.message}`]
+      : []),
+    `Time: ${session.startedAt ? clock(elapsed) : 'not started'}${budget ? ` of ${clock(budget * 1000)}` : ''}.`,
+    `Chat: ${session.chat.filter((c) => c.question).length} question(s). ${session.listening ? 'You are listening.' : 'Nobody is listening now.'}`,
+  ].join('\n');
+}
+
+function eventText(session: PresentationSession, event: PresentEvent): string {
+  if (event.type === 'ended') {
+    return 'status: ended\nThe presentation ended. Stop listening.';
+  }
+  const step = session.steps[session.current];
+  const context = [
+    `Now: ${session.state === 'title' ? 'the title slide' : stepLine(session, session.current)}.`,
+    ...(step?.notes ? [`Notes of this step: ${step.notes}`] : []),
+    `Environment: ${describeEnvironment(session.info.environment)}.`,
+  ];
+  if (event.type === 'step_failed') {
+    return [
+      'status: step_failed',
+      `Step ${event.step} did not work: ${event.message}`,
+      ...context,
+      'The presenter can retry, skip, or do the step by hand. To help, look at the page with snapshot or read. Then send a short note with present action "answer" and no id. Then call present with action "listen" again.',
+    ].join('\n');
+  }
+  return [
+    'status: question',
+    `Question ${event.id} from the presenter:`,
+    untrusted(event.text),
+    ...context,
+    `Answer with present action "answer", id "${event.id}", and 1 to 3 short sentences in plain text. You can use snapshot, read, and the project code first. Then call present with action "listen" again.`,
+  ].join('\n');
+}
+
+// Waits a moment for the runner to take a command, so the reply shows the new state.
+function changeSoon(session: PresentationSession, ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const stop = session.watch(() => {
+      clearTimeout(timer);
+      stop();
+      resolve();
+    });
+    const timer = setTimeout(() => {
+      stop();
+      resolve();
+    }, ms);
+  });
+}
+
+async function startPresentation(
+  ctx: Context,
+  input: { plan?: string; runId?: string; environment?: string; kiosk?: boolean },
+  extra: Extra,
+): Promise<string> {
+  if (current?.session.active) {
+    throw new ToolError(
+      'A presentation is going already. Call present with action "stop" first.',
+      'presentation_active',
+    );
+  }
+  if (ctx.run?.run.status === 'running') {
+    throw new ToolError(
+      `The run "${ctx.run.run.name}" is still going. Call run_finish first.`,
+      'run_active',
+    );
+  }
+  if (liveCaptures(ctx).length > 0) {
+    throw new ToolError('A video is recording. Call video with action stop first.', 'video_active');
+  }
+  if (ctx.driver?.alive && ctx.driver.mode === 'attached') {
+    throw new ToolError(
+      'Walkthrough uses your own Chrome now. A presentation needs a Chrome of its own. Call browser_close first.',
+      'attached',
+    );
+  }
+  if (!input.plan) throw new ToolError('Give the name of the plan to present.', 'bad_input');
+  const lines = input.environment
+    ? await ctx.useEnvironment(input.environment, { source: 'tool' })
+    : [];
+  const config = await ctx.config();
+  const { file, plan } = loadPlan(config.projectDir, input.plan);
+  const env = config.environment;
+  if (plan.environments && !plan.environments.includes(env.name)) {
+    throw new ToolError(
+      `The plan "${plan.name}" may run only in these environments: ${plan.environments.join(', ')}. The session uses "${env.name}".`,
+      'environment_not_allowed',
+    );
+  }
+  const slides = slideProblems(plan, config.projectDir);
+  if (slides.length) {
+    throw new ToolError(
+      `The presentation cannot show these slides:\n${slides.map((s) => `- ${s}`).join('\n')}`,
+      'slide_blocked',
+    );
+  }
+
+  // The rehearsal: a run of this plan that can be presented.
+  let run: Run | undefined;
+  if (input.runId) {
+    run = RunStore.open(config.projectDir, input.runId).run;
+    const problems = rehearsalProblems(run, plan);
+    if (run.planHash && run.planHash !== executionHash(plan))
+      problems.push('The steps of the plan changed after this run.');
+    if (problems.length) {
+      throw new ToolError(
+        `The run ${run.id} cannot be presented:\n${problems.map((p) => `- ${p}`).join('\n')}`,
+        'not_presentable',
+      );
+    }
+  } else {
+    run = findRehearsal(config.projectDir, file, plan, env.name);
+    if (!run) {
+      throw new ToolError(
+        `There is no good rehearsal of "${plan.name}" on ${env.name} from the last 12 hours. Rehearse first: call run_start with plan "${input.plan}" and mode "autonomous", do and check every step, and call run_finish. Then call present again.`,
+        'no_rehearsal',
+      );
+    }
+  }
+
+  // A protected environment needs a person's OK first.
+  let confirmed = !env.protected;
+  const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? '').split(',').map((s) => s.trim());
+  if (!confirmed && allowed.includes(env.name)) confirmed = true;
+  const ask = ctx.elicit?.();
+  if (!confirmed && ask) {
+    const answer = await ask(
+      `Present on the "${env.name}" environment (${env.baseUrl})? The presentation can create real data there.`,
+      { timeoutMs: 300_000, signal: extra.signal, relatedRequestId: extra.requestId },
+    );
+    if (answer !== 'yes') {
+      await ctx.finishSwitch(false);
+      throw new ToolError(
+        `The developer did not confirm the "${env.name}" environment.`,
+        'protected_unconfirmed',
+      );
+    }
+    confirmed = true;
+  }
+  if (!confirmed) {
+    await ctx.finishSwitch(false);
+    throw new ToolError(
+      `"${env.name}" is a protected environment. A presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env.name}.`,
+      'protected_unconfirmed',
+    );
+  }
+
+  // A new Chrome, with the audience window first.
+  const settings = plan.presentation ?? {};
+  const kiosk = Boolean(input.kiosk ?? settings.kiosk);
+  if (ctx.driver?.alive) await ctx.driver.close();
+  const driver = await ctx.startDriver(undefined, {
+    launch: { presentation: settings.window ?? { width: 1280, height: 800 } },
+    panel: false,
+  });
+  ctx.confirmFor(env.name);
+  await ctx.finishSwitch(true);
+  const audience = driver.activeTab();
+
+  const ops = opsByStep(buildOps(run));
+  const vars = replayVars(run, config);
+  const pace = PACES[settings.pace ?? 'normal'];
+  const abort = new AbortController();
+  const engine = new ReplayEngine({
+    driver,
+    config,
+    secrets: await ctx.secrets(),
+    vars,
+    pace,
+    stage: new NullStage(),
+    rebase: Rebaser.forRun(run, config),
+    signal: abort.signal,
+  });
+  const show = (text: string) => new TokenResolver(engine.unique, vars).display(text);
+  const steps: PresentStep[] = plan.steps.map((step, i) => {
+    const id = step.id ?? `step-${i + 1}`;
+    return {
+      index: i + 1,
+      id,
+      title: show(step.do),
+      ...(step.caption ? { caption: show(step.caption) } : {}),
+      ...(step.notes ? { notes: show(step.notes) } : {}),
+      ...(step.slide ? { slide: step.slide } : {}),
+      hasAction: Boolean(ops.get(id)?.ops.some((o) => o.type === 'action')),
+      pause: step.pause ?? settings.pause !== 'none',
+      spotlight: step.spotlight ?? settings.spotlight ?? true,
+      ...(step.zoom ? { zoom: step.zoom } : {}),
+      ...(step.timeBudget ? { timeBudgetSec: durationSeconds(step.timeBudget) } : {}),
+    };
+  });
+  const session = new PresentationSession(
+    steps,
+    {
+      name: plan.name,
+      runId: run.id,
+      environment: { name: env.name, label: env.label, color: env.color, baseUrl: env.baseUrl },
+      kiosk,
+      ...(settings.timeBudget ? { timeBudgetSec: durationSeconds(settings.timeBudget) } : {}),
+    },
+    abort,
+  );
+  await engine.open({
+    mainTab: audience,
+    emulation: settings.device ? run.emulation : undefined,
+    session: run.session,
+    startUrl: run.baseUrl ?? config.baseUrl,
+  });
+
+  ctx.presentation = session;
+  const runner = new PresentationRunner(session, engine, ops, {
+    pace,
+    ...(kiosk
+      ? {
+          kiosk: {
+            holdMs: (settings.kiosk?.holdSeconds ?? 6) * 1000,
+            loop: settings.kiosk?.loop ?? false,
+            loops: settings.kiosk?.loops ?? 100,
+          },
+        }
+      : {}),
+  });
+  // The presentation goes on in the background. The tools stay free for the chat.
+  const done = runner
+    .run()
+    .catch((error) => log.error('the presentation stopped', error))
+    .finally(async () => {
+      await engine.dispose().catch(() => undefined);
+      await driver.close().catch(() => undefined);
+      if (ctx.presentation === session) ctx.presentation = undefined;
+    });
+  current = { session, done };
+
+  return [
+    ...lines,
+    `The presentation "${plan.name}" is ready on ${describeEnvironment(env)}. It plays the rehearsal ${run.id}.`,
+    `It has ${steps.length} step(s).${kiosk ? ' It runs by itself (kiosk).' : ' It waits for the presenter before each step.'}`,
+    kiosk
+      ? 'Call present with action "stop" to end it.'
+      : 'The audience window shows the title. The presenter starts it. When the presenter asks you, use present with action "control".',
+    'Now call present with action "listen", and answer each question with action "answer". Keep listening until listen says "ended".',
+  ].join('\n');
+}
+
+async function stopPresentation(): Promise<string> {
+  const live = current;
+  if (!live) return 'No presentation is going.';
+  const { session } = live;
+  session.stop();
+  await Promise.race([live.done, new Promise((resolve) => setTimeout(resolve, 15_000))]);
+  const shown = new Set([...session.stepTimes.keys()].filter((i) => i < session.steps.length));
+  const minutes = session.startedAt ? clock(Date.now() - session.startedAt) : '0:00';
+  return [
+    `The presentation "${session.info.name}" ended. It showed ${shown.size} of ${session.steps.length} step(s) in ${minutes}.`,
+    `Chat: ${session.chat.filter((c) => c.question).length} question(s), ${session.chat.filter((c) => c.answer).length} answer(s).`,
+  ].join('\n');
+}
+
+export function registerPresentTools(server: McpServer, ctx: Context): void {
+  server.registerTool(
+    'present',
+    {
+      title: 'Present',
+      description: [
+        'Play a plan as a live presentation for an audience, with /walkthrough:present.',
+        'start opens a new Chrome with the audience window, and plays a rehearsal run of the plan. The presentation runs in the background. It waits before each step until the presenter goes on.',
+        'listen waits for a question from the presenter, a failed step, or the end. Answer a question with answer, in 1 to 3 short sentences. Then listen again.',
+        'status shows where the presentation is. control moves it, only when the presenter asks you: continue, skip, retry, manual, back, jump, blank, or end. stop ends it.',
+        'While a presentation is going, only tools that read the page work.',
+      ].join(' '),
+      inputSchema: {
+        action: z.enum(['start', 'status', 'control', 'listen', 'answer', 'stop']),
+        plan: z
+          .string()
+          .optional()
+          .describe('For start: the plan to present, like "checkout-tour".'),
+        runId: z
+          .string()
+          .optional()
+          .describe(
+            'For start: the rehearsal run to play. The default is a good rehearsal of the plan from the last 12 hours.',
+          ),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'For start: present on this environment, like "staging". It switches the session.',
+          ),
+        kiosk: z
+          .boolean()
+          .optional()
+          .describe('For start: run without a presenter. Each step holds for a few seconds.'),
+        command: z
+          .enum(COMMANDS)
+          .optional()
+          .describe(
+            'For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), or end.',
+          ),
+        step: z.number().int().min(1).optional().describe('For control jump: the step number.'),
+        id: z
+          .string()
+          .optional()
+          .describe('For answer: the question id, like "q2". Leave it out for a note.'),
+        text: z
+          .string()
+          .min(1)
+          .max(1000)
+          .optional()
+          .describe('For answer: 1 to 3 short sentences in plain text.'),
+        onScreen: z
+          .boolean()
+          .optional()
+          .describe('For answer: also show the answer on the audience screen.'),
+      },
+    },
+    (input, extra) =>
+      runTool(
+        ctx,
+        'present',
+        async () => {
+          if (input.action === 'start') return startPresentation(ctx, input, extra);
+          if (input.action === 'stop') return stopPresentation();
+          const session = current?.session;
+          if (!session?.active) {
+            if (input.action === 'listen') return 'status: ended\nNo presentation is going.';
+            return 'No presentation is going. Call present with action "start".';
+          }
+          if (input.action === 'status') return statusText(session);
+
+          if (input.action === 'answer') {
+            if (!input.text) throw new ToolError('Give the text of the answer.', 'bad_input');
+            try {
+              const entry = session.answer(input.id, input.text, input.onScreen);
+              return `The presenter sees the ${entry.question ? 'answer' : 'note'} in the chat${input.onScreen ? ', and the audience sees it on the screen' : ''}. Call present with action "listen" again.`;
+            } catch (error) {
+              throw new ToolError((error as Error).message, 'bad_input');
+            }
+          }
+
+          if (input.action === 'listen') {
+            const config = await ctx.config();
+            const timeoutSec =
+              config.askTimeoutSec ?? (ctx.clientName() === 'claude-code' ? 300 : 50);
+            const stopProgress = startProgress(extra, 'Walkthrough waits for the presenter.');
+            try {
+              const outcome = await session.listen(timeoutSec * 1000, extra.signal);
+              if (outcome.kind === 'event') return eventText(session, outcome.event);
+              if (outcome.kind === 'timeout')
+                return `status: waiting\nNo question after ${timeoutSec} seconds. Call present with action "listen" again.`;
+              if (outcome.kind === 'superseded')
+                return 'status: superseded\nA newer listen call took over. Do not call listen again from this one.';
+              return 'status: canceled\nWalkthrough stopped listening. The presentation goes on.';
+            } finally {
+              stopProgress();
+            }
+          }
+
+          // control
+          if (!input.command) throw new ToolError('Give a command for control.', 'bad_input');
+          if (input.command === 'blank') {
+            session.setBlank(!session.blank);
+            return `The audience screen is ${session.blank ? 'blank' : 'back'}.\n${statusText(session)}`;
+          }
+          const command = (
+            input.command === 'jump'
+              ? { type: 'jump', step: input.step ?? 0 }
+              : { type: input.command }
+          ) as Command;
+          if (command.type === 'jump' && !input.step)
+            throw new ToolError('Give the step number for jump.', 'bad_input');
+          const problem = session.check(command);
+          if (problem) throw new ToolError(problem, 'bad_command');
+          session.command(command);
+          await changeSoon(session, 2000);
+          return statusText(session);
+        },
+        {
+          // These wait for a person or only read, so they run next to the other tools.
+          exclusive: !['status', 'control', 'listen', 'answer'].includes(input.action),
+          action: input.action,
+        },
+      ),
+  );
+}

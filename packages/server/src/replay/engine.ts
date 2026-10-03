@@ -117,6 +117,10 @@ export class ReplayEngine {
   readonly restores: Array<() => Promise<void>> = [];
   private readonly key = randomBytes(2).toString('hex');
   private readonly before?: string;
+  // True when the main tab is a tab of the browser, like the audience window.
+  private mainAdopted = false;
+  // How open() started, so restart() can do it again.
+  private started?: { session?: string; startUrl?: string };
 
   constructor(readonly options: EngineOptions) {
     this.pace = options.pace;
@@ -140,10 +144,15 @@ export class ReplayEngine {
 
   // The logins that the replay made. They all close at the end.
   get loginNames(): Set<string> {
-    return new Set(this.logins.values());
+    const names = new Set(this.logins.values());
+    // The login of an adopted tab belongs to the browser, not to the replay.
+    names.delete('main');
+    return names;
   }
 
   private login(runLogin: string): string {
+    // New tabs of the main login share the login of an adopted main tab.
+    if (runLogin === 'main' && this.mainAdopted) return 'main';
     let name = this.logins.get(runLogin);
     if (!name) {
       name = `replay-${this.key}${runLogin === 'main' ? '' : `-${runLogin}`}`.slice(0, 60);
@@ -159,6 +168,15 @@ export class ReplayEngine {
     if (next.accept) await dialog.accept(next.text ?? dialog.defaultValue());
     else await dialog.dismiss();
   };
+
+  // Uses a tab that is open already as a tab of the replay.
+  adopt(name: string, tab: Tab): Tab {
+    tab.answerDialog = this.answer;
+    this.tabs.set(name, tab);
+    this.current = name;
+    if (name === 'main') this.mainAdopted = true;
+    return tab;
+  }
 
   async openTab(name: string, runLogin: string): Promise<Tab> {
     const tab = await this.driver.newTab({ isolated: this.login(runLogin) });
@@ -196,8 +214,13 @@ export class ReplayEngine {
     width?: number;
     session?: string;
     startUrl?: string;
+    // A tab to use as the main tab, like the audience window. Without it, a new login opens.
+    mainTab?: Tab;
   }): Promise<Tab> {
-    const main = await this.openTab('main', 'main');
+    this.started = { session: options.session, startUrl: options.startUrl };
+    const main = options.mainTab
+      ? this.adopt('main', options.mainTab)
+      : await this.openTab('main', 'main');
     const { device, ...rest } = options.emulation ?? {};
     await this.driver.setEmulation(device ? { ...rest, device } : rest, {
       tab: main,
@@ -568,6 +591,22 @@ export class ReplayEngine {
     }
     this.unique = newUnique();
     this.dialogs = [];
+  }
+
+  // Starts over at the start page, with a new login and a new {{unique}} value.
+  async restart(): Promise<void> {
+    await this.resetLogin();
+    const main = this.tab;
+    if (this.started?.session) {
+      await restoreSession(
+        main,
+        loadSession(this.config.projectDir, this.started.session, this.config.environment.name),
+      );
+    }
+    await main.page.goto(
+      this.started?.startUrl ? this.address(this.started.startUrl) : 'about:blank',
+      { waitUntil: 'load' },
+    );
   }
 
   private async removeMocks(): Promise<void> {

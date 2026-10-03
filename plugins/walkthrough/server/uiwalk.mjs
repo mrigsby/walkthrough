@@ -15704,11 +15704,11 @@ var init_HTTPResponse2 = __esm({
         if (!match) {
           return;
         }
-        const statusText = match[1];
-        if (!statusText) {
+        const statusText2 = match[1];
+        if (!statusText2) {
           return;
         }
-        return statusText;
+        return statusText2;
       }
       _resolveBody(err) {
         if (err) {
@@ -48937,11 +48937,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative18 = path14;
-  if (/^[a-zA-Z]:/.test(relative18)) relative18 = relative18.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative18.startsWith("/")) relative18 = relative18.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative18.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative18;
+  let relative19 = path14;
+  if (/^[a-zA-Z]:/.test(relative19)) relative19 = relative19.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative19.startsWith("/")) relative19 = relative19.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative19.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative19;
 }
 function packTar(sources, options = {}) {
   const results2 = /* @__PURE__ */ new Map();
@@ -54358,7 +54358,7 @@ var init_completion = __esm({
         this.zshShell = (_c2 = ((_a11 = this.shim.getEnv("SHELL")) === null || _a11 === void 0 ? void 0 : _a11.includes("zsh")) || ((_b2 = this.shim.getEnv("ZSH_NAME")) === null || _b2 === void 0 ? void 0 : _b2.includes("zsh"))) !== null && _c2 !== void 0 ? _c2 : false;
         this.fishShell = (_e = (_d = this.shim.getEnv("SHELL")) === null || _d === void 0 ? void 0 : _d.includes("fish")) !== null && _e !== void 0 ? _e : false;
       }
-      defaultCompletion(args, argv, current, done) {
+      defaultCompletion(args, argv, current2, done) {
         const handlers = this.command.getCommandHandlers();
         for (let i = 0, ii = args.length; i < ii; ++i) {
           if (handlers[args[i]] && handlers[args[i]].builder) {
@@ -54372,15 +54372,15 @@ var init_completion = __esm({
           }
         }
         const completions = [];
-        this.commandCompletions(completions, args, current);
-        this.optionCompletions(completions, args, argv, current);
-        this.choicesFromOptionsCompletions(completions, args, argv, current);
-        this.choicesFromPositionalsCompletions(completions, args, argv, current);
+        this.commandCompletions(completions, args, current2);
+        this.optionCompletions(completions, args, argv, current2);
+        this.choicesFromOptionsCompletions(completions, args, argv, current2);
+        this.choicesFromPositionalsCompletions(completions, args, argv, current2);
         done(null, completions);
       }
-      commandCompletions(completions, args, current) {
+      commandCompletions(completions, args, current2) {
         const parentCommands = this.yargs.getInternalMethods().getContext().commands;
-        if (!current.match(/^-/) && parentCommands[parentCommands.length - 1] !== current && !this.previousArgHasChoices(args)) {
+        if (!current2.match(/^-/) && parentCommands[parentCommands.length - 1] !== current2 && !this.previousArgHasChoices(args)) {
           this.usage.getCommands().forEach((usageCommand) => {
             const commandName = parseCommand(usageCommand[0]).cmd;
             if (args.indexOf(commandName) === -1) {
@@ -54396,20 +54396,20 @@ var init_completion = __esm({
           });
         }
       }
-      optionCompletions(completions, args, argv, current) {
-        if ((current.match(/^-/) || current === "" && completions.length === 0) && !this.previousArgHasChoices(args)) {
+      optionCompletions(completions, args, argv, current2) {
+        if ((current2.match(/^-/) || current2 === "" && completions.length === 0) && !this.previousArgHasChoices(args)) {
           const options = this.yargs.getOptions();
           const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
           Object.keys(options.key).forEach((key2) => {
             const negable = !!options.configuration["boolean-negation"] && options.boolean.includes(key2);
             const isPositionalKey = positionalKeys.includes(key2);
             if (!isPositionalKey && !options.hiddenOptions.includes(key2) && !this.argsContainKey(args, key2, negable)) {
-              this.completeOptionKey(key2, completions, current, negable && !!options.default[key2]);
+              this.completeOptionKey(key2, completions, current2, negable && !!options.default[key2]);
             }
           });
         }
       }
-      choicesFromOptionsCompletions(completions, args, argv, current) {
+      choicesFromOptionsCompletions(completions, args, argv, current2) {
         if (this.previousArgHasChoices(args)) {
           const choices = this.getPreviousArgChoices(args);
           if (choices && choices.length > 0) {
@@ -54421,8 +54421,8 @@ var init_completion = __esm({
           }
         }
       }
-      choicesFromPositionalsCompletions(completions, args, argv, current) {
-        if (current === "" && completions.length > 0 && this.previousArgHasChoices(args)) {
+      choicesFromPositionalsCompletions(completions, args, argv, current2) {
+        if (current2 === "" && completions.length > 0 && this.previousArgHasChoices(args)) {
           return;
         }
         const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
@@ -54433,7 +54433,7 @@ var init_completion = __esm({
         }
         const choices = this.yargs.getOptions().choices[positionalKey] || [];
         for (const choice of choices) {
-          if (choice.startsWith(current)) {
+          if (choice.startsWith(current2)) {
             if (this.fishShell) {
               completions.push(choice);
             } else {
@@ -54488,7 +54488,7 @@ var init_completion = __esm({
         }
         return false;
       }
-      completeOptionKey(key2, completions, current, negable) {
+      completeOptionKey(key2, completions, current2, negable) {
         var _a11, _b2, _c2, _d;
         let keyWithDesc = key2;
         if (this.zshShell || this.fishShell) {
@@ -54508,16 +54508,16 @@ var init_completion = __esm({
         }
         const startsByTwoDashes = (s) => /^--/.test(s);
         const isShortOption = (s) => /^[^0-9]$/.test(s);
-        const dashes = !startsByTwoDashes(current) && isShortOption(key2) ? "-" : "--";
+        const dashes = !startsByTwoDashes(current2) && isShortOption(key2) ? "-" : "--";
         completions.push(dashes + keyWithDesc);
         if (negable) {
           completions.push(dashes + "no-" + keyWithDesc);
         }
       }
-      customCompletion(args, argv, current, done) {
+      customCompletion(args, argv, current2, done) {
         assertNotStrictEqual(this.customCompletionFunction, null, this.shim);
         if (isSyncCompletionFunction(this.customCompletionFunction)) {
-          const result = this.customCompletionFunction(current, argv);
+          const result = this.customCompletionFunction(current2, argv);
           if (isPromise2(result)) {
             return result.then((list2) => {
               this.shim.process.nextTick(() => {
@@ -54531,19 +54531,19 @@ var init_completion = __esm({
           }
           return done(null, result);
         } else if (isFallbackCompletionFunction(this.customCompletionFunction)) {
-          return this.customCompletionFunction(current, argv, (onCompleted = done) => this.defaultCompletion(args, argv, current, onCompleted), (completions) => {
+          return this.customCompletionFunction(current2, argv, (onCompleted = done) => this.defaultCompletion(args, argv, current2, onCompleted), (completions) => {
             done(null, completions);
           });
         } else {
-          return this.customCompletionFunction(current, argv, (completions) => {
+          return this.customCompletionFunction(current2, argv, (completions) => {
             done(null, completions);
           });
         }
       }
       getCompletion(args, done) {
-        const current = args.length ? args[args.length - 1] : "";
+        const current2 = args.length ? args[args.length - 1] : "";
         const argv = this.yargs.parse(args, true);
-        const completionFunction = this.customCompletionFunction ? (argv2) => this.customCompletion(args, argv2, current, done) : (argv2) => this.defaultCompletion(args, argv2, current, done);
+        const completionFunction = this.customCompletionFunction ? (argv2) => this.customCompletion(args, argv2, current2, done) : (argv2) => this.defaultCompletion(args, argv2, current2, done);
         return isPromise2(argv) ? argv.then(completionFunction) : completionFunction(argv);
       }
       generateCompletionScript($0, cmd) {
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join42 } = await import("node:path");
+    const { join: join43 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join42(userDataDir, "DevToolsActivePort");
+    const portPath = join43(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -68743,49 +68743,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative18, options, skipNormalization) {
+    function resolveComponent(base, relative19, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
         base = parse7(serialize(base, options), options);
-        relative18 = parse7(serialize(relative18, options), options);
+        relative19 = parse7(serialize(relative19, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative18.scheme) {
-        target2.scheme = relative18.scheme;
-        target2.userinfo = relative18.userinfo;
-        target2.host = relative18.host;
-        target2.port = relative18.port;
-        target2.path = removeDotSegments(relative18.path || "");
-        target2.query = relative18.query;
+      if (!options.tolerant && relative19.scheme) {
+        target2.scheme = relative19.scheme;
+        target2.userinfo = relative19.userinfo;
+        target2.host = relative19.host;
+        target2.port = relative19.port;
+        target2.path = removeDotSegments(relative19.path || "");
+        target2.query = relative19.query;
       } else {
-        if (relative18.userinfo !== void 0 || relative18.host !== void 0 || relative18.port !== void 0) {
-          target2.userinfo = relative18.userinfo;
-          target2.host = relative18.host;
-          target2.port = relative18.port;
-          target2.path = removeDotSegments(relative18.path || "");
-          target2.query = relative18.query;
+        if (relative19.userinfo !== void 0 || relative19.host !== void 0 || relative19.port !== void 0) {
+          target2.userinfo = relative19.userinfo;
+          target2.host = relative19.host;
+          target2.port = relative19.port;
+          target2.path = removeDotSegments(relative19.path || "");
+          target2.query = relative19.query;
         } else {
-          if (!relative18.path) {
+          if (!relative19.path) {
             target2.path = base.path;
-            if (relative18.query !== void 0) {
-              target2.query = relative18.query;
+            if (relative19.query !== void 0) {
+              target2.query = relative19.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative18.path[0] === "/") {
-              target2.path = removeDotSegments(relative18.path);
+            if (relative19.path[0] === "/") {
+              target2.path = removeDotSegments(relative19.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative18.path;
+                target2.path = "/" + relative19.path;
               } else if (!base.path) {
-                target2.path = relative18.path;
+                target2.path = relative19.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative18.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative19.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative18.query;
+            target2.query = relative19.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -68793,7 +68793,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative18.fragment;
+      target2.fragment = relative19.fragment;
       return target2;
     }
     function equal2(uriA, uriB, options) {
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname14, join as join41 } from "node:path";
+import { dirname as dirname14, join as join42 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -98363,6 +98363,11 @@ var screenshot = external_exports.union(
 );
 var DURATION = /^(?=\d)(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
 var duration3 = external_exports.string().regex(DURATION, 'Use a time like "45s", "10m", or "1h30m".');
+function durationSeconds(text) {
+  const m = DURATION.exec(text);
+  if (!m) return 0;
+  return Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
+}
 var hexColor = external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#000000".');
 var SLIDE_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"];
 var imageSlide = external_exports.object({
@@ -108385,6 +108390,7 @@ function writeProfilePrefs(profileDir) {
   mkdirSync4(join14(profileDir, "Default"), { recursive: true });
   writeFileSync3(join14(profileDir, "Default", "Preferences"), JSON.stringify(PROFILE_PREFS));
 }
+var AUDIENCE_START = "data:text/html,uiwalk-audience";
 async function launchChrome(config3, options = {}) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
@@ -108398,8 +108404,17 @@ async function launchChrome(config3, options = {}) {
       slowMo: options.background ? 0 : config3.browser.slowMo,
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
-      defaultViewport: headless ? { width: 1280, height: 800 } : null,
-      args: ["--no-first-run", "--no-default-browser-check", "--window-size=1280,900"],
+      defaultViewport: headless ? {
+        width: options.presentation?.width ?? 1280,
+        height: options.presentation?.height ?? 800
+      } : null,
+      args: [
+        "--no-first-run",
+        "--no-default-browser-check",
+        options.presentation ? `--window-size=${options.presentation.width},${options.presentation.height}` : "--window-size=1280,900",
+        ...options.presentation && !headless ? [`--app=${AUDIENCE_START}`] : []
+      ],
+      ...options.presentation ? { ignoreDefaultArgs: ["--enable-automation"] } : {},
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,
@@ -108491,7 +108506,7 @@ var Driver = class _Driver {
       driver.logins.set("main", browser.defaultBrowserContext());
       await driver.addTab(await browser.newPage());
     } else {
-      const { browser, profileDir } = await launchChrome(options.config);
+      const { browser, profileDir } = await launchChrome(options.config, options.launch);
       driver = new _Driver(browser, "launched", await browser.version(), options, profileDir);
       driver.logins.set("main", browser.defaultBrowserContext());
       const first2 = (await browser.pages())[0] ?? await browser.newPage();
@@ -109176,6 +109191,11 @@ var Context = class {
     }
     return config3;
   }
+  // A person confirmed a protected environment for this browser, such as in a presentation.
+  confirmFor(name) {
+    this.driver?.confirmedEnvs.add(name);
+    this.rebuildGuard();
+  }
   // Builds the guard again, for example after the developer confirms an environment.
   rebuildGuard() {
     if (!this.loaded) return;
@@ -109374,12 +109394,14 @@ var Context = class {
     this.driver.assertAlive();
     return this.driver;
   }
-  async startDriver(attach) {
+  // "launch" starts Chrome for a presentation. "panel: false" leaves out the developer panel.
+  async startDriver(attach, options = {}) {
     const config3 = await this.config();
     const guard = await this.guard();
     this.driver = await Driver.start({
-      config: config3,
+      config: options.panel === false ? { ...config3, panel: false } : config3,
       attach,
+      launch: options.launch,
       // Look up the guard each time, so a config reload takes effect.
       isAllowed: (url2) => (this.loaded?.guard ?? guard).isAllowed(url2)
     });
@@ -109392,14 +109414,14 @@ var Context = class {
 
 // packages/server/src/tools/a11y-tools.ts
 import {
-  existsSync as existsSync20,
-  readdirSync as readdirSync10,
-  readFileSync as readFileSync18,
+  existsSync as existsSync21,
+  readdirSync as readdirSync11,
+  readFileSync as readFileSync19,
   realpathSync as realpathSync3,
   statSync as statSync7,
   writeFileSync as writeFileSync13
 } from "node:fs";
-import { join as join33, relative as relative11, resolve as resolve10, sep as sep5 } from "node:path";
+import { join as join34, relative as relative12, resolve as resolve10, sep as sep5 } from "node:path";
 
 // packages/server/src/audit/axe.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -110775,14 +110797,14 @@ function findPrevious(projectDir, currentRunId, pages, compareTo, env2 = "develo
 function normal(html) {
   return html.replace(/\s+/g, " ").trim().toLowerCase();
 }
-function compareFindings(current, previous) {
-  const pagesNow = new Set(current.pages.map((p) => p.page));
+function compareFindings(current2, previous) {
+  const pagesNow = new Set(current2.pages.map((p) => p.page));
   const pagesBoth = new Set(previous.pages.map((p) => p.page).filter((p) => pagesNow.has(p)));
   const keepIds = /* @__PURE__ */ new Map();
   const status = /* @__PURE__ */ new Map();
   const elementsFixed = /* @__PURE__ */ new Map();
   const byRule = new Map(previous.findings.map((f) => [f.rule, f]));
-  for (const finding of current.findings) {
+  for (const finding of current2.findings) {
     const before = byRule.get(finding.rule);
     const shared = before?.pages.some((p) => pagesBoth.has(p));
     if (!before || !shared) {
@@ -113191,9 +113213,9 @@ async function pageSummary(tab) {
 Title: ${title || "(no title)"}
 URL: ${tab.page.url()}`);
 }
-function fullUrl(input3, current, baseUrl) {
+function fullUrl(input3, current2, baseUrl) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(input3)) return input3;
-  const base = /^https?:/.test(current) ? current : baseUrl;
+  const base = /^https?:/.test(current2) ? current2 : baseUrl;
   if (!base) {
     throw new ToolError(
       `"${input3}" is not a full URL, and there is no page or baseUrl to start from. Use a full URL like http://localhost:3000${input3.startsWith("/") ? input3 : `/${input3}`}.`,
@@ -113593,11 +113615,13 @@ function reloadableTab(driver) {
 }
 
 // packages/server/src/tools/run-tools.ts
-import { existsSync as existsSync19, writeFileSync as writeFileSync12 } from "node:fs";
-import { join as join32, relative as relative10 } from "node:path";
+import { existsSync as existsSync20, writeFileSync as writeFileSync12 } from "node:fs";
+import { join as join33, relative as relative11 } from "node:path";
 
 // packages/server/src/presentation/rehearsal.ts
 import { createHash as createHash4 } from "node:crypto";
+import { existsSync as existsSync17, readdirSync as readdirSync9, readFileSync as readFileSync16 } from "node:fs";
+import { join as join26, relative as relative6 } from "node:path";
 
 // packages/server/src/page/actions.ts
 var ACTIONS = [
@@ -113956,6 +113980,9 @@ function dialogAnswers(ops, from2 = 0) {
   }
   return answers;
 }
+function opsByStep(ops) {
+  return new Map(ops.steps.map((s) => [s.step.id, s]));
+}
 
 // packages/server/src/presentation/rehearsal.ts
 var REHEARSAL_MAX_AGE_MS = 12 * 60 * 60 * 1e3;
@@ -114018,20 +114045,40 @@ function slideProblems(plan, projectDir) {
   });
   return problems;
 }
+function findRehearsal(projectDir, planFile, plan, env2, now = Date.now()) {
+  const root = join26(projectDir, ".walkthrough", "runs");
+  if (!existsSync17(root)) return void 0;
+  const file2 = relative6(projectDir, planFile);
+  const hash2 = executionHash(plan);
+  for (const id of readdirSync9(root).sort().reverse()) {
+    let run;
+    try {
+      run = JSON.parse(readFileSync16(join26(root, id, "run.json"), "utf8"));
+    } catch {
+      continue;
+    }
+    if (run.planFile !== file2 || run.planHash !== hash2) continue;
+    if ((run.environment?.name ?? "development") !== env2) continue;
+    const ended = run.endedAt ? Date.parse(run.endedAt) : Number.NaN;
+    if (!(now - ended <= REHEARSAL_MAX_AGE_MS)) continue;
+    if (rehearsalProblems(run, plan).length === 0) return run;
+  }
+  return void 0;
+}
 
 // packages/server/src/report/html.ts
-import { existsSync as existsSync17, readFileSync as readFileSync16 } from "node:fs";
-import { join as join28 } from "node:path";
+import { existsSync as existsSync18, readFileSync as readFileSync17 } from "node:fs";
+import { join as join29 } from "node:path";
 
 // packages/server/src/evidence/screenshot.ts
 import { mkdirSync as mkdirSync10 } from "node:fs";
-import { dirname as dirname10, extname as extname5, join as join26, relative as relative6 } from "node:path";
+import { dirname as dirname10, extname as extname5, join as join27, relative as relative7 } from "node:path";
 function imageType(path14) {
   const ext = extname5(path14).toLowerCase();
   return ext === ".jpg" || ext === ".jpeg" ? "jpeg" : ext === ".webp" ? "webp" : "png";
 }
 async function takeScreenshot(tab, dir, projectDir, options) {
-  const path14 = options.path ?? join26(dir, `${fileStamp(options.label)}.png`);
+  const path14 = options.path ?? join27(dir, `${fileStamp(options.label)}.png`);
   const { handle, fullPage = false } = options;
   const type = imageType(path14);
   if (options.path) {
@@ -114045,12 +114092,12 @@ async function takeScreenshot(tab, dir, projectDir, options) {
     await tab.page.screenshot({ path: path14, type, fullPage });
   }
   const preview = handle ? await handle.screenshot({ type: "jpeg", quality: 60, encoding: "base64" }) : await tab.page.screenshot({ type: "jpeg", quality: 60, encoding: "base64" });
-  return { path: path14, relativePath: relative6(projectDir, path14), preview };
+  return { path: path14, relativePath: relative7(projectDir, path14), preview };
 }
 
 // packages/server/src/lighthouse/flow.ts
 import { mkdirSync as mkdirSync11, writeFileSync as writeFileSync9 } from "node:fs";
-import { join as join27 } from "node:path";
+import { join as join28 } from "node:path";
 
 // packages/server/src/lighthouse/audit.ts
 var NO_SCORE = /* @__PURE__ */ new Set(["notApplicable", "manual", "informative", "error"]);
@@ -114322,19 +114369,19 @@ var LhFlow = class {
     if (!this.results.length) return;
     const lighthouse = await loadLighthouse();
     const result = { steps: this.results, name: this.name };
-    mkdirSync11(join27(runDir, "lighthouse"), { recursive: true });
+    mkdirSync11(join28(runDir, "lighthouse"), { recursive: true });
     writeFileSync9(
-      join27(runDir, FLOW_REPORT),
+      join28(runDir, FLOW_REPORT),
       secrets.redact(lighthouse.generateReport(result, "html"))
     );
-    writeFileSync9(join27(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
+    writeFileSync9(join28(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
   }
 };
 
 // packages/server/src/report/html.ts
 function image(runDir, path14, alt) {
   try {
-    const data = readFileSync16(join28(runDir, path14)).toString("base64");
+    const data = readFileSync17(join29(runDir, path14)).toString("base64");
     return `<a href="${esc2(path14)}"><img src="data:image/${imageType(path14)};base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
@@ -114479,7 +114526,7 @@ function htmlReport(run, runDir) {
 <body>
 <main>
 <h1>${esc2(run.name)}</h1>
-<p class="muted"><span class="badge" style="background:${esc2(env2.color)}">${esc2(env2.label)}</span> Walkthrough report. Result: ${esc2(resultLine(run) || "no steps")}.${existsSync17(join28(runDir, "accessibility.html")) ? ' <a href="accessibility.html">Accessibility report</a>' : ""}${existsSync17(join28(runDir, "lighthouse.html")) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ""}${existsSync17(join28(runDir, FLOW_REPORT)) ? ` <a href="${FLOW_REPORT}">Lighthouse flow report</a>` : ""}</p>
+<p class="muted"><span class="badge" style="background:${esc2(env2.color)}">${esc2(env2.label)}</span> Walkthrough report. Result: ${esc2(resultLine(run) || "no steps")}.${existsSync18(join29(runDir, "accessibility.html")) ? ' <a href="accessibility.html">Accessibility report</a>' : ""}${existsSync18(join29(runDir, "lighthouse.html")) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ""}${existsSync18(join29(runDir, FLOW_REPORT)) ? ` <a href="${FLOW_REPORT}">Lighthouse flow report</a>` : ""}</p>
 <div class="meta">${meta3.map(([k, v2]) => `<div><span>${esc2(k)}</span>${esc2(v2)}</div>`).join("")}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc2(STATUS_LABELS[status])}</span>`).join("")}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc2(run.summary)}</p>` : ""}
@@ -114957,10 +115004,10 @@ function markdownReport(run, options = {}) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync18, mkdirSync as mkdirSync12, readdirSync as readdirSync9, readFileSync as readFileSync17, writeFileSync as writeFileSync10 } from "node:fs";
-import { basename as basename6, extname as extname7, isAbsolute as isAbsolute6, join as join29, relative as relative7, resolve as resolve9 } from "node:path";
+import { existsSync as existsSync19, mkdirSync as mkdirSync12, readdirSync as readdirSync10, readFileSync as readFileSync18, writeFileSync as writeFileSync10 } from "node:fs";
+import { basename as basename6, extname as extname7, isAbsolute as isAbsolute6, join as join30, relative as relative8, resolve as resolve9 } from "node:path";
 function plansDir(projectDir) {
-  return join29(projectDir, ".walkthrough", "plans");
+  return join30(projectDir, ".walkthrough", "plans");
 }
 function validatePlanText(text) {
   const lineCounter = new import_yaml2.LineCounter();
@@ -114999,14 +115046,14 @@ function formatProblems(file2, problems) {
 function findPlanFile(projectDir, name) {
   const dir = plansDir(projectDir);
   const candidates = [
-    join29(dir, name),
-    join29(dir, `${name}.yaml`),
-    join29(dir, `${name}.yml`),
+    join30(dir, name),
+    join30(dir, `${name}.yaml`),
+    join30(dir, `${name}.yml`),
     isAbsolute6(name) ? name : resolve9(projectDir, name)
   ];
   for (const file2 of candidates) {
-    if (existsSync18(file2) && [".yaml", ".yml"].includes(extname7(file2))) {
-      const rel = relative7(projectDir, file2);
+    if (existsSync19(file2) && [".yaml", ".yml"].includes(extname7(file2))) {
+      const rel = relative8(projectDir, file2);
       if (rel.startsWith("..") || isAbsolute6(rel)) {
         throw new ToolError(`The plan ${name} is outside the project folder.`, "plan_not_found");
       }
@@ -115020,10 +115067,10 @@ function findPlanFile(projectDir, name) {
 }
 function loadPlan(projectDir, name) {
   const file2 = findPlanFile(projectDir, name);
-  const result = validatePlanText(readFileSync17(file2, "utf8"));
+  const result = validatePlanText(readFileSync18(file2, "utf8"));
   if (!result.ok)
     throw new ToolError(
-      formatProblems(relative7(projectDir, file2), result.problems),
+      formatProblems(relative8(projectDir, file2), result.problems),
       "plan_invalid"
     );
   return { file: file2, plan: result.plan };
@@ -115043,11 +115090,11 @@ function laterFeatures(plan) {
 }
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
-  if (!existsSync18(dir)) return [];
-  return readdirSync9(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync17(join29(dir, f), "utf8"));
+  if (!existsSync19(dir)) return [];
+  return readdirSync10(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync18(join30(dir, f), "utf8"));
     const name = basename6(f, extname7(f));
-    const file2 = relative7(projectDir, join29(dir, f));
+    const file2 = relative8(projectDir, join30(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
   });
 }
@@ -115063,8 +115110,8 @@ function savePlan(projectDir, name, text, overwrite = false) {
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
   const dir = plansDir(projectDir);
   mkdirSync12(dir, { recursive: true });
-  const file2 = join29(dir, `${name}.yaml`);
-  if (existsSync18(file2) && !overwrite) {
+  const file2 = join30(dir, `${name}.yaml`);
+  if (existsSync19(file2) && !overwrite) {
     throw new ToolError(
       `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
       "plan_exists"
@@ -115075,16 +115122,16 @@ function savePlan(projectDir, name, text, overwrite = false) {
   return file2;
 }
 function loadRunPlan(projectDir, planFile) {
-  if (!planFile || !existsSync18(join29(projectDir, planFile))) return void 0;
+  if (!planFile || !existsSync19(join30(projectDir, planFile))) return void 0;
   try {
-    return loadPlan(projectDir, join29(projectDir, planFile)).plan;
+    return loadPlan(projectDir, join30(projectDir, planFile)).plan;
   } catch {
     return void 0;
   }
 }
 
 // packages/server/src/run/record.ts
-import { isAbsolute as isAbsolute7, join as join30, relative as relative8 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join31, relative as relative9 } from "node:path";
 function recordResult(ctx, ref, result) {
   const store = ctx.run;
   if (store?.run.status !== "running") return void 0;
@@ -115094,13 +115141,13 @@ function recordResult(ctx, ref, result) {
   if (result.notes !== void 0) step.notes = result.notes || void 0;
   if (result.actual !== void 0) step.actual = result.actual || void 0;
   if (result.screenshot) {
-    const full = isAbsolute7(result.screenshot) ? result.screenshot : join30(store.projectDir, result.screenshot);
-    step.screenshots.push(relative8(store.dir, full));
+    const full = isAbsolute7(result.screenshot) ? result.screenshot : join31(store.projectDir, result.screenshot);
+    step.screenshots.push(relative9(store.dir, full));
   }
   if (result.mocked?.length) step.mocked = [.../* @__PURE__ */ new Set([...step.mocked ?? [], ...result.mocked])];
   for (const file2 of result.files ?? []) {
-    const full = isAbsolute7(file2) ? file2 : join30(store.projectDir, file2);
-    step.files = [...step.files ?? [], relative8(store.dir, full)];
+    const full = isAbsolute7(file2) ? file2 : join31(store.projectDir, file2);
+    step.files = [...step.files ?? [], relative9(store.dir, full)];
   }
   if (result.logs) {
     step.logs = formatLogs(result.logs);
@@ -115131,11 +115178,11 @@ function nextStepHint(ctx) {
 }
 
 // packages/server/src/tools/developer-tools.ts
-import { relative as relative9 } from "node:path";
+import { relative as relative10 } from "node:path";
 
 // packages/server/src/evidence/har.ts
 import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
-import { dirname as dirname11, join as join31 } from "node:path";
+import { dirname as dirname11, join as join32 } from "node:path";
 function headers(values, clean) {
   return Object.entries(values ?? {}).map(([name, value]) => ({
     name,
@@ -115215,11 +115262,11 @@ function toHar(entries, secrets) {
   };
 }
 function networkDir(ctx, projectDir) {
-  return join31(dirname11(ctx.evidenceDir(projectDir)), "network");
+  return join32(dirname11(ctx.evidenceDir(projectDir)), "network");
 }
 function writeHar(dir, label2, entries, secrets) {
   mkdirSync13(dir, { recursive: true });
-  const file2 = join31(dir, `${fileStamp(label2)}.har`);
+  const file2 = join32(dir, `${fileStamp(label2)}.har`);
   writeFileSync11(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
 `);
   return file2;
@@ -115251,7 +115298,7 @@ async function bugHar(ctx, entries, stepLabel) {
     entries,
     await ctx.secrets()
   );
-  return relative9(config3.projectDir, file2);
+  return relative10(config3.projectDir, file2);
 }
 function startProgress(extra, message = "Walkthrough waits for the developer to answer in the browser.") {
   const token = extra._meta?.progressToken;
@@ -115490,15 +115537,15 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown = join32(store.dir, "report.md");
-  const html = join32(store.dir, "report.html");
+  const markdown = join33(store.dir, "report.md");
+  const html = join33(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
-  const a11yReport = existsSync19(join32(store.dir, "accessibility.html"));
-  const lhReport = existsSync19(join32(store.dir, "lighthouse.html"));
+  const a11yReport = existsSync20(join33(store.dir, "accessibility.html"));
+  const lhReport = existsSync20(join33(store.dir, "lighthouse.html"));
   const md = markdownReport(run, { a11yReport, lhReport });
   writeFileSync12(markdown, secrets ? secrets.redact(md) : md);
   writeFileSync12(html, htmlReport(run, store.dir));
-  return { markdown: relative10(store.projectDir, markdown), html: relative10(store.projectDir, html) };
+  return { markdown: relative11(store.projectDir, markdown), html: relative11(store.projectDir, html) };
 }
 async function closeFlow(ctx, store) {
   const flow = ctx.lhFlow;
@@ -115656,7 +115703,7 @@ function registerRunTools(server, ctx) {
         if (!name || !content)
           throw new ToolError("Give a name and the plan content to save.", "bad_input");
         const file3 = savePlan(projectDir, name, content, overwrite);
-        return `Saved the plan: ${relative10(projectDir, file3)}`;
+        return `Saved the plan: ${relative11(projectDir, file3)}`;
       }
       if (action2 === "validate" && content) {
         const result = validatePlanText(content);
@@ -115672,15 +115719,15 @@ function registerRunTools(server, ctx) {
         ];
         if (shots.length) {
           return [
-            `The plan ${relative10(projectDir, file2)} has file paths that Walkthrough cannot use:`,
+            `The plan ${relative11(projectDir, file2)} has file paths that Walkthrough cannot use:`,
             ...shots.map((p) => `- ${p}`)
           ].join("\n");
         }
-        return `The plan ${relative10(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
+        return `The plan ${relative11(projectDir, file2)} is valid. It has ${plan.steps.length} step(s).${later.length ? ` Note: these keys do not work yet: ${later.join(", ")}.` : ""}`;
       }
       const mode = plan.mode ?? "checkpoints";
       return [
-        `Plan: ${plan.name} (${relative10(projectDir, file2)})`,
+        `Plan: ${plan.name} (${relative11(projectDir, file2)})`,
         plan.description ? `About: ${plan.description}` : "",
         `Mode: ${mode}`,
         plan.baseUrl ? `Start page: ${plan.baseUrl}` : "",
@@ -116029,11 +116076,11 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
 // packages/server/src/tools/a11y-tools.ts
 var TIME_LIMIT_MS = Number(process.env.UIWALK_SCAN_LIMIT_MS) || 45e3;
 function latestA11yRunId(projectDir) {
-  const dir = join33(projectDir, ".walkthrough", "runs");
-  if (!existsSync20(dir)) return void 0;
-  for (const id of readdirSync10(dir).sort().reverse()) {
+  const dir = join34(projectDir, ".walkthrough", "runs");
+  if (!existsSync21(dir)) return void 0;
+  for (const id of readdirSync11(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync18(join33(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync19(join34(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
     } catch {
     }
@@ -116167,10 +116214,10 @@ function registerA11yTools(server, ctx) {
         const tab = driver.activeTab();
         const startUrl2 = tab.page.url();
         if (!input3.runId) {
-          const current = /^https?:/.test(startUrl2) ? startUrl2 : "";
-          pending = (input3.urls?.length ? input3.urls : [current]).map((u) => {
+          const current2 = /^https?:/.test(startUrl2) ? startUrl2 : "";
+          pending = (input3.urls?.length ? input3.urls : [current2]).map((u) => {
             if (!u) throw new ToolError("Give the pages to check in urls.", "bad_input");
-            return fullUrl(u, current, config3.baseUrl);
+            return fullUrl(u, current2, config3.baseUrl);
           });
           for (const url2 of pending) guard.check(url2);
           if (!store) {
@@ -116416,9 +116463,9 @@ function registerA11yTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join33(store.dir, "accessibility.html"),
-        md: join33(store.dir, "accessibility.md"),
-        json: join33(store.dir, "accessibility.json")
+        html: join34(store.dir, "accessibility.html"),
+        md: join34(store.dir, "accessibility.md"),
+        json: join34(store.dir, "accessibility.json")
       };
       writeFileSync13(files.html, a11yHtmlReport(data));
       writeFileSync13(files.md, secrets.redact(a11yMarkdownReport(data)));
@@ -116427,7 +116474,7 @@ function registerA11yTools(server, ctx) {
       writeReports(store, secrets);
       return [
         `Wrote the accessibility report for the run "${store.run.name}":`,
-        ...Object.values(files).map((f) => `- ${relative11(projectDir, f)}`),
+        ...Object.values(files).map((f) => `- ${relative12(projectDir, f)}`),
         scoreLine(scores),
         compareLine,
         ...warnings.length ? ["Warnings:", ...warnings.map((w2) => `- ${w2}`)] : [],
@@ -116439,7 +116486,7 @@ function registerA11yTools(server, ctx) {
 }
 
 // packages/server/src/tools/devtools-tools.ts
-import { relative as relative12 } from "node:path";
+import { relative as relative13 } from "node:path";
 
 // packages/server/src/devtools/inspect.ts
 import { randomBytes as randomBytes10 } from "node:crypto";
@@ -116985,10 +117032,10 @@ function registerDevtoolsTools(server, ctx) {
           entries,
           await ctx.secrets()
         );
-        const relativePath = relative12(config3.projectDir, file2);
+        const relativePath = relative13(config3.projectDir, file2);
         if (input3.stepId && ctx.run?.run.status === "running") {
           const step = ctx.run.step({ id: input3.stepId });
-          step.files = [...step.files ?? [], relative12(ctx.run.dir, file2)];
+          step.files = [...step.files ?? [], relative13(ctx.run.dir, file2)];
           ctx.run.save();
         }
         return `Saved ${entries.length} request(s) to ${relativePath}. The file has no login headers, cookies, or secret body fields. DevTools and other tools can open the file.`;
@@ -117169,9 +117216,9 @@ async function storageAction(tab, input3, show, resolve12, keep, isAllowed) {
 }
 
 // packages/server/src/tools/environment-tools.ts
-function envLine(env2, current, confirmed) {
+function envLine(env2, current2, confirmed) {
   const marks = [
-    env2.name === current ? "current" : "",
+    env2.name === current2 ? "current" : "",
     env2.protected ? confirmed.has(env2.name) ? "protected, confirmed" : "protected" : ""
   ].filter(Boolean);
   return `- ${env2.name}${marks.length ? ` (${marks.join(", ")})` : ""}: ${env2.baseUrl ?? "no baseUrl"}. Label "${env2.label}". From ${env2.source}.`;
@@ -117258,19 +117305,19 @@ function registerEnvironmentTools(server, ctx) {
 
 // packages/server/src/tools/lighthouse-tools.ts
 import {
-  existsSync as existsSync22,
-  readdirSync as readdirSync12,
-  readFileSync as readFileSync20,
+  existsSync as existsSync23,
+  readdirSync as readdirSync13,
+  readFileSync as readFileSync21,
   realpathSync as realpathSync4,
   statSync as statSync8,
   writeFileSync as writeFileSync15
 } from "node:fs";
-import { join as join36, relative as relative13, resolve as resolve11, sep as sep6 } from "node:path";
+import { join as join37, relative as relative14, resolve as resolve11, sep as sep6 } from "node:path";
 
 // packages/server/src/lighthouse/findings.ts
 import { createHash as createHash6 } from "node:crypto";
-import { existsSync as existsSync21, readdirSync as readdirSync11, readFileSync as readFileSync19 } from "node:fs";
-import { join as join34 } from "node:path";
+import { existsSync as existsSync22, readdirSync as readdirSync12, readFileSync as readFileSync20 } from "node:fs";
+import { join as join35 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
 function checkLabel(check2) {
   const page = pageKey(check2.url);
@@ -117282,9 +117329,9 @@ function latest(checks) {
   return [...byPage.values()];
 }
 function buildLhFindings(checks, options = {}) {
-  const current = latest(checks);
+  const current2 = latest(checks);
   const byAudit = /* @__PURE__ */ new Map();
-  for (const check2 of current) {
+  for (const check2 of current2) {
     const page = checkLabel(check2);
     for (const audit of check2.audits) {
       let finding = byAudit.get(audit.id);
@@ -117325,7 +117372,7 @@ function buildLhFindings(checks, options = {}) {
     f.id = lhId(next);
     used.add(f.id);
   }
-  const pages = current.map((c) => ({
+  const pages = current2.map((c) => ({
     page: checkLabel(c),
     url: c.url,
     device: c.device,
@@ -117336,24 +117383,24 @@ function buildLhFindings(checks, options = {}) {
     metrics: c.metrics,
     files: c.files
   }));
-  const categories = [...new Set(current.flatMap((c) => Object.keys(c.scores)))].sort(
+  const categories = [...new Set(current2.flatMap((c) => Object.keys(c.scores)))].sort(
     (a2, b2) => (ORDER.get(a2) ?? 99) - (ORDER.get(b2) ?? 99)
   );
   const digest = createHash6("sha256").update(
     JSON.stringify(findings.map((f) => [f.id, f.audit, f.pages.map((p) => [p.page, p.score])]))
   ).digest("hex").slice(0, 12);
-  return { findings, pages, categories, version: current[0]?.version ?? "", digest };
+  return { findings, pages, categories, version: current2[0]?.version ?? "", digest };
 }
 function lhId(n) {
   return `LH-${String(n).padStart(3, "0")}`;
 }
 function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "development") {
-  const runs = join34(projectDir, ".walkthrough", "runs");
+  const runs = join35(projectDir, ".walkthrough", "runs");
   const read = (id) => {
-    const file2 = join34(runs, id, "lighthouse.json");
-    if (!existsSync21(file2)) return void 0;
+    const file2 = join35(runs, id, "lighthouse.json");
+    if (!existsSync22(file2)) return void 0;
     try {
-      return JSON.parse(readFileSync19(file2, "utf8"));
+      return JSON.parse(readFileSync20(file2, "utf8"));
     } catch {
       return void 0;
     }
@@ -117362,8 +117409,8 @@ function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "devel
     checkRunId(projectDir, compareTo);
     return read(compareTo);
   }
-  if (!existsSync21(runs)) return void 0;
-  for (const id of readdirSync11(runs).sort().reverse()) {
+  if (!existsSync22(runs)) return void 0;
+  for (const id of readdirSync12(runs).sort().reverse()) {
     if (id >= runId) continue;
     const saved = read(id);
     if (!saved || saved.plan !== plan) continue;
@@ -117372,14 +117419,14 @@ function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "devel
   }
   return void 0;
 }
-function compareLh(current, previous) {
+function compareLh(current2, previous) {
   const keepIds = new Map(previous.findings.map((f) => [f.audit, f.id]));
   const startAfter = Math.max(0, ...previous.findings.map((f) => Number(f.id.slice(3)) || 0));
-  const now = new Set(current.findings.map((f) => f.audit));
-  const pages = new Set(current.pages.map((p) => p.page));
+  const now = new Set(current2.findings.map((f) => f.audit));
+  const pages = new Set(current2.pages.map((p) => p.page));
   const fixed = previous.findings.filter((f) => !now.has(f.audit) && f.pages.some((p) => pages.has(p))).map(({ id, audit, title }) => ({ id, audit, title }));
   const changes = [];
-  for (const page of current.pages) {
+  for (const page of current2.pages) {
     const before = previous.pages.find((p) => p.page === page.page);
     if (!before || page.mode !== "navigation" || (before.mode ?? "navigation") !== "navigation")
       continue;
@@ -117400,7 +117447,7 @@ function compareLh(current, previous) {
 
 // packages/server/src/lighthouse/run.ts
 import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync14 } from "node:fs";
-import { join as join35 } from "node:path";
+import { join as join36 } from "node:path";
 async function auditPage2(url2, options) {
   const lighthouse = await loadLighthouse();
   const { browser, profileDir } = await launchChrome(options.config, { background: true });
@@ -117444,7 +117491,7 @@ async function auditPage2(url2, options) {
     );
   }
   const [html, json2] = Array.isArray(result.report) ? result.report : [result.report];
-  const dir = join35(options.runDir, "lighthouse");
+  const dir = join36(options.runDir, "lighthouse");
   mkdirSync14(dir, { recursive: true });
   let path14 = "/";
   try {
@@ -117454,11 +117501,11 @@ async function auditPage2(url2, options) {
   const base = `${String(options.index).padStart(2, "0")}-${slug(path14, 40, "home")}`;
   const files = {};
   if (html) {
-    writeFileSync14(join35(dir, `${base}.report.html`), options.secrets.redact(html));
+    writeFileSync14(join36(dir, `${base}.report.html`), options.secrets.redact(html));
     files.html = `lighthouse/${base}.report.html`;
   }
   if (json2) {
-    writeFileSync14(join35(dir, `${base}.report.json`), options.secrets.redact(json2));
+    writeFileSync14(join36(dir, `${base}.report.json`), options.secrets.redact(json2));
     files.json = `lighthouse/${base}.report.json`;
   }
   return {
@@ -117475,11 +117522,11 @@ function scoresLine(scores) {
   return Object.entries(scores).map(([c, s]) => `${CATEGORY_LABELS[c] ?? c} ${s ?? "n/a"}`).join(", ");
 }
 function latestLhRunId(projectDir) {
-  const dir = join36(projectDir, ".walkthrough", "runs");
-  if (!existsSync22(dir)) return void 0;
-  for (const id of readdirSync12(dir).sort().reverse()) {
+  const dir = join37(projectDir, ".walkthrough", "runs");
+  if (!existsSync23(dir)) return void 0;
+  for (const id of readdirSync13(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync20(join36(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync21(join37(dir, id, "run.json"), "utf8"));
       if (run.lighthouse?.length) return id;
     } catch {
     }
@@ -117702,11 +117749,11 @@ function registerLighthouseTools(server, ctx) {
         }
         const driver = ctx.driver?.alive && ctx.driver.hasActiveTab ? ctx.driver : void 0;
         const tabUrl = driver?.activeTab().page.url() ?? "";
-        const current = /^https?:/.test(tabUrl) ? tabUrl : "";
+        const current2 = /^https?:/.test(tabUrl) ? tabUrl : "";
         if (!input3.runId) {
-          pending = (input3.urls?.length ? input3.urls : [current]).map((u) => {
+          pending = (input3.urls?.length ? input3.urls : [current2]).map((u) => {
             if (!u) throw new ToolError("Give the pages to check in urls.", "bad_input");
-            return fullUrl(u, current, config3.baseUrl);
+            return fullUrl(u, current2, config3.baseUrl);
           });
           for (const url2 of pending) guard.check(url2);
           store ??= RunStore.create(config3.projectDir, {
@@ -117950,9 +117997,9 @@ function registerLighthouseTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join36(store.dir, "lighthouse.html"),
-        md: join36(store.dir, "lighthouse.md"),
-        json: join36(store.dir, "lighthouse.json")
+        html: join37(store.dir, "lighthouse.html"),
+        md: join37(store.dir, "lighthouse.md"),
+        json: join37(store.dir, "lighthouse.json")
       };
       writeFileSync15(files.html, secrets.redact(lhHtml(data)));
       writeFileSync15(files.md, secrets.redact(lhMarkdown(data)));
@@ -117961,7 +118008,7 @@ function registerLighthouseTools(server, ctx) {
       writeReports(store, secrets);
       return [
         `Wrote the Lighthouse report for the run "${store.run.name}":`,
-        ...Object.values(files).map((f) => `- ${relative13(projectDir, f)}`),
+        ...Object.values(files).map((f) => `- ${relative14(projectDir, f)}`),
         compareLine,
         ...warnings.length ? ["Warnings:", ...warnings.map((w2) => `- ${w2}`)] : [],
         "Show this prompt to the developer in a code block. They can paste it into a new session to plan the fixes:",
@@ -117972,7 +118019,7 @@ function registerLighthouseTools(server, ctx) {
 }
 
 // packages/server/src/tools/page-tools.ts
-import { relative as relative14 } from "node:path";
+import { relative as relative15 } from "node:path";
 
 // packages/server/src/page/read.ts
 async function readElement(handle) {
@@ -118145,6 +118192,7 @@ function registerPageTools(server, ctx) {
       }
     },
     ({ ref }) => runTool(ctx, "snapshot", async () => {
+      await ctx.presentation?.settled?.(5e3);
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const root = ref ? (await driver.refs.resolve(ref, tab.id, tab.nav)).handle : void 0;
@@ -118229,6 +118277,7 @@ ${outline}`),
       inputSchema: { ref: refField, selector: selectorField }
     },
     ({ ref, selector }) => runTool(ctx, "read", async () => {
+      await ctx.presentation?.settled?.(5e3);
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const target2 = await resolveTarget(driver, tab, { ref, selector });
@@ -118307,7 +118356,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
       const saved = exact?.display ?? shot.relativePath;
       if (stepId && store) {
         const step = store.step({ id: stepId });
-        step.screenshots.push(relative14(store.dir, shot.path));
+        step.screenshots.push(relative15(store.dir, shot.path));
         if (exact) {
           const element = target2 && !rect ? target2 : void 0;
           const found = element ? selector ?? await stableSelector(element.handle, element) : void 0;
@@ -118331,9 +118380,1555 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
   );
 }
 
+// packages/server/src/replay/engine.ts
+import { randomBytes as randomBytes11 } from "node:crypto";
+var INSTANT = { typeMs: 0, glideMs: 0, holdMs: 0 };
+var MAX_TYPE_MS = 3e3;
+var StepError = class extends Error {
+};
+var parse6 = (value) => {
+  try {
+    return JSON.parse(value ?? "{}");
+  } catch {
+    return {};
+  }
+};
+function sleep(ms, signal) {
+  if (ms <= 0 || signal?.aborted) return Promise.resolve();
+  return new Promise((resolve12) => {
+    const timer2 = setTimeout(done, ms);
+    function done() {
+      clearTimeout(timer2);
+      signal?.removeEventListener("abort", done);
+      resolve12();
+    }
+    signal?.addEventListener("abort", done, { once: true });
+  });
+}
+async function centerInView(handle) {
+  await handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
+}
+async function runOps(ops, from2, exec2, signal) {
+  for (let i = from2; i < ops.length; i++) {
+    if (signal?.aborted) {
+      return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
+    }
+    try {
+      await exec2(ops[i]);
+    } catch (error62) {
+      if (signal?.aborted) {
+        return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
+      }
+      return { ok: false, opIndex: i, message: error62.message };
+    }
+  }
+  return { ok: true };
+}
+var ReplayEngine = class {
+  constructor(options) {
+    this.options = options;
+    this.pace = options.pace;
+    this.stage = options.stage;
+    this.before = options.driver.activeId;
+  }
+  options;
+  // Tabs by their name in the run. The replay has its own tabs.
+  tabs = /* @__PURE__ */ new Map();
+  current = "main";
+  // A new value for each replay, so a flow that makes data can run again.
+  unique = newUnique();
+  pace;
+  stage;
+  // Logins by their name in the run, and the new login that stands for each.
+  logins = /* @__PURE__ */ new Map();
+  // Dialog answers of the step that is going, in order.
+  dialogs = [];
+  // Mock rules of the replay, by their id in the run.
+  mocks = /* @__PURE__ */ new Map();
+  restores = [];
+  key = randomBytes11(2).toString("hex");
+  before;
+  // True when the main tab is a tab of the browser, like the audience window.
+  mainAdopted = false;
+  // How open() started, so restart() can do it again.
+  started;
+  get driver() {
+    return this.options.driver;
+  }
+  get config() {
+    return this.options.config;
+  }
+  get tab() {
+    const tab = this.tabs.get(this.current);
+    if (!tab || tab.closed) throw new StepError(`The tab "${this.current}" is not open.`);
+    return tab;
+  }
+  // The logins that the replay made. They all close at the end.
+  get loginNames() {
+    const names = new Set(this.logins.values());
+    names.delete("main");
+    return names;
+  }
+  login(runLogin) {
+    if (runLogin === "main" && this.mainAdopted) return "main";
+    let name = this.logins.get(runLogin);
+    if (!name) {
+      name = `replay-${this.key}${runLogin === "main" ? "" : `-${runLogin}`}`.slice(0, 60);
+      this.logins.set(runLogin, name);
+    }
+    return name;
+  }
+  answer = async (dialog) => {
+    const type = dialog.type();
+    if (type === "alert" || type === "beforeunload") return dialog.accept();
+    const next = this.dialogs.shift() ?? { accept: true };
+    if (next.accept) await dialog.accept(next.text ?? dialog.defaultValue());
+    else await dialog.dismiss();
+  };
+  // Uses a tab that is open already as a tab of the replay.
+  adopt(name, tab) {
+    tab.answerDialog = this.answer;
+    this.tabs.set(name, tab);
+    this.current = name;
+    if (name === "main") this.mainAdopted = true;
+    return tab;
+  }
+  async openTab(name, runLogin) {
+    const tab = await this.driver.newTab({ isolated: this.login(runLogin) });
+    tab.answerDialog = this.answer;
+    this.tabs.set(name, tab);
+    this.current = name;
+    return tab;
+  }
+  use(name) {
+    this.current = name;
+    this.driver.switchTo(this.tab.id);
+  }
+  tokens() {
+    return new TokenResolver(this.unique, this.options.vars ?? {}, this.options.secrets);
+  }
+  // The real value, with vars, {{unique}}, and secrets.
+  text(value) {
+    return this.tokens().apply(value);
+  }
+  // An address of the run, on the environment of the replay.
+  address(value) {
+    return this.options.rebase.url(
+      new TokenResolver(this.unique, this.options.vars ?? {}).display(value)
+    );
+  }
+  // Opens the main tab in a new login, with the run's settings, at the start page.
+  async open(options) {
+    this.started = { session: options.session, startUrl: options.startUrl };
+    const main2 = options.mainTab ? this.adopt("main", options.mainTab) : await this.openTab("main", "main");
+    const { device, ...rest } = options.emulation ?? {};
+    await this.driver.setEmulation(device ? { ...rest, device } : rest, {
+      tab: main2,
+      reload: false
+    });
+    if (!device && options.width) {
+      await main2.page.setViewport({
+        width: options.width,
+        height: Math.round(options.width * 10 / 16),
+        deviceScaleFactor: 1
+      });
+    }
+    if (options.session)
+      await restoreSession(
+        main2,
+        loadSession(this.config.projectDir, options.session, this.config.environment.name)
+      );
+    await main2.page.goto(options.startUrl ? this.address(options.startUrl) : "about:blank", {
+      waitUntil: "load"
+    });
+    return main2;
+  }
+  // Does one step. "fromOp" starts in the middle, to try a failed operation again.
+  async runStep(stepOps, options = {}) {
+    const from2 = options.fromOp ?? 0;
+    this.dialogs = dialogAnswers(stepOps.ops, from2);
+    if (from2 === 0) {
+      const { step } = stepOps;
+      const text = options.caption ?? step.template?.caption ?? step.caption ?? step.template?.title ?? step.title;
+      this.stage.stepStart(new TokenResolver(this.unique, this.options.vars ?? {}).display(text));
+    }
+    return runOps(
+      stepOps.ops,
+      from2,
+      async (op) => {
+        if (op.type === "reach") await this.reach(op.url);
+        else if (op.type === "action") {
+          await this.act(op.action);
+          await this.tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 3e3, signal: this.options.signal }).catch(() => void 0);
+        } else if (op.type === "expect") await this.expectText(op.text);
+      },
+      this.options.signal
+    );
+  }
+  async frameOf(frameUrl2) {
+    const page = this.tab.page;
+    if (!frameUrl2) return page.mainFrame();
+    let part = frameUrl2;
+    try {
+      part = new URL(this.address(frameUrl2)).pathname;
+    } catch {
+    }
+    const end = Date.now() + this.config.actionTimeoutMs;
+    while (Date.now() < end && !this.options.signal?.aborted) {
+      const found = page.frames().find((f) => f.url().includes(part));
+      if (found) return found;
+      await sleep(100, this.options.signal);
+    }
+    throw new StepError(`There is no frame with the address ${part}.`);
+  }
+  async find(action2) {
+    const frame = await this.frameOf(action2.frameUrl);
+    const handle = await frame.waitForSelector(action2.selector, {
+      timeout: this.config.actionTimeoutMs,
+      signal: this.options.signal
+    }).catch(() => null);
+    if (!handle)
+      throw new StepError(`Walkthrough did not find ${action2.label} (${action2.selector}).`);
+    return handle;
+  }
+  // Moves the pointer to the element before the action.
+  async point(handle, kind) {
+    await centerInView(handle);
+    await sleep(this.pace.glideMs, this.options.signal);
+    await this.stage.point(this.tab, kind, await elementRect(handle));
+  }
+  // Goes to the address, unless the last action already went there.
+  async reach(url2) {
+    let want;
+    try {
+      want = new URL(this.address(url2));
+    } catch {
+      return;
+    }
+    if (!/^https?:$/.test(want.protocol)) return;
+    const page = this.tab.page;
+    const here = new URL(page.url());
+    if (here.pathname === want.pathname && here.search === want.search) return;
+    try {
+      await page.waitForFunction(
+        (path14) => location.pathname + location.search === path14,
+        { timeout: 3e3, signal: this.options.signal },
+        want.pathname + want.search
+      );
+    } catch {
+      await page.goto(want.href, { waitUntil: "load" });
+    }
+  }
+  async expectText(text) {
+    const want = new TokenResolver(this.unique, this.options.vars ?? {}).display(text);
+    const found = await this.tab.page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 1e4 }, want).then(() => true).catch(() => false);
+    if (!found) throw new StepError(`The page does not show "${want}".`);
+  }
+  // Types like a person, a few characters at a time, so a stop can come in between.
+  async type(text) {
+    const delay = Math.min(this.pace.typeMs, MAX_TYPE_MS / Math.max(1, text.length));
+    const keyboard = this.tab.page.keyboard;
+    if (delay <= 0) {
+      await keyboard.type(text);
+      return;
+    }
+    for (let i = 0; i < text.length; i += 8) {
+      if (this.options.signal?.aborted) throw new StepError("The replay stopped.");
+      await keyboard.type(text.slice(i, i + 8), { delay });
+    }
+  }
+  async act(action2) {
+    const page = () => this.tab.page;
+    const value = action2.value ?? "";
+    switch (action2.action) {
+      case "navigate":
+        await page().goto(this.address(action2.value ?? action2.label), { waitUntil: "load" });
+        return;
+      case "click":
+      case "dblclick": {
+        const handle = await this.find(action2);
+        await this.point(handle, action2.action);
+        await handle.click({ count: action2.action === "dblclick" ? 2 : 1 });
+        return;
+      }
+      case "hover": {
+        const handle = await this.find(action2);
+        await this.point(handle, "hover");
+        await handle.hover();
+        return;
+      }
+      case "fill": {
+        const handle = await this.find(action2);
+        await this.point(handle, "fill");
+        const shown = new TokenResolver(this.unique, this.options.vars ?? {}).display(value);
+        if (this.options.secrets.hasTokens(shown))
+          this.restores.push(await maskSecretFields([handle]));
+        const text = this.text(value);
+        await handle.evaluate((el) => {
+          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+            el.value = "";
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+          } else if (el.isContentEditable) {
+            el.textContent = "";
+          }
+        });
+        await handle.focus();
+        await this.type(text);
+        return;
+      }
+      case "select": {
+        const handle = await this.find(action2);
+        await this.point(handle, "select");
+        await selectOption(handle, this.text(value));
+        return;
+      }
+      case "check":
+      case "uncheck": {
+        const handle = await this.find(action2);
+        await this.point(handle, action2.action);
+        const want = action2.action === "check";
+        if (await handle.evaluate((el) => el.checked) !== want)
+          await handle.click();
+        return;
+      }
+      case "press": {
+        if (action2.selector) await (await this.find(action2)).focus();
+        await this.stage.point(this.tab, "press");
+        await pressKeys(this.tab, value);
+        return;
+      }
+      case "scroll": {
+        if (action2.selector) {
+          await (await this.find(action2)).scrollIntoView();
+          return;
+        }
+        await page().mouse.wheel({ deltaY: value === "up" ? -600 : Number(value) || 600 });
+        return;
+      }
+      case "upload": {
+        const handle = await this.find(action2);
+        await this.point(handle, "upload");
+        const paths = (action2.files ?? []).map(
+          (f) => checkUploadPath(f, this.config.uploadsRoot, this.config.projectDir)
+        );
+        await handle.uploadFile(...paths);
+        return;
+      }
+      case "dialog":
+        return;
+      case "tab-new": {
+        const detail = parse6(action2.value);
+        const tab = await this.openTab(
+          String(detail.name ?? `tab-${this.tabs.size + 1}`),
+          String(detail.login ?? "main")
+        );
+        if (typeof detail.url === "string")
+          await tab.page.goto(this.address(detail.url), { waitUntil: "load" });
+        return;
+      }
+      case "tab-switch": {
+        const detail = parse6(action2.value);
+        const name = String(detail.name ?? "");
+        if (this.tabs.has(name)) {
+          this.use(name);
+          return;
+        }
+        const opener = this.tabs.get(String(detail.opener ?? ""));
+        if (!opener) throw new StepError(`The replay does not know how the tab "${name}" opened.`);
+        const mine = new Set([...this.tabs.values()].map((t) => t.id));
+        const end = Date.now() + 1e4;
+        while (Date.now() < end && !this.options.signal?.aborted) {
+          const popup = [...this.driver.tabs.values()].find(
+            (t) => t.openerId === opener.id && !mine.has(t.id)
+          );
+          if (popup) {
+            popup.answerDialog = this.answer;
+            this.tabs.set(name, popup);
+            this.use(name);
+            return;
+          }
+          await sleep(100, this.options.signal);
+        }
+        throw new StepError(`The tab "${name}" did not open.`);
+      }
+      case "tab-close": {
+        const name = String(parse6(action2.value).name ?? "");
+        const tab = this.tabs.get(name);
+        this.tabs.delete(name);
+        await tab?.page.close().catch(() => void 0);
+        if (this.current === name) this.use([...this.tabs.keys()].at(-1) ?? "main");
+        return;
+      }
+      case "emulate": {
+        const { allTabs, ...change } = parse6(action2.value);
+        const targets = allTabs ? [...this.tabs.values()] : [this.tab];
+        for (const tab of targets) await this.driver.setEmulation(change, { tab, reload: false });
+        return;
+      }
+      case "mock": {
+        const { tab, id, ...rule } = parse6(action2.value);
+        const target2 = typeof tab === "string" ? this.tabs.get(tab) : void 0;
+        const input3 = rule;
+        if (input3.url) input3.url = this.options.rebase.pattern(input3.url);
+        const tabIds = target2 ? [target2.id] : [...this.tabs.values()].map((t) => t.id);
+        for (const tabId of tabIds) {
+          const added = await this.driver.addMock({ ...input3, tab: tabId });
+          this.mocks.set(`${String(id ?? added.id)}:${tabId}`, added.id);
+        }
+        return;
+      }
+      case "mock-clear": {
+        const { id } = parse6(action2.value);
+        for (const [key2, driverId] of [...this.mocks]) {
+          if (id !== void 0 && !key2.startsWith(`${String(id)}:`)) continue;
+          await this.driver.removeMocks(driverId);
+          this.mocks.delete(key2);
+        }
+        return;
+      }
+      case "storage":
+        await this.storage(parse6(action2.value));
+        return;
+    }
+  }
+  async storage(detail) {
+    const tab = this.tab;
+    const op = String(detail.op ?? "");
+    const name = typeof detail.name === "string" ? detail.name : void 0;
+    const text = typeof detail.value === "string" ? this.text(detail.value) : "";
+    if (op === "clearSiteData") {
+      const cdp = await tab.page.createCDPSession();
+      await cdp.send("Storage.clearDataForOrigin", {
+        origin: new URL(tab.page.url()).origin,
+        storageTypes: "all"
+      });
+      await cdp.detach().catch(() => void 0);
+      return;
+    }
+    if (detail.kind === "local" || detail.kind === "session") {
+      if (op === "set" || op === "delete" || op === "clear")
+        await writeStorage(tab, detail.kind, op, name, text);
+      return;
+    }
+    const context2 = tab.page.browserContext();
+    if (op === "set" && name) {
+      await context2.setCookie({
+        name,
+        value: text,
+        domain: typeof detail.domain === "string" && detail.domain ? this.options.rebase.host(detail.domain) : new URL(tab.page.url()).hostname,
+        path: typeof detail.path === "string" ? detail.path : "/",
+        ...typeof detail.httpOnly === "boolean" ? { httpOnly: detail.httpOnly } : {},
+        ...typeof detail.secure === "boolean" ? { secure: detail.secure } : {}
+      });
+      return;
+    }
+    if (op === "delete" || op === "clear") {
+      for (const cookie of await context2.cookies()) {
+        if (op === "delete" && cookie.name !== name) continue;
+        await context2.deleteCookie(cookie);
+      }
+    }
+  }
+  // Starts over in the same window: the other tabs close, the login and site data go,
+  // and {{unique}} gets a new value. The main tab stays, on a blank page.
+  async resetLogin() {
+    await this.removeMocks();
+    const main2 = this.tabs.get("main");
+    for (const [name, tab] of [...this.tabs]) {
+      if (name === "main") continue;
+      this.tabs.delete(name);
+      await tab.page.close().catch(() => void 0);
+    }
+    if (main2 && !main2.closed) {
+      this.current = "main";
+      const origins = /* @__PURE__ */ new Set();
+      for (const url2 of [main2.page.url(), this.options.config.baseUrl]) {
+        try {
+          if (url2 && /^https?:/.test(url2)) origins.add(new URL(url2).origin);
+        } catch {
+        }
+      }
+      const cdp = await main2.page.createCDPSession();
+      try {
+        for (const origin of origins)
+          await cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
+      } finally {
+        await cdp.detach().catch(() => void 0);
+      }
+      const context2 = main2.page.browserContext();
+      for (const cookie of await context2.cookies()) await context2.deleteCookie(cookie);
+      await main2.page.goto("about:blank").catch(() => void 0);
+    }
+    this.unique = newUnique();
+    this.dialogs = [];
+  }
+  // Starts over at the start page, with a new login and a new {{unique}} value.
+  async restart() {
+    await this.resetLogin();
+    const main2 = this.tab;
+    if (this.started?.session) {
+      await restoreSession(
+        main2,
+        loadSession(this.config.projectDir, this.started.session, this.config.environment.name)
+      );
+    }
+    await main2.page.goto(
+      this.started?.startUrl ? this.address(this.started.startUrl) : "about:blank",
+      { waitUntil: "load" }
+    );
+  }
+  async removeMocks() {
+    for (const driverId of this.mocks.values())
+      await this.driver.removeMocks(driverId).catch(() => 0);
+    this.mocks.clear();
+  }
+  // Closes the replay's tabs and logins. The tab from before is active again.
+  async dispose() {
+    await this.removeMocks();
+    for (const restore of this.restores.reverse()) await restore().catch(() => void 0);
+    const logins = this.loginNames;
+    for (const tab of [...this.driver.tabs.values()]) {
+      if (logins.has(tab.login)) await tab.page.close().catch(() => void 0);
+    }
+    if (this.before && this.driver.tabs.has(this.before)) this.driver.switchTo(this.before);
+  }
+};
+
+// packages/server/src/replay/stage.ts
+var NullStage = class {
+  stepStart() {
+  }
+  async point() {
+  }
+};
+var VideoStage = class {
+  constructor(capture, captions) {
+    this.capture = capture;
+    this.captions = captions;
+  }
+  capture;
+  captions;
+  stepStart(text) {
+    if (this.captions) this.capture()?.setCaption(text);
+  }
+  async point(tab, kind, rect) {
+    this.capture()?.action(tab.id, kind, rect);
+  }
+};
+
+// packages/server/src/presentation/runner.ts
+var NO_SCREEN = {
+  title: async () => void 0,
+  slide: async () => void 0,
+  end: async () => void 0,
+  clear: async () => void 0,
+  curtain: async () => void 0,
+  gate: async () => void 0
+};
+var PresentationRunner = class {
+  constructor(session, engine, ops, options) {
+    this.session = session;
+    this.engine = engine;
+    this.ops = ops;
+    this.options = options;
+    this.screen = options.screen ?? NO_SCREEN;
+  }
+  session;
+  engine;
+  ops;
+  options;
+  screen;
+  get steps() {
+    return this.session.steps;
+  }
+  get signal() {
+    return this.session.abort.signal;
+  }
+  get kiosk() {
+    return this.options.kiosk;
+  }
+  opsOf(step) {
+    const found = this.ops.get(step.id);
+    return step.hasAction && found?.ops.length ? found : void 0;
+  }
+  async run() {
+    let loopsLeft = this.kiosk?.loop ? this.kiosk.loops : 1;
+    let next = "title";
+    try {
+      while (!this.signal.aborted && next !== "done") {
+        if (next === "title") next = await this.title();
+        else if (next === "end") {
+          next = await this.endScreen();
+          if (next === "done" && this.kiosk && --loopsLeft > 0 && !this.signal.aborted) {
+            await this.engine.restart();
+            next = "title";
+          }
+        } else if (next >= this.steps.length) next = "end";
+        else next = await this.play(next);
+      }
+    } finally {
+      this.session.stop();
+    }
+  }
+  async title() {
+    this.session.setState("title", 0);
+    await this.screen.title();
+    if (this.kiosk) {
+      await sleep(this.kiosk.holdMs, this.signal);
+      this.session.startedAt ??= Date.now();
+      await this.screen.clear();
+      return 0;
+    }
+    for (; ; ) {
+      const command2 = await this.session.nextCommand();
+      if (command2.type === "end") return "done";
+      if (command2.type === "start" || command2.type === "jump") {
+        this.session.startedAt ??= Date.now();
+        await this.screen.clear();
+        return command2.type === "start" ? 0 : this.jumpTo(command2.step - 1, 0);
+      }
+    }
+  }
+  async play(i) {
+    const step = this.steps[i];
+    const stepOps = this.opsOf(step);
+    if (step.slide) await this.screen.slide(step);
+    if (!this.kiosk && step.pause) {
+      this.session.setState("gate", i);
+      if (stepOps) await this.screen.gate(step, stepOps);
+      const next = await this.atGate(i);
+      if (next !== "run") return next;
+    } else {
+      this.session.setState("gate", i);
+      if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
+      else if (!stepOps) await sleep(this.options.pace.holdMs, this.signal);
+    }
+    if (!stepOps) return i + 1;
+    if (step.slide) await this.screen.clear();
+    return this.runAction(i, stepOps, 0);
+  }
+  async atGate(i) {
+    for (; ; ) {
+      const command2 = await this.session.nextCommand();
+      switch (command2.type) {
+        case "continue":
+          return "run";
+        case "skip":
+          return i + 1;
+        case "back":
+          return this.rewindTo(this.previousGate(i));
+        case "jump":
+          return this.jumpTo(command2.step - 1, i);
+        case "end":
+          return "end";
+      }
+    }
+  }
+  async runAction(i, stepOps, fromOp) {
+    this.session.setState("running", i);
+    const outcome = await this.engine.runStep(stepOps, { fromOp });
+    if (outcome.ok) {
+      this.session.failure = void 0;
+      const following = this.steps[i + 1];
+      if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
+      else if (!following?.pause) await sleep(this.options.pace.holdMs, this.signal);
+      return i + 1;
+    }
+    return this.failed(i, stepOps, outcome);
+  }
+  // A step did not work. The presenter chooses: retry, skip, do it by hand, or go elsewhere.
+  async failed(i, stepOps, outcome) {
+    if (outcome.stopped || this.signal.aborted) return "done";
+    this.session.failure = { step: i + 1, opIndex: outcome.opIndex, message: outcome.message };
+    this.session.setState("failed", i);
+    this.session.push({ type: "step_failed", step: i + 1, message: outcome.message });
+    if (this.kiosk) return i + 1;
+    for (; ; ) {
+      const command2 = await this.session.nextCommand();
+      switch (command2.type) {
+        case "retry":
+          return this.runAction(i, stepOps, outcome.opIndex);
+        case "skip":
+          return i + 1;
+        case "manual":
+          return this.manual(i);
+        case "back":
+          return this.rewindTo(this.previousGate(i));
+        case "jump":
+          return this.jumpTo(command2.step - 1, i);
+        case "end":
+          return "end";
+      }
+    }
+  }
+  // The presenter uses the app by hand. Continue goes on with the next step.
+  async manual(i) {
+    this.session.setState("manual", i);
+    for (; ; ) {
+      const command2 = await this.session.nextCommand();
+      switch (command2.type) {
+        case "continue":
+          return i >= this.steps.length ? "end" : i + 1;
+        case "back":
+          return this.rewindTo(this.previousGate(Math.min(i, this.steps.length)));
+        case "jump":
+          return this.jumpTo(command2.step - 1, Math.min(i, this.steps.length));
+        case "end":
+          return i >= this.steps.length ? "done" : "end";
+      }
+    }
+  }
+  async endScreen() {
+    this.session.setState("end", this.steps.length);
+    await this.screen.end();
+    if (this.kiosk) {
+      await sleep(this.kiosk.holdMs, this.signal);
+      return "done";
+    }
+    for (; ; ) {
+      const command2 = await this.session.nextCommand();
+      switch (command2.type) {
+        case "end":
+          return "done";
+        case "manual":
+          await this.screen.clear();
+          await this.manual(this.steps.length);
+          return this.session.state === "stopped" ? "done" : "end";
+        case "back":
+          return this.rewindTo(this.previousGate(this.steps.length));
+        case "jump":
+          return this.jumpTo(command2.step - 1, this.steps.length);
+      }
+    }
+  }
+  // The step before i that waits for the presenter. Back goes there, so a step that plays
+  // by itself does not bring the presentation right back.
+  previousGate(i) {
+    let k = Math.max(0, i - 1);
+    while (k > 0 && !this.steps[k].pause) k -= 1;
+    return k;
+  }
+  // Goes to a step. Ahead, the steps between run at full speed. Back, it starts over.
+  async jumpTo(target2, from2) {
+    if (target2 === from2) return target2;
+    if (target2 < from2) return this.rewindTo(target2);
+    return this.fastForward(from2, target2);
+  }
+  // Starts over in a new login, and runs the steps before the target at full speed.
+  async rewindTo(target2) {
+    this.session.setState("running", target2);
+    await this.screen.curtain(true);
+    try {
+      await this.engine.restart();
+    } catch (error62) {
+      await this.screen.curtain(false);
+      throw error62;
+    }
+    return this.fastForward(0, target2, true);
+  }
+  async fastForward(from2, to, curtainOn = false) {
+    this.session.setState("running", from2);
+    if (!curtainOn) await this.screen.curtain(true);
+    const pace = this.engine.pace;
+    const stage = this.engine.stage;
+    this.engine.pace = INSTANT;
+    this.engine.stage = new NullStage();
+    let failure2;
+    try {
+      for (let i = from2; i < to && !this.signal.aborted; i++) {
+        const stepOps = this.opsOf(this.steps[i]);
+        if (!stepOps) continue;
+        const outcome = await this.engine.runStep(stepOps);
+        if (!outcome.ok) {
+          failure2 = { i, stepOps, outcome };
+          break;
+        }
+      }
+    } finally {
+      this.engine.pace = pace;
+      this.engine.stage = stage;
+      await this.screen.curtain(false);
+    }
+    if (failure2) return this.failed(failure2.i, failure2.stepOps, failure2.outcome);
+    return to;
+  }
+};
+
+// packages/server/src/presentation/session.ts
+var COMMANDS_IN = {
+  title: ["start", "jump", "end"],
+  gate: ["continue", "skip", "back", "jump", "end"],
+  running: ["end"],
+  failed: ["retry", "skip", "manual", "back", "jump", "end"],
+  manual: ["continue", "back", "jump", "end"],
+  end: ["manual", "back", "jump", "end"],
+  stopped: []
+};
+var PresentationSession = class {
+  constructor(steps, info, abort = new AbortController()) {
+    this.steps = steps;
+    this.info = info;
+    this.abort = abort;
+  }
+  steps;
+  info;
+  abort;
+  state = "title";
+  // The step at the gate, playing, or failed, from 0. steps.length means the end screen.
+  current = 0;
+  // The audience screen shows black.
+  blank = false;
+  openedAt = Date.now();
+  // When the presenter clicked Start.
+  startedAt;
+  failure;
+  // Time spent on each step, in milliseconds, by index from 0.
+  stepTimes = /* @__PURE__ */ new Map();
+  chat = [];
+  stepSince;
+  commands = [];
+  commandWaiter;
+  events = [];
+  listener;
+  idle = /* @__PURE__ */ new Set();
+  watchers = /* @__PURE__ */ new Set();
+  get active() {
+    return this.state !== "stopped";
+  }
+  // True while a listen call waits for an event. The presenter window shows it.
+  get listening() {
+    return Boolean(this.listener);
+  }
+  // Calls fn after each change, for the presenter window. Returns a way to stop.
+  watch(fn) {
+    this.watchers.add(fn);
+    return () => this.watchers.delete(fn);
+  }
+  changed() {
+    for (const fn of this.watchers) {
+      try {
+        fn();
+      } catch {
+      }
+    }
+  }
+  setState(state, current2 = this.current) {
+    if (current2 !== this.current || state === "end" || state === "stopped") this.closeStepTime();
+    if (this.stepSince === void 0 && state !== "title" && state !== "stopped")
+      this.stepSince = Date.now();
+    this.state = state;
+    this.current = current2;
+    if (state !== "running") {
+      for (const done of this.idle) done();
+      this.idle.clear();
+    }
+    this.changed();
+  }
+  closeStepTime() {
+    if (this.stepSince === void 0) return;
+    this.stepTimes.set(
+      this.current,
+      (this.stepTimes.get(this.current) ?? 0) + Date.now() - this.stepSince
+    );
+    this.stepSince = void 0;
+  }
+  // The time on the step that shows now, in milliseconds.
+  stepElapsed() {
+    return (this.stepTimes.get(this.current) ?? 0) + (this.stepSince === void 0 ? 0 : Date.now() - this.stepSince);
+  }
+  setBlank(on) {
+    this.blank = on;
+    this.changed();
+  }
+  // Waits until no step plays, so a tool can read the page without a race.
+  settled(ms = 5e3) {
+    if (this.state !== "running") return Promise.resolve();
+    return new Promise((resolve12) => {
+      const done = () => {
+        clearTimeout(timer2);
+        this.idle.delete(done);
+        resolve12();
+      };
+      const timer2 = setTimeout(done, ms);
+      this.idle.add(done);
+    });
+  }
+  // Returns a reason when the command cannot run now.
+  check(command2) {
+    if (!COMMANDS_IN[this.state].includes(command2.type)) {
+      return `The presentation is at "${this.state}", so "${command2.type}" does not work now. It can: ${COMMANDS_IN[this.state].join(", ") || "nothing"}.`;
+    }
+    if (command2.type === "jump" && (command2.step < 1 || command2.step > this.steps.length)) {
+      return `There is no step ${command2.step}. The steps are 1 to ${this.steps.length}.`;
+    }
+    return void 0;
+  }
+  // A command from the presenter or the agent. The runner takes it at its next stop.
+  command(command2) {
+    const waiter = this.commandWaiter;
+    if (waiter) {
+      this.commandWaiter = void 0;
+      waiter(command2);
+    } else {
+      this.commands.push(command2);
+    }
+  }
+  // The next command for the runner. A stop gives "end".
+  nextCommand() {
+    const queued = this.commands.shift();
+    if (queued) return Promise.resolve(queued);
+    if (this.abort.signal.aborted) return Promise.resolve({ type: "end" });
+    return new Promise((resolve12) => {
+      this.commandWaiter = resolve12;
+    });
+  }
+  // A question from the presenter, for the agent.
+  ask(text) {
+    const entry = {
+      id: `q${this.chat.length + 1}`,
+      question: text,
+      askedAt: Date.now()
+    };
+    this.chat.push(entry);
+    this.push({ type: "question", id: entry.id, text });
+    this.changed();
+    return entry;
+  }
+  // The agent's answer. Without an id, it is a note, such as about a failed step.
+  answer(id, text, onScreen = false) {
+    let entry = id ? this.chat.find((c) => c.id === id) : void 0;
+    if (id && !entry) throw new Error(`There is no question "${id}".`);
+    if (!entry) {
+      entry = { id: `n${this.chat.length + 1}`, askedAt: Date.now() };
+      this.chat.push(entry);
+    }
+    entry.answer = text;
+    entry.answeredAt = Date.now();
+    entry.onScreen = onScreen;
+    this.changed();
+    return entry;
+  }
+  push(event) {
+    const listener = this.listener;
+    if (listener) {
+      this.listener = void 0;
+      listener({ kind: "event", event });
+    } else {
+      this.events.push(event);
+    }
+  }
+  // Waits for the next event. A newer call ends this one.
+  listen(timeoutMs, signal) {
+    const queued = this.events.shift();
+    if (queued) return Promise.resolve({ kind: "event", event: queued });
+    this.listener?.({ kind: "superseded" });
+    return new Promise((resolve12) => {
+      const finish = (outcome) => {
+        clearTimeout(timer2);
+        signal?.removeEventListener("abort", onAbort);
+        if (this.listener === finish) this.listener = void 0;
+        this.changed();
+        resolve12(outcome);
+      };
+      const onAbort = () => finish({ kind: "canceled" });
+      const timer2 = setTimeout(() => finish({ kind: "timeout" }), timeoutMs);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      this.listener = finish;
+      this.changed();
+    });
+  }
+  // Ends the presentation. The runner stops, and a listen call hears "ended".
+  stop() {
+    if (this.state === "stopped") return;
+    this.setState("stopped");
+    this.abort.abort();
+    this.command({ type: "end" });
+    this.push({ type: "ended" });
+  }
+};
+
+// packages/server/src/replay/rebase.ts
+var Rebaser = class _Rebaser {
+  constructor(from2, to) {
+    this.to = to;
+    this.from = [...new Set(from2.filter((u) => Boolean(u)))].sort(
+      (a2, b2) => b2.length - a2.length
+    );
+  }
+  to;
+  // Base URLs to move from, longest first, so the most exact one wins.
+  from;
+  // From the run's environment, and any environment in the settings, to the one in use.
+  static forRun(run, config3) {
+    return new _Rebaser(
+      [
+        run.environment?.baseUrl,
+        run.baseUrl,
+        ...Object.values(config3.environments).map((e) => e.baseUrl)
+      ],
+      config3.environment.baseUrl
+    );
+  }
+  url(url2) {
+    for (const base of this.from) {
+      const moved = rebaseUrl(url2, base, this.to);
+      if (moved) return moved;
+    }
+    return url2;
+  }
+  // A cookie domain on the old site moves to the new site.
+  host(host) {
+    if (!this.to) return host;
+    const bare = host.replace(/^\./, "");
+    for (const base of this.from) {
+      try {
+        if (new URL(base).hostname === bare) {
+          const to = new URL(this.to).hostname;
+          return host.startsWith(".") ? `.${to}` : to;
+        }
+      } catch {
+      }
+    }
+    return host;
+  }
+  // A mock URL pattern on the old site, like "https://staging.example.com/api/*".
+  pattern(pattern) {
+    return /^https?:\/\//.test(pattern) ? this.url(pattern) : pattern;
+  }
+};
+
+// packages/server/src/replay/replayer.ts
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync22, writeFileSync as writeFileSync16 } from "node:fs";
+import { dirname as dirname12, join as join38, relative as relative16 } from "node:path";
+var PACES = {
+  slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
+  normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
+  fast: { typeMs: 20, glideMs: 200, holdMs: 700 }
+};
+var VIDEO_FPS2 = 15;
+function replayVars(run, config3) {
+  return { ...run.vars, ...buildVars(config3, planOf(run, config3)?.vars) };
+}
+function planOf(run, config3) {
+  return loadRunPlan(config3.projectDir, run.planFile);
+}
+async function replayRun(ctx, input3) {
+  const config3 = await ctx.config();
+  if (ctx.run?.run.status === "running") {
+    throw new ToolError("A run is going. Call run_finish first, then replay it.", "run_active");
+  }
+  if (liveCaptures(ctx).length > 0) {
+    throw new ToolError("A video is recording. Call video with action stop first.", "video_active");
+  }
+  const id = input3.runId ?? latestRunId(config3.projectDir, { finishedOnly: true });
+  if (!id) throw new ToolError("There is no finished run to replay.", "no_run");
+  const store = RunStore.open(config3.projectDir, id);
+  const run = store.run;
+  const allowed = planOf(run, config3)?.environments;
+  if (allowed && !allowed.includes(config3.environment.name)) {
+    throw new ToolError(
+      `The plan of this run may run only in these environments: ${allowed.join(", ")}. The session uses "${config3.environment.name}".`,
+      "environment_not_allowed"
+    );
+  }
+  const plan = buildOps(run);
+  if (plan.missingSelectors.length) {
+    throw new ToolError(
+      [
+        `Walkthrough cannot replay the run "${run.name}", because these actions have no stable selector:`,
+        ...plan.missingSelectors.map((m) => `- ${m}`),
+        "Add an exact action to these plan steps, and run the plan again."
+      ].join("\n"),
+      "replay_blocked"
+    );
+  }
+  if (!plan.steps.some((s) => s.ops.some((o) => o.type === "action"))) {
+    throw new ToolError(`The run "${run.name}" has no actions to replay.`, "nothing_to_do");
+  }
+  const targets = (input3.paths ?? []).map((p) => ({
+    format: chooseFormat(void 0, p, config3.video.runFormat),
+    ...checkMediaPath(p, config3.projectDir, config3.screenshotRoots)
+  }));
+  const formats = [.../* @__PURE__ */ new Set([...input3.formats ?? [], ...targets.map((t) => t.format)])];
+  if (formats.length === 0) formats.push(config3.video.runFormat);
+  if (!ctx.driver?.alive) await openBrowser(ctx, {});
+  const driver = ctx.requireDriver();
+  const width = input3.width ?? config3.video.width;
+  const pace = PACES[input3.pace];
+  let capture;
+  const replay = new ReplayEngine({
+    driver,
+    config: config3,
+    secrets: await ctx.secrets(),
+    vars: replayVars(run, config3),
+    pace,
+    stage: new VideoStage(() => capture, input3.captions ?? config3.video.captions),
+    rebase: Rebaser.forRun(run, config3)
+  });
+  const failure2 = async (stepTitle, message) => {
+    const lines = [
+      `The replay stopped at step ${stepTitle}: ${message}`,
+      "Walkthrough saved no video. Fix the step or the app, and replay again."
+    ];
+    let preview;
+    try {
+      const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
+      preview = Buffer.from(shot).toString("base64");
+      const file2 = join38(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      mkdirSync15(dirname12(file2), { recursive: true });
+      writeFileSync16(file2, shot);
+      lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
+    } catch {
+    }
+    return { ok: false, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
+  };
+  try {
+    await replay.open({
+      emulation: run.emulation,
+      width,
+      session: input3.session ?? run.session,
+      startUrl: run.baseUrl ?? config3.baseUrl
+    });
+    capture = new VideoCapture(driver, { maxWidth: width, showPanel: false });
+    await capture.start();
+    for (const stepOps of plan.steps) {
+      const { step } = stepOps;
+      input3.onStep?.(`Step ${step.index}: ${step.title}`);
+      const outcome = await replay.runStep(stepOps);
+      if (!outcome.ok) return await failure2(`${step.index} "${step.title}"`, outcome.message);
+      await sleep(pace.holdMs);
+    }
+    await capture.stop();
+    const events = [
+      ...capture.events,
+      { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
+    ];
+    const lines = [];
+    const videoDir = join38(store.dir, "video");
+    mkdirSync15(videoDir, { recursive: true });
+    const stamp3 = fileStamp("replay");
+    let preview;
+    for (const format3 of formats) {
+      const samples = buildSamples(capture.frames, events, {
+        start: capture.startedAt,
+        end: capture.stoppedAt ?? Date.now(),
+        fps: format3 === "gif" ? config3.video.gifFps : VIDEO_FPS2,
+        idleSeconds: config3.video.idleSeconds,
+        pointer: input3.pointer ?? config3.video.pointer,
+        captions: input3.captions ?? config3.video.captions,
+        glideMs: pace.glideMs
+      });
+      const seconds = samples.reduce((sum, s) => sum + s.duration, 0);
+      if (format3 === "gif" && seconds > config3.video.maxGifSeconds) {
+        lines.push(
+          `Walkthrough made no GIF, because the replay is ${Math.round(seconds)} seconds long. GIF files can be up to ${config3.video.maxGifSeconds} seconds (maxGifSeconds).`
+        );
+        continue;
+      }
+      const middle = samples[Math.floor(samples.length / 2)];
+      if (!preview && middle)
+        preview = readFileSync22(join38(capture.dir, middle.file)).toString("base64");
+      const out = await encodeVideo({
+        config: config3,
+        framesDir: capture.dir,
+        samples,
+        format: format3,
+        outFile: join38(videoDir, `${stamp3}.${format3}`),
+        title: input3.titleCard ?? true ? run.name : void 0,
+        width: format3 === "gif" ? config3.video.gifWidth : width
+      });
+      lines.push(
+        `Saved the replay (${out.format.toUpperCase()}, ${out.seconds.toFixed(1)} seconds, ${size(out.bytes)}, ${out.width}x${out.height}): ${relative16(config3.projectDir, out.file)}`
+      );
+      if (out.note) lines.push(out.note);
+      const copies = [];
+      for (const target2 of targets.filter((t) => t.format === out.format)) {
+        mkdirSync15(dirname12(target2.path), { recursive: true });
+        copyFileSync2(out.file, target2.path);
+        copies.push(target2.display);
+        lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
+      }
+      run.videos ??= [];
+      run.videos.push({
+        file: relative16(store.dir, out.file),
+        format: out.format,
+        seconds: Math.round(out.seconds * 10) / 10,
+        bytes: out.bytes,
+        name: "replay",
+        ...copies[0] ? { path: copies[0] } : {}
+      });
+    }
+    store.save();
+    lines.push(
+      `The replay used a new login and a new {{unique}} value (${replay.unique}), at the ${input3.pace} pace.`
+    );
+    return { ok: true, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
+  } catch (error62) {
+    if (error62 instanceof StepError) return failure2("(setup)", error62.message);
+    throw error62;
+  } finally {
+    await capture?.stop().catch(() => void 0);
+    capture?.discard();
+    await replay.dispose();
+  }
+}
+
+// packages/server/src/tools/present-tools.ts
+var current;
+var COMMANDS = [
+  "start",
+  "continue",
+  "skip",
+  "retry",
+  "manual",
+  "back",
+  "jump",
+  "blank",
+  "end"
+];
+function clock(ms) {
+  const s = Math.max(0, Math.round(ms / 1e3));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+function stepLine(session, i) {
+  const step = session.steps[i];
+  return step ? `step ${step.index} of ${session.steps.length}: "${step.title}"` : "the end screen";
+}
+function statusText(session) {
+  const step = session.steps[session.current];
+  const next = session.steps[session.current + 1];
+  const env2 = session.info.environment;
+  const elapsed = session.startedAt ? Date.now() - session.startedAt : 0;
+  const budget = session.info.timeBudgetSec;
+  return [
+    `Presentation: ${session.info.name}. Environment: ${env2.name}${env2.baseUrl ? ` (${env2.baseUrl})` : ""}. Rehearsal: ${session.info.runId}.`,
+    `State: ${session.state}, at ${session.state === "title" ? "the title slide" : stepLine(session, session.current)}.${session.blank ? " The audience screen is blank." : ""}`,
+    ...step?.notes && session.state !== "title" ? [`Notes: ${step.notes}`] : [],
+    ...next && session.state !== "end" ? [`Next: step ${next.index} "${next.title}".`] : [],
+    ...session.failure ? [`Failed: step ${session.failure.step}: ${session.failure.message}`] : [],
+    `Time: ${session.startedAt ? clock(elapsed) : "not started"}${budget ? ` of ${clock(budget * 1e3)}` : ""}.`,
+    `Chat: ${session.chat.filter((c) => c.question).length} question(s). ${session.listening ? "You are listening." : "Nobody is listening now."}`
+  ].join("\n");
+}
+function eventText(session, event) {
+  if (event.type === "ended") {
+    return "status: ended\nThe presentation ended. Stop listening.";
+  }
+  const step = session.steps[session.current];
+  const context2 = [
+    `Now: ${session.state === "title" ? "the title slide" : stepLine(session, session.current)}.`,
+    ...step?.notes ? [`Notes of this step: ${step.notes}`] : [],
+    `Environment: ${describeEnvironment(session.info.environment)}.`
+  ];
+  if (event.type === "step_failed") {
+    return [
+      "status: step_failed",
+      `Step ${event.step} did not work: ${event.message}`,
+      ...context2,
+      'The presenter can retry, skip, or do the step by hand. To help, look at the page with snapshot or read. Then send a short note with present action "answer" and no id. Then call present with action "listen" again.'
+    ].join("\n");
+  }
+  return [
+    "status: question",
+    `Question ${event.id} from the presenter:`,
+    untrusted(event.text),
+    ...context2,
+    `Answer with present action "answer", id "${event.id}", and 1 to 3 short sentences in plain text. You can use snapshot, read, and the project code first. Then call present with action "listen" again.`
+  ].join("\n");
+}
+function changeSoon(session, ms) {
+  return new Promise((resolve12) => {
+    const stop = session.watch(() => {
+      clearTimeout(timer2);
+      stop();
+      resolve12();
+    });
+    const timer2 = setTimeout(() => {
+      stop();
+      resolve12();
+    }, ms);
+  });
+}
+async function startPresentation(ctx, input3, extra) {
+  if (current?.session.active) {
+    throw new ToolError(
+      'A presentation is going already. Call present with action "stop" first.',
+      "presentation_active"
+    );
+  }
+  if (ctx.run?.run.status === "running") {
+    throw new ToolError(
+      `The run "${ctx.run.run.name}" is still going. Call run_finish first.`,
+      "run_active"
+    );
+  }
+  if (liveCaptures(ctx).length > 0) {
+    throw new ToolError("A video is recording. Call video with action stop first.", "video_active");
+  }
+  if (ctx.driver?.alive && ctx.driver.mode === "attached") {
+    throw new ToolError(
+      "Walkthrough uses your own Chrome now. A presentation needs a Chrome of its own. Call browser_close first.",
+      "attached"
+    );
+  }
+  if (!input3.plan) throw new ToolError("Give the name of the plan to present.", "bad_input");
+  const lines = input3.environment ? await ctx.useEnvironment(input3.environment, { source: "tool" }) : [];
+  const config3 = await ctx.config();
+  const { file: file2, plan } = loadPlan(config3.projectDir, input3.plan);
+  const env2 = config3.environment;
+  if (plan.environments && !plan.environments.includes(env2.name)) {
+    throw new ToolError(
+      `The plan "${plan.name}" may run only in these environments: ${plan.environments.join(", ")}. The session uses "${env2.name}".`,
+      "environment_not_allowed"
+    );
+  }
+  const slides = slideProblems(plan, config3.projectDir);
+  if (slides.length) {
+    throw new ToolError(
+      `The presentation cannot show these slides:
+${slides.map((s) => `- ${s}`).join("\n")}`,
+      "slide_blocked"
+    );
+  }
+  let run;
+  if (input3.runId) {
+    run = RunStore.open(config3.projectDir, input3.runId).run;
+    const problems = rehearsalProblems(run, plan);
+    if (run.planHash && run.planHash !== executionHash(plan))
+      problems.push("The steps of the plan changed after this run.");
+    if (problems.length) {
+      throw new ToolError(
+        `The run ${run.id} cannot be presented:
+${problems.map((p) => `- ${p}`).join("\n")}`,
+        "not_presentable"
+      );
+    }
+  } else {
+    run = findRehearsal(config3.projectDir, file2, plan, env2.name);
+    if (!run) {
+      throw new ToolError(
+        `There is no good rehearsal of "${plan.name}" on ${env2.name} from the last 12 hours. Rehearse first: call run_start with plan "${input3.plan}" and mode "autonomous", do and check every step, and call run_finish. Then call present again.`,
+        "no_rehearsal"
+      );
+    }
+  }
+  let confirmed = !env2.protected;
+  const allowed = (process.env.UIWALK_ALLOW_PROTECTED ?? "").split(",").map((s) => s.trim());
+  if (!confirmed && allowed.includes(env2.name)) confirmed = true;
+  const ask = ctx.elicit?.();
+  if (!confirmed && ask) {
+    const answer = await ask(
+      `Present on the "${env2.name}" environment (${env2.baseUrl})? The presentation can create real data there.`,
+      { timeoutMs: 3e5, signal: extra.signal, relatedRequestId: extra.requestId }
+    );
+    if (answer !== "yes") {
+      await ctx.finishSwitch(false);
+      throw new ToolError(
+        `The developer did not confirm the "${env2.name}" environment.`,
+        "protected_unconfirmed"
+      );
+    }
+    confirmed = true;
+  }
+  if (!confirmed) {
+    await ctx.finishSwitch(false);
+    throw new ToolError(
+      `"${env2.name}" is a protected environment. A presentation there needs the developer's OK: through the MCP client, or with UIWALK_ALLOW_PROTECTED=${env2.name}.`,
+      "protected_unconfirmed"
+    );
+  }
+  const settings = plan.presentation ?? {};
+  const kiosk = Boolean(input3.kiosk ?? settings.kiosk);
+  if (ctx.driver?.alive) await ctx.driver.close();
+  const driver = await ctx.startDriver(void 0, {
+    launch: { presentation: settings.window ?? { width: 1280, height: 800 } },
+    panel: false
+  });
+  ctx.confirmFor(env2.name);
+  await ctx.finishSwitch(true);
+  const audience = driver.activeTab();
+  const ops = opsByStep(buildOps(run));
+  const vars = replayVars(run, config3);
+  const pace = PACES[settings.pace ?? "normal"];
+  const abort = new AbortController();
+  const engine = new ReplayEngine({
+    driver,
+    config: config3,
+    secrets: await ctx.secrets(),
+    vars,
+    pace,
+    stage: new NullStage(),
+    rebase: Rebaser.forRun(run, config3),
+    signal: abort.signal
+  });
+  const show = (text) => new TokenResolver(engine.unique, vars).display(text);
+  const steps = plan.steps.map((step, i) => {
+    const id = step.id ?? `step-${i + 1}`;
+    return {
+      index: i + 1,
+      id,
+      title: show(step.do),
+      ...step.caption ? { caption: show(step.caption) } : {},
+      ...step.notes ? { notes: show(step.notes) } : {},
+      ...step.slide ? { slide: step.slide } : {},
+      hasAction: Boolean(ops.get(id)?.ops.some((o) => o.type === "action")),
+      pause: step.pause ?? settings.pause !== "none",
+      spotlight: step.spotlight ?? settings.spotlight ?? true,
+      ...step.zoom ? { zoom: step.zoom } : {},
+      ...step.timeBudget ? { timeBudgetSec: durationSeconds(step.timeBudget) } : {}
+    };
+  });
+  const session = new PresentationSession(
+    steps,
+    {
+      name: plan.name,
+      runId: run.id,
+      environment: { name: env2.name, label: env2.label, color: env2.color, baseUrl: env2.baseUrl },
+      kiosk,
+      ...settings.timeBudget ? { timeBudgetSec: durationSeconds(settings.timeBudget) } : {}
+    },
+    abort
+  );
+  await engine.open({
+    mainTab: audience,
+    emulation: settings.device ? run.emulation : void 0,
+    session: run.session,
+    startUrl: run.baseUrl ?? config3.baseUrl
+  });
+  ctx.presentation = session;
+  const runner = new PresentationRunner(session, engine, ops, {
+    pace,
+    ...kiosk ? {
+      kiosk: {
+        holdMs: (settings.kiosk?.holdSeconds ?? 6) * 1e3,
+        loop: settings.kiosk?.loop ?? false,
+        loops: settings.kiosk?.loops ?? 100
+      }
+    } : {}
+  });
+  const done = runner.run().catch((error62) => log.error("the presentation stopped", error62)).finally(async () => {
+    await engine.dispose().catch(() => void 0);
+    await driver.close().catch(() => void 0);
+    if (ctx.presentation === session) ctx.presentation = void 0;
+  });
+  current = { session, done };
+  return [
+    ...lines,
+    `The presentation "${plan.name}" is ready on ${describeEnvironment(env2)}. It plays the rehearsal ${run.id}.`,
+    `It has ${steps.length} step(s).${kiosk ? " It runs by itself (kiosk)." : " It waits for the presenter before each step."}`,
+    kiosk ? 'Call present with action "stop" to end it.' : 'The audience window shows the title. The presenter starts it. When the presenter asks you, use present with action "control".',
+    'Now call present with action "listen", and answer each question with action "answer". Keep listening until listen says "ended".'
+  ].join("\n");
+}
+async function stopPresentation() {
+  const live = current;
+  if (!live) return "No presentation is going.";
+  const { session } = live;
+  session.stop();
+  await Promise.race([live.done, new Promise((resolve12) => setTimeout(resolve12, 15e3))]);
+  const shown = new Set([...session.stepTimes.keys()].filter((i) => i < session.steps.length));
+  const minutes = session.startedAt ? clock(Date.now() - session.startedAt) : "0:00";
+  return [
+    `The presentation "${session.info.name}" ended. It showed ${shown.size} of ${session.steps.length} step(s) in ${minutes}.`,
+    `Chat: ${session.chat.filter((c) => c.question).length} question(s), ${session.chat.filter((c) => c.answer).length} answer(s).`
+  ].join("\n");
+}
+function registerPresentTools(server, ctx) {
+  server.registerTool(
+    "present",
+    {
+      title: "Present",
+      description: [
+        "Play a plan as a live presentation for an audience, with /walkthrough:present.",
+        "start opens a new Chrome with the audience window, and plays a rehearsal run of the plan. The presentation runs in the background. It waits before each step until the presenter goes on.",
+        "listen waits for a question from the presenter, a failed step, or the end. Answer a question with answer, in 1 to 3 short sentences. Then listen again.",
+        "status shows where the presentation is. control moves it, only when the presenter asks you: continue, skip, retry, manual, back, jump, blank, or end. stop ends it.",
+        "While a presentation is going, only tools that read the page work."
+      ].join(" "),
+      inputSchema: {
+        action: external_exports.enum(["start", "status", "control", "listen", "answer", "stop"]),
+        plan: external_exports.string().optional().describe('For start: the plan to present, like "checkout-tour".'),
+        runId: external_exports.string().optional().describe(
+          "For start: the rehearsal run to play. The default is a good rehearsal of the plan from the last 12 hours."
+        ),
+        environment: external_exports.string().optional().describe(
+          'For start: present on this environment, like "staging". It switches the session.'
+        ),
+        kiosk: external_exports.boolean().optional().describe("For start: run without a presenter. Each step holds for a few seconds."),
+        command: external_exports.enum(COMMANDS).optional().describe(
+          "For control: start, continue, skip (the step), retry (a failed step), manual (the presenter does it by hand), back, jump (with step), blank (the audience screen, on or off), or end."
+        ),
+        step: external_exports.number().int().min(1).optional().describe("For control jump: the step number."),
+        id: external_exports.string().optional().describe('For answer: the question id, like "q2". Leave it out for a note.'),
+        text: external_exports.string().min(1).max(1e3).optional().describe("For answer: 1 to 3 short sentences in plain text."),
+        onScreen: external_exports.boolean().optional().describe("For answer: also show the answer on the audience screen.")
+      }
+    },
+    (input3, extra) => runTool(
+      ctx,
+      "present",
+      async () => {
+        if (input3.action === "start") return startPresentation(ctx, input3, extra);
+        if (input3.action === "stop") return stopPresentation();
+        const session = current?.session;
+        if (!session?.active) {
+          if (input3.action === "listen") return "status: ended\nNo presentation is going.";
+          return 'No presentation is going. Call present with action "start".';
+        }
+        if (input3.action === "status") return statusText(session);
+        if (input3.action === "answer") {
+          if (!input3.text) throw new ToolError("Give the text of the answer.", "bad_input");
+          try {
+            const entry = session.answer(input3.id, input3.text, input3.onScreen);
+            return `The presenter sees the ${entry.question ? "answer" : "note"} in the chat${input3.onScreen ? ", and the audience sees it on the screen" : ""}. Call present with action "listen" again.`;
+          } catch (error62) {
+            throw new ToolError(error62.message, "bad_input");
+          }
+        }
+        if (input3.action === "listen") {
+          const config3 = await ctx.config();
+          const timeoutSec = config3.askTimeoutSec ?? (ctx.clientName() === "claude-code" ? 300 : 50);
+          const stopProgress = startProgress(extra, "Walkthrough waits for the presenter.");
+          try {
+            const outcome = await session.listen(timeoutSec * 1e3, extra.signal);
+            if (outcome.kind === "event") return eventText(session, outcome.event);
+            if (outcome.kind === "timeout")
+              return `status: waiting
+No question after ${timeoutSec} seconds. Call present with action "listen" again.`;
+            if (outcome.kind === "superseded")
+              return "status: superseded\nA newer listen call took over. Do not call listen again from this one.";
+            return "status: canceled\nWalkthrough stopped listening. The presentation goes on.";
+          } finally {
+            stopProgress();
+          }
+        }
+        if (!input3.command) throw new ToolError("Give a command for control.", "bad_input");
+        if (input3.command === "blank") {
+          session.setBlank(!session.blank);
+          return `The audience screen is ${session.blank ? "blank" : "back"}.
+${statusText(session)}`;
+        }
+        const command2 = input3.command === "jump" ? { type: "jump", step: input3.step ?? 0 } : { type: input3.command };
+        if (command2.type === "jump" && !input3.step)
+          throw new ToolError("Give the step number for jump.", "bad_input");
+        const problem = session.check(command2);
+        if (problem) throw new ToolError(problem, "bad_command");
+        session.command(command2);
+        await changeSoon(session, 2e3);
+        return statusText(session);
+      },
+      {
+        // These wait for a person or only read, so they run next to the other tools.
+        exclusive: !["status", "control", "listen", "answer"].includes(input3.action),
+        action: input3.action
+      }
+    )
+  );
+}
+
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync23, readdirSync as readdirSync13, readFileSync as readFileSync21 } from "node:fs";
-import { join as join37 } from "node:path";
+import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync23 } from "node:fs";
+import { join as join39 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -118371,16 +119966,16 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join37(projectDir, ".walkthrough", "runs");
-      if (!existsSync23(dir)) return "There are no runs yet.";
+      const dir = join39(projectDir, ".walkthrough", "runs");
+      if (!existsSync24(dir)) return "There are no runs yet.";
       const rows = [];
-      for (const id of readdirSync13(dir).sort().reverse()) {
+      for (const id of readdirSync14(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join37(dir, id, "run.json");
-        if (!existsSync23(file2)) continue;
+        const file2 = join39(dir, id, "run.json");
+        if (!existsSync24(file2)) continue;
         try {
-          const run = JSON.parse(readFileSync21(file2, "utf8"));
-          const report = existsSync23(join37(dir, id, "report.html")) ? `report written${existsSync23(join37(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync23(join37(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
+          const run = JSON.parse(readFileSync23(file2, "utf8"));
+          const report = existsSync24(join39(dir, id, "report.html")) ? `report written${existsSync24(join39(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join39(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
             `- ${id}: "${run.name}"${env2 === "development" ? "" : ` on ${env2}`}, ${run.status}, ${resultLine(run) || "no steps"} (${report})`
@@ -118395,9 +119990,9 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 }
 
 // packages/server/src/tools/quality-tools.ts
-import { randomBytes as randomBytes11 } from "node:crypto";
-import { existsSync as existsSync24, mkdirSync as mkdirSync15, readFileSync as readFileSync22, writeFileSync as writeFileSync16 } from "node:fs";
-import { basename as basename7, dirname as dirname12, extname as extname8, join as join38, relative as relative15 } from "node:path";
+import { randomBytes as randomBytes12 } from "node:crypto";
+import { existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync24, writeFileSync as writeFileSync17 } from "node:fs";
+import { basename as basename7, dirname as dirname13, extname as extname8, join as join40, relative as relative17 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -118765,7 +120360,7 @@ function registerQualityTools(server, ctx) {
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
-      const baselinePath = join38(
+      const baselinePath = join40(
         config3.projectDir,
         ".walkthrough",
         "baselines",
@@ -118773,16 +120368,16 @@ function registerQualityTools(server, ctx) {
         ...env2 === "development" ? [] : [env2],
         file2
       );
-      const baselineRel = relative15(config3.projectDir, baselinePath);
+      const baselineRel = relative17(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
         handle: target2?.handle,
         fullPage: input3.fullPage,
         mask: input3.mask
       });
-      if (!existsSync24(baselinePath) || input3.updateBaseline) {
-        const existed = existsSync24(baselinePath);
-        mkdirSync15(dirname12(baselinePath), { recursive: true });
-        writeFileSync16(baselinePath, capture.png);
+      if (!existsSync25(baselinePath) || input3.updateBaseline) {
+        const existed = existsSync25(baselinePath);
+        mkdirSync16(dirname13(baselinePath), { recursive: true });
+        writeFileSync17(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -118790,12 +120385,12 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           [{ type: "image", data: capture.png.toString("base64"), mimeType: "image/png" }]
         );
       }
-      const comparison = comparePng(readFileSync22(baselinePath), capture.png, capture.masks);
+      const comparison = comparePng(readFileSync24(baselinePath), capture.png, capture.masks);
       const limit = input3.maxDiffPercent ?? 0;
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join38(dir, `${stamp3}-actual.png`);
+      const actualPath = join40(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -118805,7 +120400,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync16(actualPath, capture.png);
+        writeFileSync17(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -118818,11 +120413,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join38(dir, `${stamp3}-diff.png`);
-          writeFileSync16(diffPath, comparison.diffPng);
+          const diffPath = join40(dir, `${stamp3}-diff.png`);
+          writeFileSync17(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
-            `Diff image (changed pixels in red): ${relative15(config3.projectDir, diffPath)}`
+            `Diff image (changed pixels in red): ${relative17(config3.projectDir, diffPath)}`
           );
           images.push({
             type: "image",
@@ -118831,7 +120426,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           });
         }
         lines.push(
-          `Screenshot now: ${relative15(config3.projectDir, actualPath)}`,
+          `Screenshot now: ${relative17(config3.projectDir, actualPath)}`,
           `Baseline: ${baselineRel}`
         );
         lines.push(
@@ -118840,7 +120435,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       }
       if (input3.stepId && ctx.run?.run.status === "running" && saved.length) {
         const step = ctx.run.step({ id: input3.stepId });
-        step.screenshots.push(...saved.map((p) => relative15(ctx.run?.dir ?? "", p)));
+        step.screenshots.push(...saved.map((p) => relative17(ctx.run?.dir ?? "", p)));
         ctx.run.save();
       }
       return textResult(lines.join("\n"), images);
@@ -118894,7 +120489,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         label2 = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
         if (label2 && isPlainCss(label2)) scope = label2;
         else {
-          const mark = randomBytes11(4).toString("hex");
+          const mark = randomBytes12(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
           marked = target2.handle;
           scope = `[data-uiwalk-a11y="${mark}"]`;
@@ -118912,7 +120507,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.
-            root: dirname12(ctx.evidenceDir(config3.projectDir)),
+            root: dirname13(ctx.evidenceDir(config3.projectDir)),
             sub: "a11y",
             max: config3.accessibility.maxScreenshots
           }
@@ -118932,7 +120527,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative15(config3.projectDir, join38(dirname12(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative17(config3.projectDir, join40(dirname13(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -118940,8 +120535,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync25, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
-import { join as join40, relative as relative17 } from "node:path";
+import { existsSync as existsSync26, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
+import { join as join41, relative as relative18 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -120048,732 +121643,6 @@ function actionOf(step) {
   return { [step.kind]: target2 };
 }
 
-// packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync16, readFileSync as readFileSync23, writeFileSync as writeFileSync17 } from "node:fs";
-import { dirname as dirname13, join as join39, relative as relative16 } from "node:path";
-
-// packages/server/src/replay/engine.ts
-import { randomBytes as randomBytes12 } from "node:crypto";
-var MAX_TYPE_MS = 3e3;
-var StepError = class extends Error {
-};
-var parse6 = (value) => {
-  try {
-    return JSON.parse(value ?? "{}");
-  } catch {
-    return {};
-  }
-};
-function sleep(ms, signal) {
-  if (ms <= 0 || signal?.aborted) return Promise.resolve();
-  return new Promise((resolve12) => {
-    const timer2 = setTimeout(done, ms);
-    function done() {
-      clearTimeout(timer2);
-      signal?.removeEventListener("abort", done);
-      resolve12();
-    }
-    signal?.addEventListener("abort", done, { once: true });
-  });
-}
-async function centerInView(handle) {
-  await handle.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" })).catch(() => void 0);
-}
-async function runOps(ops, from2, exec2, signal) {
-  for (let i = from2; i < ops.length; i++) {
-    if (signal?.aborted) {
-      return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
-    }
-    try {
-      await exec2(ops[i]);
-    } catch (error62) {
-      if (signal?.aborted) {
-        return { ok: false, opIndex: i, message: "The replay stopped.", stopped: true };
-      }
-      return { ok: false, opIndex: i, message: error62.message };
-    }
-  }
-  return { ok: true };
-}
-var ReplayEngine = class {
-  constructor(options) {
-    this.options = options;
-    this.pace = options.pace;
-    this.stage = options.stage;
-    this.before = options.driver.activeId;
-  }
-  options;
-  // Tabs by their name in the run. The replay has its own tabs.
-  tabs = /* @__PURE__ */ new Map();
-  current = "main";
-  // A new value for each replay, so a flow that makes data can run again.
-  unique = newUnique();
-  pace;
-  stage;
-  // Logins by their name in the run, and the new login that stands for each.
-  logins = /* @__PURE__ */ new Map();
-  // Dialog answers of the step that is going, in order.
-  dialogs = [];
-  // Mock rules of the replay, by their id in the run.
-  mocks = /* @__PURE__ */ new Map();
-  restores = [];
-  key = randomBytes12(2).toString("hex");
-  before;
-  get driver() {
-    return this.options.driver;
-  }
-  get config() {
-    return this.options.config;
-  }
-  get tab() {
-    const tab = this.tabs.get(this.current);
-    if (!tab || tab.closed) throw new StepError(`The tab "${this.current}" is not open.`);
-    return tab;
-  }
-  // The logins that the replay made. They all close at the end.
-  get loginNames() {
-    return new Set(this.logins.values());
-  }
-  login(runLogin) {
-    let name = this.logins.get(runLogin);
-    if (!name) {
-      name = `replay-${this.key}${runLogin === "main" ? "" : `-${runLogin}`}`.slice(0, 60);
-      this.logins.set(runLogin, name);
-    }
-    return name;
-  }
-  answer = async (dialog) => {
-    const type = dialog.type();
-    if (type === "alert" || type === "beforeunload") return dialog.accept();
-    const next = this.dialogs.shift() ?? { accept: true };
-    if (next.accept) await dialog.accept(next.text ?? dialog.defaultValue());
-    else await dialog.dismiss();
-  };
-  async openTab(name, runLogin) {
-    const tab = await this.driver.newTab({ isolated: this.login(runLogin) });
-    tab.answerDialog = this.answer;
-    this.tabs.set(name, tab);
-    this.current = name;
-    return tab;
-  }
-  use(name) {
-    this.current = name;
-    this.driver.switchTo(this.tab.id);
-  }
-  tokens() {
-    return new TokenResolver(this.unique, this.options.vars ?? {}, this.options.secrets);
-  }
-  // The real value, with vars, {{unique}}, and secrets.
-  text(value) {
-    return this.tokens().apply(value);
-  }
-  // An address of the run, on the environment of the replay.
-  address(value) {
-    return this.options.rebase.url(
-      new TokenResolver(this.unique, this.options.vars ?? {}).display(value)
-    );
-  }
-  // Opens the main tab in a new login, with the run's settings, at the start page.
-  async open(options) {
-    const main2 = await this.openTab("main", "main");
-    const { device, ...rest } = options.emulation ?? {};
-    await this.driver.setEmulation(device ? { ...rest, device } : rest, {
-      tab: main2,
-      reload: false
-    });
-    if (!device && options.width) {
-      await main2.page.setViewport({
-        width: options.width,
-        height: Math.round(options.width * 10 / 16),
-        deviceScaleFactor: 1
-      });
-    }
-    if (options.session)
-      await restoreSession(
-        main2,
-        loadSession(this.config.projectDir, options.session, this.config.environment.name)
-      );
-    await main2.page.goto(options.startUrl ? this.address(options.startUrl) : "about:blank", {
-      waitUntil: "load"
-    });
-    return main2;
-  }
-  // Does one step. "fromOp" starts in the middle, to try a failed operation again.
-  async runStep(stepOps, options = {}) {
-    const from2 = options.fromOp ?? 0;
-    this.dialogs = dialogAnswers(stepOps.ops, from2);
-    if (from2 === 0) {
-      const { step } = stepOps;
-      const text = options.caption ?? step.template?.caption ?? step.caption ?? step.template?.title ?? step.title;
-      this.stage.stepStart(new TokenResolver(this.unique, this.options.vars ?? {}).display(text));
-    }
-    return runOps(
-      stepOps.ops,
-      from2,
-      async (op) => {
-        if (op.type === "reach") await this.reach(op.url);
-        else if (op.type === "action") {
-          await this.act(op.action);
-          await this.tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 3e3, signal: this.options.signal }).catch(() => void 0);
-        } else if (op.type === "expect") await this.expectText(op.text);
-      },
-      this.options.signal
-    );
-  }
-  async frameOf(frameUrl2) {
-    const page = this.tab.page;
-    if (!frameUrl2) return page.mainFrame();
-    let part = frameUrl2;
-    try {
-      part = new URL(this.address(frameUrl2)).pathname;
-    } catch {
-    }
-    const end = Date.now() + this.config.actionTimeoutMs;
-    while (Date.now() < end && !this.options.signal?.aborted) {
-      const found = page.frames().find((f) => f.url().includes(part));
-      if (found) return found;
-      await sleep(100, this.options.signal);
-    }
-    throw new StepError(`There is no frame with the address ${part}.`);
-  }
-  async find(action2) {
-    const frame = await this.frameOf(action2.frameUrl);
-    const handle = await frame.waitForSelector(action2.selector, {
-      timeout: this.config.actionTimeoutMs,
-      signal: this.options.signal
-    }).catch(() => null);
-    if (!handle)
-      throw new StepError(`Walkthrough did not find ${action2.label} (${action2.selector}).`);
-    return handle;
-  }
-  // Moves the pointer to the element before the action.
-  async point(handle, kind) {
-    await centerInView(handle);
-    await sleep(this.pace.glideMs, this.options.signal);
-    await this.stage.point(this.tab, kind, await elementRect(handle));
-  }
-  // Goes to the address, unless the last action already went there.
-  async reach(url2) {
-    let want;
-    try {
-      want = new URL(this.address(url2));
-    } catch {
-      return;
-    }
-    if (!/^https?:$/.test(want.protocol)) return;
-    const page = this.tab.page;
-    const here = new URL(page.url());
-    if (here.pathname === want.pathname && here.search === want.search) return;
-    try {
-      await page.waitForFunction(
-        (path14) => location.pathname + location.search === path14,
-        { timeout: 3e3, signal: this.options.signal },
-        want.pathname + want.search
-      );
-    } catch {
-      await page.goto(want.href, { waitUntil: "load" });
-    }
-  }
-  async expectText(text) {
-    const want = new TokenResolver(this.unique, this.options.vars ?? {}).display(text);
-    const found = await this.tab.page.waitForFunction((t) => document.body?.innerText.includes(t), { timeout: 1e4 }, want).then(() => true).catch(() => false);
-    if (!found) throw new StepError(`The page does not show "${want}".`);
-  }
-  // Types like a person, a few characters at a time, so a stop can come in between.
-  async type(text) {
-    const delay = Math.min(this.pace.typeMs, MAX_TYPE_MS / Math.max(1, text.length));
-    const keyboard = this.tab.page.keyboard;
-    if (delay <= 0) {
-      await keyboard.type(text);
-      return;
-    }
-    for (let i = 0; i < text.length; i += 8) {
-      if (this.options.signal?.aborted) throw new StepError("The replay stopped.");
-      await keyboard.type(text.slice(i, i + 8), { delay });
-    }
-  }
-  async act(action2) {
-    const page = () => this.tab.page;
-    const value = action2.value ?? "";
-    switch (action2.action) {
-      case "navigate":
-        await page().goto(this.address(action2.value ?? action2.label), { waitUntil: "load" });
-        return;
-      case "click":
-      case "dblclick": {
-        const handle = await this.find(action2);
-        await this.point(handle, action2.action);
-        await handle.click({ count: action2.action === "dblclick" ? 2 : 1 });
-        return;
-      }
-      case "hover": {
-        const handle = await this.find(action2);
-        await this.point(handle, "hover");
-        await handle.hover();
-        return;
-      }
-      case "fill": {
-        const handle = await this.find(action2);
-        await this.point(handle, "fill");
-        const shown = new TokenResolver(this.unique, this.options.vars ?? {}).display(value);
-        if (this.options.secrets.hasTokens(shown))
-          this.restores.push(await maskSecretFields([handle]));
-        const text = this.text(value);
-        await handle.evaluate((el) => {
-          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-            el.value = "";
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-          } else if (el.isContentEditable) {
-            el.textContent = "";
-          }
-        });
-        await handle.focus();
-        await this.type(text);
-        return;
-      }
-      case "select": {
-        const handle = await this.find(action2);
-        await this.point(handle, "select");
-        await selectOption(handle, this.text(value));
-        return;
-      }
-      case "check":
-      case "uncheck": {
-        const handle = await this.find(action2);
-        await this.point(handle, action2.action);
-        const want = action2.action === "check";
-        if (await handle.evaluate((el) => el.checked) !== want)
-          await handle.click();
-        return;
-      }
-      case "press": {
-        if (action2.selector) await (await this.find(action2)).focus();
-        await this.stage.point(this.tab, "press");
-        await pressKeys(this.tab, value);
-        return;
-      }
-      case "scroll": {
-        if (action2.selector) {
-          await (await this.find(action2)).scrollIntoView();
-          return;
-        }
-        await page().mouse.wheel({ deltaY: value === "up" ? -600 : Number(value) || 600 });
-        return;
-      }
-      case "upload": {
-        const handle = await this.find(action2);
-        await this.point(handle, "upload");
-        const paths = (action2.files ?? []).map(
-          (f) => checkUploadPath(f, this.config.uploadsRoot, this.config.projectDir)
-        );
-        await handle.uploadFile(...paths);
-        return;
-      }
-      case "dialog":
-        return;
-      case "tab-new": {
-        const detail = parse6(action2.value);
-        const tab = await this.openTab(
-          String(detail.name ?? `tab-${this.tabs.size + 1}`),
-          String(detail.login ?? "main")
-        );
-        if (typeof detail.url === "string")
-          await tab.page.goto(this.address(detail.url), { waitUntil: "load" });
-        return;
-      }
-      case "tab-switch": {
-        const detail = parse6(action2.value);
-        const name = String(detail.name ?? "");
-        if (this.tabs.has(name)) {
-          this.use(name);
-          return;
-        }
-        const opener = this.tabs.get(String(detail.opener ?? ""));
-        if (!opener) throw new StepError(`The replay does not know how the tab "${name}" opened.`);
-        const mine = new Set([...this.tabs.values()].map((t) => t.id));
-        const end = Date.now() + 1e4;
-        while (Date.now() < end && !this.options.signal?.aborted) {
-          const popup = [...this.driver.tabs.values()].find(
-            (t) => t.openerId === opener.id && !mine.has(t.id)
-          );
-          if (popup) {
-            popup.answerDialog = this.answer;
-            this.tabs.set(name, popup);
-            this.use(name);
-            return;
-          }
-          await sleep(100, this.options.signal);
-        }
-        throw new StepError(`The tab "${name}" did not open.`);
-      }
-      case "tab-close": {
-        const name = String(parse6(action2.value).name ?? "");
-        const tab = this.tabs.get(name);
-        this.tabs.delete(name);
-        await tab?.page.close().catch(() => void 0);
-        if (this.current === name) this.use([...this.tabs.keys()].at(-1) ?? "main");
-        return;
-      }
-      case "emulate": {
-        const { allTabs, ...change } = parse6(action2.value);
-        const targets = allTabs ? [...this.tabs.values()] : [this.tab];
-        for (const tab of targets) await this.driver.setEmulation(change, { tab, reload: false });
-        return;
-      }
-      case "mock": {
-        const { tab, id, ...rule } = parse6(action2.value);
-        const target2 = typeof tab === "string" ? this.tabs.get(tab) : void 0;
-        const input3 = rule;
-        if (input3.url) input3.url = this.options.rebase.pattern(input3.url);
-        const tabIds = target2 ? [target2.id] : [...this.tabs.values()].map((t) => t.id);
-        for (const tabId of tabIds) {
-          const added = await this.driver.addMock({ ...input3, tab: tabId });
-          this.mocks.set(`${String(id ?? added.id)}:${tabId}`, added.id);
-        }
-        return;
-      }
-      case "mock-clear": {
-        const { id } = parse6(action2.value);
-        for (const [key2, driverId] of [...this.mocks]) {
-          if (id !== void 0 && !key2.startsWith(`${String(id)}:`)) continue;
-          await this.driver.removeMocks(driverId);
-          this.mocks.delete(key2);
-        }
-        return;
-      }
-      case "storage":
-        await this.storage(parse6(action2.value));
-        return;
-    }
-  }
-  async storage(detail) {
-    const tab = this.tab;
-    const op = String(detail.op ?? "");
-    const name = typeof detail.name === "string" ? detail.name : void 0;
-    const text = typeof detail.value === "string" ? this.text(detail.value) : "";
-    if (op === "clearSiteData") {
-      const cdp = await tab.page.createCDPSession();
-      await cdp.send("Storage.clearDataForOrigin", {
-        origin: new URL(tab.page.url()).origin,
-        storageTypes: "all"
-      });
-      await cdp.detach().catch(() => void 0);
-      return;
-    }
-    if (detail.kind === "local" || detail.kind === "session") {
-      if (op === "set" || op === "delete" || op === "clear")
-        await writeStorage(tab, detail.kind, op, name, text);
-      return;
-    }
-    const context2 = tab.page.browserContext();
-    if (op === "set" && name) {
-      await context2.setCookie({
-        name,
-        value: text,
-        domain: typeof detail.domain === "string" && detail.domain ? this.options.rebase.host(detail.domain) : new URL(tab.page.url()).hostname,
-        path: typeof detail.path === "string" ? detail.path : "/",
-        ...typeof detail.httpOnly === "boolean" ? { httpOnly: detail.httpOnly } : {},
-        ...typeof detail.secure === "boolean" ? { secure: detail.secure } : {}
-      });
-      return;
-    }
-    if (op === "delete" || op === "clear") {
-      for (const cookie of await context2.cookies()) {
-        if (op === "delete" && cookie.name !== name) continue;
-        await context2.deleteCookie(cookie);
-      }
-    }
-  }
-  // Starts over in the same window: the other tabs close, the login and site data go,
-  // and {{unique}} gets a new value. The main tab stays, on a blank page.
-  async resetLogin() {
-    await this.removeMocks();
-    const main2 = this.tabs.get("main");
-    for (const [name, tab] of [...this.tabs]) {
-      if (name === "main") continue;
-      this.tabs.delete(name);
-      await tab.page.close().catch(() => void 0);
-    }
-    if (main2 && !main2.closed) {
-      this.current = "main";
-      const origins = /* @__PURE__ */ new Set();
-      for (const url2 of [main2.page.url(), this.options.config.baseUrl]) {
-        try {
-          if (url2 && /^https?:/.test(url2)) origins.add(new URL(url2).origin);
-        } catch {
-        }
-      }
-      const cdp = await main2.page.createCDPSession();
-      try {
-        for (const origin of origins)
-          await cdp.send("Storage.clearDataForOrigin", { origin, storageTypes: "all" });
-      } finally {
-        await cdp.detach().catch(() => void 0);
-      }
-      const context2 = main2.page.browserContext();
-      for (const cookie of await context2.cookies()) await context2.deleteCookie(cookie);
-      await main2.page.goto("about:blank").catch(() => void 0);
-    }
-    this.unique = newUnique();
-    this.dialogs = [];
-  }
-  async removeMocks() {
-    for (const driverId of this.mocks.values())
-      await this.driver.removeMocks(driverId).catch(() => 0);
-    this.mocks.clear();
-  }
-  // Closes the replay's tabs and logins. The tab from before is active again.
-  async dispose() {
-    await this.removeMocks();
-    for (const restore of this.restores.reverse()) await restore().catch(() => void 0);
-    const logins = this.loginNames;
-    for (const tab of [...this.driver.tabs.values()]) {
-      if (logins.has(tab.login)) await tab.page.close().catch(() => void 0);
-    }
-    if (this.before && this.driver.tabs.has(this.before)) this.driver.switchTo(this.before);
-  }
-};
-
-// packages/server/src/replay/rebase.ts
-var Rebaser = class _Rebaser {
-  constructor(from2, to) {
-    this.to = to;
-    this.from = [...new Set(from2.filter((u) => Boolean(u)))].sort(
-      (a2, b2) => b2.length - a2.length
-    );
-  }
-  to;
-  // Base URLs to move from, longest first, so the most exact one wins.
-  from;
-  // From the run's environment, and any environment in the settings, to the one in use.
-  static forRun(run, config3) {
-    return new _Rebaser(
-      [
-        run.environment?.baseUrl,
-        run.baseUrl,
-        ...Object.values(config3.environments).map((e) => e.baseUrl)
-      ],
-      config3.environment.baseUrl
-    );
-  }
-  url(url2) {
-    for (const base of this.from) {
-      const moved = rebaseUrl(url2, base, this.to);
-      if (moved) return moved;
-    }
-    return url2;
-  }
-  // A cookie domain on the old site moves to the new site.
-  host(host) {
-    if (!this.to) return host;
-    const bare = host.replace(/^\./, "");
-    for (const base of this.from) {
-      try {
-        if (new URL(base).hostname === bare) {
-          const to = new URL(this.to).hostname;
-          return host.startsWith(".") ? `.${to}` : to;
-        }
-      } catch {
-      }
-    }
-    return host;
-  }
-  // A mock URL pattern on the old site, like "https://staging.example.com/api/*".
-  pattern(pattern) {
-    return /^https?:\/\//.test(pattern) ? this.url(pattern) : pattern;
-  }
-};
-
-// packages/server/src/replay/stage.ts
-var VideoStage = class {
-  constructor(capture, captions) {
-    this.capture = capture;
-    this.captions = captions;
-  }
-  capture;
-  captions;
-  stepStart(text) {
-    if (this.captions) this.capture()?.setCaption(text);
-  }
-  async point(tab, kind, rect) {
-    this.capture()?.action(tab.id, kind, rect);
-  }
-};
-
-// packages/server/src/replay/replayer.ts
-var PACES = {
-  slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
-  normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
-  fast: { typeMs: 20, glideMs: 200, holdMs: 700 }
-};
-var VIDEO_FPS2 = 15;
-function replayVars(run, config3) {
-  return { ...run.vars, ...buildVars(config3, planOf(run, config3)?.vars) };
-}
-function planOf(run, config3) {
-  return loadRunPlan(config3.projectDir, run.planFile);
-}
-async function replayRun(ctx, input3) {
-  const config3 = await ctx.config();
-  if (ctx.run?.run.status === "running") {
-    throw new ToolError("A run is going. Call run_finish first, then replay it.", "run_active");
-  }
-  if (liveCaptures(ctx).length > 0) {
-    throw new ToolError("A video is recording. Call video with action stop first.", "video_active");
-  }
-  const id = input3.runId ?? latestRunId(config3.projectDir, { finishedOnly: true });
-  if (!id) throw new ToolError("There is no finished run to replay.", "no_run");
-  const store = RunStore.open(config3.projectDir, id);
-  const run = store.run;
-  const allowed = planOf(run, config3)?.environments;
-  if (allowed && !allowed.includes(config3.environment.name)) {
-    throw new ToolError(
-      `The plan of this run may run only in these environments: ${allowed.join(", ")}. The session uses "${config3.environment.name}".`,
-      "environment_not_allowed"
-    );
-  }
-  const plan = buildOps(run);
-  if (plan.missingSelectors.length) {
-    throw new ToolError(
-      [
-        `Walkthrough cannot replay the run "${run.name}", because these actions have no stable selector:`,
-        ...plan.missingSelectors.map((m) => `- ${m}`),
-        "Add an exact action to these plan steps, and run the plan again."
-      ].join("\n"),
-      "replay_blocked"
-    );
-  }
-  if (!plan.steps.some((s) => s.ops.some((o) => o.type === "action"))) {
-    throw new ToolError(`The run "${run.name}" has no actions to replay.`, "nothing_to_do");
-  }
-  const targets = (input3.paths ?? []).map((p) => ({
-    format: chooseFormat(void 0, p, config3.video.runFormat),
-    ...checkMediaPath(p, config3.projectDir, config3.screenshotRoots)
-  }));
-  const formats = [.../* @__PURE__ */ new Set([...input3.formats ?? [], ...targets.map((t) => t.format)])];
-  if (formats.length === 0) formats.push(config3.video.runFormat);
-  if (!ctx.driver?.alive) await openBrowser(ctx, {});
-  const driver = ctx.requireDriver();
-  const width = input3.width ?? config3.video.width;
-  const pace = PACES[input3.pace];
-  let capture;
-  const replay = new ReplayEngine({
-    driver,
-    config: config3,
-    secrets: await ctx.secrets(),
-    vars: replayVars(run, config3),
-    pace,
-    stage: new VideoStage(() => capture, input3.captions ?? config3.video.captions),
-    rebase: Rebaser.forRun(run, config3)
-  });
-  const failure2 = async (stepTitle, message) => {
-    const lines = [
-      `The replay stopped at step ${stepTitle}: ${message}`,
-      "Walkthrough saved no video. Fix the step or the app, and replay again."
-    ];
-    let preview;
-    try {
-      const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
-      preview = Buffer.from(shot).toString("base64");
-      const file2 = join39(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
-      mkdirSync16(dirname13(file2), { recursive: true });
-      writeFileSync17(file2, shot);
-      lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
-    } catch {
-    }
-    return { ok: false, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
-  };
-  try {
-    await replay.open({
-      emulation: run.emulation,
-      width,
-      session: input3.session ?? run.session,
-      startUrl: run.baseUrl ?? config3.baseUrl
-    });
-    capture = new VideoCapture(driver, { maxWidth: width, showPanel: false });
-    await capture.start();
-    for (const stepOps of plan.steps) {
-      const { step } = stepOps;
-      input3.onStep?.(`Step ${step.index}: ${step.title}`);
-      const outcome = await replay.runStep(stepOps);
-      if (!outcome.ok) return await failure2(`${step.index} "${step.title}"`, outcome.message);
-      await sleep(pace.holdMs);
-    }
-    await capture.stop();
-    const events = [
-      ...capture.events,
-      { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
-    ];
-    const lines = [];
-    const videoDir = join39(store.dir, "video");
-    mkdirSync16(videoDir, { recursive: true });
-    const stamp3 = fileStamp("replay");
-    let preview;
-    for (const format3 of formats) {
-      const samples = buildSamples(capture.frames, events, {
-        start: capture.startedAt,
-        end: capture.stoppedAt ?? Date.now(),
-        fps: format3 === "gif" ? config3.video.gifFps : VIDEO_FPS2,
-        idleSeconds: config3.video.idleSeconds,
-        pointer: input3.pointer ?? config3.video.pointer,
-        captions: input3.captions ?? config3.video.captions,
-        glideMs: pace.glideMs
-      });
-      const seconds = samples.reduce((sum, s) => sum + s.duration, 0);
-      if (format3 === "gif" && seconds > config3.video.maxGifSeconds) {
-        lines.push(
-          `Walkthrough made no GIF, because the replay is ${Math.round(seconds)} seconds long. GIF files can be up to ${config3.video.maxGifSeconds} seconds (maxGifSeconds).`
-        );
-        continue;
-      }
-      const middle = samples[Math.floor(samples.length / 2)];
-      if (!preview && middle)
-        preview = readFileSync23(join39(capture.dir, middle.file)).toString("base64");
-      const out = await encodeVideo({
-        config: config3,
-        framesDir: capture.dir,
-        samples,
-        format: format3,
-        outFile: join39(videoDir, `${stamp3}.${format3}`),
-        title: input3.titleCard ?? true ? run.name : void 0,
-        width: format3 === "gif" ? config3.video.gifWidth : width
-      });
-      lines.push(
-        `Saved the replay (${out.format.toUpperCase()}, ${out.seconds.toFixed(1)} seconds, ${size(out.bytes)}, ${out.width}x${out.height}): ${relative16(config3.projectDir, out.file)}`
-      );
-      if (out.note) lines.push(out.note);
-      const copies = [];
-      for (const target2 of targets.filter((t) => t.format === out.format)) {
-        mkdirSync16(dirname13(target2.path), { recursive: true });
-        copyFileSync2(out.file, target2.path);
-        copies.push(target2.display);
-        lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
-      }
-      run.videos ??= [];
-      run.videos.push({
-        file: relative16(store.dir, out.file),
-        format: out.format,
-        seconds: Math.round(out.seconds * 10) / 10,
-        bytes: out.bytes,
-        name: "replay",
-        ...copies[0] ? { path: copies[0] } : {}
-      });
-    }
-    store.save();
-    lines.push(
-      `The replay used a new login and a new {{unique}} value (${replay.unique}), at the ${input3.pace} pace.`
-    );
-    return { ok: true, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
-  } catch (error62) {
-    if (error62 instanceof StepError) return failure2("(setup)", error62.message);
-    throw error62;
-  } finally {
-    await capture?.stop().catch(() => void 0);
-    capture?.discard();
-    await replay.dispose();
-  }
-}
-
 // packages/server/src/tools/share-tools.ts
 function openRun(ctx, projectDir, runId) {
   if (!runId && ctx.run?.run.status === "running") {
@@ -120918,10 +121787,10 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join40(projectDir, ".walkthrough", "exports");
+      const dir = join41(projectDir, ".walkthrough", "exports");
       mkdirSync17(dir, { recursive: true });
-      const file2 = join40(dir, `${name}.mjs`);
-      const existed = existsSync25(file2);
+      const file2 = join41(dir, `${name}.mjs`);
+      const existed = existsSync26(file2);
       let target2;
       if (environment2) {
         const other = loadConfig(projectDir, config3.projectDirSource, environment2);
@@ -120939,7 +121808,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
           baseUrl: e.baseUrl
         }))
       });
-      const rel = relative17(projectDir, file2);
+      const rel = relative18(projectDir, file2);
       writeFileSync18(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
@@ -120983,9 +121852,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync25(join40(store.dir, "report.md")) ? { markdown: relative17(projectDir, join40(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative17(projectDir, join40(store.dir, s)));
-      const files = (step.files ?? []).map((f) => relative17(projectDir, join40(store.dir, f)));
+      const reports = existsSync26(join41(store.dir, "report.md")) ? { markdown: relative18(projectDir, join41(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative18(projectDir, join41(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative18(projectDir, join41(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, {
@@ -120993,15 +121862,15 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         screenshots,
         files
       });
-      const bodyFile = join40(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      const bodyFile = join41(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
       writeFileSync18(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
-        `Body file: ${relative17(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
+        `Body file: ${relative18(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join40(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join41(projectDir, s)}`).join("\n")}` : " none"}`,
         ...files.length ? [`Other files to attach:
-${files.map((f) => `- ${join40(projectDir, f)}`).join("\n")}`] : [],
+${files.map((f) => `- ${join41(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -121170,6 +122039,7 @@ function createServer2() {
   registerLighthouseTools(server, ctx);
   registerShareTools(server, ctx);
   registerVideoTools(server, ctx);
+  registerPresentTools(server, ctx);
   onShutdown(async () => {
     if (ctx.run?.run.status !== "running") return;
     try {
@@ -121291,7 +122161,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join41(dirname14(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join42(dirname14(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

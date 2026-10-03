@@ -11,6 +11,7 @@ import { registerDevtoolsTools } from './tools/devtools-tools.js';
 import { registerEnvironmentTools } from './tools/environment-tools.js';
 import { registerLighthouseTools } from './tools/lighthouse-tools.js';
 import { registerPageTools } from './tools/page-tools.js';
+import { registerPresentTools } from './tools/present-tools.js';
 import { registerProjectTools } from './tools/project-tools.js';
 import { registerQualityTools } from './tools/quality-tools.js';
 import { registerRunTools, writeReports } from './tools/run-tools.js';
@@ -67,6 +68,7 @@ export function createServer(): { server: McpServer; ctx: Context } {
   registerLighthouseTools(server, ctx);
   registerShareTools(server, ctx);
   registerVideoTools(server, ctx);
+  registerPresentTools(server, ctx);
 
   // If the server stops during a run, keep what we have and write the reports.
   onShutdown(async () => {

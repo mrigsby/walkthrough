@@ -26,7 +26,7 @@ import { attachChrome } from './attach.js';
 import { applyEmulation, checkEmulation, type Emulation } from './devices.js';
 import { mergeEmulation, permissionEntries } from './emulation-schema.js';
 import { FetchRouter } from './fetch-router.js';
-import { killChrome, launchChrome, removeProfile } from './launch.js';
+import { killChrome, type LaunchOptions, launchChrome, removeProfile } from './launch.js';
 
 export interface Tab {
   id: string;
@@ -69,6 +69,7 @@ export interface DriverOptions {
   config: Config;
   isAllowed: (url: string) => boolean;
   attach?: string;
+  launch?: LaunchOptions;
 }
 
 // Owns one browser and its tabs. Tracks dialogs, crashes, and closing.
@@ -132,7 +133,7 @@ export class Driver {
       // Use a new tab of our own. Never touch the developer's other tabs.
       await driver.addTab(await browser.newPage());
     } else {
-      const { browser, profileDir } = await launchChrome(options.config);
+      const { browser, profileDir } = await launchChrome(options.config, options.launch);
       driver = new Driver(browser, 'launched', await browser.version(), options, profileDir);
       driver.logins.set('main', browser.defaultBrowserContext());
       const first = (await browser.pages())[0] ?? (await browser.newPage());

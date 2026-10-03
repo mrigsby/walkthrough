@@ -152,6 +152,9 @@ describe('replay', () => {
         cwd: project,
         env: { ...process.env, BASE_URL: demo.base, VIDEO: 'videos/checkout.webm', PACE_MS: '5' },
         timeout: 120_000,
+      }).catch((error: { message: string; stdout?: string; stderr?: string }) => {
+        // Show where the script stopped. It hung once on a slow CI computer.
+        throw new Error(`${error.message}\nstdout:\n${error.stdout}\nstderr:\n${error.stderr}`);
       });
       expect(stdout).toContain('Passed: every step and check.');
       expect(stdout).toContain('Saved the video: videos/checkout.webm');

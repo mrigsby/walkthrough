@@ -1,4 +1,5 @@
 import { Driver } from './browser/driver.js';
+import type { LaunchOptions } from './browser/launch.js';
 import { type Config, loadConfig, resolveProjectDir } from './config.js';
 import {
   describeEnvironment,
@@ -123,6 +124,12 @@ export class Context {
       await this.driver.panel?.setEnvironment(environmentBadge(config));
     }
     return config;
+  }
+
+  // A person confirmed a protected environment for this browser, such as in a presentation.
+  confirmFor(name: string): void {
+    this.driver?.confirmedEnvs.add(name);
+    this.rebuildGuard();
   }
 
   // Builds the guard again, for example after the developer confirms an environment.
@@ -363,12 +370,17 @@ export class Context {
     return this.driver;
   }
 
-  async startDriver(attach?: string): Promise<Driver> {
+  // "launch" starts Chrome for a presentation. "panel: false" leaves out the developer panel.
+  async startDriver(
+    attach?: string,
+    options: { launch?: LaunchOptions; panel?: boolean } = {},
+  ): Promise<Driver> {
     const config = await this.config();
     const guard = await this.guard();
     this.driver = await Driver.start({
-      config,
+      config: options.panel === false ? { ...config, panel: false } : config,
       attach,
+      launch: options.launch,
       // Look up the guard each time, so a config reload takes effect.
       isAllowed: (url) => (this.loaded?.guard ?? guard).isAllowed(url),
     });
