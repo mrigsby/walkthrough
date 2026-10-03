@@ -28,7 +28,10 @@ steps:
 | --- | --- | --- |
 | `name` | Yes | The name of the test. Reports use it. |
 | `description` | No | A short note about the test. |
-| `baseUrl` | No | The start page. It replaces `baseUrl` from `config.yaml` for this plan. |
+| `baseUrl` | No | The start page: a full URL, or a path like `/admin` on the site of the environment. A full URL on the site of another environment moves to the environment in use. |
+| `environment` | No | The environment to run in, such as `staging`, when the tool call and the session do not choose one. See [Environments](environments.md). |
+| `environments` | No | The only environments this plan may run in, such as `[development, staging]`. Use it for plans that make data. |
+| `vars` | No | Values for `{{var:NAME}}` in this plan, such as `{ shopper: Demo Shopper }`. An environment can change them. |
 | `mode` | No | `interactive`, `checkpoints` (default), or `autonomous`. See [Run modes](#run-modes). |
 | `steps` | Yes | The list of steps. |
 | `device` | No | Screen preset: `desktop`, `laptop`, `tablet`, `mobile`, or a Puppeteer device name, such as `Pixel 5`. |
@@ -77,6 +80,8 @@ Use one key in `action`:
 - `newTab`, `switchTab`, and `closeTab` open, change, and close tabs. See [Tabs and logins](#tabs-and-logins).
 
 For passwords, write `value: "{{secret:NAME}}"`. The value comes from `.walkthrough/.env`, and the agent never sees it.
+
+For test data that is different in each environment, such as a test user or a product, write `{{var:NAME}}`, such as `value: "{{var:shopper}}"`. The value comes from `vars` in the plan, in `config.yaml`, or in the environment. See [Values for each environment](environments.md#values-for-each-environment).
 
 For data that must be new each time, put `{{unique}}` in a value or a path, such as `value: "demo+{{unique}}@example.com"`. It becomes a short value, such as `k3x9p2`, that stays the same for the whole run. Each run gets a new value, so a flow that makes an account or an order can run again. `run_start` shows the value, and exported scripts make a new one each time.
 
@@ -302,7 +307,7 @@ To start runs logged in:
 2. Ask the agent to save the session, for example "save this login as admin".
 3. Add `session: admin` to a plan.
 
-Saved logins go in `.walkthrough/sessions/`. Git does not track that folder, and only your user account can read the files. Anyone with the file can log in as that user, so do not share it. Apps that keep their login in IndexedDB need a new login each time.
+Saved logins go in `.walkthrough/sessions/`, and the logins of other environments go in a folder for each one, such as `.walkthrough/sessions/staging/`. Git does not track that folder, and only your user account can read the files. Anyone with the file can log in as that user, so do not share it. Apps that keep their login in IndexedDB need a new login each time.
 
 ## Results and reports
 

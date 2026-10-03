@@ -12,13 +12,24 @@ Walkthrough opens only the sites in `allowedOrigins` in `.walkthrough/config.yam
 - Frames inside the page, such as a payment form, can come from other sites. Walkthrough does not block them.
 - Mock rules from the `intercept` tool cannot open a site that is not allowed. The guard checks each page load before any rule.
 
-To test a staging server, add it to the list, such as `https://*.staging.example.com`. Do not add production sites unless you mean to test them.
+To test a staging server, add it as an environment. See [Environments](environments.md). Walkthrough then blocks the sites of the other environments, also when a pattern like `https://*.example.com` would allow them.
+
+## Protected environments
+
+An environment named `production`, and any environment with `protected: true`, needs your OK before Walkthrough opens a page there:
+
+- The panel in the browser asks, with **Use Production** and **Cancel**. Only a real click counts. The agent cannot answer for you.
+- Without the panel, Walkthrough asks through the MCP client, if the client can. For automation, `UIWALK_ALLOW_PROTECTED` names the environments that need no question.
+- Your OK lasts until the browser closes.
+- A protected environment never reads the plain `.walkthrough/.env` file, so development passwords never go there.
+
+Extra headers and basic auth logins of an environment go only to the site of that environment, never to other sites. See [Headers and basic auth](environments.md#headers-and-basic-auth).
 
 ## Secrets stay secret
 
-- Put passwords in `.walkthrough/.env`, and use them as `{{secret:NAME}}`. Walkthrough puts the value into the field, and the agent sees `****`.
+- Put passwords in `.walkthrough/.env`, and use them as `{{secret:NAME}}`. Walkthrough puts the value into the field, and the agent sees `****`. Each environment can have its own file, such as `.walkthrough/.env.staging`.
 - Walkthrough removes secret values from everything it sends to the agent: page outlines, element values, logs, and reports. It also removes the URL-encoded and Base64 forms of each value.
-- Report files and issue drafts hide the values in `.walkthrough/.env`. They also hide secrets from environment variables that the server used during the run. When Walkthrough writes a report again later, such as with `/walkthrough:report`, it knows only the values in `.walkthrough/.env`.
+- Report files and issue drafts hide the values in `.walkthrough/.env` and in every `.walkthrough/.env.<name>`. They also hide secrets from environment variables that the server used during the run. When Walkthrough writes a report again later, such as with `/walkthrough:report`, it knows only the values in `.walkthrough/.env`.
 - A text field that got a secret shows dots in screenshots. Password fields show dots anyway.
 - Run records keep `{{secret:NAME}}`, never the value.
 - In record mode, the value of a password field never leaves the page. For other private fields, click **Mark last field as secret**. Walkthrough throws the value away.

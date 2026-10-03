@@ -1,6 +1,6 @@
 ---
 description: Make a demo video of a workflow. It writes or uses a plan, runs it, and records a clean replay as MP4 and GIF.
-argument-hint: "<workflow, like: the checkout, or a plan name> [mp4 | webm | gif] [path, like docs/images/checkout.gif]"
+argument-hint: "<workflow, like: the checkout, or a plan name> [mp4 | webm | gif] [path, like docs/images/checkout.gif] [on <environment>]"
 allowed-tools: mcp__plugin_walkthrough_uiwalk__*, Read, Grep, Glob
 ---
 
@@ -19,7 +19,7 @@ What to record: $ARGUMENTS
    3. If a fact is missing, like a login or test data, ask the developer. Do not ask about anything else.
    4. Call `plan` with action `validate` and the YAML as `content`. Fix any problems.
    5. Call `plan` with action `save`, with a short name like `checkout-demo`. If a plan with that name exists, ask before you replace it.
-3. Run the plan. Call `run_start` with the plan, do each step as `run_start` says, and then call `run_finish`. Check every step. The run and the replay each do the workflow once, so the app gets the data two times, like two orders.
+3. Run the plan. Call `run_start` with the plan, do each step as `run_start` says, and then call `run_finish`. If the developer named an environment, such as `on staging`, pass it to `run_start` as `environment`. The replay then uses that environment too. Check every step. The run and the replay each do the workflow once, so the app gets the data two times, like two orders.
 4. If a step fails, stop. Tell the developer which step failed and why. Do not record a broken workflow unless the developer asks for it.
 5. Record the clean replay: call `video` with action `replay`, the `runId` from `run_start`, and:
    - `format`: the formats the developer asked for. The default is `[mp4, gif]`: the MP4 to watch, and a GIF preview.

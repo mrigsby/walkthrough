@@ -4,7 +4,25 @@ This file lists all notable changes to the project.
 
 ## Unreleased
 
+### Added
+
+- Environments: run the same plans and checks on development, staging, production, or any copy of your app. `config.yaml` has `environments`, each with a `baseUrl` and optional `label`, `color`, `allowedOrigins`, `vars`, `secrets`, `protected`, `headers`, `httpCredentials`, `ignoreHttpsErrors`, and `actionTimeoutMs`. The top-level settings are the default environment, development. See [Environments](docs/environments.md).
+- The new `environment` tool lists the environments, shows the one in use, and switches to another one. Open tabs move to the same page there, and the panel shows a badge. `browser_open`, `run_start`, `a11y_scan`, `lighthouse`, and `video` (action `replay`) take `environment`, and `export_script` takes it for the default of the script. `UIWALK_ENV` sets the environment of a new session.
+- Protected environments: an environment named `production`, or one with `protected: true`, needs your OK before Walkthrough opens a page there. The panel asks. Without the panel, the MCP client asks if it can. `UIWALK_ALLOW_PROTECTED` is for automation.
+- Each environment can have its own secrets in `.walkthrough/.env.<name>`. A protected environment never reads the plain `.env`. `secrets` can read a secret under another name.
+- `{{var:NAME}}` puts a value from `vars` into a plan, such as a test user. The values come from `config.yaml`, the plan, and the environment. Replays and exported scripts use the values of their own environment. Exported scripts read `VAR_<NAME>`.
+- Plan keys `environment`, `environments`, and `vars`. A plan `baseUrl` can be a path, like `/admin`.
+- Extra request headers and a basic auth login go only to the site of their environment. While they are set, Chrome skips the app's service worker.
+- Every report shows the environment: the run reports, the accessibility and Lighthouse reports and their JSON files, issue drafts, and the `runs` list. Accessibility and Lighthouse reports compare only with reports of the same environment, unless `compareTo` names another one.
+- Saved logins and visual baselines are separate for each environment. Development keeps the paths from before.
+- `doctor` checks that each environment answers, except a protected one, and that Git ignores the secret files of each environment.
+- The demo shop has staging and production copies: `npm run demo:staging` and `npm run demo:production`.
+
 ### Changed
+
+- Plans from `/walkthrough:record` have no `baseUrl`, so they run in any environment.
+- A video replay of a run from another environment goes to the same pages on the environment in use.
+- `/walkthrough:init` adds `.env.*` and `!.env.example` to an older `.walkthrough/.gitignore`.
 
 - The install steps say to install the plugin from Claude Code in a terminal, not from the IDE extension or the desktop app.
 

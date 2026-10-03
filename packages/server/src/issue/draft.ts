@@ -1,4 +1,4 @@
-import { reproSteps } from '../report/common.js';
+import { environmentText, reproSteps, runEnvironment } from '../report/common.js';
 import type { Run, RunStep } from '../run/run-store.js';
 import { VERSION } from '../version.js';
 
@@ -37,6 +37,7 @@ export function draftIssue(
 
   const repro = reproSteps(run, step).map((line, i) => `${i + 1}. ${line}`);
   const environment = [
+    `- Environment: ${environmentText(runEnvironment(run))}`,
     `- Page: ${step.actions.at(-1)?.url ?? run.baseUrl ?? 'unknown'}`,
     ...(run.chrome ? [`- Browser: ${run.chrome}`] : []),
     ...(run.setup ? [`- Setup: ${run.setup}`] : []),

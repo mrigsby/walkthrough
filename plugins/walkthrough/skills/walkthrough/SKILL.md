@@ -13,6 +13,15 @@ Walkthrough drives a visible Chrome browser through a web app, one step at a tim
 - **Without a plan:** call `run_start` with a `name` to record an ad hoc run with a report. Or call `browser_open` to test without a run.
 - Call `snapshot` to see the page. Each element has a ref, such as `e12`.
 
+## Environments
+
+An app can have more than one environment, such as development, staging, and production. Development is the default. `environment` with action `list` shows them.
+
+- When the developer names one, such as "run checkout on staging", pass `environment` to `run_start`, `browser_open`, `a11y_scan`, `lighthouse`, or `video` replay. Or call `environment` with action `use`. Only switch when the developer asks for it.
+- Never choose a protected environment, such as production, on your own. When the developer asks for it, Walkthrough asks them to confirm in the browser. On `status: waiting`, tell them to answer in the panel, then call the tool again with `resume: true`. On `status: canceled`, stop and tell them.
+- A step can have `{{var:NAME}}` in its action. Pass the token as it is, not its value, like you do with `{{secret:NAME}}`. `run_start` shows the values.
+- If a site is blocked because it belongs to another environment, tell the developer. Do not switch by yourself.
+
 ## Run modes
 
 - `interactive`: the developer confirms every step.
@@ -58,6 +67,8 @@ When the developer asks for a new plan:
 - Write `expect` so that a person can check it in a few seconds: exact text, numbers, or what is visible.
 - Use `action` only when the exact element is clear. Otherwise, write `do` in plain words.
 - Use `{{secret:NAME}}` for passwords, never the real value.
+- Use `{{var:NAME}}` for test data that is different in each environment, such as a test user. Add the value to the plan's `vars`, and ask the developer for the values of other environments.
+- Do not put a full URL in `baseUrl` or `navigate`. Paths like `/cart` work in every environment.
 
 ## Evidence
 

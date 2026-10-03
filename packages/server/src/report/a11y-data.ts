@@ -7,7 +7,8 @@ import { pageKey } from '../audit/findings.js';
 import type { FocusStop } from '../audit/keyboard.js';
 import type { Scores } from '../audit/score.js';
 import { CRITERIA, type Criterion, criteriaForTags } from '../audit/wcag.js';
-import type { Run } from '../run/run-store.js';
+import type { Run, RunEnvironment } from '../run/run-store.js';
+import { runEnvironment } from './common.js';
 
 // The text the agent wrote for one issue.
 export interface ReportItem {
@@ -34,6 +35,7 @@ export interface A11yReportData {
   relativeDir: string;
   createdAt: string;
   baseUrl?: string;
+  environment: RunEnvironment;
   standard: string;
   engine: string;
   checksRun: string[];
@@ -46,7 +48,8 @@ export interface A11yReportData {
   status: Record<string, 'new' | 'still'>;
   elementsFixed: Record<string, number>;
   fixed: Comparison['fixed'];
-  previous?: { runId: string; at: string };
+  // The environment of the earlier report, when it is another one.
+  previous?: { runId: string; at: string; environment?: string };
   review: ReviewItem[];
   keyboard: Array<{ page: string; stops: FocusStop[]; endedBy: string }>;
   framesNotChecked: Array<{ url: string; reason: string }>;
@@ -65,7 +68,8 @@ export function suggestedPrompt(
   firstId: string | undefined,
 ): string {
   const target = run.planFile ? basename(run.planFile).replace(/\.ya?ml$/, '') : pages.join(' ');
-  const app = run.baseUrl ?? run.name;
+  const env = runEnvironment(run);
+  const app = run.baseUrl ? `${run.baseUrl} (the ${env.name} environment)` : run.name;
   return [
     `Read ${runDir}/accessibility.md. It is an accessibility report for ${app}.`,
     'Write a plan to fix the issues. Fix critical and serious issues first. Group the fixes by',
@@ -136,6 +140,7 @@ export function buildReportData(input: {
     relativeDir: input.relativeDir,
     createdAt: new Date().toISOString(),
     baseUrl: run.baseUrl,
+    environment: runEnvironment(run),
     standard: standardLabel(checks[0]?.standard) || 'WCAG 2.2 AA',
     engine: checks.find((c) => c.engine)?.engine ?? 'axe-core',
     checksRun,
@@ -149,7 +154,13 @@ export function buildReportData(input: {
     elementsFixed: Object.fromEntries(comparison?.elementsFixed ?? []),
     fixed: comparison?.fixed ?? [],
     previous: comparison
-      ? { runId: comparison.previousRunId, at: comparison.previousAt }
+      ? {
+          runId: comparison.previousRunId,
+          at: comparison.previousAt,
+          ...(comparison.previousEnvironment !== runEnvironment(run).name
+            ? { environment: comparison.previousEnvironment }
+            : {}),
+        }
       : undefined,
     review: findings.review,
     keyboard,
@@ -169,6 +180,7 @@ export function jsonReport(data: A11yReportData): SavedReport & Record<string, u
     createdAt: data.createdAt,
     runName: data.runName,
     baseUrl: data.baseUrl,
+    environment: { name: data.environment.name, baseUrl: data.environment.baseUrl },
     standard: data.standard,
     engine: data.engine,
     checksRun: data.checksRun,

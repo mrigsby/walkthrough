@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { loadConfig } from '../config.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { exportScript } from '../export/puppeteer-script.js';
@@ -9,6 +10,7 @@ import { redactDeep } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { draftIssue } from '../issue/draft.js';
 import { Recorder } from '../record/recorder.js';
+import { replayVars } from '../replay/replayer.js';
 import { isProblem } from '../report/common.js';
 import { latestRunId, RunStore } from '../run/run-store.js';
 import { slug } from '../text.js';
@@ -167,11 +169,18 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
           .describe(
             'Use puppeteer-core and the installed Chrome, not the Chrome that puppeteer downloads.',
           ),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'The environment that the script tests by default, like "staging". The default is the environment of the run. It does not change the session.',
+          ),
       },
     },
-    ({ runId, installedChrome }) =>
+    ({ runId, installedChrome, environment }) =>
       runTool(ctx, 'export_script', async () => {
-        const { projectDir } = await ctx.config();
+        const config = await ctx.config();
+        const { projectDir } = config;
         const store = openRun(ctx, projectDir, runId);
         const name = slug(
           store.run.planFile
@@ -184,7 +193,24 @@ export function registerShareTools(server: McpServer, ctx: Context): void {
         mkdirSync(dir, { recursive: true });
         const file = join(dir, `${name}.mjs`);
         const existed = existsSync(file);
-        const result = exportScript(store.run, { installedChrome });
+        // Another environment gives the script its base URL and its values.
+        let target: { name: string; baseUrl?: string; vars: Record<string, string> } | undefined;
+        if (environment) {
+          const other = loadConfig(projectDir, config.projectDirSource, environment);
+          target = {
+            name: other.environment.name,
+            baseUrl: other.environment.baseUrl,
+            vars: replayVars(store.run, other),
+          };
+        }
+        const result = exportScript(store.run, {
+          installedChrome,
+          target,
+          environments: Object.values(config.environments).map((e) => ({
+            name: e.name,
+            baseUrl: e.baseUrl,
+          })),
+        });
         const rel = relative(projectDir, file);
         writeFileSync(file, result.code.replace('<this file>', rel));
         const pkg = installedChrome ? 'puppeteer-core' : 'puppeteer';

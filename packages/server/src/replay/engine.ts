@@ -211,7 +211,10 @@ export class ReplayEngine {
       });
     }
     if (options.session)
-      await restoreSession(main, loadSession(this.config.projectDir, options.session));
+      await restoreSession(
+        main,
+        loadSession(this.config.projectDir, options.session, this.config.environment.name),
+      );
     await main.page.goto(options.startUrl ? this.address(options.startUrl) : 'about:blank', {
       waitUntil: 'load',
     });
@@ -225,8 +228,16 @@ export class ReplayEngine {
   ): Promise<StepOutcome> {
     const from = options.fromOp ?? 0;
     this.dialogs = dialogAnswers(stepOps.ops, from);
-    if (from === 0)
-      this.stage.stepStart(options.caption ?? stepOps.step.caption ?? stepOps.step.title);
+    if (from === 0) {
+      const { step } = stepOps;
+      const text =
+        options.caption ??
+        step.template?.caption ??
+        step.caption ??
+        step.template?.title ??
+        step.title;
+      this.stage.stepStart(new TokenResolver(this.unique, this.options.vars ?? {}).display(text));
+    }
     return runOps(
       stepOps.ops,
       from,

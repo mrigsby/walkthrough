@@ -74,10 +74,12 @@ export function buildOps(run: Run): RunOps {
       if (action.action === 'tab-close') lastUrl = '';
     }
     for (const check of step.cookies ?? []) ops.push({ type: 'cookie', check });
-    if (step.expect) {
-      const texts = checkableText(step.expect);
+    // The token form, so a replay or export elsewhere checks its own values.
+    const expect = step.template?.expect ?? step.expect;
+    if (expect) {
+      const texts = checkableText(expect);
       for (const text of texts) ops.push({ type: 'expect', text });
-      if (texts.length === 0) ops.push({ type: 'check-by-hand', text: step.expect });
+      if (texts.length === 0) ops.push({ type: 'check-by-hand', text: expect });
     }
     for (const shot of shots) {
       if (shot.element && !shot.selector) {

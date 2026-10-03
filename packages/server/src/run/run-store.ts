@@ -20,7 +20,7 @@ import type { LhMode } from '../lighthouse/categories.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
 import { slug } from '../text.js';
-import type { Capture, Mode, Plan } from './plan-schema.js';
+import type { Capture, Mode, Plan, PlanStep } from './plan-schema.js';
 
 export type StepStatus = 'pending' | 'pass' | 'fail' | 'bug' | 'skip' | 'stop' | 'blocked';
 export type RunStatus = 'running' | 'finished' | 'stopped' | 'incomplete';
@@ -33,6 +33,9 @@ export interface RunStep {
   index: number;
   title: string;
   expect?: string;
+  // The text with its {{var:NAME}} tokens, when the values made it different.
+  // A replay or an export in another environment fills in its own values.
+  template?: { title?: string; expect?: string; caption?: string };
   confirm: boolean;
   status: StepStatus;
   checkedBy?: 'developer' | 'agent';
@@ -216,11 +219,24 @@ export class RunStore {
     const planChecks = settings?.checks
       ? CHECKS.filter((c) => settings.checks?.[c] ?? input.a11yChecks?.includes(c))
       : undefined;
+    // Keeps the token form of text that changed when the values went in.
+    const template = (step: PlanStep) => {
+      const out: NonNullable<RunStep['template']> = {};
+      for (const [key, text] of [
+        ['title', step.do],
+        ['expect', step.expect],
+        ['caption', step.caption],
+      ] as const) {
+        if (text !== undefined && show(text) !== text) out[key] = text;
+      }
+      return Object.keys(out).length ? { template: out } : {};
+    };
     const steps: RunStep[] = (input.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
       title: show(step.do),
       expect: step.expect === undefined ? undefined : show(step.expect),
+      ...template(step),
       confirm: needsConfirm(input.mode, step.checkpoint),
       status: 'pending',
       screenshots: [],

@@ -34,6 +34,8 @@ describe('Recorder', () => {
     );
     expect(yaml).toContain('{{secret:PASSWORD}}');
     expect(yaml).toContain('expect: The Account page shows.');
+    // No baseUrl, so the plan runs in any environment.
+    expect(yaml).not.toContain('baseUrl');
     const result = validatePlanText(yaml);
     expect(result.ok, JSON.stringify(result)).toBe(true);
     if (result.ok) expect(result.plan.steps).toHaveLength(3);

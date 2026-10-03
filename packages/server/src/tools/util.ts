@@ -14,6 +14,22 @@ export function textResult(text: string, extra: Content[] = []): CallToolResult 
   return { content: [{ type: 'text', text }, ...extra] };
 }
 
+// Switches to the environment of a tool's "environment" argument first, if it has one.
+// The lines about the switch go at the top of the reply.
+export async function withEnvironment(
+  ctx: Context,
+  environment: string | undefined,
+  extra: { signal?: AbortSignal; requestId?: string | number },
+  fn: () => Promise<CallToolResult | string>,
+): Promise<CallToolResult | string> {
+  const lines = environment ? await ctx.useEnvironmentForTool(environment, extra) : [];
+  const out = await fn();
+  if (lines.length === 0) return out;
+  const head = lines.join('\n');
+  if (typeof out === 'string') return `${head}\n${out}`;
+  return { ...out, content: [{ type: 'text', text: head }, ...out.content] };
+}
+
 // Runs a tool: one at a time, with clear errors, and with secrets removed from the output.
 export async function runTool(
   ctx: Context,

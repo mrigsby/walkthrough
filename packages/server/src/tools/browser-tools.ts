@@ -148,7 +148,8 @@ export async function openBrowser(
     await driver.setEmulation(options.emulation, { reload: false });
   }
   if (options.session) {
-    await restoreSession(tab, loadSession(config.projectDir, options.session));
+    const env = (await ctx.config()).environment.name;
+    await restoreSession(tab, loadSession(config.projectDir, options.session, env));
     lines.push(`Loaded the saved login "${options.session}".`);
   }
   // A new browser starts at the baseUrl. An open one stays where it is.
@@ -377,7 +378,11 @@ export function registerBrowserTools(server: McpServer, ctx: Context): void {
           if (full) guard.check(full);
           const loginChoice = isolated === true ? true : isolated ? isolated : undefined;
           const tab = await driver.newTab({ name, isolated: loginChoice });
-          if (session) await restoreSession(tab, loadSession(config.projectDir, session));
+          if (session)
+            await restoreSession(
+              tab,
+              loadSession(config.projectDir, session, config.environment.name),
+            );
           const problem = full ? await goTo(tab, full) : undefined;
           ctx.actionLog.push({
             at: new Date().toISOString(),

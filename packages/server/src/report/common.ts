@@ -1,7 +1,26 @@
 import { IMPACT_ORDER } from '../audit/axe.js';
 import { customViolations } from '../audit/custom-rules.js';
+import { defaultColor, defaultLabel } from '../environments.js';
 import { CATEGORY_LABELS } from '../lighthouse/categories.js';
-import type { Run, RunStep, StepStatus } from '../run/run-store.js';
+import type { Run, RunEnvironment, RunStep, StepStatus } from '../run/run-store.js';
+
+// The environment of a run. Runs from before 0.4.0 have none: they are development.
+export function runEnvironment(run: Pick<Run, 'environment' | 'baseUrl'>): RunEnvironment {
+  return (
+    run.environment ?? {
+      name: 'development',
+      label: defaultLabel('development'),
+      color: defaultColor('development'),
+      baseUrl: run.baseUrl,
+      protected: false,
+    }
+  );
+}
+
+// "staging (https://staging.example.com)"
+export function environmentText(env: Pick<RunEnvironment, 'name' | 'baseUrl'>): string {
+  return env.baseUrl ? `${env.name} (${env.baseUrl})` : env.name;
+}
 
 // Makes text safe to put in HTML, in text or in an attribute.
 export function esc(text: string): string {
@@ -82,7 +101,9 @@ export function reproSteps(run: Run, step: RunStep): string[] {
         return `${ACTION_WORDS[a.action] ?? a.action} ${a.label}${a.action === 'fill' ? ` the text${value}` : value}`;
       })
     : [step.title];
-  return [...(run.baseUrl ? [`Open ${run.baseUrl}`] : []), ...before, ...own];
+  const env = runEnvironment(run).name;
+  const where = env === 'development' ? '' : ` (the ${env} environment)`;
+  return [...(run.baseUrl ? [`Open ${run.baseUrl}${where}`] : []), ...before, ...own];
 }
 
 export function duration(run: Run): string {

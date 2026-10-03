@@ -35,6 +35,7 @@ import {
 import { LhFlow } from '../lighthouse/flow.js';
 import { auditPage } from '../lighthouse/run.js';
 import { tokenizeUnique, withUnique } from '../page/unique.js';
+import { runEnvironment } from '../report/common.js';
 import {
   buildLhReportData,
   CATEGORY_LABELS,
@@ -47,7 +48,7 @@ import { type Run, RunStore } from '../run/run-store.js';
 import { slug } from '../text.js';
 import { fullUrl, pageSummary } from './browser-tools.js';
 import { writeReports } from './run-tools.js';
-import { runTool } from './util.js';
+import { runTool, withEnvironment } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
@@ -126,6 +127,7 @@ function prepare(projectDir: string, store: RunStore, compareTo?: string) {
     first.pages.map((p) => p.page),
     compareTo,
     plan,
+    runEnvironment(store.run).name,
   );
   const comparison = previous ? compareLh(first, previous) : undefined;
   const findings = comparison
@@ -170,9 +172,10 @@ async function flowStep(
   const driver = ctx.requireDriver();
   if (ctx.lhFlow?.runId !== store.run.id) {
     const settings = store.run.lhPlan;
+    const env = runEnvironment(store.run).name;
     ctx.lhFlow = new LhFlow(
       store.run.id,
-      store.run.name,
+      env === 'development' ? store.run.name : `${store.run.name} (${env})`,
       (settings?.device as LhDevice | undefined) ?? input.device ?? config.lighthouse.device,
       (settings?.categories as LhCategory[] | undefined) ??
         input.categories ??
@@ -299,196 +302,204 @@ export function registerLighthouseTools(server: McpServer, ctx: Context): void {
           .min(1)
           .optional()
           .describe('The categories to check. The default comes from config.yaml.'),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'Switch the session to this environment first, like "staging". Only when the developer asks for it.',
+          ),
       },
     },
     (input, extra: Extra) =>
-      runTool(ctx, 'lighthouse', async () => {
-        const config = await ctx.config();
-        if (input.action === 'status') {
-          const found = findLighthouse();
-          return found
-            ? `Lighthouse ${found.version} is installed: ${found.dir}`
-            : LIGHTHOUSE_MISSING;
-        }
-        if (!findLighthouse()) throw new ToolError(LIGHTHOUSE_MISSING, 'lighthouse_missing');
-        if (input.action !== 'audit') return flowStep(ctx, { ...input, action: input.action });
-        const guard = await ctx.guard();
-        const secrets = await ctx.secrets();
-        const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
-        if (live && ctx.lhFlow?.runId === live.run.id && ctx.lhFlow.timespan) {
-          throw new ToolError(
-            'A Lighthouse timespan is going. Call lighthouse with action end first.',
-            'timespan_active',
-          );
-        }
-        let store: RunStore | undefined = live;
-        let owned: boolean;
-        let pending: string[];
-        let device: LhDevice;
-        let categories: LhCategory[];
-        if (input.runId) {
-          store =
-            live?.run.id === input.runId ? live : RunStore.open(config.projectDir, input.runId);
-          const saved = store.run.lhScan;
-          if (!saved?.pending.length)
-            throw new ToolError('That check has no pages left.', 'nothing_to_do');
-          owned = store !== live;
-          pending = saved.pending;
-          device = saved.device as LhDevice;
-          categories = saved.categories as LhCategory[];
-        } else {
-          device = input.device ?? config.lighthouse.device;
-          categories = input.categories ?? config.lighthouse.categories;
-          owned = !live;
-          pending = [];
-        }
-
-        // The checks run in their own Chrome, so the test browser does not have to be open.
-        const driver = ctx.driver?.alive && ctx.driver.hasActiveTab ? ctx.driver : undefined;
-        const tabUrl = driver?.activeTab().page.url() ?? '';
-        const current = /^https?:/.test(tabUrl) ? tabUrl : '';
-
-        if (!input.runId) {
-          pending = (input.urls?.length ? input.urls : [current]).map((u) => {
-            if (!u) throw new ToolError('Give the pages to check in urls.', 'bad_input');
-            return fullUrl(u, current, config.baseUrl);
-          });
-          for (const url of pending) guard.check(url);
-          store ??= RunStore.create(config.projectDir, {
-            name: input.name ?? 'Lighthouse check',
-            mode: 'autonomous',
-            baseUrl: config.baseUrl,
-            chrome: driver?.chromeVersion,
-          });
-        }
-        if (!store) throw new ToolError('Walkthrough could not start the check.', 'error');
-        const scan = store;
-        scan.run.lhScan = { pending: [...pending], device, categories };
-        if (owned) scan.run.status = 'running';
-        scan.save();
-
-        // A saved login, or a copy of the active tab's login. It stays in memory.
-        const login = input.session
-          ? loadSession(config.projectDir, input.session)
-          : driver
-            ? await captureSession(
-                driver,
-                guard,
-                'lighthouse',
-                pending.map((u) => new URL(u).hostname),
-              )
-            : undefined;
-        // Rules for one tab stay with that tab.
-        const rules = driver?.mocks.filter((r) => !r.tab) ?? [];
-        const clean = (text: string) => scrubText(secrets.redact(text));
-        const started = Date.now();
-        const total = pending.length;
-        const lines: string[] = [];
-        let done = 0;
-        let stopped: string | undefined;
-        try {
-          while (pending.length) {
-            if (done > 0 && Date.now() - started > TIME_LIMIT_MS) {
-              stopped = 'time';
-              break;
-            }
-            if (extra.signal.aborted) {
-              stopped = 'canceled';
-              break;
-            }
-            const url = pending[0] as string;
-            const token = extra._meta?.progressToken;
-            if (token !== undefined) {
-              await extra
-                .sendNotification({
-                  method: 'notifications/progress',
-                  params: {
-                    progressToken: token,
-                    progress: done,
-                    total,
-                    message: `Lighthouse on ${url}`,
-                  },
-                })
-                .catch(() => undefined);
-            }
-            const path = pageKey(url);
-            let stepId = `lh-${slug(path, 40, 'page')}`;
-            for (let n = 2; scan.run.steps.some((s) => s.id === stepId); n++) {
-              stepId = `lh-${slug(path, 40, 'page')}-${n}`;
-            }
-            const step = scan.step({ id: stepId, title: `Check ${path} with Lighthouse` });
-            step.checkedBy = 'agent';
-            step.at = new Date().toISOString();
-            try {
-              const check = await auditPage(url, {
-                config,
-                login,
-                isAllowed: (u) => guard.isAllowed(u),
-                rules,
-                device,
-                categories,
-                runDir: scan.dir,
-                index: (scan.run.lighthouse?.length ?? 0) + 1,
-                secrets,
-                clean,
-                network: ctx.network,
-              });
-              check.stepId = stepId;
-              if (pageKey(check.url) !== path) check.requestedUrl = url;
-              scan.run.lighthouse ??= [];
-              scan.run.lighthouse.push(check);
-              step.status = 'pass';
-              step.actual = `${scoresLine(check.scores)}. ${check.audits.length} audit(s) did not pass.`;
-              lines.push(
-                `- ${path}: ${scoresLine(check.scores)}. ${check.audits.length} audit(s) did not pass.`,
-              );
-            } catch (error) {
-              step.status = 'blocked';
-              step.actual = (error as Error).message;
-              lines.push(`- ${path}: could not check it. ${(error as Error).message}`);
-              const code = (error as ToolError).code;
-              if (['lighthouse_missing', 'chrome_missing', 'launch_failed'].includes(code))
-                throw error;
-            } finally {
-              pending.shift();
-              done += 1;
-              scan.run.lhScan = { pending: [...pending], device, categories };
-              scan.save();
-            }
+      runTool(ctx, 'lighthouse', () =>
+        withEnvironment(ctx, input.environment, extra, async () => {
+          const config = await ctx.config();
+          if (input.action === 'status') {
+            const found = findLighthouse();
+            return found
+              ? `Lighthouse ${found.version} is installed: ${found.dir}`
+              : LIGHTHOUSE_MISSING;
           }
-        } finally {
-          if (!owned) {
-            // These steps are not part of the plan's actions.
-            ctx.actionCursor = ctx.actionLog.length;
-            if (!pending.length) scan.run.lhScan = undefined;
-            scan.save();
-          } else if (pending.length) {
-            scan.markIncomplete();
-            writeReports(scan, secrets);
+          if (!findLighthouse()) throw new ToolError(LIGHTHOUSE_MISSING, 'lighthouse_missing');
+          if (input.action !== 'audit') return flowStep(ctx, { ...input, action: input.action });
+          const guard = await ctx.guard();
+          const secrets = await ctx.secrets();
+          const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+          if (live && ctx.lhFlow?.runId === live.run.id && ctx.lhFlow.timespan) {
+            throw new ToolError(
+              'A Lighthouse timespan is going. Call lighthouse with action end first.',
+              'timespan_active',
+            );
+          }
+          let store: RunStore | undefined = live;
+          let owned: boolean;
+          let pending: string[];
+          let device: LhDevice;
+          let categories: LhCategory[];
+          if (input.runId) {
+            store =
+              live?.run.id === input.runId ? live : RunStore.open(config.projectDir, input.runId);
+            const saved = store.run.lhScan;
+            if (!saved?.pending.length)
+              throw new ToolError('That check has no pages left.', 'nothing_to_do');
+            owned = store !== live;
+            pending = saved.pending;
+            device = saved.device as LhDevice;
+            categories = saved.categories as LhCategory[];
           } else {
-            scan.run.lhScan = undefined;
-            scan.finish();
-            writeReports(scan, secrets);
+            device = input.device ?? config.lighthouse.device;
+            categories = input.categories ?? config.lighthouse.categories;
+            owned = !live;
+            pending = [];
           }
-        }
 
-        const out = [
-          `Checked ${done} page(s) with Lighthouse (${device}, ${categories.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')}).`,
-          untrusted(lines.join('\n')),
-          'Scores from a dev machine change from run to run. Compare changes between runs more than the numbers.',
-          `Run folder: ${scan.relativeDir}`,
-        ];
-        if (pending.length) {
-          out.push(
-            `Checked ${total - pending.length} of ${total} pages${stopped === 'canceled' ? ' before the call was canceled' : ''}. Call lighthouse again with runId "${scan.run.id}" to continue.`,
-          );
-        } else {
-          out.push(
-            `Next, call lighthouse_report with runId "${scan.run.id}" to get the findings and write the report.`,
-          );
-        }
-        return out.join('\n');
-      }),
+          // The checks run in their own Chrome, so the test browser does not have to be open.
+          const driver = ctx.driver?.alive && ctx.driver.hasActiveTab ? ctx.driver : undefined;
+          const tabUrl = driver?.activeTab().page.url() ?? '';
+          const current = /^https?:/.test(tabUrl) ? tabUrl : '';
+
+          if (!input.runId) {
+            pending = (input.urls?.length ? input.urls : [current]).map((u) => {
+              if (!u) throw new ToolError('Give the pages to check in urls.', 'bad_input');
+              return fullUrl(u, current, config.baseUrl);
+            });
+            for (const url of pending) guard.check(url);
+            store ??= RunStore.create(config.projectDir, {
+              name: input.name ?? 'Lighthouse check',
+              mode: 'autonomous',
+              baseUrl: config.baseUrl,
+              chrome: driver?.chromeVersion,
+            });
+          }
+          if (!store) throw new ToolError('Walkthrough could not start the check.', 'error');
+          const scan = store;
+          scan.run.lhScan = { pending: [...pending], device, categories };
+          if (owned) scan.run.status = 'running';
+          scan.save();
+
+          // A saved login, or a copy of the active tab's login. It stays in memory.
+          const login = input.session
+            ? loadSession(config.projectDir, input.session, config.environment.name)
+            : driver
+              ? await captureSession(
+                  driver,
+                  guard,
+                  'lighthouse',
+                  pending.map((u) => new URL(u).hostname),
+                )
+              : undefined;
+          // Rules for one tab stay with that tab.
+          const rules = driver?.mocks.filter((r) => !r.tab) ?? [];
+          const clean = (text: string) => scrubText(secrets.redact(text));
+          const started = Date.now();
+          const total = pending.length;
+          const lines: string[] = [];
+          let done = 0;
+          let stopped: string | undefined;
+          try {
+            while (pending.length) {
+              if (done > 0 && Date.now() - started > TIME_LIMIT_MS) {
+                stopped = 'time';
+                break;
+              }
+              if (extra.signal.aborted) {
+                stopped = 'canceled';
+                break;
+              }
+              const url = pending[0] as string;
+              const token = extra._meta?.progressToken;
+              if (token !== undefined) {
+                await extra
+                  .sendNotification({
+                    method: 'notifications/progress',
+                    params: {
+                      progressToken: token,
+                      progress: done,
+                      total,
+                      message: `Lighthouse on ${url}`,
+                    },
+                  })
+                  .catch(() => undefined);
+              }
+              const path = pageKey(url);
+              let stepId = `lh-${slug(path, 40, 'page')}`;
+              for (let n = 2; scan.run.steps.some((s) => s.id === stepId); n++) {
+                stepId = `lh-${slug(path, 40, 'page')}-${n}`;
+              }
+              const step = scan.step({ id: stepId, title: `Check ${path} with Lighthouse` });
+              step.checkedBy = 'agent';
+              step.at = new Date().toISOString();
+              try {
+                const check = await auditPage(url, {
+                  config,
+                  login,
+                  isAllowed: (u) => guard.isAllowed(u),
+                  rules,
+                  device,
+                  categories,
+                  runDir: scan.dir,
+                  index: (scan.run.lighthouse?.length ?? 0) + 1,
+                  secrets,
+                  clean,
+                  network: ctx.network,
+                });
+                check.stepId = stepId;
+                if (pageKey(check.url) !== path) check.requestedUrl = url;
+                scan.run.lighthouse ??= [];
+                scan.run.lighthouse.push(check);
+                step.status = 'pass';
+                step.actual = `${scoresLine(check.scores)}. ${check.audits.length} audit(s) did not pass.`;
+                lines.push(
+                  `- ${path}: ${scoresLine(check.scores)}. ${check.audits.length} audit(s) did not pass.`,
+                );
+              } catch (error) {
+                step.status = 'blocked';
+                step.actual = (error as Error).message;
+                lines.push(`- ${path}: could not check it. ${(error as Error).message}`);
+                const code = (error as ToolError).code;
+                if (['lighthouse_missing', 'chrome_missing', 'launch_failed'].includes(code))
+                  throw error;
+              } finally {
+                pending.shift();
+                done += 1;
+                scan.run.lhScan = { pending: [...pending], device, categories };
+                scan.save();
+              }
+            }
+          } finally {
+            if (!owned) {
+              // These steps are not part of the plan's actions.
+              ctx.actionCursor = ctx.actionLog.length;
+              if (!pending.length) scan.run.lhScan = undefined;
+              scan.save();
+            } else if (pending.length) {
+              scan.markIncomplete();
+              writeReports(scan, secrets);
+            } else {
+              scan.run.lhScan = undefined;
+              scan.finish();
+              writeReports(scan, secrets);
+            }
+          }
+
+          const out = [
+            `Checked ${done} page(s) with Lighthouse (${device}, ${categories.map((c) => CATEGORY_LABELS[c] ?? c).join(', ')}).`,
+            untrusted(lines.join('\n')),
+            'Scores from a dev machine change from run to run. Compare changes between runs more than the numbers.',
+            `Run folder: ${scan.relativeDir}`,
+          ];
+          if (pending.length) {
+            out.push(
+              `Checked ${total - pending.length} of ${total} pages${stopped === 'canceled' ? ' before the call was canceled' : ''}. Call lighthouse again with runId "${scan.run.id}" to continue.`,
+            );
+          } else {
+            out.push(
+              `Next, call lighthouse_report with runId "${scan.run.id}" to get the findings and write the report.`,
+            );
+          }
+          return out.join('\n');
+        }),
+      ),
   );
 
   server.registerTool(

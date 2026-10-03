@@ -150,6 +150,7 @@ async function main(): Promise<void> {
       const result = initProject(process.cwd(), flag > -1 ? process.argv[flag + 1] : undefined);
       for (const file of result.created) process.stdout.write(`Created ${file}\n`);
       for (const file of result.kept) process.stdout.write(`Kept ${file} (already there)\n`);
+      for (const file of result.updated) process.stdout.write(`Updated ${file}\n`);
       break;
     }
     case 'schema':

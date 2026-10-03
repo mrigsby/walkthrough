@@ -32,11 +32,12 @@ import { untrusted } from '../guards/untrusted.js';
 import { buildReportData, jsonReport, type ReportItem } from '../report/a11y-data.js';
 import { a11yHtmlReport } from '../report/a11y-html.js';
 import { a11yMarkdownReport } from '../report/a11y-markdown.js';
+import { runEnvironment } from '../report/common.js';
 import { type A11yCheck, type Run, RunStore } from '../run/run-store.js';
 import { slug } from '../text.js';
 import { fullUrl, goTo, openBrowser } from './browser-tools.js';
 import { writeReports } from './run-tools.js';
-import { runTool } from './util.js';
+import { runTool, withEnvironment } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
@@ -126,6 +127,7 @@ function prepare(projectDir: string, store: RunStore, compareTo?: string) {
     store.run.id,
     first.pages.map((p) => p.page),
     compareTo,
+    runEnvironment(store.run).name,
   );
   const comparison = previous ? compareFindings(first, previous) : undefined;
   const findings = comparison
@@ -169,200 +171,210 @@ export function registerA11yTools(server: McpServer, ctx: Context): void {
           .array(z.enum(CHECKS))
           .optional()
           .describe('The extra checks to run. The default comes from config.yaml.'),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'Switch the session to this environment first, like "staging". Only when the developer asks for it.',
+          ),
       },
     },
     (input, extra: Extra) =>
-      runTool(ctx, 'a11y_scan', async () => {
-        const config = await ctx.config();
-        const guard = await ctx.guard();
-        const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
-        if (input.session && live) {
-          throw new ToolError(
-            'A run is going. A saved login would change it. Call run_finish first, or leave out session.',
-            'run_active',
-          );
-        }
-
-        // Which run, and which pages.
-        let store: RunStore | undefined = live;
-        let owned: boolean;
-        let pending: string[];
-        let standard: Standard;
-        let checks: CheckName[];
-        if (input.runId) {
-          // Use the same object for the run that is going, so Walkthrough keeps its changes.
-          store =
-            live?.run.id === input.runId ? live : RunStore.open(config.projectDir, input.runId);
-          const saved = store.run.a11yScan;
-          if (!saved?.pending.length)
-            throw new ToolError('That scan has no pages left to check.', 'nothing_to_do');
-          owned = store !== live;
-          pending = saved.pending;
-          standard = saved.standard as Standard;
-          checks = saved.checks as CheckName[];
-        } else {
-          // The call wins over the plan, and the plan wins over config.yaml.
-          standard =
-            input.standard ??
-            (live?.run.a11yPlan?.standard as Standard | undefined) ??
-            config.accessibility.standard;
-          checks =
-            input.checks ??
-            live?.run.a11yPlan?.checks ??
-            CHECKS.filter((c) => config.accessibility.checks[c]);
-          owned = !live;
-          pending = [];
-        }
-        const tags = standardTags(standard, config.accessibility.bestPractices);
-
-        // Open the browser, and load a saved login if asked.
-        if (!ctx.driver?.alive || input.session) {
-          await openBrowser(ctx, { session: input.session });
-        }
-        const driver = ctx.requireDriver();
-        const tab = driver.activeTab();
-        const startUrl = tab.page.url();
-
-        if (!input.runId) {
-          const current = /^https?:/.test(startUrl) ? startUrl : '';
-          pending = (input.urls?.length ? input.urls : [current]).map((u) => {
-            if (!u) throw new ToolError('Give the pages to check in urls.', 'bad_input');
-            return fullUrl(u, current, config.baseUrl);
-          });
-          // Check every page against the allowed sites before opening any.
-          for (const url of pending) guard.check(url);
-          if (!store) {
-            store = RunStore.create(config.projectDir, {
-              name: input.name ?? 'Accessibility check',
-              mode: 'autonomous',
-              baseUrl: config.baseUrl,
-              chrome: driver.chromeVersion,
-            });
+      runTool(ctx, 'a11y_scan', () =>
+        withEnvironment(ctx, input.environment, extra, async () => {
+          const config = await ctx.config();
+          const guard = await ctx.guard();
+          const live = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+          if (input.session && live) {
+            throw new ToolError(
+              'A run is going. A saved login would change it. Call run_finish first, or leave out session.',
+              'run_active',
+            );
           }
-        }
-        if (!store) throw new ToolError('Walkthrough could not start the scan.', 'error');
-        const scan = store;
-        scan.run.a11yScan = { pending: [...pending], standard, tags, checks };
-        if (owned) scan.run.status = 'running';
-        scan.save();
 
-        const started = Date.now();
-        const total = pending.length;
-        const lines: string[] = [];
-        let done = 0;
-        let stopped: string | undefined;
-        const secrets = await ctx.secrets();
-        try {
-          while (pending.length) {
-            if (done > 0 && Date.now() - started > TIME_LIMIT_MS) {
-              stopped = 'time';
-              break;
-            }
-            if (extra.signal.aborted) {
-              stopped = 'canceled';
-              break;
-            }
-            const url = pending[0] as string;
-            const token = extra._meta?.progressToken;
-            if (token !== undefined) {
-              await extra
-                .sendNotification({
-                  method: 'notifications/progress',
-                  params: {
-                    progressToken: token,
-                    progress: done,
-                    total,
-                    message: `Checking ${url}`,
-                  },
-                })
-                .catch(() => undefined);
-            }
-
-            const path = pageKey(url);
-            let stepId = `a11y-${slug(path, 40, 'page')}`;
-            for (let n = 2; scan.run.steps.some((s) => s.id === stepId); n++) {
-              stepId = `a11y-${slug(path, 40, 'page')}-${n}`;
-            }
-            const step = scan.step({ id: stepId, title: `Check accessibility of ${path}` });
-            step.checkedBy = 'agent';
-            step.at = new Date().toISOString();
-            try {
-              const problem = await goTo(tab, url);
-              if (problem) throw new ToolError(problem, 'navigation_failed');
-              const audit = await auditPage(ctx, driver, tab, {
-                standard,
-                tags,
-                checks,
-                stepId,
-                requestedUrl: pageKey(tab.page.url()) !== path ? url : undefined,
-                shots: { root: scan.dir, sub: 'a11y', max: config.accessibility.maxScreenshots },
-              });
-              scan.run.accessibility ??= [];
-              scan.run.accessibility.push(audit.check);
-              const wcag = wcagProblems(audit.check);
-              const all = [...audit.check.violations, ...customViolations(audit.check)];
-              step.status = wcag.length ? 'fail' : 'pass';
-              step.actual = all.length
-                ? `${all.length} accessibility problem type(s): ${impactLine(all)}.`
-                : undefined;
-              if (audit.check.requestedUrl) step.notes = `The page went to ${audit.check.url}.`;
-              const one = computeScores([audit.check], buildFindings([audit.check]));
-              lines.push(
-                `- ${path}: ${all.length ? impactLine(all) : 'no problems'}${one.overall !== null ? `, score ${one.overall}` : ''}`,
-              );
-            } catch (error) {
-              step.status = 'blocked';
-              step.actual = (error as Error).message;
-              lines.push(`- ${path}: could not check it. ${(error as Error).message}`);
-              // Nothing else will load either.
-              if ((error as ToolError).code === 'connection_refused') throw error;
-            } finally {
-              pending.shift();
-              done += 1;
-              scan.run.a11yScan = { pending: [...pending], standard, tags, checks };
-              scan.save();
-            }
-          }
-        } finally {
-          if (!owned) {
-            // Scan steps are not part of the plan's actions. Go back where the plan was.
-            ctx.actionCursor = ctx.actionLog.length;
-            if (!pending.length) scan.run.a11yScan = undefined;
-            scan.save();
-            if (/^https?:/.test(startUrl)) await goTo(tab, startUrl).catch(() => undefined);
-          } else if (pending.length) {
-            // Stopped early: the run is incomplete until the scan goes on.
-            scan.markIncomplete();
-            writeReports(scan, secrets);
+          // Which run, and which pages.
+          let store: RunStore | undefined = live;
+          let owned: boolean;
+          let pending: string[];
+          let standard: Standard;
+          let checks: CheckName[];
+          if (input.runId) {
+            // Use the same object for the run that is going, so Walkthrough keeps its changes.
+            store =
+              live?.run.id === input.runId ? live : RunStore.open(config.projectDir, input.runId);
+            const saved = store.run.a11yScan;
+            if (!saved?.pending.length)
+              throw new ToolError('That scan has no pages left to check.', 'nothing_to_do');
+            owned = store !== live;
+            pending = saved.pending;
+            standard = saved.standard as Standard;
+            checks = saved.checks as CheckName[];
           } else {
-            scan.run.a11yScan = undefined;
-            scan.finish();
-            writeReports(scan, secrets);
+            // The call wins over the plan, and the plan wins over config.yaml.
+            standard =
+              input.standard ??
+              (live?.run.a11yPlan?.standard as Standard | undefined) ??
+              config.accessibility.standard;
+            checks =
+              input.checks ??
+              live?.run.a11yPlan?.checks ??
+              CHECKS.filter((c) => config.accessibility.checks[c]);
+            owned = !live;
+            pending = [];
           }
-        }
+          const tags = standardTags(standard, config.accessibility.bestPractices);
 
-        const results = scan.run.accessibility ?? [];
-        const findings = buildFindings(results);
-        const scores = computeScores(results, findings);
-        const out = [
-          `Checked ${done} page(s) (${standardLabel(standard)}, extra checks: ${checks.join(', ') || 'none'}).`,
-          untrusted(lines.join('\n')),
-          scoreLine(scores),
-          `Run folder: ${scan.relativeDir}`,
-        ];
-        if (pending.length) {
-          out.push(
-            `Checked ${total - pending.length} of ${total} pages${stopped === 'canceled' ? ' before the call was canceled' : ''}. Call a11y_scan again with runId "${scan.run.id}" to go on.`,
-          );
-        } else {
-          if (owned)
-            out.push(`Reports: ${scan.relativeDir}/report.md and ${scan.relativeDir}/report.html`);
-          out.push(
-            `Next, call a11y_report with runId "${scan.run.id}" to get the findings and write the accessibility report.`,
-          );
-        }
-        return out.join('\n');
-      }),
+          // Open the browser, and load a saved login if asked.
+          if (!ctx.driver?.alive || input.session) {
+            await openBrowser(ctx, { session: input.session });
+          }
+          const driver = ctx.requireDriver();
+          const tab = driver.activeTab();
+          const startUrl = tab.page.url();
+
+          if (!input.runId) {
+            const current = /^https?:/.test(startUrl) ? startUrl : '';
+            pending = (input.urls?.length ? input.urls : [current]).map((u) => {
+              if (!u) throw new ToolError('Give the pages to check in urls.', 'bad_input');
+              return fullUrl(u, current, config.baseUrl);
+            });
+            // Check every page against the allowed sites before opening any.
+            for (const url of pending) guard.check(url);
+            if (!store) {
+              store = RunStore.create(config.projectDir, {
+                name: input.name ?? 'Accessibility check',
+                mode: 'autonomous',
+                baseUrl: config.baseUrl,
+                chrome: driver.chromeVersion,
+              });
+            }
+          }
+          if (!store) throw new ToolError('Walkthrough could not start the scan.', 'error');
+          const scan = store;
+          scan.run.a11yScan = { pending: [...pending], standard, tags, checks };
+          if (owned) scan.run.status = 'running';
+          scan.save();
+
+          const started = Date.now();
+          const total = pending.length;
+          const lines: string[] = [];
+          let done = 0;
+          let stopped: string | undefined;
+          const secrets = await ctx.secrets();
+          try {
+            while (pending.length) {
+              if (done > 0 && Date.now() - started > TIME_LIMIT_MS) {
+                stopped = 'time';
+                break;
+              }
+              if (extra.signal.aborted) {
+                stopped = 'canceled';
+                break;
+              }
+              const url = pending[0] as string;
+              const token = extra._meta?.progressToken;
+              if (token !== undefined) {
+                await extra
+                  .sendNotification({
+                    method: 'notifications/progress',
+                    params: {
+                      progressToken: token,
+                      progress: done,
+                      total,
+                      message: `Checking ${url}`,
+                    },
+                  })
+                  .catch(() => undefined);
+              }
+
+              const path = pageKey(url);
+              let stepId = `a11y-${slug(path, 40, 'page')}`;
+              for (let n = 2; scan.run.steps.some((s) => s.id === stepId); n++) {
+                stepId = `a11y-${slug(path, 40, 'page')}-${n}`;
+              }
+              const step = scan.step({ id: stepId, title: `Check accessibility of ${path}` });
+              step.checkedBy = 'agent';
+              step.at = new Date().toISOString();
+              try {
+                const problem = await goTo(tab, url);
+                if (problem) throw new ToolError(problem, 'navigation_failed');
+                const audit = await auditPage(ctx, driver, tab, {
+                  standard,
+                  tags,
+                  checks,
+                  stepId,
+                  requestedUrl: pageKey(tab.page.url()) !== path ? url : undefined,
+                  shots: { root: scan.dir, sub: 'a11y', max: config.accessibility.maxScreenshots },
+                });
+                scan.run.accessibility ??= [];
+                scan.run.accessibility.push(audit.check);
+                const wcag = wcagProblems(audit.check);
+                const all = [...audit.check.violations, ...customViolations(audit.check)];
+                step.status = wcag.length ? 'fail' : 'pass';
+                step.actual = all.length
+                  ? `${all.length} accessibility problem type(s): ${impactLine(all)}.`
+                  : undefined;
+                if (audit.check.requestedUrl) step.notes = `The page went to ${audit.check.url}.`;
+                const one = computeScores([audit.check], buildFindings([audit.check]));
+                lines.push(
+                  `- ${path}: ${all.length ? impactLine(all) : 'no problems'}${one.overall !== null ? `, score ${one.overall}` : ''}`,
+                );
+              } catch (error) {
+                step.status = 'blocked';
+                step.actual = (error as Error).message;
+                lines.push(`- ${path}: could not check it. ${(error as Error).message}`);
+                // Nothing else will load either.
+                if ((error as ToolError).code === 'connection_refused') throw error;
+              } finally {
+                pending.shift();
+                done += 1;
+                scan.run.a11yScan = { pending: [...pending], standard, tags, checks };
+                scan.save();
+              }
+            }
+          } finally {
+            if (!owned) {
+              // Scan steps are not part of the plan's actions. Go back where the plan was.
+              ctx.actionCursor = ctx.actionLog.length;
+              if (!pending.length) scan.run.a11yScan = undefined;
+              scan.save();
+              if (/^https?:/.test(startUrl)) await goTo(tab, startUrl).catch(() => undefined);
+            } else if (pending.length) {
+              // Stopped early: the run is incomplete until the scan goes on.
+              scan.markIncomplete();
+              writeReports(scan, secrets);
+            } else {
+              scan.run.a11yScan = undefined;
+              scan.finish();
+              writeReports(scan, secrets);
+            }
+          }
+
+          const results = scan.run.accessibility ?? [];
+          const findings = buildFindings(results);
+          const scores = computeScores(results, findings);
+          const out = [
+            `Checked ${done} page(s) (${standardLabel(standard)}, extra checks: ${checks.join(', ') || 'none'}).`,
+            untrusted(lines.join('\n')),
+            scoreLine(scores),
+            `Run folder: ${scan.relativeDir}`,
+          ];
+          if (pending.length) {
+            out.push(
+              `Checked ${total - pending.length} of ${total} pages${stopped === 'canceled' ? ' before the call was canceled' : ''}. Call a11y_scan again with runId "${scan.run.id}" to go on.`,
+            );
+          } else {
+            if (owned)
+              out.push(
+                `Reports: ${scan.relativeDir}/report.md and ${scan.relativeDir}/report.html`,
+              );
+            out.push(
+              `Next, call a11y_report with runId "${scan.run.id}" to get the findings and write the accessibility report.`,
+            );
+          }
+          return out.join('\n');
+        }),
+      ),
   );
 
   server.registerTool(

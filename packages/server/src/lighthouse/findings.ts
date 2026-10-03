@@ -138,26 +138,30 @@ export interface SavedLhReport {
   createdAt: string;
   // The plan file of a flow run. Reports compare only with reports of the same plan.
   plan?: string;
+  // Reports from before 0.4.0 have none: they are development.
+  environment?: { name: string; baseUrl?: string };
   pages: Array<{ page: string; mode?: string; scores: Record<string, number | null> }>;
   findings: Array<{ id: string; audit: string; title: string; pages: string[] }>;
 }
 
 export interface LhComparison {
   previousRunId: string;
+  previousEnvironment: string;
   keepIds: Map<string, string>;
   startAfter: number;
   fixed: Array<{ id: string; audit: string; title: string }>;
   changes: Array<{ page: string; category: string; before: number | null; after: number | null }>;
 }
 
-// The newest earlier report of the same plan (or of no plan) with at least one of the
-// same pages, or the one asked for.
+// The newest earlier report of the same plan (or of no plan) and environment, with at
+// least one of the same pages, or the one asked for from any environment.
 export function findPreviousLh(
   projectDir: string,
   runId: string,
   pages: string[],
   compareTo?: string,
   plan?: string,
+  env = 'development',
 ): SavedLhReport | undefined {
   const runs = join(projectDir, '.walkthrough', 'runs');
   const read = (id: string): SavedLhReport | undefined => {
@@ -178,6 +182,7 @@ export function findPreviousLh(
     if (id >= runId) continue;
     const saved = read(id);
     if (!saved || saved.plan !== plan) continue;
+    if ((saved.environment?.name ?? 'development') !== env) continue;
     if (saved.pages.some((p) => pages.includes(p.page))) return saved;
   }
   return undefined;
@@ -202,5 +207,12 @@ export function compareLh(current: LhFindings, previous: SavedLhReport): LhCompa
       if (was !== after) changes.push({ page: page.page, category, before: was, after });
     }
   }
-  return { previousRunId: previous.runId, keepIds, startAfter, fixed, changes };
+  return {
+    previousRunId: previous.runId,
+    previousEnvironment: previous.environment?.name ?? 'development',
+    keepIds,
+    startAfter,
+    fixed,
+    changes,
+  };
 }

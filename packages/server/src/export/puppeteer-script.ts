@@ -2,6 +2,7 @@ import { isAbsolute } from 'node:path';
 import { mediaFeatures, NETWORK_PRESETS, resolveDevice } from '../browser/devices.js';
 import { type Emulation, mergeEmulation, permissionEntries } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
+import { rebaseUrl } from '../environments.js';
 import { buildOps, type RunAction } from '../replay/ops.js';
 import type { Run } from '../run/run-store.js';
 
@@ -25,6 +26,9 @@ const js = (value: string) => JSON.stringify(value);
 
 // {{unique}} in a value, also after URL encoding.
 const UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
+// {{var:NAME}} in a value, also after URL encoding.
+const VAR_IN =
+  /\{\{\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}|%7B%7B\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*%7D%7D/gi;
 
 // The UNIQUE constant, for scripts that use {{unique}}.
 const UNIQUE_CODE = [
@@ -36,6 +40,9 @@ const UNIQUE_CODE = [
 // Things the script needs because of what the run did.
 interface Needs {
   unique: boolean;
+  // The {{var:NAME}} values it uses, and {{var:environment}}.
+  vars: Set<string>;
+  environment: boolean;
   emulate: boolean;
   tabs: boolean;
   cookies: boolean;
@@ -275,16 +282,30 @@ function pageChangeCode(action: RunAction, gen: Gen): string[] {
   }
 }
 
-// A string literal, with {{unique}} turned into the UNIQUE constant.
+// A string literal, with {{unique}} turned into the UNIQUE constant, and {{var:NAME}}
+// into VARS, BASE_URL, or ENVIRONMENT.
 function literal(value: string, needs: Needs): string {
-  const code = js(value);
-  if (!UNIQUE_IN.test(code)) return code;
+  let code = js(value);
+  let changed = false;
+  if (UNIQUE_IN.test(code)) {
+    needs.unique = true;
+    changed = true;
+    code = code.replace(UNIQUE_IN, '" + UNIQUE + "');
+  }
   UNIQUE_IN.lastIndex = 0;
-  needs.unique = true;
-  return code
-    .replace(UNIQUE_IN, '" + UNIQUE + "')
-    .replace(/^"" \+ /, '')
-    .replace(/ \+ ""$/, '');
+  code = code.replace(VAR_IN, (_all, plain?: string, encoded?: string) => {
+    const name = (plain ?? encoded) as string;
+    changed = true;
+    if (name === 'baseUrl') return '" + BASE_URL + "';
+    if (name === 'environment') {
+      needs.environment = true;
+      return '" + ENVIRONMENT + "';
+    }
+    needs.vars.add(name);
+    return `" + VARS.${name} + "`;
+  });
+  if (!changed) return code;
+  return code.replace(/^"" \+ /, '').replace(/ \+ ""$/, '');
 }
 
 // A value as code: a secret becomes its environment variable, {{unique}} the UNIQUE constant.
@@ -642,7 +663,14 @@ async function capture(file, options = {}) {
 // Writes a plain Puppeteer script that repeats a run, for CI or a quick check.
 export function exportScript(
   run: Run,
-  options: { installedChrome?: boolean; exportedAt?: string } = {},
+  options: {
+    installedChrome?: boolean;
+    exportedAt?: string;
+    // The environment the script tests by default. Without it, the run's own.
+    target?: { name: string; baseUrl?: string; vars: Record<string, string> };
+    // The other environments, as examples in the header.
+    environments?: Array<{ name: string; baseUrl?: string }>;
+  } = {},
 ): ExportResult {
   const secrets = new Set<string>();
   const secretFields = new Set<string>();
@@ -656,6 +684,8 @@ export function exportScript(
   const body: string[] = [];
   const needs: Needs = {
     unique: false,
+    vars: new Set(),
+    environment: false,
     emulate: false,
     tabs: false,
     cookies: false,
@@ -697,7 +727,7 @@ export function exportScript(
           checks += 1;
           break;
         case 'expect':
-          lines.push(`await expectText(${js(op.text)});`);
+          lines.push(`await expectText(${literal(op.text, needs)});`);
           checks += 1;
           break;
         case 'check-by-hand':
@@ -746,12 +776,46 @@ export function exportScript(
     : '{ headless: !process.env.HEADFUL, slowMo: PACE_MS }';
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
+  // The environment of the run, and the one the script tests by default.
+  const runEnv = run.environment?.name ?? 'development';
+  const runEnvBase = run.environment?.baseUrl ?? run.baseUrl;
+  const target = options.target ?? { name: runEnv, baseUrl: runEnvBase, vars: run.vars ?? {} };
+  const startUrl =
+    (run.baseUrl && rebaseUrl(run.baseUrl, runEnvBase, target.baseUrl)) ??
+    target.baseUrl ??
+    run.baseUrl ??
+    'http://localhost:3000';
+  const others = (options.environments ?? []).filter((e) => e.name !== target.name && e.baseUrl);
+  const envComment = [
+    `// The run used the "${runEnv}" environment.${target.name === runEnv ? '' : ` This script tests "${target.name}" by default.`}`,
+    ...(others.length
+      ? [
+          `// To test another environment, set BASE_URL: ${others.map((e) => `${e.name} ${e.baseUrl}`).join(', ')}.`,
+        ]
+      : []),
+  ].join('\n');
+  const varNames = [...needs.vars].sort();
+  const varsCode = varNames.length
+    ? [
+        '// Values for {{var:NAME}}. Set VAR_<NAME> to change one, like VAR_SHOPPER.',
+        'const VARS = {',
+        ...varNames.map(
+          (n) => `  ${n}: process.env.VAR_${n.toUpperCase()} ?? ${js(target.vars[n] ?? '')},`,
+        ),
+        '};',
+        '',
+      ].join('\n')
+    : '';
+  const envCode = needs.environment
+    ? `const ENVIRONMENT = process.env.ENVIRONMENT ?? ${js(target.name)};\n`
+    : '';
   const code = `#!/usr/bin/env node
 // Walkthrough export of the run "${run.name.replace(/\n/g, ' ')}" (${run.id}).
 // It repeats the actions from the run and checks the text that the expectations quote.
 // Needs: npm install --save-dev ${pkg}${options.installedChrome ? ' (and Google Chrome)' : ''}
 // Run:   node ${'<this file>'}
 // Set BASE_URL to test another address. Set HEADFUL=1 to watch the browser.
+${envComment}
 // Set VIDEO=<file>.mp4 (or .webm or .gif) to record the first tab. It needs ffmpeg.
 // Set PACE_MS to wait that many milliseconds before each browser action, like 50.
 ${hasShots ? `// It saves ${captures.length} screenshot(s). Set SHOT=<name> to save only some of them.\n` : ''}${needs.unique ? '// Values with {{unique}} get a new value on each run. Set UNIQUE to choose the value.\n' : ''}${secretList.length ? `// Secrets come from environment variables: ${secretList.join(', ')}.\n` : ''}import { existsSync, mkdirSync, readdirSync } from 'node:fs';
@@ -760,7 +824,8 @@ import { ${hasShots ? 'basename, dirname, extname, join, relative, resolve, sep'
 import { fileURLToPath } from 'node:url';
 import ${imports} from '${pkg}';
 
-const BASE_URL = process.env.BASE_URL ?? ${js(run.baseUrl ?? 'http://localhost:3000')};
+const BASE_URL = process.env.BASE_URL ?? ${js(startUrl)};
+${envCode}${varsCode}
 // The project folder: this file is in .walkthrough/exports.
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {

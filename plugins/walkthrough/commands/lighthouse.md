@@ -1,6 +1,6 @@
 ---
 description: Check pages with Lighthouse and write a report with scores, explanations, and fixes.
-argument-hint: "[pages like / /login, a pages.txt file, or a plan name] [mobile or desktop]"
+argument-hint: "[pages like / /login, a pages.txt file, or a plan name] [mobile or desktop] [on <environment>]"
 allowed-tools: mcp__plugin_walkthrough_uiwalk__*, Read, Grep, Glob
 ---
 
@@ -13,6 +13,7 @@ What to check: $ARGUMENTS
    - An argument that starts with `/` or `http` is a page.
    - An argument that ends in `.txt` is a file in the project with one page on each line. Read it. Skip empty lines and lines that start with `#`.
    - `mobile` or `desktop` sets the device. Without it, Walkthrough uses the device from `config.yaml`.
+   - An environment, such as `staging` or `on staging`, sets `environment` for `lighthouse` or `run_start`. To compare two environments, check each one in its own run, then call `lighthouse_report` for the second one with `compareTo` set to the first run.
    - Any other argument is a plan name.
    - With no arguments, ask the developer which pages to check.
 3. Check the pages:

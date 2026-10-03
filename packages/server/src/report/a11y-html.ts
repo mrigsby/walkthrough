@@ -5,7 +5,7 @@ import { IMPACT_ORDER } from '../audit/axe.js';
 import type { Finding } from '../audit/findings.js';
 import type { Band } from '../audit/score.js';
 import type { A11yReportData } from './a11y-data.js';
-import { esc, safeHref } from './common.js';
+import { environmentText, esc, safeHref } from './common.js';
 
 const IMPACT_LABEL: Record<string, string> = {
   critical: 'Critical',
@@ -187,7 +187,7 @@ function scoresSection(data: A11yReportData): string {
   const s = data.scores;
   const c = s.counts;
   const change = data.previous
-    ? `<p class="change">Compared with the report from ${esc(new Date(data.previous.at).toLocaleString('en-US'))}: <strong>${Object.values(data.status).filter((v) => v === 'new').length} new</strong>, <strong>${Object.values(data.status).filter((v) => v === 'still').length} still there</strong>, <strong>${data.fixed.length} fixed</strong>.</p>`
+    ? `<p class="change">Compared with the report from ${esc(new Date(data.previous.at).toLocaleString('en-US'))}${data.previous.environment ? ` on the ${esc(data.previous.environment)} environment` : ''}: <strong>${Object.values(data.status).filter((v) => v === 'new').length} new</strong>, <strong>${Object.values(data.status).filter((v) => v === 'still').length} still there</strong>, <strong>${data.fixed.length} fixed</strong>.</p>`
     : '';
   return `<section id="scores" aria-labelledby="scores-title">
 <h2 id="scores-title">Scores</h2>
@@ -309,6 +309,7 @@ function howSection(data: A11yReportData): string {
   return `<section id="how" aria-labelledby="how-title">
 <h2 id="how-title">How we checked</h2>
 <div class="card"><dl class="facts">
+<dt>Environment</dt><dd>${esc(environmentText(data.environment))}</dd>
 <dt>Standard</dt><dd>${esc(data.standard)}, plus best practices</dd>
 <dt>Tools</dt><dd>${esc(data.engine)}, and Walkthrough checks: ${esc(data.checksRun.join(', ') || 'none')}</dd>
 <dt>Screen</dt><dd>${esc(data.viewports.join(', ') || 'window size')}</dd>
@@ -549,7 +550,7 @@ export function a11yHtmlReport(data: A11yReportData): string {
 <a class="skip" href="#main">Skip to the report</a>
 <header class="top">
 <h1>Accessibility report</h1>
-<p class="muted">${esc(data.baseUrl ?? data.runName)}. ${data.pages.length} page(s). ${esc(data.standard)}. ${esc(new Date(data.createdAt).toLocaleString('en-US'))}. <a href="report.html">Run report</a></p>
+<p class="muted">${esc(data.baseUrl ?? data.runName)}. Environment: ${esc(data.environment.label)}. ${data.pages.length} page(s). ${esc(data.standard)}. ${esc(new Date(data.createdAt).toLocaleString('en-US'))}. <a href="report.html">Run report</a></p>
 </header>
 <div class="layout">
 <nav class="side" aria-label="Report sections">

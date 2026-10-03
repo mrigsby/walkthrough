@@ -56,10 +56,11 @@ askTimeoutSec: 10
 highlightMs: 0
 vars:
   userName: Demo User
+  banner: Demo Shop
 environments:
   staging:
     baseUrl: ${staging.base}
-    vars: { userName: Staging User }
+    vars: { userName: Staging User, banner: Staging copy of the demo shop }
   production:
     baseUrl: ${production.base}
 `,
@@ -68,6 +69,10 @@ environments:
   writeFileSync(join(folder, '.env.staging'), 'DEMO_PASSWORD=stage123\n');
   writeFileSync(join(folder, '.env.production'), 'DEMO_PASSWORD=prod123\n');
   writeFileSync(join(folder, 'plans', 'login.yaml'), LOGIN_PLAN);
+  writeFileSync(
+    join(folder, 'plans', 'shop.yaml'),
+    'name: Shop\nsteps:\n  - id: open\n    do: Open the shop\n    action: { navigate: / }\n    expect: The page shows "{{var:banner}}".\n',
+  );
 }, 60_000);
 
 afterAll(() => {
@@ -240,4 +245,32 @@ describe('runs in an environment', () => {
       await mcp.close();
     }
   }, 60_000);
+});
+
+describe('replays in another environment', () => {
+  // Only the staging page shows the staging banner, so the replay passes only there.
+  it('replays a development run on staging, with the staging values', async () => {
+    const mcp = await startClient({ UIWALK_PROJECT_DIR: project, TMPDIR: tempDir('envs-replay') });
+    try {
+      const start = await mcp.call('run_start', {
+        plan: 'shop',
+        environment: 'development',
+        mode: 'autonomous',
+      });
+      expect(start.isError, start.text).toBe(false);
+      expect((await mcp.call('navigate', { url: '/' })).isError).toBe(false);
+      await mcp.call('run_step', { stepId: 'open', status: 'pass' });
+      await mcp.call('run_finish', {});
+      const replay = await mcp.call(
+        'video',
+        { action: 'replay', environment: 'staging', format: 'gif', pace: 'fast' },
+        { timeoutMs: 120_000 },
+      );
+      expect(replay.isError, replay.text).toBe(false);
+      expect(replay.text).toContain('The session uses the "staging" environment now');
+      expect(replay.text).toContain('Saved the replay (GIF');
+    } finally {
+      await mcp.close();
+    }
+  }, 150_000);
 });

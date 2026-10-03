@@ -119,7 +119,7 @@ Each issue has an ID, such as `LH-003`. A new report compares itself with the la
 - An issue that is gone shows under **Fixed since the last report**.
 - The report shows the changes in the page load scores. It does not compare timespans and snapshots.
 
-`compareTo` in `lighthouse_report` picks another report to compare with.
+Walkthrough compares only with reports of the same environment, because a staging server and a production server are not equally fast. `compareTo` in `lighthouse_report` picks another report to compare with, also one from another environment, such as "staging compared with production". The report then names the other environment. See [Environments](environments.md).
 
 ## Plan the fixes
 

@@ -1,6 +1,6 @@
 # Tools
 
-The `uiwalk` MCP server has 36 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
+The `uiwalk` MCP server has 37 tools. In Claude Code, the skill and the slash commands use them for you. You can also ask for a tool by name.
 
 Text that comes from a web page shows between `<page-content>` tags. The agent treats that text as data, not as instructions.
 
@@ -15,6 +15,8 @@ Opens a visible Chrome at the start page, or connects to a Chrome that is alread
 | `url` | The page to open. A full URL, or a path such as `/login` when `baseUrl` is set. |
 | `attach` | Connect to a running Chrome, such as `http://127.0.0.1:9222`. See [Troubleshooting](troubleshooting.md#connect-to-your-own-chrome). |
 | `session` | A saved login to use. |
+| `environment` | Switch the session to this environment first, such as `staging`. See [Environments](environments.md). |
+| `resume` | Keep waiting for you to confirm a protected environment, after a reply with `status: waiting`. |
 | `projectDir` | The project folder, if Walkthrough cannot find it. |
 
 ### `browser_close`
@@ -24,6 +26,18 @@ Closes the test browser. If Walkthrough connected to your own Chrome, it disconn
 ### `navigate`
 
 Goes to a `url` or a path, or does `back`, `forward`, or `reload` with `action`. Walkthrough opens only the allowed sites.
+
+### `environment`
+
+Shows and changes the environment of the session, such as development, staging, or production. See [Environments](environments.md).
+
+| Parameter | What it does |
+| --- | --- |
+| `action` | `list` shows all environments and the one in use. `show` gives the details of the one in use: its sites, values, and the names of the secrets it can read. `use` switches to another one. |
+| `name` | For `use`: the environment, such as `staging`. |
+| `resume` | For `use`: keep waiting for you to confirm a protected environment. |
+
+After a switch, the open tabs move to the same page on the new environment. A protected environment, such as production, needs your OK in the browser first.
 
 ### `tabs`
 
@@ -171,7 +185,7 @@ With `action`: `list` the plans, `show` one, `validate` one by `name` or by `con
 
 ### `run_start`
 
-Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interactive`, `checkpoints`, or `autonomous`. It opens the browser at the start page and lists the steps. `video: true` records the whole run as a video, like the plan's `video` key.
+Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interactive`, `checkpoints`, or `autonomous`. It opens the browser at the start page and lists the steps. `video: true` records the whole run as a video, like the plan's `video` key. `environment` runs it in that environment, such as `staging`, and switches the session. The reply shows the environment and the values of `{{var:NAME}}`.
 
 ### `run_step`
 
@@ -183,7 +197,7 @@ Finishes the run and writes `report.md` and `report.html`. `summary` goes at the
 
 ### `runs`
 
-Lists recent runs with their results. `limit` is 10 by default.
+Lists recent runs with their results. A run on an environment other than development shows its name. `limit` is 10 by default.
 
 ## More checks
 
@@ -209,7 +223,7 @@ Permissions belong to a login, so they apply to every tab of the same login.
 
 ### `session`
 
-With `action`: `save` the login of the active tab with a `name`, `list` the saved logins, or `delete` one. `browser_open`, `tabs` (action `new`), and plans can load a saved login.
+With `action`: `save` the login of the active tab with a `name`, `list` the saved logins, or `delete` one. `browser_open`, `tabs` (action `new`), and plans can load a saved login. Each environment has its own saved logins.
 
 ### `storage`
 
@@ -264,7 +278,7 @@ Checks the current page with axe-core, or one part of it. The reply groups the p
 
 Checks one page or a list of pages (`urls`) with axe-core and the checks from `config.yaml`. Without a run, it makes a run with one step per page, and writes `report.md` and `report.html`. During a run, it adds the pages as steps.
 
-A scan stops after about 45 seconds. The reply then says to call it again with `runId`. `name` names the new run. `session` loads a saved login first. `standard` and `checks` replace the settings.
+A scan stops after about 45 seconds. The reply then says to call it again with `runId`. `name` names the new run. `session` loads a saved login first. `standard` and `checks` replace the settings. `environment` switches the session to that environment first.
 
 ### `a11y_report`
 
@@ -273,7 +287,7 @@ Writes the accessibility report of a run. It has two calls:
 1. Without `items`, it returns the findings with IDs, the scores, a `digest`, and how to write the text.
 2. With `digest`, `summary`, and `items`, it writes `accessibility.html`, `accessibility.md`, and `accessibility.json`. Each item has `id`, `explain`, `fix`, and an optional `code` and `where`. The reply has a prompt for the next session.
 
-`runId` picks the run. The default is the run that is going, or the newest run with accessibility results. `compareTo` picks the report to compare with.
+`runId` picks the run. The default is the run that is going, or the newest run with accessibility results. The report compares with the last report of the same environment. `compareTo` picks another report to compare with, also one from another environment.
 
 ## Lighthouse
 
@@ -291,6 +305,7 @@ Checks pages with Lighthouse, like the Lighthouse panel in DevTools. During a ru
 | `device` | `desktop` or `mobile`. The default comes from `config.yaml`. |
 | `categories` | `performance`, `accessibility`, `best-practices`, `seo`, and `agentic-browsing`. The default comes from `config.yaml`. |
 | `runId`, `name`, `session` | Continue a check that stopped, name the new run, or use a saved login for the checks. |
+| `environment` | Switch the session to this environment first, such as `staging`. |
 
 With `audit`, each page runs in its own hidden Chrome with an empty profile. Walkthrough copies the login of the active tab into it, so the page stays logged in. Chrome remembers things between pages, such as its cache and failed favicons. A new Chrome for each page gives each check the same start. That Chrome has no Walkthrough panel and no screen or network settings from Walkthrough. Mock rules for all tabs still apply. The test browser does not have to be open. Without a run, it makes a run with one step per page. Lighthouse's own reports go in the `lighthouse/` folder of the run. A call stops after about 45 seconds, and the reply says to call it again with `runId`.
 
@@ -327,6 +342,7 @@ Records the active tab as a video. The video follows the active tab to other tab
 | `showPanel` | For `start`: show the Walkthrough panel in the video. |
 | `runId` | For `slideshow` and `replay`: the run. The default is the run that is going, or the newest run. |
 | `pace`, `session`, `captions`, `pointer`, `titleCard`, `width` | For `replay`. See [Clean re-recordings](#clean-re-recordings). |
+| `environment` | For `replay`: replay the run on this environment, such as `staging`. It switches the session first. |
 
 - Walkthrough cuts each wait, such as the agent thinking, to `video.idleSeconds` (1 second). It cuts the time that a question waits in the panel.
 - The video draws the mouse pointer and marks each click. Captions show at the bottom. During a run, the captions are the step titles, or the step's `caption` key.
@@ -342,6 +358,7 @@ Records the active tab as a video. The video follows the active tab to other tab
 
 - It opens a new login in a new window, so it starts with no cookies and no storage. `session` loads a saved login first. The default is the saved login of the run.
 - It uses the run's screen and settings. Without a device, the page is `width` pixels wide (1280) at 16:10.
+- It uses the environment in use. A run from another environment goes to the same pages there, with the values of `{{var:NAME}}` from the environment in use.
 - It types text one character at a time, moves the pointer to each element, and holds at the end of each step. `pace` is `slow`, `normal` (the default), or `fast`.
 - It makes a new `{{unique}}` value, answers dialogs like the run did, and hides typed secrets.
 - A title card with the run name comes first. `titleCard: false` leaves it out. `captions: false` and `pointer: false` leave those out.
@@ -363,7 +380,7 @@ Records you as you use the app. `action` is `start` (with a `name`), `wait` (unt
 
 ### `export_script`
 
-Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId` picks the run. `installedChrome: true` uses `puppeteer-core` and the installed Chrome. `VIDEO=<file>` records a video when the script runs, and `PACE_MS` waits before each browser action. See [Make a video again](sharing.md#make-a-video-again).
+Writes a Puppeteer script from a finished run to `.walkthrough/exports/`. `runId` picks the run. `installedChrome: true` uses `puppeteer-core` and the installed Chrome. The script tests the environment of the run, or `environment`, by default. `BASE_URL` tests another one, and `VAR_<NAME>` changes a `{{var:NAME}}` value. `VIDEO=<file>` records a video when the script runs, and `PACE_MS` waits before each browser action. See [Make a video again](sharing.md#make-a-video-again).
 
 ### `issue_draft`
 
@@ -373,11 +390,11 @@ Writes a GitHub issue title and body from a bug or a failed step. `runId` and `s
 
 ### `init_project`
 
-Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan schema, `.env.example`, and `.gitignore`. `baseUrl` sets the start page. `projectDir` sets the project folder, if Walkthrough cannot find it. It keeps files that exist.
+Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan schema, `.env.example`, and `.gitignore`. `baseUrl` sets the start page. `projectDir` sets the project folder, if Walkthrough cannot find it. It keeps files that exist. To an older `.gitignore`, it adds the lines that keep the secret files of environments out of Git.
 
 ### `doctor`
 
-Checks Node, Chrome, the project folder, the settings, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`. `projectDir` checks another project folder.
+Checks Node, Chrome, the project folder, the settings, the environments, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`. `projectDir` checks another project folder. It checks that each environment answers, except a protected one, and that Git ignores the secret files of each environment.
 
 Lighthouse and ffmpeg are optional downloads. Install them from a terminal:
 

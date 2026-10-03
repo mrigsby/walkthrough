@@ -4,7 +4,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Context } from '../context.js';
 import { initProject } from '../init.js';
-import { resultLine } from '../report/common.js';
+import { resultLine, runEnvironment } from '../report/common.js';
 import type { Run } from '../run/run-store.js';
 import { runTool } from './util.js';
 
@@ -38,6 +38,9 @@ export function registerProjectTools(server: McpServer, ctx: Context): void {
             : '',
           result.kept.length
             ? `Already there (not changed):\n${result.kept.map((f) => `- ${f}`).join('\n')}`
+            : '',
+          result.updated.length
+            ? `Updated:\n${result.updated.map((f) => `- ${f}`).join('\n')}`
             : '',
         ]
           .filter(Boolean)
@@ -76,8 +79,9 @@ export function registerProjectTools(server: McpServer, ctx: Context): void {
             const report = existsSync(join(dir, id, 'report.html'))
               ? `report written${existsSync(join(dir, id, 'accessibility.html')) ? ', accessibility report written' : ''}${existsSync(join(dir, id, 'lighthouse.html')) ? ', Lighthouse report written' : ''}${run.videos?.length ? `, video: ${run.videos.map((v) => v.file).join(', ')}` : ''}`
               : 'no report yet';
+            const env = runEnvironment(run).name;
             rows.push(
-              `- ${id}: "${run.name}", ${run.status}, ${resultLine(run) || 'no steps'} (${report})`,
+              `- ${id}: "${run.name}"${env === 'development' ? '' : ` on ${env}`}, ${run.status}, ${resultLine(run) || 'no steps'} (${report})`,
             );
           } catch {
             rows.push(`- ${id}: run.json cannot be read`);

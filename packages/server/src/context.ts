@@ -167,6 +167,26 @@ export class Context {
     return lines;
   }
 
+  // For a tool's "environment" argument: switch, with the developer's OK for a protected one.
+  // Without a browser, the confirmation comes when the browser opens.
+  async useEnvironmentForTool(
+    name: string,
+    extra: { signal?: AbortSignal; requestId?: string | number },
+  ): Promise<string[]> {
+    const lines = await this.useEnvironment(name, { source: 'tool' });
+    if (!this.driver?.alive) return lines;
+    const result = await this.confirmEnvironment({
+      signal: extra.signal,
+      requestId: extra.requestId,
+    });
+    if (result.status === 'confirmed') return [...lines, ...(await this.finishSwitch(true))];
+    if (result.status === 'canceled') {
+      const back = await this.finishSwitch(false);
+      throw new ToolError([result.text, ...back].join(' '), 'protected_unconfirmed');
+    }
+    throw new ToolError(`${result.text} Then call this tool again.`, 'confirm_waiting');
+  }
+
   // After the developer answers: move the tabs, or go back to the environment from before.
   async finishSwitch(confirmed: boolean): Promise<string[]> {
     const pending = this.pendingSwitch;

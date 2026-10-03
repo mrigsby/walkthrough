@@ -1,4 +1,9 @@
-import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import type { LookupOptions } from 'node:dns';
+import { existsSync, readdirSync } from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
+import type { LookupFunction } from 'node:net';
 import { join } from 'node:path';
 import { findChrome, NO_CHROME_MESSAGE } from './browser/chrome.js';
 import type { Driver } from './browser/driver.js';
@@ -6,9 +11,103 @@ import type { Config } from './config.js';
 import { SELF } from './downloads/cache.js';
 import { findFfmpeg } from './downloads/ffmpeg.js';
 import { findLighthouse } from './downloads/lighthouse.js';
-import { describeEnvironment } from './environments.js';
+import { describeEnvironment, type Environment } from './environments.js';
 import type { SecretStore } from './guards/secrets.js';
 import { MIN_NODE, nodeVersionOk, VERSION } from './version.js';
+
+// Sends a *.localhost name to this computer.
+const toThisComputer = ((_host: string, options: LookupOptions, callback: AnyCallback) => {
+  if (options.all) callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  else callback(null, '127.0.0.1', 4);
+}) as unknown as LookupFunction;
+type AnyCallback = (error: null, ...result: unknown[]) => void;
+
+// Asks the base URL of an environment for an answer, in 3 seconds or less.
+// Node does not find *.localhost names, so those go to this computer, like Chrome does.
+export function checkReachable(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    let target: URL;
+    try {
+      target = new URL(url);
+    } catch {
+      resolve('not a valid URL');
+      return;
+    }
+    const local = target.hostname.endsWith('.localhost');
+    const send = target.protocol === 'https:' ? httpsRequest : httpRequest;
+    const req = send(
+      target,
+      {
+        method: 'GET',
+        timeout: 3000,
+        rejectUnauthorized: false,
+        ...(local ? { lookup: toThisComputer } : {}),
+      },
+      (res) => {
+        res.resume();
+        resolve(`HTTP ${res.statusCode}`);
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('no answer in 3 seconds')));
+    req.on('error', (error: NodeJS.ErrnoException) => resolve(error.code ?? error.message));
+    req.end();
+  });
+}
+
+// The .env.<name> files that Git would commit. Empty when Git is not there.
+function trackedEnvFiles(projectDir: string): string[] {
+  const dir = join(projectDir, '.walkthrough');
+  let files: string[] = [];
+  try {
+    files = readdirSync(dir).filter((f) => /^\.env\..+/.test(f) && f !== '.env.example');
+  } catch {
+    return [];
+  }
+  return files.filter((f) => {
+    const result = spawnSync('git', ['check-ignore', '-q', join('.walkthrough', f)], {
+      cwd: projectDir,
+      stdio: 'ignore',
+    });
+    // 1 means "not ignored". Other codes mean no Git or no repository.
+    return result.status === 1;
+  });
+}
+
+async function environmentLines(config: Config): Promise<string[]> {
+  const envs = Object.values(config.environments).filter(
+    (e): e is Environment & { baseUrl: string } => Boolean(e.baseUrl),
+  );
+  if (envs.length < 2) return [];
+  const lines: string[] = [];
+  const answers = await Promise.all(
+    envs.map(async (e) => (e.protected ? undefined : await checkReachable(e.baseUrl))),
+  );
+  envs.forEach((e, i) => {
+    const answer = answers[i];
+    if (answer === undefined) {
+      lines.push(`INFO  ${e.name} (${e.baseUrl}): not checked, because it is protected.`);
+    } else if (/^HTTP [1-4]\d\d$/.test(answer)) {
+      lines.push(`OK    ${e.name} (${e.baseUrl}) answers: ${answer}.`);
+    } else {
+      lines.push(
+        `INFO  ${e.name} (${e.baseUrl}) does not answer: ${answer}. Start it before you test there.`,
+      );
+    }
+  });
+  // Cookies belong to a host, not a port, so two environments on one host share a login.
+  const hosts = new Map<string, string[]>();
+  for (const e of envs) {
+    const host = new URL(e.baseUrl).hostname;
+    hosts.set(host, [...(hosts.get(host) ?? []), e.name]);
+  }
+  for (const [host, names] of hosts) {
+    if (names.length > 1)
+      lines.push(
+        `INFO  ${names.join(' and ')} use the same host (${host}), so they share cookies and logins. A different host name for each one keeps them apart.`,
+      );
+  }
+  return lines;
+}
 
 // A plain report of what works and what needs a fix.
 export async function doctorReport(
@@ -57,6 +156,14 @@ export async function doctorReport(
     lines.push(
       info(
         `Environments: ${envs.map((e) => `${e.name}${e.protected ? ' (protected)' : ''}`).join(', ')}. Default: ${config.defaultEnvironment}.`,
+      ),
+    );
+  }
+  lines.push(...(await environmentLines(config)));
+  for (const file of trackedEnvFiles(config.projectDir)) {
+    lines.push(
+      fix(
+        `.walkthrough/${file} has secrets, but Git does not ignore it. Run /walkthrough:init to add ".env.*" to .walkthrough/.gitignore.`,
       ),
     );
   }

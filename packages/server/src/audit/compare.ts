@@ -18,6 +18,8 @@ export interface SavedReport {
   version: 1;
   runId: string;
   createdAt: string;
+  // Reports from before 0.4.0 have none: they are development.
+  environment?: { name: string; baseUrl?: string };
   pages: Array<{ page: string; url: string }>;
   findings: SavedFinding[];
 }
@@ -25,6 +27,7 @@ export interface SavedReport {
 export interface Comparison {
   previousRunId: string;
   previousAt: string;
+  previousEnvironment: string;
   // The ID each rule had before. Issues that are still there keep it.
   keepIds: Map<string, string>;
   // New IDs start after the highest ID used before.
@@ -44,13 +47,14 @@ function readReport(dir: string): SavedReport | undefined {
   }
 }
 
-// The newest earlier report that checked at least one of the same pages.
-// With compareTo, that run's report is used instead.
+// The newest earlier report of the same environment that checked at least one of the
+// same pages. With compareTo, that run's report is used instead, from any environment.
 export function findPrevious(
   projectDir: string,
   currentRunId: string,
   pages: string[],
   compareTo?: string,
+  env = 'development',
 ): SavedReport | undefined {
   if (compareTo) {
     const report = readReport(checkRunId(projectDir, compareTo));
@@ -62,7 +66,8 @@ export function findPrevious(
     // Run folder names start with the date and time, so older runs sort first.
     if (id >= currentRunId) continue;
     const report = readReport(join(root, id));
-    if (report?.pages.some((p) => pages.includes(p.page))) return report;
+    if (!report || (report.environment?.name ?? 'development') !== env) continue;
+    if (report.pages.some((p) => pages.includes(p.page))) return report;
   }
   return undefined;
 }
@@ -102,6 +107,7 @@ export function compareFindings(current: Findings, previous: SavedReport): Compa
   return {
     previousRunId: previous.runId,
     previousAt: previous.createdAt,
+    previousEnvironment: previous.environment?.name ?? 'development',
     keepIds,
     startAfter,
     status,

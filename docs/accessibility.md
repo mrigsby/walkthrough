@@ -81,6 +81,8 @@ Each issue has an ID, such as `A11Y-003`. When you check the same pages again, W
 
 So a plan that names `A11Y-003` still points to the same issue after the next scan.
 
+Walkthrough compares only with reports of the same environment, such as staging with staging. To compare two environments, give `a11y_report` a `compareTo` run from the other environment. The report then names the other environment. See [Environments](environments.md).
+
 ## Plan the fixes
 
 After the report, the agent shows a prompt like this:

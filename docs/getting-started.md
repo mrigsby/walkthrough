@@ -122,6 +122,7 @@ To make a GitHub issue from it, run `/walkthrough:bug`. The agent shows you the 
 
 ## Next steps
 
+- [Environments](environments.md): run the same plans on staging and production
 - [Videos](video.md): demo videos, GIFs for docs, and bug clips
 - [Lighthouse reports](lighthouse.md): performance, best practices, and SEO
 - [Accessibility reports](accessibility.md): scores, issues, and fixes

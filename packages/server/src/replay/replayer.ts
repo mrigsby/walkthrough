@@ -6,6 +6,7 @@ import { ToolError } from '../errors.js';
 import { checkMediaPath } from '../guards/paths.js';
 import { buildVars } from '../page/tokens.js';
 import { fileStamp } from '../project-files.js';
+import type { Plan } from '../run/plan-schema.js';
 import { loadPlan } from '../run/plans.js';
 import { latestRunId, type Run, RunStore } from '../run/run-store.js';
 import { openBrowser } from '../tools/browser-tools.js';
@@ -56,13 +57,17 @@ export interface ReplayResult {
 // Values for {{var:NAME}} in a replay: the run's own values, with the vars of the
 // environment in use on top, so a replay elsewhere uses that environment's values.
 export function replayVars(run: Run, config: Config): Record<string, string> {
-  let planVars: Record<string, string | number | boolean> | undefined;
-  if (run.planFile && existsSync(join(config.projectDir, run.planFile))) {
-    try {
-      planVars = loadPlan(config.projectDir, join(config.projectDir, run.planFile)).plan.vars;
-    } catch {}
+  return { ...run.vars, ...buildVars(config, planOf(run, config)?.vars) };
+}
+
+// The plan of a run, if its file is still there and valid.
+function planOf(run: Run, config: Config): Plan | undefined {
+  if (!run.planFile || !existsSync(join(config.projectDir, run.planFile))) return undefined;
+  try {
+    return loadPlan(config.projectDir, join(config.projectDir, run.planFile)).plan;
+  } catch {
+    return undefined;
   }
-  return { ...run.vars, ...buildVars(config, planVars) };
 }
 
 // Records a finished run again in a new login, at an even pace, and saves the video.
@@ -78,6 +83,14 @@ export async function replayRun(ctx: Context, input: ReplayInput): Promise<Repla
   if (!id) throw new ToolError('There is no finished run to replay.', 'no_run');
   const store = RunStore.open(config.projectDir, id);
   const run = store.run;
+  // A plan can say where it may run.
+  const allowed = planOf(run, config)?.environments;
+  if (allowed && !allowed.includes(config.environment.name)) {
+    throw new ToolError(
+      `The plan of this run may run only in these environments: ${allowed.join(', ')}. The session uses "${config.environment.name}".`,
+      'environment_not_allowed',
+    );
+  }
   const plan = buildOps(run);
   if (plan.missingSelectors.length) {
     throw new ToolError(

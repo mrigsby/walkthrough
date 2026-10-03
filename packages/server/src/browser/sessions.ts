@@ -24,18 +24,28 @@ export interface SavedSession {
   storage: Record<string, { local: Record<string, string>; session: Record<string, string> }>;
 }
 
-export function sessionsDir(projectDir: string): string {
-  return join(projectDir, '.walkthrough', 'sessions');
+// Development logins stay in sessions/. Other environments have a folder of their own,
+// so a login of one environment never goes to another one.
+export function sessionsDir(projectDir: string, env = 'development'): string {
+  const base = join(projectDir, '.walkthrough', 'sessions');
+  return env === 'development' ? base : join(base, env);
 }
 
-function sessionFile(projectDir: string, name: string): string {
+// The file of a login, from the project folder, for messages.
+export function sessionPath(name: string, env = 'development'): string {
+  return env === 'development'
+    ? `.walkthrough/sessions/${name}.json`
+    : `.walkthrough/sessions/${env}/${name}.json`;
+}
+
+function sessionFile(projectDir: string, name: string, env = 'development'): string {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
     throw new ToolError(
       'Use a session name with lowercase letters, numbers, and dashes, like "admin".',
       'bad_input',
     );
   }
-  return join(sessionsDir(projectDir), `${name}.json`);
+  return join(sessionsDir(projectDir, env), `${name}.json`);
 }
 
 // True when a cookie belongs to one of these hosts.
@@ -92,8 +102,9 @@ export async function saveSession(
   guard: OriginGuard,
   projectDir: string,
   name: string,
+  env = 'development',
 ): Promise<SavedSession> {
-  const file = sessionFile(projectDir, name);
+  const file = sessionFile(projectDir, name, env);
   const session = await captureSession(driver, guard, name);
   if (session.origins.length === 0) {
     throw new ToolError(
@@ -101,26 +112,42 @@ export async function saveSession(
       'no_tab',
     );
   }
-  mkdirSync(sessionsDir(projectDir), { recursive: true, mode: 0o700 });
+  mkdirSync(sessionsDir(projectDir, env), { recursive: true, mode: 0o700 });
   // Only the developer's user account can read this file.
   writeFileSync(file, `${JSON.stringify(session, null, 2)}\n`, { mode: 0o600 });
   chmodSync(file, 0o600);
   return session;
 }
 
-export function loadSession(projectDir: string, name: string): SavedSession {
-  const file = sessionFile(projectDir, name);
+// The environments that have a saved login with this name.
+function envsWith(projectDir: string, name: string): string[] {
+  const base = sessionsDir(projectDir);
+  const found = existsSync(join(base, `${name}.json`)) ? ['development'] : [];
+  try {
+    for (const entry of readdirSync(base, { withFileTypes: true })) {
+      if (entry.isDirectory() && existsSync(join(base, entry.name, `${name}.json`)))
+        found.push(entry.name);
+    }
+  } catch {}
+  return found;
+}
+
+export function loadSession(projectDir: string, name: string, env = 'development'): SavedSession {
+  const file = sessionFile(projectDir, name, env);
   if (!existsSync(file)) {
+    const elsewhere = envsWith(projectDir, name);
     throw new ToolError(
-      `There is no saved session "${name}". Use the session tool with action "list".`,
+      elsewhere.length
+        ? `There is no saved login "${name}" for the "${env}" environment. It is saved for: ${elsewhere.join(', ')}. Log in on ${env}, and save it with the session tool.`
+        : `There is no saved session "${name}". Use the session tool with action "list".`,
       'session_not_found',
     );
   }
   return JSON.parse(readFileSync(file, 'utf8')) as SavedSession;
 }
 
-export function listSessions(projectDir: string): SavedSession[] {
-  const dir = sessionsDir(projectDir);
+export function listSessions(projectDir: string, env = 'development'): SavedSession[] {
+  const dir = sessionsDir(projectDir, env);
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.json'))
@@ -134,8 +161,8 @@ export function listSessions(projectDir: string): SavedSession[] {
     });
 }
 
-export function deleteSession(projectDir: string, name: string): void {
-  const file = sessionFile(projectDir, name);
+export function deleteSession(projectDir: string, name: string, env = 'development'): void {
+  const file = sessionFile(projectDir, name, env);
   if (!existsSync(file))
     throw new ToolError(`There is no saved session "${name}".`, 'session_not_found');
   rmSync(file);

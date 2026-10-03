@@ -9,7 +9,7 @@ import { customViolations } from '../audit/custom-rules.js';
 import { CHECKS, STANDARDS, type Standard, standardTags } from '../audit/standards.js';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import { emulationFields } from '../browser/emulation-schema.js';
-import { deleteSession, listSessions, saveSession } from '../browser/sessions.js';
+import { deleteSession, listSessions, saveSession, sessionPath } from '../browser/sessions.js';
 import type { Context } from '../context.js';
 import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
@@ -41,10 +41,13 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
     },
     ({ action, name }) =>
       runTool(ctx, 'session', async () => {
-        const { projectDir } = await ctx.config();
+        const config = await ctx.config();
+        const { projectDir } = config;
+        const env = config.environment.name;
+        const where = env === 'development' ? '' : ` for the "${env}" environment`;
         if (action === 'list') {
-          const sessions = listSessions(projectDir);
-          if (sessions.length === 0) return 'There are no saved logins.';
+          const sessions = listSessions(projectDir, env);
+          if (sessions.length === 0) return `There are no saved logins${where}.`;
           return sessions
             .map(
               (s) =>
@@ -54,17 +57,23 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
         }
         if (!name) throw new ToolError('Give a name for the saved login.', 'bad_input');
         if (action === 'delete') {
-          deleteSession(projectDir, name);
-          return `Deleted the saved login "${name}".`;
+          deleteSession(projectDir, name, env);
+          return `Deleted the saved login "${name}"${where}.`;
         }
-        const session = await saveSession(ctx.requireDriver(), await ctx.guard(), projectDir, name);
+        const session = await saveSession(
+          ctx.requireDriver(),
+          await ctx.guard(),
+          projectDir,
+          name,
+          env,
+        );
         const keys = Object.values(session.storage).reduce(
           (n, s) => n + Object.keys(s.local).length + Object.keys(s.session).length,
           0,
         );
         return [
-          `Saved the login "${name}" for ${session.origins.join(', ')}: ${session.cookies.length} cookie(s) and ${keys} storage value(s).`,
-          `File: .walkthrough/sessions/${name}.json. Git does not track it, and only your user account can read it.`,
+          `Saved the login "${name}"${where} for ${session.origins.join(', ')}: ${session.cookies.length} cookie(s) and ${keys} storage value(s).`,
+          `File: ${sessionPath(name, env)}. Git does not track it, and only your user account can read it.`,
           'This file can log anyone in as this user. Do not share it.',
           'Walkthrough does not save logins that the app keeps in IndexedDB.',
         ].join('\n');
@@ -183,7 +192,16 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
           : 'adhoc';
         const device = slug(tab.emulation.device ?? 'default', 60, 'check');
         const file = `${slug(input.name, 60, 'check')}@${device}-${process.platform}.png`;
-        const baselinePath = join(config.projectDir, '.walkthrough', 'baselines', group, file);
+        // Each environment has its own data, so its own baselines. Development has no folder.
+        const env = config.environment.name;
+        const baselinePath = join(
+          config.projectDir,
+          '.walkthrough',
+          'baselines',
+          group,
+          ...(env === 'development' ? [] : [env]),
+          file,
+        );
         const baselineRel = relative(config.projectDir, baselinePath);
 
         const capture = await steadyCapture(driver, tab, {

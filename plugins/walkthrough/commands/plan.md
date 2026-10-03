@@ -14,6 +14,8 @@ What to test: $ARGUMENTS
    - Give each step an `id`, a `do`, and a specific `expect`.
    - Mark the important steps with `checkpoint: true`.
    - For passwords, use `{{secret:NAME}}`, never the real value.
+   - For test data that is different in each environment, such as a test user, use `{{var:NAME}}` and add the value to `vars`.
+   - Use paths like `/cart`, not full URLs, so the plan works in every environment.
 4. Call `plan` with action `validate` and the YAML as `content`. Fix any problems.
 5. Show the plan to the developer. Ask for a plan name, such as `change-name`, and for any changes.
 6. Call `plan` with action `save`. If a plan with that name exists, ask before you replace it.

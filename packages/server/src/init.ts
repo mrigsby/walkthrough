@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ToolError } from './errors.js';
 import { planJsonSchema } from './run/plan-schema.js';
@@ -15,6 +15,16 @@ baseUrl: ${baseUrl}
 # Use "*" for any port or subdomain, like http://localhost:* or https://*.staging.example.com
 allowedOrigins:
   - ${origin}
+
+# Other copies of the app, to run the same plans there. The settings above are
+# "development", the default. See docs/environments.md.
+# environments:
+#   staging:
+#     baseUrl: https://staging.example.com
+#     vars: { shopper: Staging Shopper }   # values for {{var:NAME}} in plans
+#   production:
+#     baseUrl: https://www.example.com    # protected: Walkthrough asks you first
+# Secrets of an environment go in .walkthrough/.env.<name>, like .env.staging.
 
 # How to answer confirm and prompt dialogs: ask (default), accept, or dismiss.
 dialogs: ask
@@ -76,6 +86,7 @@ const ENV_EXAMPLE = `# Secrets for test plans. Copy this file to .env in the sam
 # Git does not track .env. The agent never sees the values.
 # A plan uses a secret like this: {{secret:APP_PASSWORD}}
 # APP_PASSWORD=
+# Each environment can have its own file with the same names, like .env.staging.
 `;
 
 const GITIGNORE = `# Created by Walkthrough. These files stay on this computer.
@@ -90,6 +101,16 @@ config.local.yaml
 export interface InitResult {
   created: string[];
   kept: string[];
+  // Files that got lines added, like .gitignore.
+  updated: string[];
+}
+
+// Lines that an older .walkthrough/.gitignore does not have.
+const IGNORE_LINES = ['.env.*', '!.env.example'];
+
+export function missingIgnoreLines(content: string): string[] {
+  const have = new Set(content.split(/\r?\n/).map((l) => l.trim()));
+  return IGNORE_LINES.filter((l) => !have.has(l));
 }
 
 // Makes the .walkthrough folder. It never replaces a file that exists,
@@ -108,11 +129,22 @@ export function initProject(projectDir: string, baseUrl = 'http://localhost:3000
     ['.env.example', ENV_EXAMPLE, false],
     ['.gitignore', GITIGNORE, false],
   ];
-  const result: InitResult = { created: [], kept: [] };
+  const result: InitResult = { created: [], kept: [], updated: [] };
   for (const [name, content, replace] of files) {
     const file = join(projectDir, '.walkthrough', name);
     const shown = `.walkthrough/${name}`;
     if (existsSync(file) && !replace) {
+      // An older .gitignore misses the secret files of environments.
+      const missing = name === '.gitignore' ? missingIgnoreLines(readFileSync(file, 'utf8')) : [];
+      if (missing.length) {
+        const text = readFileSync(file, 'utf8');
+        writeFileSync(
+          file,
+          `${text}${text.endsWith('\n') ? '' : '\n'}# Secret files of each environment.\n${missing.join('\n')}\n`,
+        );
+        result.updated.push(`${shown} (added ${missing.join(', ')})`);
+        continue;
+      }
       result.kept.push(shown);
       continue;
     }

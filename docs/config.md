@@ -14,6 +14,14 @@ baseUrl: http://localhost:3000
 allowedOrigins:
   - http://localhost:3000
   - https://*.staging.example.com
+vars:
+  shopper: Demo Shopper
+environments:
+  staging:
+    baseUrl: https://staging.example.com
+    vars: { shopper: Staging Shopper }
+  production:
+    baseUrl: https://www.example.com
 dialogs: ask
 panel: true
 highlightMs: 600
@@ -35,8 +43,11 @@ lighthouse:
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `baseUrl` | none | The start page for `browser_open` and test runs. A plan can set its own. |
-| `allowedOrigins` | `http://localhost:*`, `http://127.0.0.1:*`, `https://localhost:*` | The sites that Walkthrough may open. It blocks all other sites, also after a click. Use `*` for any port or any subdomain. A list here replaces the default list. |
+| `baseUrl` | none | The start page of the development environment, for `browser_open` and test runs. A plan can set its own. |
+| `allowedOrigins` | `http://localhost:*`, `http://127.0.0.1:*`, `https://localhost:*` | The sites that Walkthrough may open, in every environment. It blocks all other sites, also after a click. Use `*` for any port or any subdomain. A list here replaces the default list. The site of the base URL of the environment in use is always allowed. |
+| `environments` | none | Other copies of the app, such as `staging` and `production`, each with its own `baseUrl`. See [Environments](environments.md). |
+| `environment` | `development` | The environment to use when nothing else chooses one. `config.local.yaml` can set your own default. |
+| `vars` | none | Values for `{{var:NAME}}` in plans, such as `{ shopper: Demo Shopper }`. Plans and environments can change them. |
 | `dialogs` | `ask` | How to answer confirm and prompt dialogs: `ask` (the agent asks you), `accept`, or `dismiss`. Walkthrough always accepts alerts. |
 | `panel` | `true` | Show the Pass, Bug, Skip, and Stop panel in the browser. |
 | `highlightMs` | `600`, or `0` when the browser is hidden | How long a box shows on an element before the agent uses it. |
@@ -111,6 +122,8 @@ API_TOKEN=abc123
 
 Then use them as `{{secret:APP_PASSWORD}}` in chat or in plans. Walkthrough puts the value into the field, and it shows `****` to the agent. If a name is not in `.env`, Walkthrough uses an environment variable with that name.
 
+Each environment can have its own file with the same names, such as `.walkthrough/.env.staging`. Walkthrough reads that file first. A protected environment, such as production, never reads the plain `.env`. See [Secrets](environments.md#secrets).
+
 Walkthrough also hides these values if they appear on a page, in a log, or in a report.
 
 ## Environment variables
@@ -123,6 +136,8 @@ Walkthrough also hides these values if they appear on a page, in a log, or in a 
 | `UIWALK_CACHE_DIR` | Where `uiwalk setup` saves Chrome for Testing, Lighthouse, and ffmpeg. The default is `~/.cache/uiwalk`. |
 | `UIWALK_FFMPEG` | The ffmpeg program to use, when `ffmpegPath` is not set. |
 | `UIWALK_TRACE_FILE` | A file path. The server writes one JSON line for each action, for debugging. |
+| `UIWALK_ENV` | The environment that the session starts with, such as `staging`. |
+| `UIWALK_ALLOW_PROTECTED` | Protected environments that need no question before Walkthrough works there, such as `production`. For automation only. |
 
 The tests use three more variables. `UIWALK_FORCE_PANEL` shows the panel in a hidden browser. `UIWALK_DEBUG_ENDPOINT_FILE` names a file for the address of the test Chrome. `UIWALK_SCAN_LIMIT_MS` sets the time limit of one `a11y_scan` call. Do not use them for normal testing.
 
@@ -144,7 +159,11 @@ Walkthrough uses the first one of these that it finds:
 
 ```text
 .env
+.env.*
+!.env.example
 sessions/
 runs/
 config.local.yaml
 ```
+
+`.env.*` keeps the secret files of each environment out of Git, such as `.env.staging`. In a project from an older version, run `/walkthrough:init` again to add it.

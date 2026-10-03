@@ -9,6 +9,7 @@ All tools come from the `uiwalk` MCP server.
 | `browser_open` | Open Chrome at the start page or a `url`. With `attach`, connect to a Chrome that is already running. |
 | `browser_close` | Close the test browser, or disconnect from the developer's Chrome. |
 | `navigate` | Go to a `url` or a path, or go `back`, `forward`, or `reload`. |
+| `environment` | `list` the environments (development, staging, production, and others), `show` the one in use, or `use` another one. A protected one needs the developer's OK in the browser. |
 | `tabs` | List tabs, open a `new` tab, `switch` to a tab, or `close` a tab. `isolated: true` gives a new tab its own login (a second user). `isolated: "name"` gives it a login that tabs share. |
 | `dialog` | Answer an alert, confirm, or prompt dialog: `accept` or `dismiss`. Or set the dialog `policy`. |
 
@@ -66,4 +67,6 @@ All tools come from the `uiwalk` MCP server.
 | Tool | Use it to |
 | --- | --- |
 | `init_project` | Make the `.walkthrough` folder with settings and a sample plan. |
-| `doctor` | Check Node, Chrome, the project folder, settings, secrets, Lighthouse, and ffmpeg. |
+| `doctor` | Check Node, Chrome, the project folder, settings, environments, secrets, Lighthouse, and ffmpeg. |
+
+`browser_open`, `run_start`, `a11y_scan`, `lighthouse`, and `video` (action `replay`) take `environment`. It switches the session first. `export_script` takes `environment` for the default of the script only.

@@ -201,8 +201,8 @@ export class Recorder {
       if (step.expect) out.expect = step.expect;
       return out;
     });
+    // No baseUrl: the paths start at the base URL of whichever environment runs the plan.
     const plan: Record<string, unknown> = { name: this.name };
-    if (this.baseUrl) plan.baseUrl = this.baseUrl;
     plan.mode = 'checkpoints';
     plan.steps = steps.length ? steps : [{ do: 'Nothing was recorded' }];
     const doc = new Document(plan);

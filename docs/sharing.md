@@ -13,7 +13,7 @@ Commit these files, so your team can run the same tests:
 | `.walkthrough/baselines/` | Optional. Baselines for visual checks. Each file is for one operating system. |
 | `.walkthrough/exports/` | Optional. Scripts for CI. |
 
-Never commit `.walkthrough/.env`, `sessions/`, `runs/`, or `config.local.yaml`. The `.gitignore` that `/walkthrough:init` makes keeps them out.
+Never commit `.walkthrough/.env`, the `.env.<name>` files of environments, `sessions/`, `runs/`, or `config.local.yaml`. The `.gitignore` that `/walkthrough:init` makes keeps them out. In a project from an older version, run `/walkthrough:init` again to add the line for `.env.<name>` files.
 
 ## Install the plugin for your whole team
 
@@ -151,6 +151,10 @@ jobs:
 ```
 
 The script prints `ok` for each step. When a check fails, it prints the step and the reason, saves `walkthrough-export-failure.png` in the project folder, and exits with code 1.
+
+The script tests the environment of the run by default. `BASE_URL` tests another one, and the top of the script lists the base URLs of your other environments. The values of `{{var:NAME}}` are in `VARS`. Set `VAR_<NAME>`, such as `VAR_SHOPPER`, to change one in CI. `/walkthrough:export` can also write a script for another environment, such as "export the last run for staging".
+
+To run Walkthrough itself on an environment, such as with an MCP client in CI, set `UIWALK_ENV=staging`. For a protected environment, also set `UIWALK_ALLOW_PROTECTED`. See [Environments](environments.md).
 
 The script uses the screen size and the color scheme of the run. If the plan has no `device`, the screen is 1280x800. The script does not use saved logins, so a plan for pages behind a login must have the login steps.
 

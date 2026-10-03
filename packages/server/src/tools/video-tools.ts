@@ -89,6 +89,12 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
           .max(3840)
           .optional()
           .describe('For replay: the width of the page and the video, in pixels.'),
+        environment: z
+          .string()
+          .optional()
+          .describe(
+            'For replay: replay the run on this environment, like "production". It also switches the session. The default is the environment in use.',
+          ),
       },
     },
     (input, extra: Extra) =>
@@ -132,6 +138,9 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
           ].join('\n');
         }
         if (input.action === 'replay') {
+          const envLines = input.environment
+            ? await ctx.useEnvironmentForTool(input.environment, extra)
+            : [];
           const stopProgress = startProgress(extra, 'Walkthrough replays the run.');
           try {
             const result = await replayRun(ctx, {
@@ -147,7 +156,7 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
             });
             if (result.ok) writeReports(result.store, await ctx.secrets());
             const reply = textResult(
-              result.lines.join('\n'),
+              [...envLines, ...result.lines].join('\n'),
               result.preview && result.previewType
                 ? [{ type: 'image', data: result.preview, mimeType: result.previewType }]
                 : [],

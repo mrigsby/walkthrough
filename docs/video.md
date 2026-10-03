@@ -152,6 +152,7 @@ The slideshow starts with a title card that shows the run name. Then it shows ea
 
 - It opens a new login in a new window, so it starts with no cookies and no storage. `session` loads a saved login first. The default is the `session` of the plan.
 - It uses the screen and the settings of the run. Without a device, the page is `width` pixels wide (1280) at 16:10.
+- It uses the environment in use. With `environment`, it switches first. A run from another environment goes to the same pages there, and uses the values of `{{var:NAME}}` from the environment in use. For example, rehearse on development, and record the video on staging. See [Environments](environments.md).
 - It makes a new `{{unique}}` value, so new data does not clash with the data from the run.
 - It types text one character at a time. It moves the pointer to each element, with the element in the middle of the screen.
 - After each action, it waits for the network to settle. When the `expect` of a step has quoted text, it waits for that text.
@@ -172,6 +173,7 @@ When a step does not work, the replay stops. The reply names the step and the er
 | `path` | One file, or a list of up to 5. Each file gets the format of its extension. | None |
 | `pace` | `slow`, `normal`, or `fast`. | `normal` |
 | `session` | A saved login to start with. | The `session` of the plan. |
+| `environment` | The environment to record on, such as `staging`. It switches the session. | The environment in use. |
 | `captions` | `false` leaves out the captions. | `video.captions` (on) |
 | `pointer` | `false` leaves out the pointer. | `video.pointer` (on) |
 | `titleCard` | `false` leaves out the title card. | On |

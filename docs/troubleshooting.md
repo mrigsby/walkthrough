@@ -30,6 +30,18 @@ allowedOrigins:
 
 The list replaces the default list, so also add `localhost` if you still need it. See [Settings](config.md).
 
+## The site of another environment is blocked
+
+While you test one environment, Walkthrough blocks the sites of the others. The reply names the environment of the site. To test there, ask the agent to switch, such as "switch to staging". See [Environments](environments.md).
+
+## Walkthrough asks to confirm production
+
+Production, and any environment with `protected: true`, needs your OK before Walkthrough opens a page there. Click **Use Production** in the panel. Your OK lasts until the browser closes. Click **Cancel** to go back to the environment from before. With a hidden browser and a client that cannot ask, set `UIWALK_ALLOW_PROTECTED=production`, but only for automation that you trust.
+
+## A secret works on development but not on staging
+
+Each environment reads `.walkthrough/.env.<name>` first, such as `.env.staging`. A protected environment never reads the plain `.env`. Put the value in the file of that environment. `environment` with action `show` lists the secret names it can read.
+
 ## The panel does not show
 
 - The panel does not show when the browser is hidden (`headless: true` or `UIWALK_HEADLESS=1`). The agent asks you in the chat instead.
@@ -98,6 +110,7 @@ See [Troubleshooting](video.md#troubleshooting) in the video guide. In short:
 
 - Walkthrough saves cookies, localStorage, and sessionStorage. It does not save IndexedDB. Some apps, such as apps that use Firebase, keep the login there. Log in at the start of the plan instead.
 - Cookies can expire. Save the login again.
+- Each environment has its own saved logins. A login saved on development does not load on staging. Log in on staging, and save it there.
 
 ## A visual check fails on another computer
 

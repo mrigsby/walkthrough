@@ -13,6 +13,7 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 ## What it does
 
 - **Step-by-step testing.** The agent does a step, checks it, and asks you to confirm it. You watch in a real browser, and a pulsing box shows each element before the agent uses it.
+- **Environments.** Run the same plans on development, staging, production, or any copy of your app. Each environment has its own address, test data, and passwords, and production asks you before Walkthrough works there. Every report names the environment. See [Environments](docs/environments.md).
 - **Test plans in YAML.** Save a test in `.walkthrough/plans/` and run it again later. Your editor gives autocomplete. Three modes set how many steps you confirm: every step, only marked steps, or none.
 - **Reports.** Each run writes `report.md` and a single-file `report.html`, with bugs first, steps to reproduce, screenshots, and errors.
 - **Evidence.** Screenshots with a red box on the element, console errors, page errors, and Chrome issues. Bugs also get a HAR file of the network requests and a video clip of the last seconds.
@@ -29,7 +30,7 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 
 ## Safe by default
 
-- Walkthrough opens only the sites that you allow. By default, that is `localhost`.
+- Walkthrough opens only the sites that you allow. By default, that is `localhost`. A protected environment, such as production, needs your OK first.
 - Passwords go in `.walkthrough/.env` and appear in plans as `{{secret:NAME}}`. The agent never sees the values.
 - Text from web pages is marked as data, so the agent does not follow instructions from a page.
 - Page scripts cannot see the panel or fake your answers.
@@ -106,6 +107,7 @@ You can also ask in plain words. The walkthrough skill loads when you ask the ag
   baselines/         Screenshots for visual checks. Commit them if your team shares them.
   exports/           Puppeteer scripts from runs.
   .env               Secrets. Git does not track it.
+  .env.staging       Secrets of one environment. Git does not track it.
   sessions/          Saved logins. Git does not track them.
   runs/              Results and reports. Git does not track them.
 ```
@@ -115,6 +117,7 @@ You can also ask in plain words. The walkthrough skill loads when you ask the ag
 - [Getting started](docs/getting-started.md)
 - [Test plan format](docs/plan-format.md)
 - [Settings](docs/config.md)
+- [Environments](docs/environments.md)
 - [Videos](docs/video.md)
 - [Accessibility reports](docs/accessibility.md)
 - [Lighthouse reports](docs/lighthouse.md)
