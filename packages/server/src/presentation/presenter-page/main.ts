@@ -300,12 +300,17 @@ function ask(): void {
   if (!text) return;
   send({ type: 'ask', text });
   chatInput.value = '';
+  // The keys go back to the presentation, so a clicker works again.
+  chatInput.blur();
 }
 
 chatInput.addEventListener('keydown', (event) => {
-  if (event.isTrusted && event.key === 'Enter' && !event.shiftKey) {
+  if (!event.isTrusted) return;
+  if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     ask();
+  } else if (event.key === 'Escape') {
+    chatInput.blur();
   }
 });
 
@@ -376,9 +381,11 @@ function askJump(step: PresenterStep): void {
 // Keys for the presenter, like on a clicker. They do not count while the chat has focus.
 window.addEventListener('keydown', (event) => {
   if (!event.isTrusted || !view) return;
-  const target = event.target as HTMLElement | null;
-  if (target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT')) return;
   const key = event.key;
+  const target = event.target as HTMLElement | null;
+  const typing = target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT');
+  // Most clickers send Page Down and Page Up. Those work while the chat has the cursor.
+  if (typing && key !== 'PageDown' && key !== 'PageUp') return;
   if (key === 'Escape') {
     hide(screenBox);
     jumpBar.replaceChildren();

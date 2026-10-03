@@ -1,3 +1,4 @@
+import { basename, join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -9,15 +10,17 @@ import { ToolError } from '../errors.js';
 import { untrusted } from '../guards/untrusted.js';
 import { log } from '../log.js';
 import { TokenResolver } from '../page/tokens.js';
+import { handoutData, handoutFolder, writeHandout } from '../presentation/handout.js';
 import { LiveStage } from '../presentation/live-stage.js';
 import { type PresenterControls, PresenterWindow } from '../presentation/presenter-window.js';
+import { PresentationRecorder, type RecordOptions } from '../presentation/recorder.js';
 import {
   executionHash,
   findRehearsal,
   rehearsalProblems,
   slideProblems,
 } from '../presentation/rehearsal.js';
-import { PresentationRunner } from '../presentation/runner.js';
+import { type AudienceScreen, PresentationRunner } from '../presentation/runner.js';
 import {
   type Command,
   PresentationSession,
@@ -32,7 +35,7 @@ import { NullStage } from '../replay/stage.js';
 import { durationSeconds } from '../run/plan-schema.js';
 import { loadPlan } from '../run/plans.js';
 import { type Run, RunStore } from '../run/run-store.js';
-import { liveCaptures } from '../video/recording.js';
+import { liveCaptures, size } from '../video/recording.js';
 import { startProgress } from './developer-tools.js';
 import { runTool } from './util.js';
 
@@ -58,6 +61,9 @@ let current:
       kiosk: boolean;
       presenterOpen: () => boolean;
       openPresenter: () => Promise<void>;
+      endedAt: () => number | undefined;
+      // What the end wrote: the handout and the recording.
+      after: () => string[];
     }
   | undefined;
 
@@ -119,7 +125,7 @@ function statusText(session: PresentationSession): string {
 
 function eventText(session: PresentationSession, event: PresentEvent): string {
   if (event.type === 'ended') {
-    return 'status: ended\nThe presentation ended. Stop listening.';
+    return 'status: ended\nThe presentation ended. Stop listening. Call present with action "stop" to get the summary and the handout.';
   }
   const step = session.steps[session.current];
   const context = [
@@ -281,13 +287,14 @@ async function startPresentation(
   const audience = driver.activeTab();
 
   const ops = opsByStep(buildOps(run));
+  const secrets = await ctx.secrets();
   const vars = replayVars(run, config);
   const pace = PACES[settings.pace ?? 'normal'];
   const abort = new AbortController();
   const engine = new ReplayEngine({
     driver,
     config,
-    secrets: await ctx.secrets(),
+    secrets,
     vars,
     pace,
     stage: new NullStage(),
@@ -382,9 +389,40 @@ async function startPresentation(
   driver.emitter.once('closed', () => session.stop());
 
   ctx.presentation = session;
+  // The recording, and a picture of each step for the handout. A kiosk has neither.
+  const record = kiosk ? undefined : settings.record;
+  const recorder = record ? new PresentationRecorder(driver, session, config) : undefined;
+  await recorder?.start();
+  const frames = new Map<number, Buffer>();
+  const snapshot = async (i: number) => {
+    const cdp = audience.cdp;
+    if (!cdp) return;
+    // A plain screenshot of the window. It does not change the page, so nothing flickers.
+    const { data } = await cdp.send('Page.captureScreenshot', {
+      format: 'jpeg',
+      quality: 80,
+      captureBeyondViewport: false,
+    });
+    frames.set(i, Buffer.from(data, 'base64'));
+  };
+  // The curtain of a jump is cut from the recording.
+  const screen: AudienceScreen = {
+    title: () => stage.title(),
+    slide: (step) => stage.slide(step),
+    end: () => stage.end(),
+    clear: () => stage.clear(),
+    gate: (step, stepOps) => stage.gate(step, stepOps),
+    curtain: async (on) => {
+      if (on) recorder?.curtain(true);
+      await stage.curtain(on);
+      if (!on) recorder?.curtain(false);
+    },
+  };
+
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
-    screen: stage,
+    screen,
+    ...(kiosk ? {} : { snapshot }),
     ...(kiosk
       ? {
           kiosk: {
@@ -396,15 +434,33 @@ async function startPresentation(
       : {}),
   });
   // The presentation goes on in the background. The tools stay free for the chat.
+  let endedAt: number | undefined;
+  let after: string[] = [];
   const done = runner
     .run()
     .catch((error) => log.error('the presentation stopped', error))
     .finally(async () => {
+      endedAt = Date.now();
+      await recorder?.stop().catch(() => undefined);
       await presenter?.close();
       stage.dispose();
       await engine.dispose().catch(() => undefined);
       await driver.close().catch(() => undefined);
       if (ctx.presentation === session) ctx.presentation = undefined;
+      if (kiosk) return;
+      after = await saveHandout({
+        projectDir: config.projectDir,
+        runId: run.id,
+        session,
+        frames,
+        endedAt,
+        redact: (text) => secrets.redact(text),
+        recorder,
+        record: typeof record === 'object' ? record : {},
+      }).catch((error) => {
+        recorder?.discard();
+        return [`Walkthrough did not write the handout: ${(error as Error).message}`];
+      });
     });
   current = {
     session,
@@ -412,6 +468,8 @@ async function startPresentation(
     kiosk,
     presenterOpen: () => Boolean(presenter?.isOpen),
     openPresenter,
+    endedAt: () => endedAt,
+    after: () => after,
   };
 
   return [
@@ -430,17 +488,71 @@ async function startPresentation(
   ].join('\n');
 }
 
-async function stopPresentation(): Promise<string> {
+// Writes the handout, after the recording, so the handout can show the video.
+async function saveHandout(o: {
+  projectDir: string;
+  runId: string;
+  session: PresentationSession;
+  frames: Map<number, Buffer>;
+  endedAt: number;
+  redact: (text: string) => string;
+  recorder?: PresentationRecorder;
+  record: RecordOptions;
+}): Promise<string[]> {
+  const { session } = o;
+  if (!session.startedAt) {
+    o.recorder?.discard();
+    return ['The presentation did not start, so Walkthrough wrote no handout.'];
+  }
+  const store = RunStore.open(o.projectDir, o.runId);
+  const dir = join(
+    store.dir,
+    'presentations',
+    handoutFolder(session.startedAt, session.info.environment.name),
+  );
+  const data = handoutData(session, o.frames, o.redact, o.endedAt);
+  const lines: string[] = [];
+  if (o.recorder) {
+    const saved = await o.recorder.save(dir, o.record);
+    if (saved.out) {
+      data.video = { file: basename(saved.out.file), seconds: saved.out.seconds };
+      lines.push(
+        `Recording: ${relative(o.projectDir, saved.out.file)} (${saved.out.format.toUpperCase()}, ${clock(saved.out.seconds * 1000)}, ${size(saved.out.bytes)}).`,
+      );
+    }
+    if (saved.copied) lines.push(`Also saved the recording to ${saved.copied}.`);
+    if (saved.note) {
+      data.videoNote = saved.note;
+      lines.push(saved.note);
+    }
+  }
+  const files = writeHandout(dir, data);
+  lines.unshift(
+    `Handout: ${relative(o.projectDir, files.html)} and ${relative(o.projectDir, files.md)}.`,
+  );
+  return lines;
+}
+
+async function stopPresentation(extra: Extra): Promise<string> {
   const live = current;
   if (!live) return 'No presentation is going.';
   const { session } = live;
   session.stop();
-  await Promise.race([live.done, new Promise((resolve) => setTimeout(resolve, 15_000))]);
+  // The handout and the recording can take a while to save.
+  const stopProgress = startProgress(extra, 'Walkthrough saves the handout of the presentation.');
+  try {
+    await Promise.race([live.done, new Promise((resolve) => setTimeout(resolve, 600_000))]);
+  } finally {
+    stopProgress();
+  }
   const shown = new Set([...session.stepTimes.keys()].filter((i) => i < session.steps.length));
-  const minutes = session.startedAt ? clock(Date.now() - session.startedAt) : '0:00';
+  const minutes = session.startedAt
+    ? clock((live.endedAt() ?? Date.now()) - session.startedAt)
+    : '0:00';
   return [
     `The presentation "${session.info.name}" ended. It showed ${shown.size} of ${session.steps.length} step(s) in ${minutes}.`,
     `Chat: ${session.chat.filter((c) => c.question).length} question(s), ${session.chat.filter((c) => c.answer).length} answer(s).`,
+    ...live.after(),
   ].join('\n');
 }
 
@@ -507,7 +619,7 @@ export function registerPresentTools(server: McpServer, ctx: Context): void {
         'present',
         async () => {
           if (input.action === 'start') return startPresentation(ctx, input, extra);
-          if (input.action === 'stop') return stopPresentation();
+          if (input.action === 'stop') return stopPresentation(extra);
           const session = current?.session;
           if (!session?.active) {
             if (input.action === 'listen') return 'status: ended\nNo presentation is going.';

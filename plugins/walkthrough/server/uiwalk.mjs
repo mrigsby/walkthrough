@@ -8147,9 +8147,9 @@ var init_Frame = __esm({
          * @internal
          */
         async setFrameContent(content) {
-          return await this.evaluate((html) => {
+          return await this.evaluate((html2) => {
             document.open();
-            document.write(html);
+            document.write(html2);
             document.close();
           }, content);
         }
@@ -9606,8 +9606,8 @@ var init_Page = __esm({
          * @param html - HTML markup to assign to the page.
          * @param options - Parameters that has some properties.
          */
-        async setContent(html, options) {
-          await this.mainFrame().setContent(html, options);
+        async setContent(html2, options) {
+          await this.mainFrame().setContent(html2, options);
         }
         /**
          * {@inheritDoc Frame.goto}
@@ -15169,9 +15169,9 @@ var init_Frame2 = __esm({
         isolatedRealm() {
           return this.worlds[PUPPETEER_WORLD];
         }
-        async setContent(html, options = {}) {
+        async setContent(html2, options = {}) {
           const { waitUntil = ["load"], timeout: timeout2 = this._frameManager.timeoutSettings.navigationTimeout() } = options;
-          await this.setFrameContent(html);
+          await this.setFrameContent(html2);
           const watcher = new LifecycleWatcher(this._frameManager.networkManager, this, waitUntil, timeout2);
           const error62 = await Deferred.race([
             watcher.terminationPromise(),
@@ -39354,9 +39354,9 @@ var init_Frame3 = __esm({
           ]).catch(rewriteNavigationError(url2, options.timeout ?? this.timeoutSettings.navigationTimeout()));
           return response;
         }
-        async setContent(html, options = {}) {
+        async setContent(html2, options = {}) {
           await Promise.all([
-            this.setFrameContent(html),
+            this.setFrameContent(html2),
             firstValueFrom(combineLatest([
               this.#waitForLoad$(options),
               this.#waitForNetworkIdle$(options)
@@ -48937,11 +48937,11 @@ function validateBounds(targetPath, destDir, errorMessage) {
 function normalizeName(name) {
   const path14 = name.replace(/\\/g, "/");
   if (path14.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path14)) throw new Error(`${name} points outside extraction directory`);
-  let relative19 = path14;
-  if (/^[a-zA-Z]:/.test(relative19)) relative19 = relative19.replace(/^[a-zA-Z]:[/\\]?/, "");
-  else if (relative19.startsWith("/")) relative19 = relative19.replace(/^\/+/, "");
-  if (process.platform === "win32") return relative19.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
-  return relative19;
+  let relative20 = path14;
+  if (/^[a-zA-Z]:/.test(relative20)) relative20 = relative20.replace(/^[a-zA-Z]:[/\\]?/, "");
+  else if (relative20.startsWith("/")) relative20 = relative20.replace(/^\/+/, "");
+  if (process.platform === "win32") return relative20.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
+  return relative20;
 }
 function packTar(sources, options = {}) {
   const results2 = /* @__PURE__ */ new Map();
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join44 } = await import("node:path");
+    const { join: join47 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join44(userDataDir, "DevToolsActivePort");
+    const portPath = join47(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -68743,49 +68743,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative19, options, skipNormalization) {
+    function resolveComponent(base, relative20, options, skipNormalization) {
       const target2 = {};
       if (!skipNormalization) {
         base = parse7(serialize(base, options), options);
-        relative19 = parse7(serialize(relative19, options), options);
+        relative20 = parse7(serialize(relative20, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative19.scheme) {
-        target2.scheme = relative19.scheme;
-        target2.userinfo = relative19.userinfo;
-        target2.host = relative19.host;
-        target2.port = relative19.port;
-        target2.path = removeDotSegments(relative19.path || "");
-        target2.query = relative19.query;
+      if (!options.tolerant && relative20.scheme) {
+        target2.scheme = relative20.scheme;
+        target2.userinfo = relative20.userinfo;
+        target2.host = relative20.host;
+        target2.port = relative20.port;
+        target2.path = removeDotSegments(relative20.path || "");
+        target2.query = relative20.query;
       } else {
-        if (relative19.userinfo !== void 0 || relative19.host !== void 0 || relative19.port !== void 0) {
-          target2.userinfo = relative19.userinfo;
-          target2.host = relative19.host;
-          target2.port = relative19.port;
-          target2.path = removeDotSegments(relative19.path || "");
-          target2.query = relative19.query;
+        if (relative20.userinfo !== void 0 || relative20.host !== void 0 || relative20.port !== void 0) {
+          target2.userinfo = relative20.userinfo;
+          target2.host = relative20.host;
+          target2.port = relative20.port;
+          target2.path = removeDotSegments(relative20.path || "");
+          target2.query = relative20.query;
         } else {
-          if (!relative19.path) {
+          if (!relative20.path) {
             target2.path = base.path;
-            if (relative19.query !== void 0) {
-              target2.query = relative19.query;
+            if (relative20.query !== void 0) {
+              target2.query = relative20.query;
             } else {
               target2.query = base.query;
             }
           } else {
-            if (relative19.path[0] === "/") {
-              target2.path = removeDotSegments(relative19.path);
+            if (relative20.path[0] === "/") {
+              target2.path = removeDotSegments(relative20.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target2.path = "/" + relative19.path;
+                target2.path = "/" + relative20.path;
               } else if (!base.path) {
-                target2.path = relative19.path;
+                target2.path = relative20.path;
               } else {
-                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative19.path;
+                target2.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative20.path;
               }
               target2.path = removeDotSegments(target2.path);
             }
-            target2.query = relative19.query;
+            target2.query = relative20.query;
           }
           target2.userinfo = base.userinfo;
           target2.host = base.host;
@@ -68793,7 +68793,7 @@ var require_fast_uri = __commonJS({
         }
         target2.scheme = base.scheme;
       }
-      target2.fragment = relative19.fragment;
+      target2.fragment = relative20.fragment;
       return target2;
     }
     function equal2(uriA, uriB, options) {
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname15, join as join43 } from "node:path";
+import { dirname as dirname16, join as join46 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -107700,7 +107700,7 @@ function panelMain(opts, candidates) {
     return void 0;
   };
   const nameOf = (node3) => {
-    const html = node3;
+    const html2 = node3;
     const aria = node3.getAttribute("aria-label");
     if (aria) return aria.trim();
     const labelledBy = node3.getAttribute("aria-labelledby");
@@ -107708,8 +107708,8 @@ function panelMain(opts, candidates) {
       const text2 = labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? "").join(" ").trim();
       if (text2) return text2;
     }
-    if (html.labels && html.labels.length > 0) {
-      const label3 = html.labels[0];
+    if (html2.labels && html2.labels.length > 0) {
+      const label3 = html2.labels[0];
       const copy = label3.cloneNode(true);
       for (const inner of Array.from(copy.querySelectorAll("input, select, textarea")))
         inner.remove();
@@ -107718,7 +107718,7 @@ function panelMain(opts, candidates) {
     }
     const text = node3.innerText?.replace(/\s+/g, " ").trim();
     if (text && ["a", "button"].includes(node3.tagName.toLowerCase())) return text;
-    return (html.placeholder || node3.getAttribute("title") || node3.getAttribute("alt") || html.value || text || "").trim();
+    return (html2.placeholder || node3.getAttribute("title") || node3.getAttribute("alt") || html2.value || text || "").trim();
   };
   const targetOf = (node3) => {
     const role = roleOf(node3);
@@ -110848,8 +110848,8 @@ function findPrevious(projectDir, currentRunId, pages, compareTo, env2 = "develo
   }
   return void 0;
 }
-function normal(html) {
-  return html.replace(/\s+/g, " ").trim().toLowerCase();
+function normal(html2) {
+  return html2.replace(/\s+/g, " ").trim().toLowerCase();
 }
 function compareFindings(current2, previous) {
   const pagesNow = new Set(current2.pages.map((p) => p.page));
@@ -115602,15 +115602,15 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown = join33(store.dir, "report.md");
-  const html = join33(store.dir, "report.html");
+  const markdown2 = join33(store.dir, "report.md");
+  const html2 = join33(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
   const a11yReport = existsSync20(join33(store.dir, "accessibility.html"));
   const lhReport = existsSync20(join33(store.dir, "lighthouse.html"));
   const md = markdownReport(run, { a11yReport, lhReport });
-  writeFileSync12(markdown, secrets ? secrets.redact(md) : md);
-  writeFileSync12(html, htmlReport(run, store.dir));
-  return { markdown: relative11(store.projectDir, markdown), html: relative11(store.projectDir, html) };
+  writeFileSync12(markdown2, secrets ? secrets.redact(md) : md);
+  writeFileSync12(html2, htmlReport(run, store.dir));
+  return { markdown: relative11(store.projectDir, markdown2), html: relative11(store.projectDir, html2) };
 }
 async function closeFlow(ctx, store) {
   const flow = ctx.lhFlow;
@@ -117555,7 +117555,7 @@ async function auditPage2(url2, options) {
       "lighthouse_failed"
     );
   }
-  const [html, json2] = Array.isArray(result.report) ? result.report : [result.report];
+  const [html2, json2] = Array.isArray(result.report) ? result.report : [result.report];
   const dir = join36(options.runDir, "lighthouse");
   mkdirSync14(dir, { recursive: true });
   let path14 = "/";
@@ -117565,8 +117565,8 @@ async function auditPage2(url2, options) {
   }
   const base = `${String(options.index).padStart(2, "0")}-${slug(path14, 40, "home")}`;
   const files = {};
-  if (html) {
-    writeFileSync14(join36(dir, `${base}.report.html`), options.secrets.redact(html));
+  if (html2) {
+    writeFileSync14(join36(dir, `${base}.report.html`), options.secrets.redact(html2));
     files.html = `lighthouse/${base}.report.html`;
   }
   if (json2) {
@@ -118089,18 +118089,18 @@ import { relative as relative15 } from "node:path";
 // packages/server/src/page/read.ts
 async function readElement(handle) {
   return handle.evaluate((el) => {
-    const html = el;
-    const text = (html.innerText ?? el.textContent ?? "").replace(/\s+\n/g, "\n").trim().slice(0, 2e3);
-    const visible = typeof html.checkVisibility === "function" ? html.checkVisibility() : html.offsetParent !== null;
-    const isPassword = html.type === "password";
+    const html2 = el;
+    const text = (html2.innerText ?? el.textContent ?? "").replace(/\s+\n/g, "\n").trim().slice(0, 2e3);
+    const visible = typeof html2.checkVisibility === "function" ? html2.checkVisibility() : html2.offsetParent !== null;
+    const isPassword = html2.type === "password";
     return {
       tag: el.tagName.toLowerCase(),
       text,
-      value: typeof html.value === "string" ? isPassword && html.value ? "(hidden password)" : html.value : void 0,
+      value: typeof html2.value === "string" ? isPassword && html2.value ? "(hidden password)" : html2.value : void 0,
       visible,
-      enabled: !html.disabled && el.getAttribute("aria-disabled") !== "true",
-      checked: html.type === "checkbox" || html.type === "radio" ? Boolean(html.checked) : void 0,
-      href: typeof html.href === "string" && html.href ? html.href : void 0
+      enabled: !html2.disabled && el.getAttribute("aria-disabled") !== "true",
+      checked: html2.type === "checkbox" || html2.type === "radio" ? Boolean(html2.checked) : void 0,
+      href: typeof html2.href === "string" && html2.href ? html2.href : void 0
     };
   });
 }
@@ -118443,6 +118443,185 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
       ]);
     })
   );
+}
+
+// packages/server/src/tools/present-tools.ts
+import { basename as basename7, join as join42, relative as relative17 } from "node:path";
+
+// packages/server/src/presentation/handout.ts
+import { mkdirSync as mkdirSync15, writeFileSync as writeFileSync16 } from "node:fs";
+import { join as join38 } from "node:path";
+function handoutData(session, frames, redact, endedAt = Date.now()) {
+  return {
+    name: session.info.name,
+    runId: session.info.runId,
+    environment: session.info.environment,
+    startedAt: session.startedAt ?? session.openedAt,
+    endedAt,
+    ...session.info.timeBudgetSec ? { timeBudgetSec: session.info.timeBudgetSec } : {},
+    steps: session.steps.map((step, i) => {
+      const frame = frames.get(i);
+      const spentMs = session.stepTimes.get(i) ?? 0;
+      return {
+        index: step.index,
+        title: redact(step.title),
+        ...step.notes ? { notes: redact(step.notes) } : {},
+        slide: Boolean(step.slide),
+        ...step.timeBudgetSec ? { timeBudgetSec: step.timeBudgetSec } : {},
+        spentMs,
+        shown: Boolean(frame) || spentMs > 0,
+        ...frame ? { frame } : {}
+      };
+    }),
+    chat: session.chat.filter((c) => c.question || c.answer).map((c) => ({
+      ...c.question ? { question: redact(c.question) } : {},
+      ...c.answer ? { answer: redact(c.answer) } : {}
+    }))
+  };
+}
+function clock(ms) {
+  const s = Math.max(0, Math.round(ms / 1e3));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+function when(t) {
+  const d = new Date(t);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function handoutFolder(startedAt, environment2) {
+  const d = new Date(startedAt);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}-${environment2}`;
+}
+function frameFile(index) {
+  return `frames/step-${String(index).padStart(2, "0")}.jpg`;
+}
+function timeText(step) {
+  return `${clock(step.spentMs)}${step.timeBudgetSec ? ` (budget ${clock(step.timeBudgetSec * 1e3)})` : ""}`;
+}
+function inlineHtml(text) {
+  return esc2(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1 ($2)").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*\w])[*_]([^*_\s][^*_]*)[*_]/g, "$1<em>$2</em>");
+}
+function notesHtml(text) {
+  const out = [];
+  const item = /^\s*[-*]\s+/;
+  for (const block of text.trim().split(/\n\s*\n/)) {
+    let list2;
+    let para;
+    const flush = () => {
+      if (list2) out.push(`<ul>${list2.map((l) => `<li>${l}</li>`).join("")}</ul>`);
+      if (para) out.push(`<p>${para.join("<br>")}</p>`);
+      list2 = void 0;
+      para = void 0;
+    };
+    for (const line2 of block.split("\n")) {
+      if (item.test(line2)) {
+        if (para) flush();
+        list2 ??= [];
+        list2.push(inlineHtml(line2.replace(item, "")));
+      } else {
+        if (list2) flush();
+        para ??= [];
+        para.push(inlineHtml(line2));
+      }
+    }
+    flush();
+  }
+  return out.join("\n");
+}
+var CSS5 = `
+body { margin: 0; background: #f8fafc; color: #0f172a; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+h1 { margin: 0 0 8px; }
+.meta { color: #475569; margin: 0 0 24px; }
+.env { display: inline-block; padding: 1px 10px; border-radius: 999px; color: #fff; font-weight: 600; font-size: 14px; }
+.step { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin: 16px 0; }
+.step h2 { margin: 0 0 4px; font-size: 20px; }
+.step .time { color: #64748b; font-size: 14px; margin: 0 0 12px; }
+.step .over { color: #b91c1c; }
+.step img { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; }
+.notes { margin-top: 12px; }
+.notes code, .qa code { background: #f1f5f9; padding: 0 4px; border-radius: 4px; }
+.skipped { color: #64748b; }
+.qa dt { font-weight: 600; margin-top: 12px; }
+.qa dd { margin: 4px 0 0 0; }
+video { width: 100%; border-radius: 8px; background: #000; }
+@media print { body { background: #fff; } .step { break-inside: avoid; } }
+`;
+function html(data) {
+  const env2 = data.environment;
+  const length = clock(data.endedAt - data.startedAt);
+  const shown = data.steps.filter((s) => s.shown).length;
+  const steps = data.steps.map((step) => {
+    const over = step.timeBudgetSec && step.spentMs > step.timeBudgetSec * 1e3;
+    return [
+      `<section class="step${step.shown ? "" : " skipped"}">`,
+      `<h2>${step.index}. ${esc2(step.title)}${step.slide ? " <small>(slide)</small>" : ""}</h2>`,
+      step.shown ? `<p class="time${over ? " over" : ""}">Time: ${esc2(timeText(step))}</p>` : '<p class="time">Not shown.</p>',
+      step.frame ? `<img src="${frameFile(step.index)}" alt="Step ${step.index}">` : "",
+      step.notes ? `<div class="notes">${notesHtml(step.notes)}</div>` : "",
+      "</section>"
+    ].join("\n");
+  }).join("\n");
+  const qa = data.chat.length ? `<h2>Questions and answers</h2>
+<dl class="qa">${data.chat.map(
+    (c) => `${c.question ? `<dt>Q: ${esc2(c.question)}</dt>` : "<dt>Note</dt>"}<dd>${c.answer ? esc2(c.answer) : "<em>No answer.</em>"}</dd>`
+  ).join("\n")}</dl>` : "";
+  const video = data.video ? `<h2>Recording</h2>
+<video controls src="${esc2(data.video.file)}"></video>
+<p><a href="${esc2(data.video.file)}">${esc2(data.video.file)}</a> (${clock(data.video.seconds * 1e3)})</p>` : data.videoNote ? `<p>${esc2(data.videoNote)}</p>` : "";
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc2(data.name)}: presentation</title><style>${CSS5}</style></head>
+<body><main>
+<h1>${esc2(data.name)}</h1>
+<p class="meta"><span class="env" style="background:${esc2(env2.color)}">${esc2(env2.label)}</span> ${esc2(env2.baseUrl ?? env2.name)}<br>
+${esc2(when(data.startedAt))}. Length ${length}${data.timeBudgetSec ? ` (budget ${clock(data.timeBudgetSec * 1e3)})` : ""}. ${shown} of ${data.steps.length} steps shown. Rehearsal ${esc2(data.runId)}.</p>
+${steps}
+${qa}
+${video}
+</main></body></html>
+`;
+}
+function markdown(data) {
+  const env2 = data.environment;
+  const lines = [
+    `# ${data.name}`,
+    "",
+    `- Environment: ${env2.label} (${env2.name})${env2.baseUrl ? `, ${env2.baseUrl}` : ""}`,
+    `- Date: ${when(data.startedAt)}`,
+    `- Length: ${clock(data.endedAt - data.startedAt)}${data.timeBudgetSec ? ` (budget ${clock(data.timeBudgetSec * 1e3)})` : ""}`,
+    `- Steps shown: ${data.steps.filter((s) => s.shown).length} of ${data.steps.length}`,
+    `- Rehearsal: ${data.runId}`,
+    ...data.video ? [`- Recording: [${data.video.file}](${data.video.file})`] : [],
+    ...data.videoNote ? [`- Recording: ${data.videoNote}`] : [],
+    ""
+  ];
+  for (const step of data.steps) {
+    lines.push(`## ${step.index}. ${step.title}${step.slide ? " (slide)" : ""}`, "");
+    lines.push(step.shown ? `Time: ${timeText(step)}` : "Not shown.", "");
+    if (step.frame) lines.push(`![Step ${step.index}](${frameFile(step.index)})`, "");
+    if (step.notes) lines.push(step.notes.trim(), "");
+  }
+  if (data.chat.length) {
+    lines.push("## Questions and answers", "");
+    for (const c of data.chat) {
+      lines.push(c.question ? `**Q:** ${c.question}` : "**Note**", "");
+      lines.push(c.answer ? `**A:** ${c.answer}` : "*No answer.*", "");
+    }
+  }
+  return `${lines.join("\n").trimEnd()}
+`;
+}
+function writeHandout(dir, data) {
+  mkdirSync15(join38(dir, "frames"), { recursive: true });
+  for (const step of data.steps) {
+    if (step.frame) writeFileSync16(join38(dir, frameFile(step.index)), step.frame);
+  }
+  const files = { html: join38(dir, "presentation.html"), md: join38(dir, "presentation.md") };
+  writeFileSync16(files.html, html(data));
+  writeFileSync16(files.md, markdown(data));
+  return files;
 }
 
 // packages/server/src/presentation/live-stage.ts
@@ -119551,15 +119730,15 @@ var LiveStage = class {
 import { randomBytes as randomBytes13 } from "node:crypto";
 
 // packages/server/src/presentation/presenter-source.ts
-import { dirname as dirname12, join as join38 } from "node:path";
+import { dirname as dirname12, join as join39 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 var built2;
 async function presenterSource() {
-  if (true) return '"use strict";(()=>{var A=`\n:root { color-scheme: dark; --bg: #0b1020; --panel: #131b2f; --line: #26314d; --text: #e5e7eb;\n  --muted: #94a3b8; --accent: #3b82f6; --warn: #f59e0b; --bad: #ef4444; --good: #22c55e; }\n* { box-sizing: border-box; }\n[hidden] { display: none !important; }\nhtml, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);\n  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }\nbody { display: flex; flex-direction: column; overflow: hidden; }\nbutton { font: inherit; color: var(--text); background: #1e293b; border: 1px solid var(--line);\n  border-radius: 8px; padding: 8px 14px; cursor: pointer; }\nbutton:hover { background: #26324a; }\nbutton:disabled { opacity: 0.6; cursor: default; }\nbutton.primary { background: var(--accent); border-color: var(--accent); color: #fff; }\nbutton.danger { border-color: #7f1d1d; color: #fecaca; }\nbutton.danger.big, .dialog button.danger { background: #991b1b; color: #fff; }\nbutton.big { font-size: 20px; padding: 14px 28px; }\nbutton.small { padding: 2px 8px; font-size: 13px; }\nbutton.on { background: var(--warn); border-color: var(--warn); color: #111827; }\nheader { display: flex; justify-content: space-between; align-items: center; gap: 16px;\n  padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }\nheader .title { display: flex; align-items: center; gap: 10px; min-width: 0; }\nheader .name { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.env { padding: 2px 10px; border-radius: 999px; color: #fff; font-weight: 600; font-size: 13px; }\n.url { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.clocks { display: flex; gap: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n.clocks .clock { color: var(--muted); }\n.near { color: var(--warn); }\n.over { color: var(--bad); font-weight: 700; }\nmain { flex: 1; display: grid; grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); gap: 16px;\n  padding: 16px 18px; min-height: 0; }\n.left, .right { display: flex; flex-direction: column; gap: 12px; min-height: 0; }\n.now { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }\n.nowbar { display: flex; justify-content: space-between; align-items: center; }\n.now h1 { margin: 6px 0 0; font-size: 26px; line-height: 1.25; }\n.chip { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px;\n  border-radius: 6px; background: #1e293b; }\n.chip.gate { background: #1d4ed8; }\n.chip.running { background: #15803d; }\n.chip.failed { background: var(--bad); }\n.chip.manual, .chip.end { background: #7c3aed; }\n.steptime { font-variant-numeric: tabular-nums; }\n.failure { background: #3f1d1d; border: 1px solid var(--bad); border-radius: 12px; padding: 12px 16px; }\n.failure p { margin: 6px 0 10px; white-space: pre-wrap; }\n.manual { background: #2e1065; border: 1px solid #7c3aed; border-radius: 12px; padding: 12px 16px; }\n.notes { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.notesbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line);\n  color: var(--muted); }\n.notesbar span { flex: 1; }\n.notes-text { flex: 1; overflow: auto; padding: 8px 16px; }\n.notes-text p { margin: 0 0 0.6em; }\n.notes-text ul { margin: 0 0 0.6em; padding-left: 1.2em; }\n.notes-text code { background: #1e293b; padding: 0 4px; border-radius: 4px; }\n.muted { color: var(--muted); }\n.next { color: var(--muted); font-size: 16px; }\n.controls { display: flex; flex-direction: column; gap: 8px; }\n.row, .primary-row { display: flex; flex-wrap: wrap; gap: 8px; }\n.mirror { background: #000; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;\n  aspect-ratio: 16 / 10; flex: none; }\n.mirror img { width: 100%; height: 100%; object-fit: contain; display: block; }\n.jumpbar:empty { display: none; }\n.jumpbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #172554;\n  border: 1px solid var(--accent); border-radius: 10px; padding: 8px 12px; }\n.jumpbar span { flex: 1 1 200px; }\n.steps { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 30vh; flex: none;\n  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }\n.steps li { display: flex; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); }\n.steps li:last-child { border-bottom: 0; }\n.steps li.can-jump { cursor: pointer; }\n.steps li.can-jump:hover { background: #1e293b; }\n.steps li.here { background: #172554; }\n.steps li.done .label { color: var(--muted); }\n.steps .mark { width: 1.6em; text-align: center; color: var(--muted); }\n.steps li.done .mark { color: var(--good); }\n.steps .label { flex: 1; }\n.steps .spent { color: var(--muted); font-variant-numeric: tabular-nums; }\n.chat { flex: 1; min-height: 160px; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.chathead { padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--muted); }\n.chatlog { flex: 1; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }\n.msg { padding: 8px 12px; border-radius: 10px; max-width: 90%; white-space: pre-wrap; }\n.msg.q { align-self: flex-end; background: #1d4ed8; }\n.msg.a { align-self: flex-start; background: #1e293b; }\n.msgbar { margin-top: 6px; }\n.shown { color: var(--good); font-size: 13px; }\n.chatstatus { padding: 4px 12px; font-size: 13px; color: var(--muted); }\n.chatstatus.thinking { color: var(--warn); }\n.chatstatus.ok { color: var(--good); }\n.chatform { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }\n.chatform textarea { flex: 1; resize: none; font: inherit; color: var(--text); background: var(--bg);\n  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }\n.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center;\n  justify-content: center; z-index: 10; }\n.dialog { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px;\n  max-width: 520px; display: flex; flex-direction: column; gap: 12px; }\n.dialog h2 { margin: 0; }\n.dialog p { margin: 0; color: var(--muted); }\n.screens { display: flex; flex-direction: column; gap: 8px; }\n.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b;\n  border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; z-index: 11; }\n@media (max-width: 900px) { main { grid-template-columns: 1fr; overflow: auto; } }\n`;var z=window,D=z.__uiwalkPresenterBoot;function p(e){let t=z[D.binding];typeof t=="function"&&t(JSON.stringify({nonce:D.nonce,msg:e}))}function n(e,t={},...a){let s=document.createElement(e);for(let[o,i]of Object.entries(t))o==="class"?s.className=i:s.setAttribute(o,i);return s.append(...a),s}function V(e,t){e.addEventListener("click",a=>{a.isTrusted&&t()})}function r(e,t,a,s=""){let o=n("button",{type:"button",class:s,"data-act":t},e);return V(o,a),o}function h(e){let t=Math.max(0,Math.floor(e/1e3)),a=Math.floor(t/3600),s=Math.floor(t%3600/60),o=String(t%60).padStart(2,"0");return a?`${a}:${String(s).padStart(2,"0")}:${o}`:`${s}:${o}`}function R(e){let t=[],a=/(\\*\\*[^*]+\\*\\*|\\*[^*\\s][^*]*\\*|_[^_\\s][^_]*_|`[^`]+`|\\[[^\\]]+\\]\\([^)\\s]+\\))/g,s=0;for(let o of e.matchAll(a)){let i=o.index??0;i>s&&t.push(document.createTextNode(e.slice(s,i)));let d=o[0];if(d.startsWith("**"))t.push(n("strong",{},d.slice(2,-2)));else if(d.startsWith("`"))t.push(n("code",{},d.slice(1,-1)));else if(d.startsWith("[")){let[,x,ce]=/^\\[([^\\]]+)\\]\\(([^)\\s]+)\\)$/.exec(d)??[];t.push(document.createTextNode(`${x} (${ce})`))}else t.push(n("em",{},d.slice(1,-1)));s=i+d.length}return s<e.length&&t.push(document.createTextNode(e.slice(s))),t}function pe(e){let t=[],a=/^\\s*[-*]\\s+/;for(let s of e.trim().split(/\\n\\s*\\n/)){let o,i;for(let d of s.split(`\n`)){if(a.test(d)){i=void 0,o||(o=n("ul"),t.push(o)),o.append(n("li",{},...R(d.replace(a,""))));continue}o=void 0,i?i.append(n("br")):(i=n("p"),t.push(i)),i.append(...R(d))}}return t}var q=document.createElement("style");q.textContent=A;document.head.append(q);var J=n("b",{class:"name"}),E=n("span",{class:"env"}),O=n("span",{class:"url"}),U=n("span",{class:"stepno"}),$=n("span",{class:"elapsed","data-part":"elapsed"}),K=n("span",{class:"clock"}),ue=n("header",{},n("div",{class:"title"},J,E,O),n("div",{class:"clocks"},U,$,K)),P=n("span",{class:"chip","data-part":"state"}),W=n("h1",{"data-part":"step-title"}),y=n("span",{class:"steptime","data-part":"step-time"}),me=n("div",{class:"now"},n("div",{class:"nowbar"},P,y),W),X=n("p",{"data-part":"failure-text"}),F=n("div",{class:"failure","data-part":"failure"},n("b",{},"This step did not work."),X,n("div",{class:"row"},r("Retry","retry",()=>c({type:"retry"}),"primary"),r("Skip","skip-failed",()=>c({type:"skip"})),r("I will do it by hand","manual",()=>c({type:"manual"})))),G=n("div",{class:"manual","data-part":"manual"},"Use the app in the audience window. Then click Continue."),k=22,v=n("div",{class:"notes-text","data-part":"notes"}),fe=n("div",{class:"notes"},n("div",{class:"notesbar"},n("span",{},"Notes"),r("A-","smaller",()=>N(k-2),"small"),r("A+","bigger",()=>N(k+2),"small")),v);function N(e){k=Math.min(48,Math.max(12,e)),v.style.fontSize=`${k}px`}N(k);var Y=n("div",{class:"next","data-part":"next"}),Q=n("div",{class:"primary-row"}),Z=r("Back","back",()=>c({type:"back"})),ee=r("Skip","skip",()=>c({type:"skip"})),B=r("Blank","blank",()=>p({type:"blank"})),M=r("Title","title",()=>p({type:"title"})),ge=r("Fullscreen","fullscreen",()=>p({type:"fullscreen"})),xe=r("Other screen","screen",()=>{Te()}),te=r("Go to end","end",()=>c({type:"end"}),"danger"),he=n("div",{class:"controls"},Q,n("div",{class:"row"},Z,ee,te),n("div",{class:"row"},B,M,ge,xe)),be=n("section",{class:"left"},me,F,G,fe,Y,he),ne=n("img",{alt:"The audience screen","data-part":"mirror"}),ae=n("div",{class:"mirror"},ne),se=n("ol",{class:"steps","data-part":"steps"}),b=n("div",{class:"jumpbar","data-part":"jump"}),m=n("div",{class:"chatlog","data-part":"chat"}),L=n("div",{class:"chatstatus","data-part":"chat-status"}),T=n("textarea",{rows:"2",maxlength:"500",placeholder:"Ask Claude about the app. Enter sends.","data-part":"chat-input"}),we=r("Ask","ask",()=>ie(),"primary"),ke=n("div",{class:"chat"},n("div",{class:"chathead"},"Chat"),m,L,n("div",{class:"chatform"},T,we)),ye=n("aside",{class:"right"},ae,b,se,ke),ve=n("main",{},be,ye),re=n("h2"),H=n("div",{class:"modal","data-part":"confirm"},n("div",{class:"dialog"},re,n("p",{},"This is a protected environment. The steps can create real data there. The app opens after you confirm."),n("div",{class:"row"},r("Present here","confirm",()=>p({type:"confirm"}),"danger"),r("Cancel","cancel",()=>p({type:"cancel"}))))),oe=n("div",{class:"screens"}),g=n("div",{class:"modal","data-part":"screens"},n("div",{class:"dialog"},n("h2",{},"Send the audience window to a screen"),oe,n("div",{class:"row"},r("Cancel","screens-cancel",()=>f(g))))),w=n("div",{class:"toast","data-part":"notice"});document.body.append(ue,ve,H,g,w);f(H);f(g);f(w);function f(e){e.hidden=!0}function u(e,t=!0){e.hidden=!t}var C;function j(e){w.textContent=e,u(w),C&&clearTimeout(C),C=window.setTimeout(()=>f(w),4e3)}var l;function c(e){l?.can.includes(e.type)&&p({type:"command",command:e})}function ie(){let e=T.value.trim();e&&(p({type:"ask",text:e}),T.value="")}T.addEventListener("keydown",e=>{e.isTrusted&&e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),ie())});async function Te(){let e=[];try{e=(await window.getScreenDetails()).screens}catch{j("Chrome did not list the screens. Drag the audience window to the other screen.");return}if(e.length<2){j("Only one screen is connected.");return}oe.replaceChildren(...e.map((t,a)=>r(`${t.label||`Screen ${a+1}`}: ${t.width} x ${t.height}${t.isPrimary?" (main)":""}`,`screen-${a+1}`,()=>{f(g),p({type:"screen",left:t.left,top:t.top,width:t.width,height:t.height})}))),u(g)}function Se(e){if(!l)return;let t=e.index-1<l.current;b.replaceChildren(n("span",{},t?`Go back to step ${e.index}? The app starts over in a new login. The steps before it run at full speed.`:`Jump to step ${e.index}? The steps before it run at full speed.`),r("Jump","jump-go",()=>{b.replaceChildren(),c({type:"jump",step:e.index})},"primary"),r("Cancel","jump-cancel",()=>b.replaceChildren()))}window.addEventListener("keydown",e=>{if(!e.isTrusted||!l)return;let t=e.target;if(t&&(t.tagName==="TEXTAREA"||t.tagName==="INPUT"))return;let a=e.key;if(a==="Escape"){f(g),b.replaceChildren();return}l.confirmNeeded||(a==="ArrowRight"||a==="PageDown"||a===" "?(e.preventDefault(),p({type:"next"})):a==="ArrowLeft"||a==="PageUp"?(e.preventDefault(),c({type:"back"})):(a==="b"||a==="B"||a===".")&&(e.preventDefault(),p({type:"blank"})))});var Ce={title:"Title",gate:"Waiting",running:"Playing",failed:"Failed",manual:"By hand",end:"End screen",stopped:"Ended"},le=0;function Ee(e){return e.stepElapsedMs+(e.stepClockRunning?Date.now()-le:0)}function _(e,t){return t?e>t*1e3?"over":e>t*800?"near":"":""}function de(){let e=new Date;if(K.textContent=`${String(e.getHours()).padStart(2,"0")}:${String(e.getMinutes()).padStart(2,"0")}`,!l)return;let t=l.startedAt?Date.now()-l.startedAt:0;$.textContent=`${h(t)}${l.timeBudgetSec?` of ${h(l.timeBudgetSec*1e3)}`:""}`,$.className=`elapsed ${_(t,l.timeBudgetSec)}`;let a=l.steps[l.current];if(a&&l.state!=="title"){let s=Ee(l);y.textContent=`${h(s)}${a.timeBudgetSec?` of ${h(a.timeBudgetSec*1e3)}`:""}`,y.className=`steptime ${_(s,a.timeBudgetSec)}`}else y.textContent=""}var I=new Map;function S(e,t){let a=JSON.stringify(t);return I.get(e)===a?!1:(I.set(e,a),!0)}function $e(e){if(!S("primary",e.state))return;let t=[];e.state==="title"?t.push(r("Start","start",()=>c({type:"start"}),"primary big")):e.state==="gate"||e.state==="manual"?t.push(r("Continue","continue",()=>c({type:"continue"}),"primary big")):e.state==="running"?t.push(n("button",{type:"button",class:"primary big",disabled:""},"Playing")):e.state==="end"&&t.push(r("Back to app","back-to-app",()=>c({type:"manual"}),"big"),r("Close presentation","close",()=>c({type:"end"}),"danger big")),Q.replaceChildren(...t)}function Pe(e){let t=e.steps.map(s=>{let o=s.index-1;return{step:s,done:o<e.current,here:o===e.current&&e.state!=="title"&&e.state!=="end",spent:s.spentMs>=1e3?h(s.spentMs):""}}),a=e.can.includes("jump");S("steps",[t.map(s=>[s.done,s.here,s.spent]),a])&&se.replaceChildren(...t.map(({step:s,done:o,here:i,spent:d})=>{let x=n("li",{class:`${o?"done":""} ${i?"here":""}`,"data-step":String(s.index)},n("span",{class:"mark"},o?"\\u2713":i?"\\u25B6":String(s.index)),n("span",{class:"label"},`${s.slide?"[Slide] ":""}${s.title}`),n("span",{class:"spent"},d));return a&&(x.classList.add("can-jump"),V(x,()=>Se(s))),x}))}function Ne(e){let t=[];if(e.question&&t.push(n("div",{class:"msg q"},e.question)),e.answer){let a=n("div",{class:"msg a","data-answer":e.id},e.question?"":"Note: ",e.answer);a.append(n("div",{class:"msgbar"},e.onScreen?n("span",{class:"shown"},"On the screen"):r("Show on screen",`show-${e.id}`,()=>p({type:"show",id:e.id}),"small"))),t.push(a)}return t}function Be(e){if(S("chat",e.chat)){let s=m.scrollHeight-m.scrollTop-m.clientHeight<40;m.replaceChildren(...e.chat.flatMap(Ne)),s&&(m.scrollTop=m.scrollHeight)}let t=e.chat.some(s=>s.state==="thinking"),a=e.chat.some(s=>s.state==="waiting");L.textContent=t?"Claude is thinking.":a?"Claude is not listening now. Your question waits.":e.listening?"Claude is listening.":"Claude is not listening now.",L.className=`chatstatus ${t?"thinking":e.listening?"ok":"off"}`}function Me(e){l=e,le=Date.now(),document.title=`Presenter: ${e.name}`,J.textContent=e.name,E.textContent=e.environment.label,E.style.background=e.environment.color,O.textContent=e.environment.baseUrl??"";let t=e.steps[e.current];U.textContent=e.state==="title"?`${e.steps.length} steps`:t?`Step ${t.index} of ${e.steps.length}`:"End",P.textContent=Ce[e.state]??e.state,P.className=`chip ${e.state}`,W.textContent=e.state==="title"?"The title shows. Click Start.":e.state==="end"||!t?"The end screen shows.":t.title,u(F,e.state==="failed"),X.textContent=e.failure?`Step ${e.failure.step}: ${e.failure.message}`:"",u(G,e.state==="manual");let a=e.state==="title"?e.steps[0]:t;S("notes",a?.notes??"")&&(v.replaceChildren(...a?.notes?pe(a.notes):[n("p",{class:"muted"},"No notes.")]),v.scrollTop=0);let s=e.state==="title"?e.steps[0]:e.steps[e.current+1];Y.textContent=e.state==="end"?"":s?`Next: step ${s.index}, ${s.title}`:"Next: the end screen",$e(e),u(Z,e.can.includes("back")),u(ee,e.state==="gate"),u(te,e.state!=="end"&&e.can.includes("end")),B.classList.toggle("on",e.blank),B.textContent=e.blank?"Show screen":"Blank",M.classList.toggle("on",e.titleShown),M.textContent=e.titleShown?"Hide title":"Title",u(ae,e.mirror),Pe(e),Be(e),re.textContent=e.confirmNeeded?`Present on ${e.confirmNeeded.label}?`:"",u(H,!!e.confirmNeeded),de()}function Le(e){e.type==="view"?Me(e.view):e.type==="frame"?ne.src=e.src:e.type==="notice"&&j(e.text)}z.__uiwalkPresenter={receive:Le};setInterval(de,500);p({type:"hello"});})();\n';
+  if (true) return '"use strict";(()=>{var A=`\n:root { color-scheme: dark; --bg: #0b1020; --panel: #131b2f; --line: #26314d; --text: #e5e7eb;\n  --muted: #94a3b8; --accent: #3b82f6; --warn: #f59e0b; --bad: #ef4444; --good: #22c55e; }\n* { box-sizing: border-box; }\n[hidden] { display: none !important; }\nhtml, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);\n  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }\nbody { display: flex; flex-direction: column; overflow: hidden; }\nbutton { font: inherit; color: var(--text); background: #1e293b; border: 1px solid var(--line);\n  border-radius: 8px; padding: 8px 14px; cursor: pointer; }\nbutton:hover { background: #26324a; }\nbutton:disabled { opacity: 0.6; cursor: default; }\nbutton.primary { background: var(--accent); border-color: var(--accent); color: #fff; }\nbutton.danger { border-color: #7f1d1d; color: #fecaca; }\nbutton.danger.big, .dialog button.danger { background: #991b1b; color: #fff; }\nbutton.big { font-size: 20px; padding: 14px 28px; }\nbutton.small { padding: 2px 8px; font-size: 13px; }\nbutton.on { background: var(--warn); border-color: var(--warn); color: #111827; }\nheader { display: flex; justify-content: space-between; align-items: center; gap: 16px;\n  padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }\nheader .title { display: flex; align-items: center; gap: 10px; min-width: 0; }\nheader .name { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.env { padding: 2px 10px; border-radius: 999px; color: #fff; font-weight: 600; font-size: 13px; }\n.url { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.clocks { display: flex; gap: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n.clocks .clock { color: var(--muted); }\n.near { color: var(--warn); }\n.over { color: var(--bad); font-weight: 700; }\nmain { flex: 1; display: grid; grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); gap: 16px;\n  padding: 16px 18px; min-height: 0; }\n.left, .right { display: flex; flex-direction: column; gap: 12px; min-height: 0; }\n.now { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }\n.nowbar { display: flex; justify-content: space-between; align-items: center; }\n.now h1 { margin: 6px 0 0; font-size: 26px; line-height: 1.25; }\n.chip { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px;\n  border-radius: 6px; background: #1e293b; }\n.chip.gate { background: #1d4ed8; }\n.chip.running { background: #15803d; }\n.chip.failed { background: var(--bad); }\n.chip.manual, .chip.end { background: #7c3aed; }\n.steptime { font-variant-numeric: tabular-nums; }\n.failure { background: #3f1d1d; border: 1px solid var(--bad); border-radius: 12px; padding: 12px 16px; }\n.failure p { margin: 6px 0 10px; white-space: pre-wrap; }\n.manual { background: #2e1065; border: 1px solid #7c3aed; border-radius: 12px; padding: 12px 16px; }\n.notes { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.notesbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line);\n  color: var(--muted); }\n.notesbar span { flex: 1; }\n.notes-text { flex: 1; overflow: auto; padding: 8px 16px; }\n.notes-text p { margin: 0 0 0.6em; }\n.notes-text ul { margin: 0 0 0.6em; padding-left: 1.2em; }\n.notes-text code { background: #1e293b; padding: 0 4px; border-radius: 4px; }\n.muted { color: var(--muted); }\n.next { color: var(--muted); font-size: 16px; }\n.controls { display: flex; flex-direction: column; gap: 8px; }\n.row, .primary-row { display: flex; flex-wrap: wrap; gap: 8px; }\n.mirror { background: #000; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;\n  aspect-ratio: 16 / 10; flex: none; }\n.mirror img { width: 100%; height: 100%; object-fit: contain; display: block; }\n.jumpbar:empty { display: none; }\n.jumpbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #172554;\n  border: 1px solid var(--accent); border-radius: 10px; padding: 8px 12px; }\n.jumpbar span { flex: 1 1 200px; }\n.steps { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 30vh; flex: none;\n  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }\n.steps li { display: flex; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); }\n.steps li:last-child { border-bottom: 0; }\n.steps li.can-jump { cursor: pointer; }\n.steps li.can-jump:hover { background: #1e293b; }\n.steps li.here { background: #172554; }\n.steps li.done .label { color: var(--muted); }\n.steps .mark { width: 1.6em; text-align: center; color: var(--muted); }\n.steps li.done .mark { color: var(--good); }\n.steps .label { flex: 1; }\n.steps .spent { color: var(--muted); font-variant-numeric: tabular-nums; }\n.chat { flex: 1; min-height: 160px; display: flex; flex-direction: column; background: var(--panel);\n  border: 1px solid var(--line); border-radius: 12px; }\n.chathead { padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--muted); }\n.chatlog { flex: 1; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }\n.msg { padding: 8px 12px; border-radius: 10px; max-width: 90%; white-space: pre-wrap; }\n.msg.q { align-self: flex-end; background: #1d4ed8; }\n.msg.a { align-self: flex-start; background: #1e293b; }\n.msgbar { margin-top: 6px; }\n.shown { color: var(--good); font-size: 13px; }\n.chatstatus { padding: 4px 12px; font-size: 13px; color: var(--muted); }\n.chatstatus.thinking { color: var(--warn); }\n.chatstatus.ok { color: var(--good); }\n.chatform { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }\n.chatform textarea { flex: 1; resize: none; font: inherit; color: var(--text); background: var(--bg);\n  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }\n.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center;\n  justify-content: center; z-index: 10; }\n.dialog { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px;\n  max-width: 520px; display: flex; flex-direction: column; gap: 12px; }\n.dialog h2 { margin: 0; }\n.dialog p { margin: 0; color: var(--muted); }\n.screens { display: flex; flex-direction: column; gap: 8px; }\n.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b;\n  border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; z-index: 11; }\n@media (max-width: 900px) { main { grid-template-columns: 1fr; overflow: auto; } }\n`;var z=window,D=z.__uiwalkPresenterBoot;function p(e){let t=z[D.binding];typeof t=="function"&&t(JSON.stringify({nonce:D.nonce,msg:e}))}function n(e,t={},...s){let a=document.createElement(e);for(let[o,i]of Object.entries(t))o==="class"?a.className=i:a.setAttribute(o,i);return a.append(...s),a}function U(e,t){e.addEventListener("click",s=>{s.isTrusted&&t()})}function r(e,t,s,a=""){let o=n("button",{type:"button",class:a,"data-act":t},e);return U(o,s),o}function b(e){let t=Math.max(0,Math.floor(e/1e3)),s=Math.floor(t/3600),a=Math.floor(t%3600/60),o=String(t%60).padStart(2,"0");return s?`${s}:${String(a).padStart(2,"0")}:${o}`:`${a}:${o}`}function R(e){let t=[],s=/(\\*\\*[^*]+\\*\\*|\\*[^*\\s][^*]*\\*|_[^_\\s][^_]*_|`[^`]+`|\\[[^\\]]+\\]\\([^)\\s]+\\))/g,a=0;for(let o of e.matchAll(s)){let i=o.index??0;i>a&&t.push(document.createTextNode(e.slice(a,i)));let d=o[0];if(d.startsWith("**"))t.push(n("strong",{},d.slice(2,-2)));else if(d.startsWith("`"))t.push(n("code",{},d.slice(1,-1)));else if(d.startsWith("[")){let[,h,ce]=/^\\[([^\\]]+)\\]\\(([^)\\s]+)\\)$/.exec(d)??[];t.push(document.createTextNode(`${h} (${ce})`))}else t.push(n("em",{},d.slice(1,-1)));a=i+d.length}return a<e.length&&t.push(document.createTextNode(e.slice(a))),t}function pe(e){let t=[],s=/^\\s*[-*]\\s+/;for(let a of e.trim().split(/\\n\\s*\\n/)){let o,i;for(let d of a.split(`\n`)){if(s.test(d)){i=void 0,o||(o=n("ul"),t.push(o)),o.append(n("li",{},...R(d.replace(s,""))));continue}o=void 0,i?i.append(n("br")):(i=n("p"),t.push(i)),i.append(...R(d))}}return t}var V=document.createElement("style");V.textContent=A;document.head.append(V);var q=n("b",{class:"name"}),E=n("span",{class:"env"}),J=n("span",{class:"url"}),O=n("span",{class:"stepno"}),$=n("span",{class:"elapsed","data-part":"elapsed"}),K=n("span",{class:"clock"}),ue=n("header",{},n("div",{class:"title"},q,E,J),n("div",{class:"clocks"},O,$,K)),P=n("span",{class:"chip","data-part":"state"}),W=n("h1",{"data-part":"step-title"}),v=n("span",{class:"steptime","data-part":"step-time"}),me=n("div",{class:"now"},n("div",{class:"nowbar"},P,v),W),X=n("p",{"data-part":"failure-text"}),F=n("div",{class:"failure","data-part":"failure"},n("b",{},"This step did not work."),X,n("div",{class:"row"},r("Retry","retry",()=>c({type:"retry"}),"primary"),r("Skip","skip-failed",()=>c({type:"skip"})),r("I will do it by hand","manual",()=>c({type:"manual"})))),G=n("div",{class:"manual","data-part":"manual"},"Use the app in the audience window. Then click Continue."),y=22,T=n("div",{class:"notes-text","data-part":"notes"}),fe=n("div",{class:"notes"},n("div",{class:"notesbar"},n("span",{},"Notes"),r("A-","smaller",()=>N(y-2),"small"),r("A+","bigger",()=>N(y+2),"small")),T);function N(e){y=Math.min(48,Math.max(12,e)),T.style.fontSize=`${y}px`}N(y);var Y=n("div",{class:"next","data-part":"next"}),Q=n("div",{class:"primary-row"}),Z=r("Back","back",()=>c({type:"back"})),ee=r("Skip","skip",()=>c({type:"skip"})),B=r("Blank","blank",()=>p({type:"blank"})),M=r("Title","title",()=>p({type:"title"})),ge=r("Fullscreen","fullscreen",()=>p({type:"fullscreen"})),xe=r("Other screen","screen",()=>{Te()}),te=r("Go to end","end",()=>c({type:"end"}),"danger"),he=n("div",{class:"controls"},Q,n("div",{class:"row"},Z,ee,te),n("div",{class:"row"},B,M,ge,xe)),be=n("section",{class:"left"},me,F,G,fe,Y,he),ne=n("img",{alt:"The audience screen","data-part":"mirror"}),ae=n("div",{class:"mirror"},ne),se=n("ol",{class:"steps","data-part":"steps"}),w=n("div",{class:"jumpbar","data-part":"jump"}),m=n("div",{class:"chatlog","data-part":"chat"}),L=n("div",{class:"chatstatus","data-part":"chat-status"}),g=n("textarea",{rows:"2",maxlength:"500",placeholder:"Ask Claude about the app. Enter sends.","data-part":"chat-input"}),we=r("Ask","ask",()=>ie(),"primary"),ke=n("div",{class:"chat"},n("div",{class:"chathead"},"Chat"),m,L,n("div",{class:"chatform"},g,we)),ye=n("aside",{class:"right"},ae,w,se,ke),ve=n("main",{},be,ye),re=n("h2"),H=n("div",{class:"modal","data-part":"confirm"},n("div",{class:"dialog"},re,n("p",{},"This is a protected environment. The steps can create real data there. The app opens after you confirm."),n("div",{class:"row"},r("Present here","confirm",()=>p({type:"confirm"}),"danger"),r("Cancel","cancel",()=>p({type:"cancel"}))))),oe=n("div",{class:"screens"}),x=n("div",{class:"modal","data-part":"screens"},n("div",{class:"dialog"},n("h2",{},"Send the audience window to a screen"),oe,n("div",{class:"row"},r("Cancel","screens-cancel",()=>f(x))))),k=n("div",{class:"toast","data-part":"notice"});document.body.append(ue,ve,H,x,k);f(H);f(x);f(k);function f(e){e.hidden=!0}function u(e,t=!0){e.hidden=!t}var C;function j(e){k.textContent=e,u(k),C&&clearTimeout(C),C=window.setTimeout(()=>f(k),4e3)}var l;function c(e){l?.can.includes(e.type)&&p({type:"command",command:e})}function ie(){let e=g.value.trim();e&&(p({type:"ask",text:e}),g.value="",g.blur())}g.addEventListener("keydown",e=>{e.isTrusted&&(e.key==="Enter"&&!e.shiftKey?(e.preventDefault(),ie()):e.key==="Escape"&&g.blur())});async function Te(){let e=[];try{e=(await window.getScreenDetails()).screens}catch{j("Chrome did not list the screens. Drag the audience window to the other screen.");return}if(e.length<2){j("Only one screen is connected.");return}oe.replaceChildren(...e.map((t,s)=>r(`${t.label||`Screen ${s+1}`}: ${t.width} x ${t.height}${t.isPrimary?" (main)":""}`,`screen-${s+1}`,()=>{f(x),p({type:"screen",left:t.left,top:t.top,width:t.width,height:t.height})}))),u(x)}function Se(e){if(!l)return;let t=e.index-1<l.current;w.replaceChildren(n("span",{},t?`Go back to step ${e.index}? The app starts over in a new login. The steps before it run at full speed.`:`Jump to step ${e.index}? The steps before it run at full speed.`),r("Jump","jump-go",()=>{w.replaceChildren(),c({type:"jump",step:e.index})},"primary"),r("Cancel","jump-cancel",()=>w.replaceChildren()))}window.addEventListener("keydown",e=>{if(!e.isTrusted||!l)return;let t=e.key,s=e.target;if(!(s&&(s.tagName==="TEXTAREA"||s.tagName==="INPUT")&&t!=="PageDown"&&t!=="PageUp")){if(t==="Escape"){f(x),w.replaceChildren();return}l.confirmNeeded||(t==="ArrowRight"||t==="PageDown"||t===" "?(e.preventDefault(),p({type:"next"})):t==="ArrowLeft"||t==="PageUp"?(e.preventDefault(),c({type:"back"})):(t==="b"||t==="B"||t===".")&&(e.preventDefault(),p({type:"blank"})))}});var Ce={title:"Title",gate:"Waiting",running:"Playing",failed:"Failed",manual:"By hand",end:"End screen",stopped:"Ended"},le=0;function Ee(e){return e.stepElapsedMs+(e.stepClockRunning?Date.now()-le:0)}function _(e,t){return t?e>t*1e3?"over":e>t*800?"near":"":""}function de(){let e=new Date;if(K.textContent=`${String(e.getHours()).padStart(2,"0")}:${String(e.getMinutes()).padStart(2,"0")}`,!l)return;let t=l.startedAt?Date.now()-l.startedAt:0;$.textContent=`${b(t)}${l.timeBudgetSec?` of ${b(l.timeBudgetSec*1e3)}`:""}`,$.className=`elapsed ${_(t,l.timeBudgetSec)}`;let s=l.steps[l.current];if(s&&l.state!=="title"){let a=Ee(l);v.textContent=`${b(a)}${s.timeBudgetSec?` of ${b(s.timeBudgetSec*1e3)}`:""}`,v.className=`steptime ${_(a,s.timeBudgetSec)}`}else v.textContent=""}var I=new Map;function S(e,t){let s=JSON.stringify(t);return I.get(e)===s?!1:(I.set(e,s),!0)}function $e(e){if(!S("primary",e.state))return;let t=[];e.state==="title"?t.push(r("Start","start",()=>c({type:"start"}),"primary big")):e.state==="gate"||e.state==="manual"?t.push(r("Continue","continue",()=>c({type:"continue"}),"primary big")):e.state==="running"?t.push(n("button",{type:"button",class:"primary big",disabled:""},"Playing")):e.state==="end"&&t.push(r("Back to app","back-to-app",()=>c({type:"manual"}),"big"),r("Close presentation","close",()=>c({type:"end"}),"danger big")),Q.replaceChildren(...t)}function Pe(e){let t=e.steps.map(a=>{let o=a.index-1;return{step:a,done:o<e.current,here:o===e.current&&e.state!=="title"&&e.state!=="end",spent:a.spentMs>=1e3?b(a.spentMs):""}}),s=e.can.includes("jump");S("steps",[t.map(a=>[a.done,a.here,a.spent]),s])&&se.replaceChildren(...t.map(({step:a,done:o,here:i,spent:d})=>{let h=n("li",{class:`${o?"done":""} ${i?"here":""}`,"data-step":String(a.index)},n("span",{class:"mark"},o?"\\u2713":i?"\\u25B6":String(a.index)),n("span",{class:"label"},`${a.slide?"[Slide] ":""}${a.title}`),n("span",{class:"spent"},d));return s&&(h.classList.add("can-jump"),U(h,()=>Se(a))),h}))}function Ne(e){let t=[];if(e.question&&t.push(n("div",{class:"msg q"},e.question)),e.answer){let s=n("div",{class:"msg a","data-answer":e.id},e.question?"":"Note: ",e.answer);s.append(n("div",{class:"msgbar"},e.onScreen?n("span",{class:"shown"},"On the screen"):r("Show on screen",`show-${e.id}`,()=>p({type:"show",id:e.id}),"small"))),t.push(s)}return t}function Be(e){if(S("chat",e.chat)){let a=m.scrollHeight-m.scrollTop-m.clientHeight<40;m.replaceChildren(...e.chat.flatMap(Ne)),a&&(m.scrollTop=m.scrollHeight)}let t=e.chat.some(a=>a.state==="thinking"),s=e.chat.some(a=>a.state==="waiting");L.textContent=t?"Claude is thinking.":s?"Claude is not listening now. Your question waits.":e.listening?"Claude is listening.":"Claude is not listening now.",L.className=`chatstatus ${t?"thinking":e.listening?"ok":"off"}`}function Me(e){l=e,le=Date.now(),document.title=`Presenter: ${e.name}`,q.textContent=e.name,E.textContent=e.environment.label,E.style.background=e.environment.color,J.textContent=e.environment.baseUrl??"";let t=e.steps[e.current];O.textContent=e.state==="title"?`${e.steps.length} steps`:t?`Step ${t.index} of ${e.steps.length}`:"End",P.textContent=Ce[e.state]??e.state,P.className=`chip ${e.state}`,W.textContent=e.state==="title"?"The title shows. Click Start.":e.state==="end"||!t?"The end screen shows.":t.title,u(F,e.state==="failed"),X.textContent=e.failure?`Step ${e.failure.step}: ${e.failure.message}`:"",u(G,e.state==="manual");let s=e.state==="title"?e.steps[0]:t;S("notes",s?.notes??"")&&(T.replaceChildren(...s?.notes?pe(s.notes):[n("p",{class:"muted"},"No notes.")]),T.scrollTop=0);let a=e.state==="title"?e.steps[0]:e.steps[e.current+1];Y.textContent=e.state==="end"?"":a?`Next: step ${a.index}, ${a.title}`:"Next: the end screen",$e(e),u(Z,e.can.includes("back")),u(ee,e.state==="gate"),u(te,e.state!=="end"&&e.can.includes("end")),B.classList.toggle("on",e.blank),B.textContent=e.blank?"Show screen":"Blank",M.classList.toggle("on",e.titleShown),M.textContent=e.titleShown?"Hide title":"Title",u(ae,e.mirror),Pe(e),Be(e),re.textContent=e.confirmNeeded?`Present on ${e.confirmNeeded.label}?`:"",u(H,!!e.confirmNeeded),de()}function Le(e){e.type==="view"?Me(e.view):e.type==="frame"?ne.src=e.src:e.type==="notice"&&j(e.text)}z.__uiwalkPresenter={receive:Le};setInterval(de,500);p({type:"hello"});})();\n';
   if (built2) return built2;
   const esbuild = await import("esbuild");
   const result = await esbuild.build({
-    entryPoints: [join38(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
+    entryPoints: [join39(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -119892,13 +120071,13 @@ var PresenterWindow = class _PresenterWindow {
     const page = await context2.newPage({ type: "window" });
     const nonce = randomBytes13(16).toString("hex");
     const binding = `__uiwalkPresenter_${randomBytes13(6).toString("hex")}`;
-    const html = pageHtml(await presenterSource(), { binding, nonce });
+    const html2 = pageHtml(await presenterSource(), { binding, nonce });
     const win = new _PresenterWindow(session, context2, page, nonce, options);
     await page.setRequestInterception(true);
     page.on("request", (request3) => {
       const url2 = request3.url();
       if (url2 === PRESENTER_URL) {
-        void request3.respond({ status: 200, contentType: "text/html; charset=utf-8", body: html });
+        void request3.respond({ status: 200, contentType: "text/html; charset=utf-8", body: html2 });
       } else if (request3.isNavigationRequest() && request3.frame() === page.mainFrame()) {
         void request3.respond({ status: 204, body: "" });
       } else {
@@ -120043,6 +120222,90 @@ var PresenterWindow = class _PresenterWindow {
   }
 };
 
+// packages/server/src/presentation/recorder.ts
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync16 } from "node:fs";
+import { dirname as dirname13, join as join40 } from "node:path";
+var PresentationRecorder = class {
+  constructor(driver, session, config3) {
+    this.session = session;
+    this.config = config3;
+    this.capture = new VideoCapture(driver, { maxWidth: config3.video.width, showPanel: false });
+  }
+  session;
+  config;
+  capture;
+  playingSince;
+  stopWatch;
+  async start() {
+    await this.capture.start();
+    this.stopWatch = this.session.watch(() => this.onChange());
+  }
+  onChange() {
+    const state = this.session.state;
+    const playing = state === "running" || state === "manual";
+    if (playing && this.playingSince === void 0) this.playingSince = Date.now();
+    if (!playing && this.playingSince !== void 0) {
+      this.capture.activity(this.playingSince);
+      this.playingSince = void 0;
+    }
+  }
+  // The curtain hides a jump. Its time is cut from the video.
+  curtain(on) {
+    this.capture.question(on);
+  }
+  async stop() {
+    this.stopWatch?.();
+    if (this.playingSince !== void 0) this.capture.activity(this.playingSince);
+    this.playingSince = void 0;
+    await this.capture.stop();
+  }
+  // Encodes the video into the folder. The pictures go away after.
+  async save(dir, options) {
+    const config3 = this.config;
+    try {
+      const format3 = chooseFormat(options.format, options.path, config3.video.runFormat);
+      const target2 = options.path ? checkMediaPath(options.path, config3.projectDir, config3.screenshotRoots) : void 0;
+      const samples = buildSamples(this.capture.frames, this.capture.events, {
+        start: this.capture.startedAt,
+        end: this.capture.stoppedAt ?? Date.now(),
+        fps: format3 === "gif" ? config3.video.gifFps : VIDEO_FPS,
+        idleSeconds: config3.video.idleSeconds,
+        pointer: false,
+        captions: false
+      });
+      if (samples.length === 0) return { note: "The recording has no pictures." };
+      const seconds = samples.reduce((sum, s) => sum + s.duration, 0);
+      if (format3 === "gif" && seconds > config3.video.maxGifSeconds) {
+        return {
+          note: `The recording is ${Math.round(seconds)} seconds long, and a GIF can have ${config3.video.maxGifSeconds} seconds (maxGifSeconds). Record as mp4 or webm.`
+        };
+      }
+      mkdirSync16(dir, { recursive: true });
+      const out = await encodeVideo({
+        config: config3,
+        framesDir: this.capture.dir,
+        samples,
+        format: format3,
+        outFile: join40(dir, `presentation.${format3}`)
+      });
+      let copied;
+      if (target2 && out.format === format3) {
+        mkdirSync16(dirname13(target2.path), { recursive: true });
+        copyFileSync2(out.file, target2.path);
+        copied = target2.display;
+      }
+      return { out, ...copied ? { copied } : {}, ...out.note ? { note: out.note } : {} };
+    } catch (error62) {
+      return { note: `Walkthrough did not save the recording: ${error62.message}` };
+    } finally {
+      this.capture.discard();
+    }
+  }
+  discard() {
+    this.capture.discard();
+  }
+};
+
 // packages/server/src/replay/stage.ts
 var NullStage = class {
   stepStart() {
@@ -120146,16 +120409,21 @@ var PresentationRunner = class {
     if (!this.kiosk && step.pause) {
       this.session.setState("gate", i);
       if (stepOps) await this.screen.gate(step, stepOps);
+      else await this.snapshot(i);
       const next = await this.atGate(i);
       if (next !== "run") return next;
     } else {
       this.session.setState("gate", i);
+      if (!stepOps) await this.snapshot(i);
       if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
       else if (!stepOps) await sleep(this.options.pace.holdMs, this.signal);
     }
     if (!stepOps) return i + 1;
     if (step.slide) await this.screen.clear();
     return this.runAction(i, stepOps, 0);
+  }
+  async snapshot(i) {
+    await this.options.snapshot?.(i).catch(() => void 0);
   }
   async atGate(i) {
     for (; ; ) {
@@ -120179,6 +120447,7 @@ var PresentationRunner = class {
     const outcome = await this.engine.runStep(stepOps, { fromOp });
     if (outcome.ok) {
       this.session.failure = void 0;
+      await this.snapshot(i);
       const following = this.steps[i + 1];
       if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
       else if (!following?.pause) await sleep(this.options.pace.holdMs, this.signal);
@@ -120355,8 +120624,8 @@ var Rebaser = class _Rebaser {
 };
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync23, writeFileSync as writeFileSync16 } from "node:fs";
-import { dirname as dirname13, join as join39, relative as relative16 } from "node:path";
+import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync23, writeFileSync as writeFileSync17 } from "node:fs";
+import { dirname as dirname14, join as join41, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
   normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
@@ -120431,9 +120700,9 @@ async function replayRun(ctx, input3) {
     try {
       const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
       preview = Buffer.from(shot).toString("base64");
-      const file2 = join39(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
-      mkdirSync15(dirname13(file2), { recursive: true });
-      writeFileSync16(file2, shot);
+      const file2 = join41(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      mkdirSync17(dirname14(file2), { recursive: true });
+      writeFileSync17(file2, shot);
       lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
     } catch {
     }
@@ -120461,8 +120730,8 @@ async function replayRun(ctx, input3) {
       { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
     ];
     const lines = [];
-    const videoDir = join39(store.dir, "video");
-    mkdirSync15(videoDir, { recursive: true });
+    const videoDir = join41(store.dir, "video");
+    mkdirSync17(videoDir, { recursive: true });
     const stamp3 = fileStamp("replay");
     let preview;
     for (const format3 of formats) {
@@ -120484,13 +120753,13 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync23(join39(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync23(join41(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
         samples,
         format: format3,
-        outFile: join39(videoDir, `${stamp3}.${format3}`),
+        outFile: join41(videoDir, `${stamp3}.${format3}`),
         title: input3.titleCard ?? true ? run.name : void 0,
         width: format3 === "gif" ? config3.video.gifWidth : width
       });
@@ -120500,8 +120769,8 @@ async function replayRun(ctx, input3) {
       if (out.note) lines.push(out.note);
       const copies = [];
       for (const target2 of targets.filter((t) => t.format === out.format)) {
-        mkdirSync15(dirname13(target2.path), { recursive: true });
-        copyFileSync2(out.file, target2.path);
+        mkdirSync17(dirname14(target2.path), { recursive: true });
+        copyFileSync3(out.file, target2.path);
         copies.push(target2.display);
         lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
       }
@@ -120556,7 +120825,7 @@ var COMMANDS = [
   "presenter",
   "end"
 ];
-function clock(ms) {
+function clock2(ms) {
   const s = Math.max(0, Math.round(ms / 1e3));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
@@ -120582,13 +120851,13 @@ function statusText(session) {
     ...step?.notes && session.state !== "title" ? [`Notes: ${step.notes}`] : [],
     ...next && session.state !== "end" ? [`Next: step ${next.index} "${next.title}".`] : [],
     ...session.failure ? [`Failed: step ${session.failure.step}: ${session.failure.message}`] : [],
-    `Time: ${session.startedAt ? clock(elapsed) : "not started"}${budget ? ` of ${clock(budget * 1e3)}` : ""}.`,
+    `Time: ${session.startedAt ? clock2(elapsed) : "not started"}${budget ? ` of ${clock2(budget * 1e3)}` : ""}.`,
     `Chat: ${session.chat.filter((c) => c.question).length} question(s). ${session.listening ? "You are listening." : "Nobody is listening now."}`
   ].join("\n");
 }
 function eventText(session, event) {
   if (event.type === "ended") {
-    return "status: ended\nThe presentation ended. Stop listening.";
+    return 'status: ended\nThe presentation ended. Stop listening. Call present with action "stop" to get the summary and the handout.';
   }
   const step = session.steps[session.current];
   const context2 = [
@@ -120731,13 +121000,14 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   await ctx.finishSwitch(true);
   const audience = driver.activeTab();
   const ops = opsByStep(buildOps(run));
+  const secrets = await ctx.secrets();
   const vars = replayVars(run, config3);
   const pace = PACES[settings.pace ?? "normal"];
   const abort = new AbortController();
   const engine = new ReplayEngine({
     driver,
     config: config3,
-    secrets: await ctx.secrets(),
+    secrets,
     vars,
     pace,
     stage: new NullStage(),
@@ -120812,7 +121082,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     },
     cancel: () => session.stop(),
     toggleFullscreen: () => stage.toggleFullscreen(),
-    moveToScreen: (screen) => stage.moveToScreen(screen)
+    moveToScreen: (screen2) => stage.moveToScreen(screen2)
   };
   const openPresenter = async () => {
     presenter = await PresenterWindow.open(driver, session, {
@@ -120826,9 +121096,36 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   audience.page.once("close", () => session.stop());
   driver.emitter.once("closed", () => session.stop());
   ctx.presentation = session;
+  const record2 = kiosk ? void 0 : settings.record;
+  const recorder = record2 ? new PresentationRecorder(driver, session, config3) : void 0;
+  await recorder?.start();
+  const frames = /* @__PURE__ */ new Map();
+  const snapshot = async (i) => {
+    const cdp = audience.cdp;
+    if (!cdp) return;
+    const { data } = await cdp.send("Page.captureScreenshot", {
+      format: "jpeg",
+      quality: 80,
+      captureBeyondViewport: false
+    });
+    frames.set(i, Buffer.from(data, "base64"));
+  };
+  const screen = {
+    title: () => stage.title(),
+    slide: (step) => stage.slide(step),
+    end: () => stage.end(),
+    clear: () => stage.clear(),
+    gate: (step, stepOps) => stage.gate(step, stepOps),
+    curtain: async (on) => {
+      if (on) recorder?.curtain(true);
+      await stage.curtain(on);
+      if (!on) recorder?.curtain(false);
+    }
+  };
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
-    screen: stage,
+    screen,
+    ...kiosk ? {} : { snapshot },
     ...kiosk ? {
       kiosk: {
         holdMs: (settings.kiosk?.holdSeconds ?? 6) * 1e3,
@@ -120837,19 +121134,39 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
       }
     } : {}
   });
+  let endedAt;
+  let after = [];
   const done = runner.run().catch((error62) => log.error("the presentation stopped", error62)).finally(async () => {
+    endedAt = Date.now();
+    await recorder?.stop().catch(() => void 0);
     await presenter?.close();
     stage.dispose();
     await engine.dispose().catch(() => void 0);
     await driver.close().catch(() => void 0);
     if (ctx.presentation === session) ctx.presentation = void 0;
+    if (kiosk) return;
+    after = await saveHandout({
+      projectDir: config3.projectDir,
+      runId: run.id,
+      session,
+      frames,
+      endedAt,
+      redact: (text) => secrets.redact(text),
+      recorder,
+      record: typeof record2 === "object" ? record2 : {}
+    }).catch((error62) => {
+      recorder?.discard();
+      return [`Walkthrough did not write the handout: ${error62.message}`];
+    });
   });
   current = {
     session,
     done,
     kiosk,
     presenterOpen: () => Boolean(presenter?.isOpen),
-    openPresenter
+    openPresenter,
+    endedAt: () => endedAt,
+    after: () => after
   };
   return [
     ...lines,
@@ -120862,17 +121179,57 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     'Now call present with action "listen", and answer each question with action "answer". Keep listening until listen says "ended".'
   ].join("\n");
 }
-async function stopPresentation() {
+async function saveHandout(o) {
+  const { session } = o;
+  if (!session.startedAt) {
+    o.recorder?.discard();
+    return ["The presentation did not start, so Walkthrough wrote no handout."];
+  }
+  const store = RunStore.open(o.projectDir, o.runId);
+  const dir = join42(
+    store.dir,
+    "presentations",
+    handoutFolder(session.startedAt, session.info.environment.name)
+  );
+  const data = handoutData(session, o.frames, o.redact, o.endedAt);
+  const lines = [];
+  if (o.recorder) {
+    const saved = await o.recorder.save(dir, o.record);
+    if (saved.out) {
+      data.video = { file: basename7(saved.out.file), seconds: saved.out.seconds };
+      lines.push(
+        `Recording: ${relative17(o.projectDir, saved.out.file)} (${saved.out.format.toUpperCase()}, ${clock2(saved.out.seconds * 1e3)}, ${size(saved.out.bytes)}).`
+      );
+    }
+    if (saved.copied) lines.push(`Also saved the recording to ${saved.copied}.`);
+    if (saved.note) {
+      data.videoNote = saved.note;
+      lines.push(saved.note);
+    }
+  }
+  const files = writeHandout(dir, data);
+  lines.unshift(
+    `Handout: ${relative17(o.projectDir, files.html)} and ${relative17(o.projectDir, files.md)}.`
+  );
+  return lines;
+}
+async function stopPresentation(extra) {
   const live = current;
   if (!live) return "No presentation is going.";
   const { session } = live;
   session.stop();
-  await Promise.race([live.done, new Promise((resolve12) => setTimeout(resolve12, 15e3))]);
+  const stopProgress = startProgress(extra, "Walkthrough saves the handout of the presentation.");
+  try {
+    await Promise.race([live.done, new Promise((resolve12) => setTimeout(resolve12, 6e5))]);
+  } finally {
+    stopProgress();
+  }
   const shown = new Set([...session.stepTimes.keys()].filter((i) => i < session.steps.length));
-  const minutes = session.startedAt ? clock(Date.now() - session.startedAt) : "0:00";
+  const minutes = session.startedAt ? clock2((live.endedAt() ?? Date.now()) - session.startedAt) : "0:00";
   return [
     `The presentation "${session.info.name}" ended. It showed ${shown.size} of ${session.steps.length} step(s) in ${minutes}.`,
-    `Chat: ${session.chat.filter((c) => c.question).length} question(s), ${session.chat.filter((c) => c.answer).length} answer(s).`
+    `Chat: ${session.chat.filter((c) => c.question).length} question(s), ${session.chat.filter((c) => c.answer).length} answer(s).`,
+    ...live.after()
   ].join("\n");
 }
 function registerPresentTools(server, ctx) {
@@ -120911,7 +121268,7 @@ function registerPresentTools(server, ctx) {
       "present",
       async () => {
         if (input3.action === "start") return startPresentation(ctx, input3, extra);
-        if (input3.action === "stop") return stopPresentation();
+        if (input3.action === "stop") return stopPresentation(extra);
         const session = current?.session;
         if (!session?.active) {
           if (input3.action === "listen") return "status: ended\nNo presentation is going.";
@@ -120983,7 +121340,7 @@ ${statusText(session)}`;
 
 // packages/server/src/tools/project-tools.ts
 import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync24 } from "node:fs";
-import { join as join40 } from "node:path";
+import { join as join43 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -121021,16 +121378,16 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join40(projectDir, ".walkthrough", "runs");
+      const dir = join43(projectDir, ".walkthrough", "runs");
       if (!existsSync24(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync14(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join40(dir, id, "run.json");
+        const file2 = join43(dir, id, "run.json");
         if (!existsSync24(file2)) continue;
         try {
           const run = JSON.parse(readFileSync24(file2, "utf8"));
-          const report = existsSync24(join40(dir, id, "report.html")) ? `report written${existsSync24(join40(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join40(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
+          const report = existsSync24(join43(dir, id, "report.html")) ? `report written${existsSync24(join43(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join43(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
             `- ${id}: "${run.name}"${env2 === "development" ? "" : ` on ${env2}`}, ${run.status}, ${resultLine(run) || "no steps"} (${report})`
@@ -121046,8 +121403,8 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes14 } from "node:crypto";
-import { existsSync as existsSync25, mkdirSync as mkdirSync16, readFileSync as readFileSync25, writeFileSync as writeFileSync17 } from "node:fs";
-import { basename as basename7, dirname as dirname14, extname as extname9, join as join41, relative as relative17 } from "node:path";
+import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync25, writeFileSync as writeFileSync18 } from "node:fs";
+import { basename as basename8, dirname as dirname15, extname as extname9, join as join44, relative as relative18 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -121411,11 +121768,11 @@ function registerQualityTools(server, ctx) {
         ref: input3.ref,
         selector: input3.selector
       });
-      const group = ctx.run?.run.planFile ? basename7(ctx.run.run.planFile, extname9(ctx.run.run.planFile)) : "adhoc";
+      const group = ctx.run?.run.planFile ? basename8(ctx.run.run.planFile, extname9(ctx.run.run.planFile)) : "adhoc";
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
-      const baselinePath = join41(
+      const baselinePath = join44(
         config3.projectDir,
         ".walkthrough",
         "baselines",
@@ -121423,7 +121780,7 @@ function registerQualityTools(server, ctx) {
         ...env2 === "development" ? [] : [env2],
         file2
       );
-      const baselineRel = relative17(config3.projectDir, baselinePath);
+      const baselineRel = relative18(config3.projectDir, baselinePath);
       const capture = await steadyCapture(driver, tab, {
         handle: target2?.handle,
         fullPage: input3.fullPage,
@@ -121431,8 +121788,8 @@ function registerQualityTools(server, ctx) {
       });
       if (!existsSync25(baselinePath) || input3.updateBaseline) {
         const existed = existsSync25(baselinePath);
-        mkdirSync16(dirname14(baselinePath), { recursive: true });
-        writeFileSync17(baselinePath, capture.png);
+        mkdirSync18(dirname15(baselinePath), { recursive: true });
+        writeFileSync18(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -121445,7 +121802,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join41(dir, `${stamp3}-actual.png`);
+      const actualPath = join44(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -121455,7 +121812,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync17(actualPath, capture.png);
+        writeFileSync18(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -121468,11 +121825,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join41(dir, `${stamp3}-diff.png`);
-          writeFileSync17(diffPath, comparison.diffPng);
+          const diffPath = join44(dir, `${stamp3}-diff.png`);
+          writeFileSync18(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
-            `Diff image (changed pixels in red): ${relative17(config3.projectDir, diffPath)}`
+            `Diff image (changed pixels in red): ${relative18(config3.projectDir, diffPath)}`
           );
           images.push({
             type: "image",
@@ -121481,7 +121838,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           });
         }
         lines.push(
-          `Screenshot now: ${relative17(config3.projectDir, actualPath)}`,
+          `Screenshot now: ${relative18(config3.projectDir, actualPath)}`,
           `Baseline: ${baselineRel}`
         );
         lines.push(
@@ -121490,7 +121847,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       }
       if (input3.stepId && ctx.run?.run.status === "running" && saved.length) {
         const step = ctx.run.step({ id: input3.stepId });
-        step.screenshots.push(...saved.map((p) => relative17(ctx.run?.dir ?? "", p)));
+        step.screenshots.push(...saved.map((p) => relative18(ctx.run?.dir ?? "", p)));
         ctx.run.save();
       }
       return textResult(lines.join("\n"), images);
@@ -121562,7 +121919,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           stepId,
           shots: {
             // In a run, next to the run's screenshots. Otherwise in today's folder.
-            root: dirname14(ctx.evidenceDir(config3.projectDir)),
+            root: dirname15(ctx.evidenceDir(config3.projectDir)),
             sub: "a11y",
             max: config3.accessibility.maxScreenshots
           }
@@ -121582,7 +121939,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative17(config3.projectDir, join41(dirname14(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative18(config3.projectDir, join44(dirname15(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -121590,8 +121947,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync26, mkdirSync as mkdirSync17, writeFileSync as writeFileSync18 } from "node:fs";
-import { join as join42, relative as relative18 } from "node:path";
+import { existsSync as existsSync26, mkdirSync as mkdirSync19, writeFileSync as writeFileSync19 } from "node:fs";
+import { join as join45, relative as relative19 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -122842,9 +123199,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join42(projectDir, ".walkthrough", "exports");
-      mkdirSync17(dir, { recursive: true });
-      const file2 = join42(dir, `${name}.mjs`);
+      const dir = join45(projectDir, ".walkthrough", "exports");
+      mkdirSync19(dir, { recursive: true });
+      const file2 = join45(dir, `${name}.mjs`);
       const existed = existsSync26(file2);
       let target2;
       if (environment2) {
@@ -122863,8 +123220,8 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
           baseUrl: e.baseUrl
         }))
       });
-      const rel = relative18(projectDir, file2);
-      writeFileSync18(file2, result.code.replace("<this file>", rel));
+      const rel = relative19(projectDir, file2);
+      writeFileSync19(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
         `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
@@ -122907,9 +123264,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync26(join42(store.dir, "report.md")) ? { markdown: relative18(projectDir, join42(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative18(projectDir, join42(store.dir, s)));
-      const files = (step.files ?? []).map((f) => relative18(projectDir, join42(store.dir, f)));
+      const reports = existsSync26(join45(store.dir, "report.md")) ? { markdown: relative19(projectDir, join45(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative19(projectDir, join45(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative19(projectDir, join45(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, {
@@ -122917,15 +123274,15 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         screenshots,
         files
       });
-      const bodyFile = join42(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
-      writeFileSync18(bodyFile, draft.body);
+      const bodyFile = join45(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      writeFileSync19(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
-        `Body file: ${relative18(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
+        `Body file: ${relative19(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join42(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join45(projectDir, s)}`).join("\n")}` : " none"}`,
         ...files.length ? [`Other files to attach:
-${files.map((f) => `- ${join42(projectDir, f)}`).join("\n")}`] : [],
+${files.map((f) => `- ${join45(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -123216,7 +123573,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join43(dirname15(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join46(dirname16(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

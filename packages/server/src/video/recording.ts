@@ -18,7 +18,7 @@ import { chooseFormat, type VideoFormat } from './formats.js';
 import { buildSamples, lastSeconds } from './timeline.js';
 
 // Pictures each second in WebM and MP4. GIF uses the gifFps setting.
-const VIDEO_FPS = 15;
+export const VIDEO_FPS = 15;
 // The bug clip buffer keeps this much real time. The clip is the last replaySeconds of
 // it, after wait time is cut.
 const RING_KEEP_MS = 3 * 60 * 1000;

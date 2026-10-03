@@ -182,6 +182,8 @@ describe('the presenter window', () => {
     await presenter.type('[data-part="chat-input"]', 'Where does the count come from?');
     await presenter.keyboard.press('Enter');
     await waitText(presenter, 'chat-status', /not listening now\. Your question waits/);
+    // The chat lets go of the keys, so the clicker works again.
+    expect(await presenter.evaluate(() => document.activeElement?.tagName)).not.toBe('TEXTAREA');
     const heard = await mcp.call('present', { action: 'listen' });
     expect(heard.text).toContain('status: question');
     expect(heard.text).toContain('Where does the count come from?');

@@ -36,6 +36,9 @@ export interface RunnerOptions {
   // No presenter: each step and slide holds, and the presentation can loop.
   kiosk?: { holdMs: number; loop: boolean; loops: number };
   screen?: AudienceScreen;
+  // Takes a picture of the audience screen for the handout: after a step plays, or when a
+  // step without an action shows.
+  snapshot?: (i: number) => Promise<void>;
 }
 
 // What comes next: a step from 0, the title, the end screen, or the end of the presentation.
@@ -121,10 +124,12 @@ export class PresentationRunner {
     if (!this.kiosk && step.pause) {
       this.session.setState('gate', i);
       if (stepOps) await this.screen.gate(step, stepOps);
+      else await this.snapshot(i);
       const next = await this.atGate(i);
       if (next !== 'run') return next;
     } else {
       this.session.setState('gate', i);
+      if (!stepOps) await this.snapshot(i);
       // A slide or a talking point holds for a moment when nobody presses Continue.
       if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
       else if (!stepOps) await sleep(this.options.pace.holdMs, this.signal);
@@ -132,6 +137,10 @@ export class PresentationRunner {
     if (!stepOps) return i + 1;
     if (step.slide) await this.screen.clear();
     return this.runAction(i, stepOps, 0);
+  }
+
+  private async snapshot(i: number): Promise<void> {
+    await this.options.snapshot?.(i).catch(() => undefined);
   }
 
   private async atGate(i: number): Promise<Next | 'run'> {
@@ -157,6 +166,7 @@ export class PresentationRunner {
     const outcome = await this.engine.runStep(stepOps, { fromOp });
     if (outcome.ok) {
       this.session.failure = undefined;
+      await this.snapshot(i);
       // Viewers see the result for a moment before the next step goes on by itself.
       const following = this.steps[i + 1];
       if (this.kiosk) await sleep(this.kiosk.holdMs, this.signal);
