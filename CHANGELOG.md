@@ -2,7 +2,7 @@
 
 This file lists all notable changes to the project.
 
-## Unreleased
+## 0.5.0 (2026-10-17)
 
 ### Added
 
