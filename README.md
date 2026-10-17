@@ -1,6 +1,6 @@
 # Walkthrough
 
-![How Walkthrough works: the agent plans a step, runs it in a visible browser, and explains it. You answer Pass, Bug, Skip, or Stop in a panel. For a bug, Walkthrough saves a screenshot, console errors, and network requests. At the end, it writes a report.](docs/images/walkthrough-infographic.png)
+![How Walkthrough works: the agent plans a step, runs it in Chrome, and explains it in a panel. You answer Pass, Bug, Skip, Retry, or Stop. For a bug, you point at the element. Walkthrough saves a boxed screenshot, console errors, network requests, and a video clip. At the end, it writes a report.](docs/images/walkthrough-infographic.png)
 
 Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, **Retry**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the network requests. During a test run, it also saves a short video. Then it writes a report.
 
