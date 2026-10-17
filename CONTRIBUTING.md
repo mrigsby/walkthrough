@@ -41,9 +41,9 @@ Inside `packages/server/src`:
 
 | Folder | What it does |
 | --- | --- |
-| `browser/` | Starts or connects to Chrome, and handles tabs, logins, dialogs, devices, and saved logins. `fetch-router.ts` runs the guard for allowed sites and the mock rules in each tab. |
+| `browser/` | Starts or connects to Chrome, and handles tabs, logins, dialogs, devices, and saved logins. `fetch-router.ts` runs the guard for allowed sites and the mock rules in each tab. `browser-settings.ts` turns the `browser` settings into Chrome flags and preferences, and fits the window to the page. |
 | `page/` | Page outlines, refs, actions, selectors, element reads, and `{{unique}}`. |
-| `panel/` | The panel in the browser and its link to the server. |
+| `panel/` | The panel in the browser and its link to the server. `view.ts` builds what each question shows, and `rich-text.ts` reads lists, check lists, code, and snippets in panel text. |
 | `guards/` | Allowed sites, secrets, file paths, and the marks on page text. |
 | `evidence/` | Screenshots, logs, network requests, HAR files, and the removal of tokens. |
 | `devtools/` | Cookies and storage, Chrome issues, `inspect`, and the schemas for cookie checks and mock rules. |
@@ -52,7 +52,7 @@ Inside `packages/server/src`:
 | `visual/` | Visual checks. |
 | `audit/` | Accessibility checks (axe-core, keyboard, dark mode, reflow), findings, scores, and report comparison. |
 | `lighthouse/` | Lighthouse checks of pages, user flows in runs, and findings. |
-| `video/` | Screen capture, the timeline that cuts wait time, and the encoder. `encoder-page/` runs in a hidden Chrome. The build adds it to the bundle as text. |
+| `video/` | Screen capture, the timeline that cuts wait time, and the encoder. `mask-script.ts` finds the secrets and masked parts that the encoder blurs. `encoder-page/` runs in a hidden Chrome. The build adds it to the bundle as text. |
 | `replay/` | `ops.ts` turns a run into a list of steps for export and replay. `replayer.ts` records a run again. |
 | `downloads/` | The cache folder, and the optional Lighthouse and ffmpeg downloads. |
 | `record/`, `export/`, `issue/` | Record mode, script export, and issue drafts. |
@@ -75,6 +75,8 @@ claude --plugin-dir ../../plugins/walkthrough
 
 After a rebuild, run `/mcp` in Claude Code and reconnect `uiwalk`.
 
+If you also installed the plugin from the marketplace, turn it off first with `claude plugin disable walkthrough@walkthrough`. Turn it on again after the test with `claude plugin enable walkthrough@walkthrough`.
+
 ## Tests
 
 - `npm test` builds the bundle, runs all tests, and runs the text check.
@@ -82,6 +84,7 @@ After a rebuild, run `/mcp` in Claude Code and reconnect `uiwalk`.
 - `UIWALK_FORCE_PANEL=1` shows the panel in a hidden Chrome. `UIWALK_DEBUG_ENDPOINT_FILE` names a file. The server writes the exact address of its Chrome there, and `connectChrome()` from `test/helpers/chrome.ts` connects to it. The test can then click the panel like a person. Do not connect by port. When a port is already in use, Chrome can open the same port on IPv6. The test then reaches the wrong Chrome.
 - Tests start the demo shop with `--port 0`, so the system picks a free port. Do not use fixed or random ports in tests. Two test files that share a port share one server, and the first file to finish stops it.
 - Make temp folders with `tempDir()` from `test/helpers/temp.ts`. It removes them after the test file.
+- Some tests need a visible Chrome, such as the tests that fit the window to the page and dock DevTools. They run only with `UIWALK_VISIBLE_TESTS=1`, because CI has no screen. Run them on your own computer when you change `browser/`.
 - Tests for Lighthouse and for MP4 through ffmpeg skip when these downloads are missing. To run them, install both once with `node plugins/walkthrough/server/uiwalk.mjs setup lighthouse` and `... setup ffmpeg`. `UIWALK_CACHE_DIR` puts the downloads in another folder.
 
 ### Debug a test
@@ -117,7 +120,7 @@ Before the tests, CI installs Lighthouse and ffmpeg with `uiwalk setup`, so no t
 ## Make a release
 
 1. Run `npm version <version> -w packages/server --no-git-tag-version`. This sets the version in `packages/server/package.json` and `package-lock.json`.
-2. Set the same version in `plugins/walkthrough/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`.
+2. Set the same version in `plugins/walkthrough/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. `claude plugin update` reads the version in `marketplace.json`, so users get the new version only after this change.
 3. Move the "Unreleased" notes in `CHANGELOG.md` under the new version.
 4. Run `npm run build` and `npm test`.
 5. Run `npm pack -w packages/server --dry-run` to see the files in the npm package.
@@ -125,7 +128,7 @@ Before the tests, CI installs Lighthouse and ffmpeg with `uiwalk setup`, so no t
 7. Run `npm run check:bundle`. It compares the bundle with the staged files.
 8. Commit the change.
 9. Tag the commit, such as `v0.2.0`. Do not push yet.
-10. Publish the npm package: `npm publish -w packages/server`. The `prepack` step builds the bundle first. Publish before you push, so the docs never point to a package that is not on npm.
+10. Run `npm whoami`. If it fails, run `npm login`, because npm login tokens expire. Then publish the npm package: `npm publish -w packages/server`. The `prepack` step builds the bundle first. Publish before you push, so the docs never point to a package that is not on npm.
 11. Push the commit and the tag.
 12. Copy the notes of this version from `CHANGELOG.md` into a file, such as `notes.md`.
 13. Make a GitHub release from the tag: `gh release create v0.2.0 --title "0.2.0" --notes-file notes.md`.

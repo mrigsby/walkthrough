@@ -17,6 +17,13 @@ This command needs Claude Code 2.1.275 or later. With an earlier version, add th
 /plugin install walkthrough@walkthrough
 ```
 
+To update the plugin later, run these commands in a terminal, and then restart Claude Code:
+
+```sh
+claude plugin marketplace update walkthrough
+claude plugin update walkthrough@walkthrough
+```
+
 ## Use with other MCP clients
 
 Add a local (stdio) server that runs `npx -y walkthrough-ui`. Set `UIWALK_PROJECT_DIR` to your project folder. For example, in Cursor (`.cursor/mcp.json`):
