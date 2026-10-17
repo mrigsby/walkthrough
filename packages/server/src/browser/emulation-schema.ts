@@ -14,6 +14,10 @@ export const emulationFields = {
     .describe(
       'desktop, laptop, tablet, mobile, default, or a Puppeteer device name like "Pixel 5".',
     ),
+  orientation: z
+    .enum(['portrait', 'landscape'])
+    .optional()
+    .describe('Turn the device, like a phone on its side. It works with a device, like mobile.'),
   colorScheme: z.enum(['light', 'dark', 'system']).optional().describe('Light or dark mode.'),
   network: z.enum(NETWORKS).optional().describe('Network speed.'),
   cpu: z

@@ -8,7 +8,7 @@ import { tempDir } from '../helpers/temp.js';
 it('starts Chrome with the password manager and the leak check off', async () => {
   const { browser, profileDir } = await launchChrome({
     ...loadConfig(tempDir('chrome-prefs')),
-    browser: { headless: true, slowMo: 0 },
+    browser: { headless: true, slowMo: 0, window: { width: 1280, height: 800 } },
   });
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());

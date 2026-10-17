@@ -128,6 +128,8 @@ export interface Run {
   setup?: string;
   // The settings of the first tab, for exported scripts.
   emulation?: Emulation;
+  // The page size without a device. Exported scripts use it too.
+  window?: { width: number; height: number };
   // The value that {{unique}} had in this run.
   unique?: string;
   // The saved login that the run started with. A replay loads it too.
@@ -222,6 +224,7 @@ export class RunStore {
       chrome?: string;
       setup?: string;
       emulation?: Run['emulation'];
+      window?: Run['window'];
       unique?: string;
       session?: string;
       // The checks a plain "a11y: true" step runs when the plan names none.
@@ -310,6 +313,7 @@ export class RunStore {
       chrome: input.chrome,
       setup: input.setup,
       emulation: input.emulation,
+      ...(input.window ? { window: input.window } : {}),
       unique: input.unique,
       ...(input.session ? { session: input.session } : {}),
       ...(input.freshBrowser !== undefined ? { freshBrowser: input.freshBrowser } : {}),

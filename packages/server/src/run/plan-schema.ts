@@ -1,6 +1,7 @@
 import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 import { CHECKS, checksSchema, STANDARDS } from '../audit/standards.js';
+import { planBrowserSchema } from '../browser/browser-settings.js';
 import { emulationSchema } from '../browser/emulation-schema.js';
 import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
@@ -603,6 +604,9 @@ const planShape = {
     .optional()
     .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
   snippets: snippetsSchema.optional(),
+  browser: planBrowserSchema
+    .optional()
+    .describe('Browser settings for this plan, like { window: { width: 1440, height: 900 } }.'),
   panel: planPanelSchema
     .optional()
     .describe(

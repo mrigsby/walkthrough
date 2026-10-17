@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { WindowSize } from '../browser/browser-settings.js';
 import { describeEmulation, type Emulation, withoutDefaults } from '../browser/devices.js';
 import type { Tab } from '../browser/driver.js';
 import { loadSession, restoreSession } from '../browser/sessions.js';
@@ -86,6 +87,8 @@ export async function openBrowser(
     allowWaiting?: boolean;
     // Keep waiting for a confirm question that is open already.
     resume?: boolean;
+    // The page area of the windows, like a plan asks.
+    window?: WindowSize;
   },
 ): Promise<{ text: string; tab: Tab; confirmed: boolean }> {
   const config = await ctx.config();
@@ -113,6 +116,7 @@ export async function openBrowser(
         ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.`
         : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`,
     );
+    if (driver.launchNote) lines.push(driver.launchNote);
   }
   for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
 
@@ -143,9 +147,17 @@ export async function openBrowser(
   }
   lines.push(...(await ctx.finishSwitch(true)));
 
+  if (options.window) {
+    const note = await driver.setWindowSize(options.window);
+    if (note) lines.push(note);
+  }
   if (options.emulation && Object.keys(options.emulation).length > 0) {
     // No reload here. The page loads next anyway.
-    await driver.setEmulation(options.emulation, { reload: false });
+    const { note } = await driver.setEmulation(options.emulation, {
+      reload: false,
+      fitWindow: true,
+    });
+    if (note) lines.push(note);
   }
   if (options.session) {
     const env = (await ctx.config()).environment.name;

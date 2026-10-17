@@ -445,6 +445,8 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           alwaysGo: true,
           session: plan?.session,
           emulation,
+          // Each run starts at its page size, so screenshots match from run to run.
+          window: plan?.browser?.window ?? config.browser.window,
           // Lighthouse results must not depend on earlier runs, like a warm cache.
           fresh: lhSteps,
           signal: extra.signal,
@@ -465,6 +467,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           chrome: driver.chromeVersion,
           setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
           emulation: { ...opened.tab.emulation },
+          window: driver.pageSize,
           unique: ctx.unique,
           session: plan?.session,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),

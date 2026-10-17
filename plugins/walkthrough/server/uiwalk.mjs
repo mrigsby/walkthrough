@@ -97044,6 +97044,25 @@ function standardTags(standard, bestPractices) {
 var CHECKS = ["keyboard", "darkMode", "reflow", "frames", "screenshots"];
 var checksSchema = external_exports.object(Object.fromEntries(CHECKS.map((c) => [c, external_exports.boolean().optional()]))).strict().describe("Turn extra checks on or off: keyboard, darkMode, reflow, frames, screenshots.");
 
+// packages/server/src/browser/browser-settings.ts
+var windowSchema = external_exports.object({
+  width: external_exports.number().int().min(500).max(3840).describe("Width in screen points, like 1280."),
+  height: external_exports.number().int().min(400).max(2160).describe("Height in screen points, like 800.")
+}).strict().describe("The size of the page area, like { width: 1280, height: 800 }. The window fits it.");
+var DEFAULT_WINDOW = { width: 1280, height: 800 };
+function fitSize(wanted, screen2) {
+  if (!screen2) return { size: wanted, clipped: false };
+  const width = Math.min(wanted.width, screen2.width - screen2.frameWidth);
+  const height = Math.min(wanted.height, screen2.height - screen2.frameHeight);
+  return {
+    size: { width, height },
+    clipped: width < wanted.width || height < wanted.height
+  };
+}
+var planBrowserSchema = external_exports.object({
+  window: windowSchema.optional()
+}).strict();
+
 // packages/server/src/guards/origins.ts
 var DEFAULT_ORIGINS = ["http://localhost:*", "http://127.0.0.1:*", "https://localhost:*"];
 var INTERNAL = /^(about:blank|about:srcdoc|chrome-error:\/\/|data:text\/html,uiwalk)/;
@@ -97310,7 +97329,8 @@ var sharedSchema = external_exports.object({
   browser: external_exports.object({
     headless: external_exports.boolean().optional(),
     slowMo: external_exports.number().int().min(0).max(5e3).optional(),
-    executablePath: external_exports.string().optional()
+    executablePath: external_exports.string().optional(),
+    window: windowSchema.optional()
   }).optional(),
   dialogs: external_exports.enum(["ask", "accept", "dismiss"]).optional(),
   actionTimeoutMs: external_exports.number().int().min(1e3).max(12e4).optional(),
@@ -97520,7 +97540,8 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
     browser: {
       headless,
       slowMo: merged2.browser.slowMo ?? 0,
-      executablePath: merged2.browser.executablePath
+      executablePath: merged2.browser.executablePath,
+      window: merged2.browser.window ?? DEFAULT_WINDOW
     },
     dialogs: merged2.dialogs ?? "ask",
     actionTimeoutMs: environment2.actionTimeoutMs ?? merged2.actionTimeoutMs ?? 1e4,
@@ -98165,6 +98186,7 @@ var emulationFields = {
   device: external_exports.string().optional().describe(
     'desktop, laptop, tablet, mobile, default, or a Puppeteer device name like "Pixel 5".'
   ),
+  orientation: external_exports.enum(["portrait", "landscape"]).optional().describe("Turn the device, like a phone on its side. It works with a device, like mobile."),
   colorScheme: external_exports.enum(["light", "dark", "system"]).optional().describe("Light or dark mode."),
   network: external_exports.enum(NETWORKS).optional().describe("Network speed."),
   cpu: external_exports.number().min(1).max(20).optional().describe("Make the CPU slower by this factor, like 4. 1 is normal speed."),
@@ -98768,6 +98790,7 @@ var planShape = {
   ]).optional().describe("Record the whole run as a video. The report shows it."),
   presentation: presentationSchema.optional().describe("Settings to play this plan as a live presentation. See docs/presentations.md."),
   snippets: snippetsSchema.optional(),
+  browser: planBrowserSchema.optional().describe("Browser settings for this plan, like { window: { width: 1440, height: 900 } }."),
   panel: planPanelSchema.optional().describe(
     `Panel labels, buttons, and the "What's next" part for every step. A step "panel" replaces the same settings for that step.`
   ),
@@ -109258,6 +109281,43 @@ var NETWORK_PRESETS = {
   "slow-4g": "Slow 4G",
   "fast-4g": "Fast 4G"
 };
+function orientedDevice(name, orientation) {
+  if (!name) return void 0;
+  const resolved = resolveDevice(name);
+  if (!resolved || !orientation) return resolved;
+  const want = orientation === "landscape";
+  const label3 = `${resolved.label} (${orientation})`;
+  if (resolved.device && resolved.name) {
+    const viewport = resolved.device.viewport;
+    if (Boolean(viewport.isLandscape) === want) return resolved;
+    const twinName = viewport.isLandscape ? resolved.name.replace(/ landscape$/, "") : `${resolved.name} landscape`;
+    const twin = KnownDevices[twinName];
+    if (twin) return { label: label3, device: twin, name: twinName };
+    return {
+      label: label3,
+      name: resolved.name,
+      device: {
+        ...resolved.device,
+        viewport: {
+          ...viewport,
+          width: viewport.height,
+          height: viewport.width,
+          isLandscape: want
+        }
+      }
+    };
+  }
+  if (resolved.size && resolved.size.width >= resolved.size.height !== want) {
+    return { label: label3, size: { width: resolved.size.height, height: resolved.size.width } };
+  }
+  return resolved;
+}
+function deviceSize(name, orientation) {
+  const resolved = orientedDevice(name, orientation);
+  if (resolved?.size) return resolved.size;
+  const viewport = resolved?.device?.viewport;
+  return viewport ? { width: viewport.width, height: viewport.height } : void 0;
+}
 function resolveDevice(name) {
   const key2 = name.trim();
   if (["default", "none", "off"].includes(key2.toLowerCase())) return void 0;
@@ -109273,7 +109333,8 @@ function resolveDevice(name) {
   }
   return {
     label: typeof preset === "string" ? key2.toLowerCase() : match,
-    device: KnownDevices[match]
+    device: KnownDevices[match],
+    name: match
   };
 }
 function checkEmulation(emulation) {
@@ -109303,16 +109364,22 @@ function checkEmulation(emulation) {
 }
 async function applyEmulation(page, change, full, options) {
   let isMobile = options.wasMobile;
-  if (change.device !== void 0) {
-    const resolved = resolveDevice(change.device);
+  if (change.device !== void 0 || change.orientation !== void 0) {
+    const resolved = orientedDevice(full.device, full.orientation);
     if (resolved?.device) {
       await page.emulate(resolved.device);
       isMobile = Boolean(resolved.device.viewport.isMobile || resolved.device.viewport.hasTouch);
     } else {
       await page.setUserAgent(options.userAgent);
-      const size2 = resolved?.size ?? (options.headless ? { width: 1280, height: 800 } : void 0);
+      const size2 = resolved?.size ?? (options.headless ? options.size ?? { width: 1280, height: 800 } : void 0);
       await page.setViewport(
-        size2 ? { ...size2, deviceScaleFactor: 1, isMobile: false, hasTouch: false } : null
+        size2 ? {
+          ...size2,
+          deviceScaleFactor: 1,
+          isMobile: false,
+          hasTouch: false,
+          isLandscape: size2.width >= size2.height
+        } : null
       );
       isMobile = false;
     }
@@ -109372,10 +109439,11 @@ function withoutDefaults(emulation) {
 function describeEmulation(emulation, onlySet = false) {
   const parts = onlySet ? [
     emulation.device ? `device: ${emulation.device}` : "",
+    emulation.orientation ? `orientation: ${emulation.orientation}` : "",
     emulation.colorScheme ? `color scheme: ${emulation.colorScheme}` : "",
     emulation.network ? `network: ${emulation.network}` : ""
   ].filter(Boolean) : [
-    `device: ${emulation.device ?? "default"}`,
+    `device: ${emulation.device ?? "default"}${emulation.orientation ? ` (${emulation.orientation})` : ""}`,
     `color scheme: ${emulation.colorScheme ?? "system"}`,
     `network: ${emulation.network ?? "normal"}`
   ];
@@ -109553,8 +109621,8 @@ async function launchChrome(config3, options = {}) {
       userDataDir: profileDir,
       // A visible window keeps its own size. Headless gets a fixed size.
       defaultViewport: headless ? {
-        width: options.presentation?.width ?? 1280,
-        height: options.presentation?.height ?? 800
+        width: options.presentation?.width ?? config3.browser.window.width,
+        height: options.presentation?.height ?? config3.browser.window.height
       } : null,
       args: [
         "--no-first-run",
@@ -109603,6 +109671,7 @@ var Driver = class _Driver {
     this.profileDir = profileDir;
     this.dialogPolicy = options.config.dialogs;
     if (options.config.panel) this.panel = new DeveloperPanel();
+    this.windowSize = options.config.browser.window;
   }
   browser;
   mode;
@@ -109648,6 +109717,14 @@ var Driver = class _Driver {
   newTabWork;
   // Logins of our own windows, like the presenter window. Their pages never become tabs.
   foreign = /* @__PURE__ */ new WeakSet();
+  // The page area of visible windows. A plan can change it for a run.
+  windowSize;
+  // The screen, measured at launch, before a device changes what screen.* says.
+  screen;
+  // The size each window got last, so a tab switch does not undo the developer's own size.
+  fittedSize = /* @__PURE__ */ new Map();
+  // A note from the first window, like "The screen is too small".
+  launchNote;
   static async start(options) {
     let driver;
     if (options.attach) {
@@ -109660,7 +109737,9 @@ var Driver = class _Driver {
       driver = new _Driver(browser, "launched", await browser.version(), options, profileDir);
       driver.logins.set("main", browser.defaultBrowserContext());
       const first2 = (await browser.pages())[0] ?? await browser.newPage();
-      await driver.addTab(first2);
+      const tab = await driver.addTab(first2);
+      await driver.measureScreen(tab);
+      driver.launchNote = await driver.fitWindow(tab, true);
     }
     driver.watchBrowser();
     return driver;
@@ -109893,6 +109972,93 @@ var Driver = class _Driver {
     this.pendingDialogs.set(tab.id, pending);
     this.emitter.emit("dialog", pending);
   }
+  // Walkthrough sizes the windows of a Chrome that it started and that the developer sees.
+  // Presentations, hidden Chrome, and the developer's own Chrome keep their sizes.
+  get canFit() {
+    return this.mode === "launched" && !this.options.config.browser.headless && !this.options.launch?.presentation && !this.options.launch?.background;
+  }
+  get pageSize() {
+    return this.windowSize;
+  }
+  // The "controlled by automated test software" bar can come a moment after launch, and it
+  // makes the frame taller. So wait until the frame stops changing, for up to 1.5 seconds.
+  async measureScreen(tab) {
+    if (!this.canFit) return;
+    const measure = () => tab.page.evaluate(() => ({
+      width: screen.availWidth,
+      height: screen.availHeight,
+      frameWidth: outerWidth - innerWidth,
+      frameHeight: outerHeight - innerHeight
+    })).catch(() => void 0);
+    const end = Date.now() + 1500;
+    let since = Date.now();
+    while (Date.now() < end) {
+      const now = await measure();
+      if (!now) return;
+      if (now.frameHeight !== this.screen?.frameHeight) {
+        this.screen = now;
+        since = Date.now();
+      } else if (Date.now() - since >= 400) {
+        return;
+      }
+      await new Promise((resolve12) => setTimeout(resolve12, 100));
+    }
+  }
+  // Sizes the window of a tab so that its page fits: the device size, or the window size.
+  // Chrome keeps the height on the screen, but not the width, so both are checked here.
+  // Returns a note when the screen is too small.
+  async fitWindow(tab, force2 = false) {
+    if (!this.canFit) return void 0;
+    let device;
+    try {
+      device = deviceSize(tab.emulation.device, tab.emulation.orientation);
+    } catch {
+    }
+    const wanted = device ?? this.windowSize;
+    const screen2 = this.screen;
+    const fit = fitSize(wanted, screen2);
+    const { width, height } = fit.size;
+    const note = !fit.clipped ? void 0 : device ? `The screen is too small for the ${wanted.width} x ${wanted.height} page of "${tab.emulation.device}". The window shows ${width} x ${height} of it, so part of the page is hidden. Use a smaller device, or a bigger screen.` : `The screen is too small for a ${wanted.width} x ${wanted.height} page. The page area is ${width} x ${height}.`;
+    const cdp = await tab.page.createCDPSession().catch(() => void 0);
+    if (!cdp) return note;
+    try {
+      const { windowId, bounds } = await cdp.send("Browser.getWindowForTarget");
+      const key2 = `${width}x${height}`;
+      if (!force2 && this.fittedSize.get(windowId) === key2) return note;
+      if (bounds.windowState && bounds.windowState !== "normal") {
+        await cdp.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
+      }
+      try {
+        await tab.page.resize({ contentWidth: width, contentHeight: height });
+      } catch {
+        await cdp.send("Browser.setWindowBounds", {
+          windowId,
+          bounds: {
+            width: width + (screen2?.frameWidth ?? 0),
+            height: height + (screen2?.frameHeight ?? 0)
+          }
+        });
+      }
+      this.fittedSize.set(windowId, key2);
+    } catch {
+    } finally {
+      await cdp.detach().catch(() => void 0);
+    }
+    return note;
+  }
+  // A new page area for the windows, like a plan asks. Headless Chrome gets a new page size.
+  async setWindowSize(size2) {
+    this.windowSize = size2;
+    if (this.options.config.browser.headless) {
+      for (const tab2 of this.tabs.values()) {
+        if (deviceSize(tab2.emulation.device, tab2.emulation.orientation)) continue;
+        await tab2.page.setViewport({ ...size2, deviceScaleFactor: 1 }).catch(() => void 0);
+      }
+      return void 0;
+    }
+    const tab = this.tabs.get(this.activeId ?? "");
+    return tab ? this.fitWindow(tab, true) : void 0;
+  }
   // Applies changed settings to a tab. tab.emulation already has them.
   async emulateTab(tab, change) {
     this.userAgent ||= await this.browser.userAgent();
@@ -109900,29 +110066,44 @@ var Driver = class _Driver {
       headless: this.options.config.browser.headless,
       userAgent: this.userAgent,
       wasMobile: tab.mobile,
-      cdp: tab.cdp
+      cdp: tab.cdp,
+      size: this.windowSize
     });
     tab.mobile = result.isMobile;
     return result.needsReload;
   }
   // Changes the settings of one tab, or of every tab and of new tabs.
   // A tab reloads when it switches between desktop and phone mode.
+  // With fitWindow, a new device also resizes the window of the active tab.
   async setEmulation(change, options) {
     checkEmulation(change);
     const targets = options.tab ? [options.tab] : [...this.tabs.values()];
     if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
     const reloaded = [];
-    for (const tab of targets) {
-      tab.emulation = mergeEmulation(tab.emulation, change);
-      const needsReload = await this.emulateTab(tab, change);
-      if (needsReload && options.reload && /^https?:/.test(tab.page.url())) {
-        await tab.page.reload({ waitUntil: "load" }).catch(() => void 0);
-        reloaded.push(tab.id);
+    for (const tab2 of targets) {
+      tab2.emulation = mergeEmulation(tab2.emulation, change);
+      const needsReload = await this.emulateTab(tab2, change);
+      if (needsReload && options.reload && /^https?:/.test(tab2.page.url())) {
+        await tab2.page.reload({ waitUntil: "load" }).catch(() => void 0);
+        reloaded.push(tab2.id);
       }
     }
     const logins = options.tab ? [options.tab.login] : [...this.logins.keys()];
     await this.applyPermissions(change, logins);
-    return reloaded;
+    let note;
+    const active = this.tabs.get(this.activeId ?? "");
+    const turned = change.device !== void 0 || change.orientation !== void 0;
+    if (options.fitWindow && turned && active && targets.includes(active)) {
+      note = await this.fitWindow(active, true);
+    }
+    const tab = options.tab ?? active;
+    if (change.orientation && tab && !deviceSize(tab.emulation.device)) {
+      note = [
+        note,
+        "An orientation works only with a device, like mobile or tablet. Set a device too."
+      ].filter(Boolean).join(" ");
+    }
+    return { reloaded, ...note ? { note } : {} };
   }
   // Permissions belong to a login, not a tab.
   async applyPermissions(change, logins) {
@@ -109946,16 +110127,19 @@ var Driver = class _Driver {
     }
     const work = (async () => {
       let context2 = this.logins.get(login);
+      const newWindow = !context2;
       if (!context2) {
         context2 = await this.browser.createBrowserContext();
         this.logins.set(login, context2);
       }
       const page = await context2.newPage();
-      return this.addTab(page, void 0, {
+      const tab = await this.addTab(page, void 0, {
         login,
         name: options.name,
         ...options.bare ? { emulation: {}, panel: false } : {}
       });
+      if (newWindow && !options.bare) await this.fitWindow(tab, true);
+      return tab;
     })();
     this.newTabWork = work;
     try {
@@ -110047,6 +110231,7 @@ var Driver = class _Driver {
     this.activeId = tab.id;
     void tab.page.bringToFront().catch(() => void 0);
     void this.panel?.refresh(tab.id);
+    void this.fitWindow(tab).catch(() => void 0);
     return tab;
   }
   // Ends a step in the logs and in the network list.
@@ -111815,6 +112000,7 @@ var RunStore = class _RunStore {
       chrome: input3.chrome,
       setup: input3.setup,
       emulation: input3.emulation,
+      ...input3.window ? { window: input3.window } : {},
       unique: input3.unique,
       ...input3.session ? { session: input3.session } : {},
       ...input3.freshBrowser !== void 0 ? { freshBrowser: input3.freshBrowser } : {},
@@ -114481,6 +114667,7 @@ async function openBrowser(ctx, options) {
     lines.push(
       driver.mode === "attached" ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.` : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`
     );
+    if (driver.launchNote) lines.push(driver.launchNote);
   }
   for (const warning of config3.warnings) lines.push(`Warning: ${warning}`);
   const reopened = alreadyOpen && !driver.hasActiveTab;
@@ -114506,8 +114693,16 @@ async function openBrowser(ctx, options) {
     return { text: [`status: ${confirm.status}`, ...lines].join("\n"), tab, confirmed: false };
   }
   lines.push(...await ctx.finishSwitch(true));
+  if (options.window) {
+    const note = await driver.setWindowSize(options.window);
+    if (note) lines.push(note);
+  }
   if (options.emulation && Object.keys(options.emulation).length > 0) {
-    await driver.setEmulation(options.emulation, { reload: false });
+    const { note } = await driver.setEmulation(options.emulation, {
+      reload: false,
+      fitWindow: true
+    });
+    if (note) lines.push(note);
   }
   if (options.session) {
     const env2 = (await ctx.config()).environment.name;
@@ -117675,6 +117870,8 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         alwaysGo: true,
         session: plan?.session,
         emulation,
+        // Each run starts at its page size, so screenshots match from run to run.
+        window: plan?.browser?.window ?? config3.browser.window,
         // Lighthouse results must not depend on earlier runs, like a warm cache.
         fresh: lhSteps,
         signal: extra.signal,
@@ -117693,6 +117890,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         chrome: driver.chromeVersion,
         setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
         emulation: { ...opened.tab.emulation },
+        window: driver.pageSize,
         unique: ctx.unique,
         session: plan?.session,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c]),
@@ -121311,7 +121509,7 @@ var LiveStage = class {
     });
   }
   // Moves the audience window to another screen, in fullscreen.
-  moveToScreen(screen) {
+  moveToScreen(screen2) {
     return this.withWindow(async (cdp, windowId) => {
       const bounds = async () => (await cdp.send("Browser.getWindowBounds", { windowId })).bounds;
       if ((await bounds()).windowState !== "normal") {
@@ -121320,13 +121518,13 @@ var LiveStage = class {
         await sleep(800);
       }
       const now = await bounds();
-      const width = Math.min(now.width ?? 1280, screen.width);
-      const height = Math.min(now.height ?? 800, screen.height);
+      const width = Math.min(now.width ?? 1280, screen2.width);
+      const height = Math.min(now.height ?? 800, screen2.height);
       await cdp.send("Browser.setWindowBounds", {
         windowId,
         bounds: {
-          left: screen.left + Math.round((screen.width - width) / 2),
-          top: screen.top + Math.round((screen.height - height) / 2),
+          left: screen2.left + Math.round((screen2.width - width) / 2),
+          top: screen2.top + Math.round((screen2.height - height) / 2),
           width,
           height
         }
@@ -122700,7 +122898,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     },
     cancel: () => session.stop(),
     toggleFullscreen: () => stage.toggleFullscreen(),
-    moveToScreen: (screen2) => stage.moveToScreen(screen2)
+    moveToScreen: (screen3) => stage.moveToScreen(screen3)
   };
   const openPresenter = async () => {
     presenter = await PresenterWindow.open(driver, session, {
@@ -122728,7 +122926,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     });
     frames.set(i, Buffer.from(data, "base64"));
   };
-  const screen = {
+  const screen2 = {
     title: () => stage.title(),
     slide: (step) => stage.slide(step),
     end: () => stage.end(),
@@ -122742,7 +122940,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   };
   const runner = new PresentationRunner(session, engine, ops, {
     pace,
-    screen,
+    screen: screen2,
     ...kiosk ? {} : { snapshot },
     ...kiosk ? {
       kiosk: {
@@ -123311,7 +123509,7 @@ function registerQualityTools(server, ctx) {
     {
       title: "Emulate a device and settings",
       description: [
-        "Test like a phone, a tablet, or another screen. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.",
+        "Test like a phone, a tablet, or another screen, in portrait or landscape. The window fits the page of the device. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.",
         "Settings apply to the active tab. With allTabs: true, they apply to every tab and to tabs that open later.",
         "Permissions apply to every tab of the same login.",
         "With no settings, it shows the settings of the active tab."
@@ -123333,9 +123531,10 @@ function registerQualityTools(server, ctx) {
           `New tabs start with: ${describeEmulation(driver.defaultEmulation)}.`
         ].join("\n");
       }
-      const reloaded = await driver.setEmulation(change, {
+      const { reloaded, note } = await driver.setEmulation(change, {
         tab: allTabs ? void 0 : tab,
-        reload: true
+        reload: true,
+        fitWindow: true
       });
       ctx.actionLog.push({
         at: (/* @__PURE__ */ new Date()).toISOString(),
@@ -123350,6 +123549,7 @@ function registerQualityTools(server, ctx) {
         allTabs ? `Every tab, and tabs that open later, now have: ${describeEmulation(change, true)}.` : `Tab ${tab.id} now: ${describeEmulation(tab.emulation)}.`,
         change.permissions || change.geolocation ? `Permissions apply to every tab of the login "${tab.login}".` : "",
         reloaded.length ? `Reloaded ${reloaded.join(", ")}, because the page switched between desktop and phone mode.` : "",
+        note ?? "",
         "Take a new snapshot. The page can look different now."
       ].filter(Boolean).join("\n");
     })
@@ -123579,17 +123779,21 @@ var UNIQUE_CODE = [
   "const UNIQUE = process.env.UNIQUE ?? 'u' + Date.now().toString(36).slice(-5);",
   ""
 ].join("\n");
-function scriptSettings(change, full) {
+var DEFAULT_SIZE = { width: 1280, height: 800 };
+function scriptSettings(change, full, size2 = DEFAULT_SIZE) {
   const out = {};
-  if (change.device !== void 0) {
+  if (change.device !== void 0 || change.orientation !== void 0) {
     let resolved;
     try {
-      resolved = resolveDevice(change.device);
+      resolved = orientedDevice(
+        change.device ?? full.device,
+        change.orientation ?? full.orientation
+      );
     } catch {
     }
     out.device = resolved?.device ? { userAgent: resolved.device.userAgent, viewport: resolved.device.viewport } : {
       userAgent: null,
-      viewport: { ...resolved?.size ?? { width: 1280, height: 800 }, deviceScaleFactor: 1 }
+      viewport: { ...resolved?.size ?? size2, deviceScaleFactor: 1 }
     };
   }
   if (change.colorScheme !== void 0 || change.reducedMotion !== void 0 || change.media !== void 0)
@@ -123696,7 +123900,7 @@ function pageChangeCode(action2, gen) {
       const state = { ...gen.defaults };
       gen.states.set(name, state);
       lines.push(
-        `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state))});`
+        `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state, gen.size))});`
       );
       if (value.session)
         lines.push(
@@ -123726,7 +123930,7 @@ function pageChangeCode(action2, gen) {
         gen.current = name;
         return [
           `page = tabs[${js(name)}] = await popupOf(tabs[${js(opener)}]);`,
-          `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state))});`
+          `await emulate(page, ${JSON.stringify(scriptSettings({ device: "default", ...state }, state, gen.size))});`
         ];
       }
       return [
@@ -123769,12 +123973,12 @@ function pageChangeCode(action2, gen) {
         gen.defaults = mergeEmulation(gen.defaults, change);
         for (const [name, state2] of gen.states) gen.states.set(name, mergeEmulation(state2, change));
         return [
-          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults))});`
+          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults, gen.size))});`
         ];
       }
       const state = mergeEmulation(gen.states.get(gen.current) ?? gen.defaults, change);
       gen.states.set(gen.current, state);
-      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state))});`];
+      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state, gen.size))});`];
     }
     default:
       return [
@@ -124042,9 +124246,11 @@ function setupCode(emulation, gen) {
   const lines = [];
   let resolved;
   try {
-    resolved = emulation?.device ? resolveDevice(emulation.device) : void 0;
+    resolved = orientedDevice(emulation?.device, emulation?.orientation);
   } catch {
-    lines.push(`// Walkthrough does not know the device "${emulation?.device}". Using 1280x800.`);
+    lines.push(
+      `// Walkthrough does not know the device "${emulation?.device}". Using ${gen.size.width}x${gen.size.height}.`
+    );
   }
   if (resolved?.device) {
     lines.push(
@@ -124053,7 +124259,7 @@ function setupCode(emulation, gen) {
       `await page.setViewport(${JSON.stringify(resolved.device.viewport)});`
     );
   } else {
-    const size2 = resolved?.size ?? { width: 1280, height: 800 };
+    const size2 = resolved?.size ?? gen.size;
     lines.push(
       `// Screen: ${resolved?.label ?? "default"}.`,
       `await page.setViewport({ width: ${size2.width}, height: ${size2.height}, deviceScaleFactor: 1 });`
@@ -124068,7 +124274,9 @@ function setupCode(emulation, gen) {
   const { device: _device, colorScheme: _scheme, ...more } = emulation ?? {};
   if (Object.keys(more).length && emulation) {
     gen.needs.emulate = true;
-    lines.push(`await emulate(page, ${JSON.stringify(scriptSettings(more, emulation))});`);
+    lines.push(
+      `await emulate(page, ${JSON.stringify(scriptSettings(more, emulation, gen.size))});`
+    );
   }
   return lines;
 }
@@ -124162,7 +124370,8 @@ function exportScript(run, options = {}) {
     current: "main",
     states: /* @__PURE__ */ new Map([["main", { ...run.emulation }]]),
     defaults: { ...run.emulation },
-    dialogs: []
+    dialogs: [],
+    size: run.window ?? DEFAULT_SIZE
   };
   const setup2 = setupCode(run.emulation, gen);
   const plan = buildOps(run);

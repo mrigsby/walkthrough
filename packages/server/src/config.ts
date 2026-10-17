@@ -10,6 +10,7 @@ import {
   STANDARDS,
   type Standard,
 } from './audit/standards.js';
+import { DEFAULT_WINDOW, type WindowSize, windowSchema } from './browser/browser-settings.js';
 import {
   DEVELOPMENT,
   defaultColor,
@@ -43,6 +44,8 @@ export interface Config {
     headless: boolean;
     slowMo: number;
     executablePath?: string;
+    // The page area of a visible window, and the page size in headless Chrome.
+    window: WindowSize;
   };
   dialogs: DialogPolicy;
   actionTimeoutMs: number;
@@ -111,6 +114,7 @@ const sharedSchema = z
         headless: z.boolean().optional(),
         slowMo: z.number().int().min(0).max(5000).optional(),
         executablePath: z.string().optional(),
+        window: windowSchema.optional(),
       })
       .optional(),
     dialogs: z.enum(['ask', 'accept', 'dismiss']).optional(),
@@ -376,6 +380,7 @@ export function loadConfig(
       headless,
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath,
+      window: merged.browser.window ?? DEFAULT_WINDOW,
     },
     dialogs: merged.dialogs ?? 'ask',
     actionTimeoutMs: environment.actionTimeoutMs ?? merged.actionTimeoutMs ?? 10_000,

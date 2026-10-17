@@ -1,5 +1,10 @@
 import { isAbsolute } from 'node:path';
-import { mediaFeatures, NETWORK_PRESETS, resolveDevice } from '../browser/devices.js';
+import {
+  mediaFeatures,
+  NETWORK_PRESETS,
+  orientedDevice,
+  type resolveDevice,
+} from '../browser/devices.js';
 import { type Emulation, mergeEmulation, permissionEntries } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { rebaseUrl } from '../environments.js';
@@ -60,21 +65,32 @@ interface Gen {
   states: Map<string, Emulation>;
   defaults: Emulation;
   dialogs: { accept: boolean; text?: string }[];
+  // The page size of the run without a device.
+  size: { width: number; height: number };
 }
 
+const DEFAULT_SIZE = { width: 1280, height: 800 };
+
 // Settings for the script's emulate() helper. Device names become sizes here.
-export function scriptSettings(change: Emulation, full: Emulation): Record<string, unknown> {
+export function scriptSettings(
+  change: Emulation,
+  full: Emulation,
+  size = DEFAULT_SIZE,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  if (change.device !== undefined) {
+  if (change.device !== undefined || change.orientation !== undefined) {
     let resolved: ReturnType<typeof resolveDevice>;
     try {
-      resolved = resolveDevice(change.device);
+      resolved = orientedDevice(
+        change.device ?? full.device,
+        change.orientation ?? full.orientation,
+      );
     } catch {}
     out.device = resolved?.device
       ? { userAgent: resolved.device.userAgent, viewport: resolved.device.viewport }
       : {
           userAgent: null,
-          viewport: { ...(resolved?.size ?? { width: 1280, height: 800 }), deviceScaleFactor: 1 },
+          viewport: { ...(resolved?.size ?? size), deviceScaleFactor: 1 },
         };
   }
   // The media type and features go together. Chrome clears the one that a call leaves out.
@@ -194,7 +210,7 @@ function pageChangeCode(action: RunAction, gen: Gen): string[] {
       const state = { ...gen.defaults };
       gen.states.set(name, state);
       lines.push(
-        `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state))});`,
+        `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state, gen.size))});`,
       );
       if (value.session)
         lines.push(
@@ -224,7 +240,7 @@ function pageChangeCode(action: RunAction, gen: Gen): string[] {
         gen.current = name;
         return [
           `page = tabs[${js(name)}] = await popupOf(tabs[${js(opener)}]);`,
-          `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state))});`,
+          `await emulate(page, ${JSON.stringify(scriptSettings({ device: 'default', ...state }, state, gen.size))});`,
         ];
       }
       return [
@@ -268,12 +284,12 @@ function pageChangeCode(action: RunAction, gen: Gen): string[] {
         gen.defaults = mergeEmulation(gen.defaults, change);
         for (const [name, state] of gen.states) gen.states.set(name, mergeEmulation(state, change));
         return [
-          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults))});`,
+          `for (const tab of await browser.pages()) await emulate(tab, ${JSON.stringify(scriptSettings(change, gen.defaults, gen.size))});`,
         ];
       }
       const state = mergeEmulation(gen.states.get(gen.current) ?? gen.defaults, change);
       gen.states.set(gen.current, state);
-      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state))});`];
+      return [`await emulate(page, ${JSON.stringify(scriptSettings(change, state, gen.size))});`];
     }
     default:
       return [
@@ -562,9 +578,11 @@ function setupCode(emulation: Run['emulation'], gen: Gen): string[] {
   const lines: string[] = [];
   let resolved: ReturnType<typeof resolveDevice>;
   try {
-    resolved = emulation?.device ? resolveDevice(emulation.device) : undefined;
+    resolved = orientedDevice(emulation?.device, emulation?.orientation);
   } catch {
-    lines.push(`// Walkthrough does not know the device "${emulation?.device}". Using 1280x800.`);
+    lines.push(
+      `// Walkthrough does not know the device "${emulation?.device}". Using ${gen.size.width}x${gen.size.height}.`,
+    );
   }
   if (resolved?.device) {
     lines.push(
@@ -573,7 +591,7 @@ function setupCode(emulation: Run['emulation'], gen: Gen): string[] {
       `await page.setViewport(${JSON.stringify(resolved.device.viewport)});`,
     );
   } else {
-    const size = resolved?.size ?? { width: 1280, height: 800 };
+    const size = resolved?.size ?? gen.size;
     lines.push(
       `// Screen: ${resolved?.label ?? 'default'}.`,
       `await page.setViewport({ width: ${size.width}, height: ${size.height}, deviceScaleFactor: 1 });`,
@@ -588,7 +606,9 @@ function setupCode(emulation: Run['emulation'], gen: Gen): string[] {
   const { device: _device, colorScheme: _scheme, ...more } = emulation ?? {};
   if (Object.keys(more).length && emulation) {
     gen.needs.emulate = true;
-    lines.push(`await emulate(page, ${JSON.stringify(scriptSettings(more, emulation))});`);
+    lines.push(
+      `await emulate(page, ${JSON.stringify(scriptSettings(more, emulation, gen.size))});`,
+    );
   }
   return lines;
 }
@@ -701,6 +721,7 @@ export function exportScript(
     states: new Map([['main', { ...run.emulation }]]),
     defaults: { ...run.emulation },
     dialogs: [],
+    size: run.window ?? DEFAULT_SIZE,
   };
   const setup = setupCode(run.emulation, gen);
 

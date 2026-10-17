@@ -23,7 +23,8 @@ import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
 import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
-import { applyEmulation, checkEmulation, type Emulation } from './devices.js';
+import { fitSize, type ScreenSize, type WindowSize } from './browser-settings.js';
+import { applyEmulation, checkEmulation, deviceSize, type Emulation } from './devices.js';
 import { mergeEmulation, permissionEntries } from './emulation-schema.js';
 import { FetchRouter } from './fetch-router.js';
 import { killChrome, type LaunchOptions, launchChrome, removeProfile } from './launch.js';
@@ -114,6 +115,14 @@ export class Driver {
   private newTabWork?: Promise<unknown>;
   // Logins of our own windows, like the presenter window. Their pages never become tabs.
   private readonly foreign = new WeakSet<BrowserContext>();
+  // The page area of visible windows. A plan can change it for a run.
+  private windowSize: WindowSize;
+  // The screen, measured at launch, before a device changes what screen.* says.
+  private screen?: ScreenSize;
+  // The size each window got last, so a tab switch does not undo the developer's own size.
+  private readonly fittedSize = new Map<number, string>();
+  // A note from the first window, like "The screen is too small".
+  launchNote?: string;
 
   private constructor(
     readonly browser: Browser,
@@ -124,6 +133,7 @@ export class Driver {
   ) {
     this.dialogPolicy = options.config.dialogs;
     if (options.config.panel) this.panel = new DeveloperPanel();
+    this.windowSize = options.config.browser.window;
   }
 
   static async start(options: DriverOptions): Promise<Driver> {
@@ -139,7 +149,9 @@ export class Driver {
       driver = new Driver(browser, 'launched', await browser.version(), options, profileDir);
       driver.logins.set('main', browser.defaultBrowserContext());
       const first = (await browser.pages())[0] ?? (await browser.newPage());
-      await driver.addTab(first);
+      const tab = await driver.addTab(first);
+      await driver.measureScreen(tab);
+      driver.launchNote = await driver.fitWindow(tab, true);
     }
     driver.watchBrowser();
     return driver;
@@ -424,6 +436,111 @@ export class Driver {
     this.emitter.emit('dialog', pending);
   }
 
+  // Walkthrough sizes the windows of a Chrome that it started and that the developer sees.
+  // Presentations, hidden Chrome, and the developer's own Chrome keep their sizes.
+  private get canFit(): boolean {
+    return (
+      this.mode === 'launched' &&
+      !this.options.config.browser.headless &&
+      !this.options.launch?.presentation &&
+      !this.options.launch?.background
+    );
+  }
+
+  get pageSize(): WindowSize {
+    return this.windowSize;
+  }
+
+  // The "controlled by automated test software" bar can come a moment after launch, and it
+  // makes the frame taller. So wait until the frame stops changing, for up to 1.5 seconds.
+  private async measureScreen(tab: Tab): Promise<void> {
+    if (!this.canFit) return;
+    const measure = () =>
+      tab.page
+        .evaluate(() => ({
+          width: screen.availWidth,
+          height: screen.availHeight,
+          frameWidth: outerWidth - innerWidth,
+          frameHeight: outerHeight - innerHeight,
+        }))
+        .catch(() => undefined);
+    const end = Date.now() + 1500;
+    let since = Date.now();
+    while (Date.now() < end) {
+      const now = await measure();
+      if (!now) return;
+      if (now.frameHeight !== this.screen?.frameHeight) {
+        this.screen = now;
+        since = Date.now();
+      } else if (Date.now() - since >= 400) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+
+  // Sizes the window of a tab so that its page fits: the device size, or the window size.
+  // Chrome keeps the height on the screen, but not the width, so both are checked here.
+  // Returns a note when the screen is too small.
+  async fitWindow(tab: Tab, force = false): Promise<string | undefined> {
+    if (!this.canFit) return undefined;
+    let device: WindowSize | undefined;
+    try {
+      device = deviceSize(tab.emulation.device, tab.emulation.orientation);
+    } catch {}
+    const wanted = device ?? this.windowSize;
+    const screen = this.screen;
+    const fit = fitSize(wanted, screen);
+    const { width, height } = fit.size;
+    const note = !fit.clipped
+      ? undefined
+      : device
+        ? `The screen is too small for the ${wanted.width} x ${wanted.height} page of "${tab.emulation.device}". The window shows ${width} x ${height} of it, so part of the page is hidden. Use a smaller device, or a bigger screen.`
+        : `The screen is too small for a ${wanted.width} x ${wanted.height} page. The page area is ${width} x ${height}.`;
+    const cdp = await tab.page.createCDPSession().catch(() => undefined);
+    if (!cdp) return note;
+    try {
+      const { windowId, bounds } = await cdp.send('Browser.getWindowForTarget');
+      const key = `${width}x${height}`;
+      if (!force && this.fittedSize.get(windowId) === key) return note;
+      if (bounds.windowState && bounds.windowState !== 'normal') {
+        await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+      }
+      try {
+        await tab.page.resize({ contentWidth: width, contentHeight: height });
+      } catch {
+        // An older Chrome: set the outer size, with the frame.
+        await cdp.send('Browser.setWindowBounds', {
+          windowId,
+          bounds: {
+            width: width + (screen?.frameWidth ?? 0),
+            height: height + (screen?.frameHeight ?? 0),
+          },
+        });
+      }
+      this.fittedSize.set(windowId, key);
+    } catch {
+      // The window closed.
+    } finally {
+      await cdp.detach().catch(() => undefined);
+    }
+    return note;
+  }
+
+  // A new page area for the windows, like a plan asks. Headless Chrome gets a new page size.
+  async setWindowSize(size: WindowSize): Promise<string | undefined> {
+    this.windowSize = size;
+    if (this.options.config.browser.headless) {
+      for (const tab of this.tabs.values()) {
+        if (deviceSize(tab.emulation.device, tab.emulation.orientation)) continue;
+        await tab.page.setViewport({ ...size, deviceScaleFactor: 1 }).catch(() => undefined);
+      }
+      return undefined;
+    }
+    const tab = this.tabs.get(this.activeId ?? '');
+    return tab ? this.fitWindow(tab, true) : undefined;
+  }
+
   // Applies changed settings to a tab. tab.emulation already has them.
   private async emulateTab(tab: Tab, change: Emulation): Promise<boolean> {
     this.userAgent ||= await this.browser.userAgent();
@@ -432,6 +549,7 @@ export class Driver {
       userAgent: this.userAgent,
       wasMobile: tab.mobile,
       cdp: tab.cdp,
+      size: this.windowSize,
     });
     tab.mobile = result.isMobile;
     return result.needsReload;
@@ -439,10 +557,11 @@ export class Driver {
 
   // Changes the settings of one tab, or of every tab and of new tabs.
   // A tab reloads when it switches between desktop and phone mode.
+  // With fitWindow, a new device also resizes the window of the active tab.
   async setEmulation(
     change: Emulation,
-    options: { tab?: Tab; reload: boolean },
-  ): Promise<string[]> {
+    options: { tab?: Tab; reload: boolean; fitWindow?: boolean },
+  ): Promise<{ reloaded: string[]; note?: string }> {
     checkEmulation(change);
     const targets = options.tab ? [options.tab] : [...this.tabs.values()];
     if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
@@ -457,7 +576,23 @@ export class Driver {
     }
     const logins = options.tab ? [options.tab.login] : [...this.logins.keys()];
     await this.applyPermissions(change, logins);
-    return reloaded;
+    let note: string | undefined;
+    const active = this.tabs.get(this.activeId ?? '');
+    const turned = change.device !== undefined || change.orientation !== undefined;
+    if (options.fitWindow && turned && active && targets.includes(active)) {
+      note = await this.fitWindow(active, true);
+    }
+    // Without a device, a page has no orientation to turn.
+    const tab = options.tab ?? active;
+    if (change.orientation && tab && !deviceSize(tab.emulation.device)) {
+      note = [
+        note,
+        'An orientation works only with a device, like mobile or tablet. Set a device too.',
+      ]
+        .filter(Boolean)
+        .join(' ');
+    }
+    return { reloaded, ...(note ? { note } : {}) };
   }
 
   // Permissions belong to a login, not a tab.
@@ -488,16 +623,20 @@ export class Driver {
     }
     const work = (async () => {
       let context = this.logins.get(login);
+      // A new login opens a window of its own.
+      const newWindow = !context;
       if (!context) {
         context = await this.browser.createBrowserContext();
         this.logins.set(login, context);
       }
       const page = await context.newPage();
-      return this.addTab(page, undefined, {
+      const tab = await this.addTab(page, undefined, {
         login,
         name: options.name,
         ...(options.bare ? { emulation: {}, panel: false } : {}),
       });
+      if (newWindow && !options.bare) await this.fitWindow(tab, true);
+      return tab;
     })();
     this.newTabWork = work;
     try {
@@ -597,6 +736,8 @@ export class Driver {
     this.activeId = tab.id;
     void tab.page.bringToFront().catch(() => undefined);
     void this.panel?.refresh(tab.id);
+    // A tab with another device needs another window size.
+    void this.fitWindow(tab).catch(() => undefined);
     return tab;
   }
 

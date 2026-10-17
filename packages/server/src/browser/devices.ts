@@ -34,6 +34,60 @@ interface ResolvedDevice {
   label: string;
   device?: Device;
   size?: { width: number; height: number };
+  // The Puppeteer device name, like "iPhone 15".
+  name?: string;
+}
+
+export type Orientation = 'portrait' | 'landscape';
+
+// A device turned to an orientation. Puppeteer has a landscape twin for most devices,
+// like "iPhone 15 landscape". Other devices and the size presets swap width and height.
+export function orientedDevice(
+  name: string | undefined,
+  orientation?: Orientation,
+): ResolvedDevice | undefined {
+  if (!name) return undefined;
+  const resolved = resolveDevice(name);
+  if (!resolved || !orientation) return resolved;
+  const want = orientation === 'landscape';
+  const label = `${resolved.label} (${orientation})`;
+  if (resolved.device && resolved.name) {
+    const viewport = resolved.device.viewport;
+    if (Boolean(viewport.isLandscape) === want) return resolved;
+    const twinName = viewport.isLandscape
+      ? resolved.name.replace(/ landscape$/, '')
+      : `${resolved.name} landscape`;
+    const twin = KnownDevices[twinName as keyof typeof KnownDevices];
+    if (twin) return { label, device: twin, name: twinName };
+    return {
+      label,
+      name: resolved.name,
+      device: {
+        ...resolved.device,
+        viewport: {
+          ...viewport,
+          width: viewport.height,
+          height: viewport.width,
+          isLandscape: want,
+        },
+      },
+    };
+  }
+  if (resolved.size && resolved.size.width >= resolved.size.height !== want) {
+    return { label, size: { width: resolved.size.height, height: resolved.size.width } };
+  }
+  return resolved;
+}
+
+// The page size that a device asks for, or undefined for no device.
+export function deviceSize(
+  name?: string,
+  orientation?: Orientation,
+): { width: number; height: number } | undefined {
+  const resolved = orientedDevice(name, orientation);
+  if (resolved?.size) return resolved.size;
+  const viewport = resolved?.device?.viewport;
+  return viewport ? { width: viewport.width, height: viewport.height } : undefined;
 }
 
 // Finds a preset or a Puppeteer device by name. "default" means no emulation.
@@ -53,6 +107,7 @@ export function resolveDevice(name: string): ResolvedDevice | undefined {
   return {
     label: typeof preset === 'string' ? key.toLowerCase() : match,
     device: KnownDevices[match as keyof typeof KnownDevices],
+    name: match,
   };
 }
 
@@ -90,20 +145,38 @@ export async function applyEmulation(
   page: Page,
   change: Emulation,
   full: Emulation,
-  options: { headless: boolean; userAgent: string; wasMobile: boolean; cdp?: CDPSession },
+  options: {
+    headless: boolean;
+    userAgent: string;
+    wasMobile: boolean;
+    cdp?: CDPSession;
+    // The page size of headless Chrome without a device.
+    size?: { width: number; height: number };
+  },
 ): Promise<{ needsReload: boolean; isMobile: boolean }> {
   let isMobile = options.wasMobile;
-  if (change.device !== undefined) {
-    const resolved = resolveDevice(change.device);
+  if (change.device !== undefined || change.orientation !== undefined) {
+    // A new orientation turns the device that the tab has now.
+    const resolved = orientedDevice(full.device, full.orientation);
     if (resolved?.device) {
       await page.emulate(resolved.device);
       isMobile = Boolean(resolved.device.viewport.isMobile || resolved.device.viewport.hasTouch);
     } else {
       await page.setUserAgent(options.userAgent);
-      const size = resolved?.size ?? (options.headless ? { width: 1280, height: 800 } : undefined);
+      const size =
+        resolved?.size ??
+        (options.headless ? (options.size ?? { width: 1280, height: 800 }) : undefined);
       // No size means the page fills the visible window again.
       await page.setViewport(
-        size ? { ...size, deviceScaleFactor: 1, isMobile: false, hasTouch: false } : null,
+        size
+          ? {
+              ...size,
+              deviceScaleFactor: 1,
+              isMobile: false,
+              hasTouch: false,
+              isLandscape: size.width >= size.height,
+            }
+          : null,
       );
       isMobile = false;
     }
@@ -183,11 +256,12 @@ export function describeEmulation(emulation: Emulation, onlySet = false): string
   const parts = onlySet
     ? [
         emulation.device ? `device: ${emulation.device}` : '',
+        emulation.orientation ? `orientation: ${emulation.orientation}` : '',
         emulation.colorScheme ? `color scheme: ${emulation.colorScheme}` : '',
         emulation.network ? `network: ${emulation.network}` : '',
       ].filter(Boolean)
     : [
-        `device: ${emulation.device ?? 'default'}`,
+        `device: ${emulation.device ?? 'default'}${emulation.orientation ? ` (${emulation.orientation})` : ''}`,
         `color scheme: ${emulation.colorScheme ?? 'system'}`,
         `network: ${emulation.network ?? 'normal'}`,
       ];

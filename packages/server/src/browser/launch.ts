@@ -72,8 +72,8 @@ export async function launchChrome(config: Config, options: LaunchOptions = {}):
       // A visible window keeps its own size. Headless gets a fixed size.
       defaultViewport: headless
         ? {
-            width: options.presentation?.width ?? 1280,
-            height: options.presentation?.height ?? 800,
+            width: options.presentation?.width ?? config.browser.window.width,
+            height: options.presentation?.height ?? config.browser.window.height,
           }
         : null,
       args: [

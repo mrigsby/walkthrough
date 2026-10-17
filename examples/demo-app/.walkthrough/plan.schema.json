@@ -93,6 +93,14 @@
           "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
           "type": "string"
         },
+        "orientation": {
+          "description": "Turn the device, like a phone on its side. It works with a device, like mobile.",
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
         "colorScheme": {
           "description": "Light or dark mode.",
           "type": "string",
@@ -638,6 +646,36 @@
         ]
       },
       "description": "Snippets for {{copy:name}} in panel text, like { seed: \"npm run db:seed\" }."
+    },
+    "browser": {
+      "description": "Browser settings for this plan, like { window: { width: 1440, height: 900 } }.",
+      "type": "object",
+      "properties": {
+        "window": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 500,
+              "maximum": 3840,
+              "description": "Width in screen points, like 1280."
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 400,
+              "maximum": 2160,
+              "description": "Height in screen points, like 800."
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false,
+          "description": "The size of the page area, like { width: 1280, height: 800 }. The window fits it."
+        }
+      },
+      "additionalProperties": false
     },
     "panel": {
       "description": "Panel labels, buttons, and the \"What's next\" part for every step. A step \"panel\" replaces the same settings for that step.",
@@ -1296,6 +1334,14 @@
                   "device": {
                     "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
                     "type": "string"
+                  },
+                  "orientation": {
+                    "description": "Turn the device, like a phone on its side. It works with a device, like mobile.",
+                    "type": "string",
+                    "enum": [
+                      "portrait",
+                      "landscape"
+                    ]
                   },
                   "colorScheme": {
                     "description": "Light or dark mode.",

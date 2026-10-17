@@ -85,7 +85,7 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
     {
       title: 'Emulate a device and settings',
       description: [
-        'Test like a phone, a tablet, or another screen. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.',
+        'Test like a phone, a tablet, or another screen, in portrait or landscape. The window fits the page of the device. It can also set light or dark mode, a slow network or CPU, and a time zone or language. It can set a place, reduced motion, print media, and permissions.',
         'Settings apply to the active tab. With allTabs: true, they apply to every tab and to tabs that open later.',
         'Permissions apply to every tab of the same login.',
         'With no settings, it shows the settings of the active tab.',
@@ -111,9 +111,10 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
             `New tabs start with: ${describeEmulation(driver.defaultEmulation)}.`,
           ].join('\n');
         }
-        const reloaded = await driver.setEmulation(change, {
+        const { reloaded, note } = await driver.setEmulation(change, {
           tab: allTabs ? undefined : tab,
           reload: true,
+          fitWindow: true,
         });
         ctx.actionLog.push({
           at: new Date().toISOString(),
@@ -134,6 +135,7 @@ export function registerQualityTools(server: McpServer, ctx: Context): void {
           reloaded.length
             ? `Reloaded ${reloaded.join(', ')}, because the page switched between desktop and phone mode.`
             : '',
+          note ?? '',
           'Take a new snapshot. The page can look different now.',
         ]
           .filter(Boolean)
