@@ -36,6 +36,7 @@ const panelLayer = {
       pass: button.optional(),
       bug: optionalButton.optional(),
       skip: optionalButton.optional(),
+      retry: optionalButton.optional(),
       stop: button.optional(),
     })
     .strict()
@@ -76,6 +77,16 @@ export const planPanelSchema = z
       .strict()
       .optional(),
     corner: z.enum(CORNERS).optional().describe('Where the panel starts. Default: bottom-right.'),
+    progress: z
+      .boolean()
+      .optional()
+      .describe(
+        'A list of all steps and their results. A button in the panel header shows it. Default: true.',
+      ),
+    shortcuts: z
+      .boolean()
+      .optional()
+      .describe('Answer with Alt+Shift+P, B, S, R, and X (Option+Shift on a Mac). Default: true.'),
   })
   .strict();
 

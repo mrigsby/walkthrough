@@ -69,6 +69,18 @@ export interface RunStep {
   caption?: string;
   // The check list in the panel, with the developer's ticks.
   checklist?: Array<{ text: string; checked: boolean }>;
+  // Earlier tries that the developer asked to do again, oldest first.
+  tries?: StepTry[];
+  // The element that the developer pointed at in the panel.
+  pointed?: { label: string; selector?: string };
+}
+
+export interface StepTry {
+  at: string;
+  notes?: string;
+  actions: RunStep['actions'];
+  logs?: string;
+  errorCount?: number;
 }
 
 // A video of the run, or of part of it.
@@ -362,6 +374,11 @@ export class RunStore {
     };
     this.run.steps.push(added);
     return added;
+  }
+
+  // The plan asks for the progress list in the panel, or does not say.
+  get showProgress(): boolean {
+    return this.plan?.panel?.progress !== false;
   }
 
   // The plan step with this id, in a run that is going. Never adds a step.

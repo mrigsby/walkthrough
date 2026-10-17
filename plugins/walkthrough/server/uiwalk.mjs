@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join47 } = await import("node:path");
+    const { join: join48 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join47(userDataDir, "DevToolsActivePort");
+    const portPath = join48(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname16, join as join46 } from "node:path";
+import { dirname as dirname16, join as join47 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -98318,6 +98318,7 @@ var panelLayer = {
     pass: button.optional(),
     bug: optionalButton.optional(),
     skip: optionalButton.optional(),
+    retry: optionalButton.optional(),
     stop: button.optional()
   }).strict().optional().describe("Text and colors of the answer buttons, like { pass: { label: Done } }.")
 };
@@ -98334,7 +98335,11 @@ var planPanelSchema = external_exports.object({
     collapsed: external_exports.boolean().optional().describe(`Start with "What's next" closed. Default: true.`),
     auto: external_exports.boolean().optional().describe('A step without "next" shows the "do" of the next step.')
   }).strict().optional(),
-  corner: external_exports.enum(CORNERS).optional().describe("Where the panel starts. Default: bottom-right.")
+  corner: external_exports.enum(CORNERS).optional().describe("Where the panel starts. Default: bottom-right."),
+  progress: external_exports.boolean().optional().describe(
+    "A list of all steps and their results. A button in the panel header shows it. Default: true."
+  ),
+  shortcuts: external_exports.boolean().optional().describe("Answer with Alt+Shift+P, B, S, R, and X (Option+Shift on a Mac). Default: true.")
 }).strict();
 var SECRET = /\{\{\s*secret:/;
 var noSecret = (text) => !SECRET.test(text);
@@ -107665,6 +107670,26 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .card-modal .modal-head { border-bottom: none; padding: 18px 20px 0; }
 .card-modal .modal-body { padding: 4px 20px 20px; font-size: 15px; }
 .card-modal .subheading { margin: 0 0 10px; font-size: 15px; }
+.progress { margin: 0 0 10px; padding: 0 0 8px; list-style: none; max-height: 180px; overflow-y: auto;
+  border-bottom: 1px solid var(--line); font-size: 12px; }
+.progress[hidden], .point-row[hidden], .point-clear[hidden], .icon[hidden] { display: none; }
+.progress-item { display: flex; gap: 6px; padding: 1px 0; color: var(--muted); }
+.progress-item .mark { width: 14px; flex: none; text-align: center; }
+.progress-item.current { color: var(--fg); font-weight: 700; }
+.progress-item.status-pass .mark { color: var(--pass); }
+.progress-item.status-bug .mark, .progress-item.status-fail .mark, .progress-item.status-blocked .mark { color: var(--bug); }
+.progress-item .card-name { font-style: italic; }
+.point-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; }
+.point-row .point, .point-row .point-clear { padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--btn); color: var(--fg); font-size: 12px; font-weight: 600; cursor: pointer; }
+.point-row .point-clear { padding: 2px 6px; }
+.point-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.point-outline { position: fixed; z-index: 2147483646; pointer-events: none; border: 3px dashed #dc2626;
+  border-radius: 4px; background: rgba(220, 38, 38, 0.08); }
+.point-outline[hidden], .point-banner[hidden] { display: none; }
+.point-banner { position: fixed; z-index: 2147483647; top: 12px; left: 50%; transform: translateX(-50%);
+  pointer-events: none; padding: 6px 14px; border-radius: 6px; background: #dc2626; color: #ffffff;
+  font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
 .ref-big { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; margin: 0 auto; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
@@ -107741,11 +107766,16 @@ function panelMain(opts, candidates) {
   const brand = el("span", "brand", "Walkthrough");
   const envBadge = el("span", "env");
   const stepBadge = el("span", "step");
+  const progressButton = el("button", "icon progress-toggle", "\u2630");
+  progressButton.title = "Steps of the run";
+  progressButton.hidden = true;
   const moveButton = el("button", "icon", "\u21C4");
   moveButton.title = "Move to another corner";
   const collapseButton = el("button", "icon", "\u2212");
   collapseButton.title = "Collapse";
-  header.append(brand, envBadge, stepBadge, moveButton, collapseButton);
+  header.append(brand, envBadge, stepBadge, progressButton, moveButton, collapseButton);
+  const progressBox = el("ol", "progress");
+  progressBox.hidden = true;
   const body = el("div", "body");
   const status = el("p", "status");
   const title = el("h2", "title");
@@ -107755,10 +107785,17 @@ function panelMain(opts, candidates) {
   const sections = el("div", "sections");
   const notes = el("textarea", "notes");
   notes.rows = 3;
+  const pointRow = el("div", "point-row");
+  const pointButton = el("button", "point", "Point at the problem");
+  pointButton.title = "Click the element on the page that has the problem";
+  const pointLabel = el("span", "point-label");
+  const pointClear = el("button", "point-clear", "\xD7");
+  pointClear.title = "Forget the element";
+  pointRow.append(pointButton, pointLabel, pointClear);
   const error62 = el("p", "error");
   const buttons = el("div", "buttons");
   const questionBox = el("div", "question");
-  questionBox.append(title, subtitle, cardNote, sections, notes, error62, buttons);
+  questionBox.append(title, subtitle, cardNote, sections, notes, pointRow, error62, buttons);
   const recordBox = el("div", "recording");
   const recordText = el("p", "text");
   const expectInput = el("textarea", "notes rec-notes");
@@ -107771,7 +107808,7 @@ function panelMain(opts, candidates) {
   const stopRecordButton = el("button", "rec-stop", "Stop recording");
   recordButtons.append(expectButton, secretButton, stopRecordButton);
   recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
-  body.append(status, questionBox, recordBox);
+  body.append(progressBox, status, questionBox, recordBox);
   card.append(header, body);
   const backdrop = el("div", "modal-backdrop");
   const modal = el("div", "modal");
@@ -107796,7 +107833,24 @@ function panelMain(opts, candidates) {
   cardBox.append(cardHead, cardBody);
   cardBackdrop.append(cardBox);
   cardBackdrop.hidden = true;
-  root.append(pulse, pulseLabel, annotation, card, cardBackdrop, backdrop);
+  const pointOutline = el("div", "point-outline");
+  const pointBanner = el(
+    "div",
+    "point-banner",
+    "Click the element that has the problem. Esc cancels."
+  );
+  pointOutline.hidden = true;
+  pointBanner.hidden = true;
+  root.append(
+    pulse,
+    pulseLabel,
+    annotation,
+    card,
+    cardBackdrop,
+    backdrop,
+    pointOutline,
+    pointBanner
+  );
   let question = null;
   let env2 = null;
   let recording = null;
@@ -107828,9 +107882,9 @@ function panelMain(opts, candidates) {
   const placeParts = (inModal) => {
     if (inModal) {
       cardTitle.textContent = title.textContent;
-      cardBody.append(subtitle, sections, notes, error62, buttons);
+      cardBody.append(subtitle, sections, notes, pointRow, error62, buttons);
     } else {
-      questionBox.append(subtitle, sections, notes, error62, buttons);
+      questionBox.append(subtitle, sections, notes, pointRow, error62, buttons);
     }
     cardNote.hidden = !inModal;
     cardBackdrop.hidden = !inModal;
@@ -108051,9 +108105,13 @@ function panelMain(opts, candidates) {
       parts.splice(at >= 0 ? at + 1 : parts.length, 0, imageBox);
     }
     sections.replaceChildren(...parts);
+    stopPicking();
+    const keys = view.kind !== "confirm" && view.shortcuts !== false;
     buttons.replaceChildren(
       ...view.buttons.map((b2) => {
         const button2 = el("button", b2.result, b2.label);
+        const key2 = Object.keys(KEYS).find((k) => KEYS[k] === b2.result);
+        if (keys && key2) button2.title = `${b2.label} (${MOD}+Shift+${key2.slice(3)})`;
         if (b2.color) {
           button2.style.background = b2.color;
           button2.style.borderColor = b2.color;
@@ -108068,6 +108126,7 @@ function panelMain(opts, candidates) {
     error62.hidden = !view.notes;
     const bug = view.buttons.find((b2) => b2.result === "bug");
     notes.placeholder = bug ? `Notes (required for ${bug.label})` : "Notes";
+    pointRow.hidden = !view.point;
     placeParts(view.kind === "card" && view.size === "modal");
   };
   const render = () => {
@@ -108095,10 +108154,13 @@ function panelMain(opts, candidates) {
     if (question) {
       stepBadge.textContent = confirm ? "Confirm" : question.step ? `Step ${question.step}${question.total ? ` of ${question.total}` : ""}` : "Check";
       drawQuestion(question);
+      pointLabel.textContent = question.point ? `Pointed at: ${question.point}` : "";
+      pointClear.hidden = !question.point;
       questionBox.hidden = false;
       status.hidden = true;
     } else {
       if (drawnId) placeParts(false);
+      stopPicking();
       drawnId = "";
       stepBadge.textContent = "";
       questionBox.hidden = true;
@@ -108131,6 +108193,7 @@ function panelMain(opts, candidates) {
       return;
     }
     closeModal();
+    stopPicking();
     send({ type: "answer", id: question.id, nonce: question.nonce, result, note });
     const confirmed = question.view.kind === "confirm";
     question = null;
@@ -108168,6 +108231,153 @@ function panelMain(opts, candidates) {
     send({ type: "moved", corner });
   });
   onTrusted(modalClose, closeModal);
+  const KEYS = {
+    KeyP: "pass",
+    KeyB: "bug",
+    KeyS: "skip",
+    KeyR: "retry",
+    KeyX: "stop"
+  };
+  const MOD = /Mac/i.test(navigator.platform) ? "Option" : "Alt";
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!event.isTrusted || !question || recording) return;
+      if (picking && event.key === "Escape") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        stopPicking();
+        return;
+      }
+      const view = question.view;
+      if (view.kind === "confirm" || view.shortcuts === false) return;
+      if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+      const result = KEYS[event.code];
+      if (!result || !view.buttons.some((b2) => b2.result === result)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      answer(result);
+    },
+    true
+  );
+  let progress = null;
+  let progressOpen = false;
+  const MARKS = {
+    pass: "\u2713",
+    bug: "\u2717",
+    fail: "\u2717",
+    blocked: "!",
+    skip: "\u21B7",
+    stop: "\u25A0",
+    pending: "\u25CB"
+  };
+  const drawProgress = () => {
+    progressButton.hidden = !progress;
+    progressBox.hidden = !progress || !progressOpen;
+    progressButton.setAttribute("aria-expanded", String(progressOpen));
+    if (!progress) return;
+    progressBox.replaceChildren(
+      ...progress.map((item) => {
+        const li = el("li", `progress-item status-${item.status}${item.current ? " current" : ""}`);
+        li.append(
+          el("span", "mark", item.current ? "\u25B6" : MARKS[item.status] ?? ""),
+          el("span", item.card ? "name card-name" : "name", `${item.index}. ${item.title}`)
+        );
+        return li;
+      })
+    );
+  };
+  onTrusted(progressButton, () => {
+    progressOpen = !progressOpen;
+    send({ type: "progress-open", open: progressOpen });
+    drawProgress();
+  });
+  let picking = false;
+  const underPointer = (x2, y) => {
+    const node3 = document.elementFromPoint(x2, y);
+    return node3 && node3 !== host && !host.contains(node3) ? node3 : null;
+  };
+  function stopPicking() {
+    picking = false;
+    pointOutline.hidden = true;
+    pointBanner.hidden = true;
+    pointButton.textContent = "Point at the problem";
+  }
+  onTrusted(pointButton, () => {
+    if (picking) {
+      stopPicking();
+      return;
+    }
+    picking = true;
+    pointBanner.hidden = false;
+    pointButton.textContent = "Cancel pointing";
+  });
+  onTrusted(pointClear, () => {
+    if (!question) return;
+    send({ type: "point", id: question.id, nonce: question.nonce, clear: true });
+    question.point = null;
+    pointLabel.textContent = "";
+    pointClear.hidden = true;
+  });
+  window.addEventListener(
+    "mousemove",
+    (event) => {
+      if (!picking) return;
+      const node3 = underPointer(event.clientX, event.clientY);
+      if (!node3) {
+        pointOutline.hidden = true;
+        return;
+      }
+      const r = node3.getBoundingClientRect();
+      Object.assign(pointOutline.style, {
+        left: `${r.left - 3}px`,
+        top: `${r.top - 3}px`,
+        width: `${r.width + 6}px`,
+        height: `${r.height + 6}px`
+      });
+      pointOutline.hidden = false;
+    },
+    true
+  );
+  for (const type of [
+    "pointerdown",
+    "mousedown",
+    "pointerup",
+    "mouseup",
+    "click",
+    "dblclick",
+    "auxclick",
+    "contextmenu"
+  ]) {
+    window.addEventListener(
+      type,
+      (event) => {
+        if (!picking || !event.isTrusted || inPanel(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (type !== "click" || !question) return;
+        const mouse = event;
+        const node3 = underPointer(mouse.clientX, mouse.clientY);
+        if (!node3) return;
+        const target2 = targetOf(node3);
+        const name = target2.role ? `${target2.role} "${target2.name}"` : label3(node3);
+        send({
+          type: "point",
+          id: question.id,
+          nonce: question.nonce,
+          x: mouse.clientX,
+          y: mouse.clientY,
+          label: name,
+          selector: target2.selector ?? ""
+        });
+        question.point = name;
+        pointLabel.textContent = `Pointed at: ${name}`;
+        pointClear.hidden = false;
+        stopPicking();
+      },
+      true
+    );
+  }
   for (const type of ["keydown", "keyup", "keypress", "input", "beforeinput", "paste"]) {
     for (const part of [card, backdrop, cardBackdrop])
       part.addEventListener(type, (event) => event.stopPropagation());
@@ -108234,6 +108444,9 @@ function panelMain(opts, candidates) {
         }
         question = next;
         env2 = msg.env ?? null;
+        progress = msg.progress ?? null;
+        progressOpen = msg.progressOpen === true;
+        drawProgress();
         recording = msg.recording ?? null;
         if (!recording) addingExpect = false;
         setStatus(msg.status ?? "The agent is working.");
@@ -108246,6 +108459,8 @@ function panelMain(opts, candidates) {
         void showImage(msg.id, msg.mime, msg.data);
         break;
       case "hide":
+        pointOutline.style.visibility = msg.hidden ? "hidden" : "";
+        pointBanner.style.visibility = msg.hidden ? "hidden" : "";
         backdrop.style.visibility = msg.hidden ? "hidden" : "";
         cardBackdrop.style.visibility = msg.hidden ? "hidden" : "";
         card.style.visibility = msg.hidden ? "hidden" : "";
@@ -108466,11 +108681,12 @@ var DEFAULT_LABELS = {
   next: "What's next",
   content: ""
 };
-var BUTTON_ORDER = ["pass", "bug", "skip", "stop"];
+var BUTTON_ORDER = ["pass", "bug", "skip", "retry", "stop"];
 var DEFAULT_BUTTON_LABELS = {
   pass: "Pass",
   bug: "Bug",
   skip: "Skip",
+  retry: "Retry",
   stop: "Stop"
 };
 function channel(hex3, i) {
@@ -108487,7 +108703,7 @@ function textColorFor(hex3) {
 function merged(layers, key2) {
   return layers.map((l) => l?.[key2]).filter((v2) => v2 !== void 0);
 }
-var CARD_HIDDEN = ["bug", "skip"];
+var CARD_HIDDEN = ["bug", "skip", "retry"];
 function usedSnippets(texts, all) {
   const names = new Set(texts.flatMap((t) => copyRefs(t ?? "")));
   for (const name of [...names]) for (const ref of copyRefs(all[name]?.help ?? "")) names.add(ref);
@@ -108540,6 +108756,8 @@ function buildStepView(input3) {
     buttons,
     // Bug needs notes. A card has no notes box unless it shows Bug.
     notes: !card || buttons.some((b2) => b2.result === "bug"),
+    shortcuts: merged(layers, "shortcuts").at(-1) ?? true,
+    point: !card && buttons.some((b2) => b2.result === "bug"),
     snippets: usedSnippets(
       card ? [card.content, input3.next] : [input3.didWhat, input3.expected, input3.next],
       input3.snippets ?? {}
@@ -108623,12 +108841,18 @@ var DeveloperPanel = class {
   env = null;
   // The question whose image each tab has now. A page load clears it.
   imageSent = /* @__PURE__ */ new Map();
+  pages = /* @__PURE__ */ new Map();
+  // The steps of the run, for the progress list. Null hides it.
+  progress = null;
+  progressOpen = false;
   async attach(page, tabId) {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
     if (bridge) this.bridges.set(tabId, bridge);
+    this.pages.set(tabId, page);
   }
   detach(tabId) {
     this.bridges.delete(tabId);
+    this.pages.delete(tabId);
     this.imageSent.delete(tabId);
     this.hiddenIn.delete(tabId);
     this.suppressed.delete(tabId);
@@ -108662,13 +108886,16 @@ var DeveloperPanel = class {
       corner: this.corner,
       recording: this.recorder ? { count: this.recorder.steps.length, last: this.recorder.lastLabel } : null,
       env: this.env,
+      progress: this.progress,
+      progressOpen: this.progressOpen,
       question: q2 ? {
         id: q2.id,
         nonce: q2.nonce,
         step: q2.step,
         total: q2.total,
         view: questionView(q2),
-        ui: q2.ui ?? {}
+        ui: q2.ui ?? {},
+        point: q2.point?.label ?? null
       } : null
     };
   }
@@ -108695,6 +108922,14 @@ var DeveloperPanel = class {
     }
     if (msg.type === "ui") {
       this.onUi(tabId, msg);
+      return;
+    }
+    if (msg.type === "point") {
+      await this.onPoint(tabId, msg);
+      return;
+    }
+    if (msg.type === "progress-open") {
+      this.progressOpen = msg.open === true;
       return;
     }
     if (msg.type === "moved" && typeof msg.corner === "string") {
@@ -108743,6 +108978,39 @@ var DeveloperPanel = class {
     if (!(msg.key in ui2) && Object.keys(ui2).length >= MAX_UI_KEYS) return;
     ui2[msg.key] = msg.value;
     q2.ui = ui2;
+  }
+  // The developer clicked the element of a bug. The panel sends its place and a name.
+  // The browser finds the element at that place. Page scripts cannot change that.
+  async onPoint(tabId, msg) {
+    const q2 = this.question;
+    if (!q2 || q2.tabId !== tabId || msg.id !== q2.id || msg.nonce !== q2.nonce) return;
+    if (!questionView(q2).point || this.recorder) return;
+    if (msg.clear === true) {
+      q2.point = void 0;
+      return;
+    }
+    const { x: x2, y, label: label3, selector } = msg;
+    if (typeof x2 !== "number" || typeof y !== "number" || typeof label3 !== "string") return;
+    const point = {
+      label: label3.slice(0, 200),
+      ...typeof selector === "string" && selector ? { selector: selector.slice(0, 500) } : {}
+    };
+    const page = this.pages.get(tabId);
+    const cdp = await page?.createCDPSession().catch(() => void 0);
+    try {
+      await cdp?.send("DOM.getDocument", { depth: 0 });
+      const found = await cdp?.send("DOM.getNodeForLocation", {
+        x: Math.round(x2),
+        y: Math.round(y),
+        includeUserAgentShadowDOM: false,
+        ignorePointerEventsNone: true
+      });
+      if (found) point.backendNodeId = found.backendNodeId;
+    } catch {
+    } finally {
+      await cdp?.detach().catch(() => void 0);
+    }
+    q2.point = point;
   }
   finish(outcome) {
     const resolve12 = this.waiter;
@@ -108866,6 +109134,11 @@ var DeveloperPanel = class {
     this.finishRecording("stopped");
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+  // The progress list in every tab. Null hides it.
+  async setProgress(items) {
+    this.progress = items;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
   // Moves the panel to a corner in every tab, like a plan asks.
   async setCorner(corner) {
@@ -110247,9 +110520,9 @@ import {
   readFileSync as readFileSync20,
   realpathSync as realpathSync3,
   statSync as statSync7,
-  writeFileSync as writeFileSync13
+  writeFileSync as writeFileSync14
 } from "node:fs";
-import { join as join34, relative as relative12, resolve as resolve10, sep as sep5 } from "node:path";
+import { join as join35, relative as relative12, resolve as resolve10, sep as sep5 } from "node:path";
 
 // packages/server/src/audit/axe.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -111548,6 +111821,10 @@ var RunStore = class _RunStore {
     };
     this.run.steps.push(added);
     return added;
+  }
+  // The plan asks for the progress list in the panel, or does not say.
+  get showProgress() {
+    return this.plan?.panel?.progress !== false;
   }
   // The plan step with this id, in a run that is going. Never adds a step.
   planStep(id) {
@@ -114500,8 +114777,8 @@ function reloadableTab(driver) {
 }
 
 // packages/server/src/tools/run-tools.ts
-import { existsSync as existsSync20, writeFileSync as writeFileSync12 } from "node:fs";
-import { join as join33, relative as relative11 } from "node:path";
+import { existsSync as existsSync20, writeFileSync as writeFileSync13 } from "node:fs";
+import { join as join34, relative as relative11 } from "node:path";
 
 // packages/server/src/presentation/rehearsal.ts
 import { createHash as createHash4 } from "node:crypto";
@@ -115297,6 +115574,17 @@ function stepCard(run, runDir, step, open4) {
       "</ul></dd>"
     );
   }
+  if (step.pointed) {
+    const where3 = step.pointed.selector ? ` <code>${esc2(step.pointed.selector)}</code>` : "";
+    parts.push(`<dt>Pointed at</dt><dd>${esc2(step.pointed.label)}${where3}</dd>`);
+  }
+  if (step.tries?.length) {
+    parts.push(
+      `<dt>Tries</dt><dd>${step.tries.length + 1}. The developer asked to do the step again:<ul>`,
+      ...step.tries.map((t, i) => `<li>Try ${i + 1}${t.notes ? `: ${esc2(t.notes)}` : ""}</li>`),
+      "</ul></dd>"
+    );
+  }
   if (step.mocked?.length) {
     parts.push(
       `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc2(step.mocked.join("; "))}</dd>`
@@ -115813,6 +116101,16 @@ function stepDetails(run, step, withRepro) {
     out.push(`- **Checklist:** ${ticked} of ${step.checklist.length} ticked`);
     for (const item of step.checklist) out.push(`  - [${item.checked ? "x" : " "}] ${item.text}`);
   }
+  if (step.pointed) {
+    const where3 = step.pointed.selector ? ` (\`${step.pointed.selector}\`)` : "";
+    out.push(`- **Pointed at:** ${step.pointed.label}${where3}`);
+  }
+  if (step.tries?.length) {
+    out.push(`- **Tries:** ${step.tries.length + 1}. The developer asked to do the step again:`);
+    step.tries.forEach((t, i) => {
+      out.push(`  - Try ${i + 1}${t.notes ? `: ${t.notes}` : ""}`);
+    });
+  }
   if (step.mocked?.length)
     out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join("; ")}`);
   const a11y = stepAccessibility(run, step);
@@ -116036,6 +116334,53 @@ function loadRunPlan(projectDir, planFile) {
 
 // packages/server/src/run/record.ts
 import { isAbsolute as isAbsolute7, join as join31, relative as relative9 } from "node:path";
+function progressItems(ctx) {
+  const store = ctx.run;
+  if (store?.run.status !== "running" || !store.showProgress) return void 0;
+  const current2 = store.nextPending()?.id;
+  return store.run.steps.map((s) => ({
+    index: s.index,
+    title: s.title,
+    status: s.status,
+    ...s.kind ? { card: true } : {},
+    ...s.id === current2 ? { current: true } : {}
+  }));
+}
+async function pushProgress(ctx) {
+  await ctx.driver?.panel?.setProgress(progressItems(ctx) ?? null);
+}
+function recordTry(ctx, ref, input3) {
+  const store = ctx.run;
+  if (store?.run.status !== "running") return void 0;
+  const step = store.step(ref);
+  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ tab, action: action2, label: label3, selector, value, files, frameUrl: frameUrl2, url: url2 }) => ({
+    tab,
+    action: action2,
+    label: label3,
+    selector,
+    value,
+    files,
+    frameUrl: frameUrl2,
+    url: url2
+  }));
+  ctx.actionCursor = ctx.actionLog.length;
+  step.tries = [
+    ...step.tries ?? [],
+    {
+      at: (/* @__PURE__ */ new Date()).toISOString(),
+      ...input3.notes ? { notes: input3.notes } : {},
+      actions: [...step.actions, ...actions],
+      ...input3.logs?.length ? {
+        logs: formatLogs(input3.logs),
+        errorCount: input3.logs.filter((e) => e.level === "error").length
+      } : {}
+    }
+  ];
+  step.actions = [];
+  store.save();
+  void pushProgress(ctx);
+  return { step, tries: step.tries.length };
+}
 function recordResult(ctx, ref, result) {
   const store = ctx.run;
   if (store?.run.status !== "running") return void 0;
@@ -116049,6 +116394,7 @@ function recordResult(ctx, ref, result) {
     step.screenshots.push(relative9(store.dir, full));
   }
   if (result.checklist?.length) step.checklist = result.checklist;
+  if (result.pointed) step.pointed = result.pointed;
   if (result.mocked?.length) step.mocked = [.../* @__PURE__ */ new Set([...step.mocked ?? [], ...result.mocked])];
   for (const file2 of result.files ?? []) {
     const full = isAbsolute7(file2) ? file2 : join31(store.projectDir, file2);
@@ -116062,6 +116408,7 @@ function recordResult(ctx, ref, result) {
     step.at = (/* @__PURE__ */ new Date()).toISOString();
     store.save();
     setRunCaption(ctx, store);
+    void pushProgress(ctx);
     return step;
   }
   const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ tab, action: action2, label: label3, selector, value, files, frameUrl: frameUrl2, url: url2 }) => ({
@@ -116079,6 +116426,7 @@ function recordResult(ctx, ref, result) {
   step.at = (/* @__PURE__ */ new Date()).toISOString();
   store.save();
   setRunCaption(ctx, store);
+  void pushProgress(ctx);
   return step;
 }
 function nextStepHint(ctx) {
@@ -116089,8 +116437,193 @@ function nextStepHint(ctx) {
 }
 
 // packages/server/src/tools/developer-tools.ts
-import { readFileSync as readFileSync19 } from "node:fs";
-import { extname as extname8, relative as relative10 } from "node:path";
+import { readFileSync as readFileSync19, writeFileSync as writeFileSync12 } from "node:fs";
+import { extname as extname8, join as join33, relative as relative10 } from "node:path";
+
+// packages/server/src/devtools/inspect.ts
+import { randomBytes as randomBytes10 } from "node:crypto";
+var DEFAULT_PROPERTIES = [
+  "display",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "width",
+  "height",
+  "box-sizing",
+  "color",
+  "background-color",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "line-height",
+  "text-align",
+  "opacity",
+  "visibility",
+  "overflow-x",
+  "overflow-y",
+  "z-index",
+  "cursor",
+  "pointer-events",
+  "flex-direction",
+  "justify-content",
+  "align-items",
+  "transform"
+];
+function edges(outer, inner) {
+  const n = (v2) => Math.round(v2 * 10) / 10;
+  const [ox1 = 0, oy1 = 0, ox2 = 0, , , oy3 = 0] = outer;
+  const [ix1 = 0, iy1 = 0, ix2 = 0, , , iy3 = 0] = inner;
+  return `${n(iy1 - oy1)} ${n(ox2 - ix2)} ${n(oy3 - iy3)} ${n(ix1 - ox1)}`;
+}
+function nodeLabel(node3) {
+  const attrs = node3.attributes ?? [];
+  const get = (name) => {
+    const i = attrs.indexOf(name);
+    return i >= 0 && i % 2 === 0 ? attrs[i + 1] : void 0;
+  };
+  const id = get("id");
+  const classes = (get("class") ?? "").split(/\s+/).filter(Boolean).slice(0, 2);
+  return `${node3.nodeName.toLowerCase()}${id ? `#${id}` : ""}${classes.map((c) => `.${c}`).join("")}`;
+}
+async function findNode(cdp, handle) {
+  const token = randomBytes10(6).toString("hex");
+  await handle.evaluate((el, t) => el.setAttribute("data-uiwalk-inspect", t), token);
+  try {
+    await cdp.send("DOM.getDocument", { depth: -1, pierce: true });
+    const { searchId, resultCount } = await cdp.send("DOM.performSearch", {
+      query: `[data-uiwalk-inspect="${token}"]`,
+      includeUserAgentShadowDOM: false
+    });
+    const { nodeIds } = resultCount ? await cdp.send("DOM.getSearchResults", { searchId, fromIndex: 0, toIndex: resultCount }) : { nodeIds: [] };
+    await cdp.send("DOM.discardSearchResults", { searchId }).catch(() => void 0);
+    const nodeId = nodeIds[0];
+    if (!nodeId) {
+      throw new ToolError(
+        "inspect works on elements of the page and of frames from the same site. Walkthrough could not reach this element.",
+        "not_found"
+      );
+    }
+    return nodeId;
+  } finally {
+    await handle.evaluate((el) => el.removeAttribute("data-uiwalk-inspect")).catch(() => void 0);
+  }
+}
+async function nodeFromBackend(cdp, backendNodeId) {
+  await cdp.send("DOM.getDocument", { depth: -1, pierce: true });
+  const { nodeIds } = await cdp.send("DOM.pushNodesByBackendIdsToFrontend", {
+    backendNodeIds: [backendNodeId]
+  });
+  const nodeId = nodeIds[0];
+  if (!nodeId) throw new ToolError("The element is not on the page anymore.", "not_found");
+  return nodeId;
+}
+async function inspectElement(tab, target2, options) {
+  const cdp = await tab.page.createCDPSession();
+  const sheets = /* @__PURE__ */ new Map();
+  const scripts = /* @__PURE__ */ new Map();
+  cdp.on(
+    "CSS.styleSheetAdded",
+    ({ header }) => sheets.set(header.styleSheetId, header)
+  );
+  cdp.on(
+    "Debugger.scriptParsed",
+    (event) => scripts.set(event.scriptId, event.url)
+  );
+  try {
+    await cdp.send("DOM.enable");
+    await cdp.send("CSS.enable");
+    if (options.listeners) await cdp.send("Debugger.enable");
+    const nodeId = "backendNodeId" in target2 && typeof target2.backendNodeId === "number" ? await nodeFromBackend(cdp, target2.backendNodeId) : await findNode(cdp, target2);
+    const { node: node3 } = await cdp.send("DOM.describeNode", { nodeId });
+    const lines = [`Element: ${nodeLabel(node3)} (tab ${tab.id})`];
+    const box = await cdp.send("DOM.getBoxModel", { nodeId }).catch(() => void 0);
+    if (box) {
+      const m = box.model;
+      lines.push(
+        `Box: ${m.width} x ${m.height} px, at x ${Math.round(m.border[0] ?? 0)}, y ${Math.round(m.border[1] ?? 0)}.`,
+        `  Padding ${edges(m.padding, m.content)}. Border ${edges(m.border, m.padding)}. Margin ${edges(m.margin, m.border)} (top right bottom left).`
+      );
+    } else {
+      lines.push(
+        "Box: none. The page does not show the element, for example because of display: none."
+      );
+    }
+    const wanted = options.properties?.length ? options.properties : DEFAULT_PROPERTIES;
+    const { computedStyle } = await cdp.send("CSS.getComputedStyleForNode", { nodeId });
+    const computed = computedStyle.filter(
+      (p) => wanted.some((w2) => p.name === w2 || p.name.startsWith(`${w2}-`))
+    );
+    lines.push("", "Computed styles:", ...computed.map((p) => `  ${p.name}: ${p.value}`));
+    if (options.rules) {
+      const matched = await cdp.send("CSS.getMatchedStylesForNode", { nodeId });
+      const where3 = (rule) => {
+        const header = rule.styleSheetId ? sheets.get(rule.styleSheetId) : void 0;
+        if (!header) return "no file";
+        const line2 = (header.startLine ?? 0) + (rule.style.range?.startLine ?? 0) + 1;
+        return `${header.sourceURL || "(style tag)"}:${line2}`;
+      };
+      const declarations = (style) => style.cssProperties.filter((p) => !p.disabled && !p.implicit && p.parsedOk !== false && p.text).slice(0, 20).map((p) => `      ${p.name}: ${p.value}${p.important ? " !important" : ""};`);
+      const rules = (matched.matchedCSSRules ?? []).filter((m) => m.rule.origin === "regular");
+      lines.push("", "CSS rules, in cascade order (later rules win):");
+      if (rules.length === 0) lines.push("  No rules from the site style sheets.");
+      rules.forEach((m, i) => {
+        lines.push(
+          `  ${i + 1}. ${m.rule.selectorList.text} (${where3(m.rule)})`,
+          ...declarations(m.rule.style)
+        );
+      });
+      if (matched.inlineStyle?.cssProperties.length) {
+        lines.push("  Inline style attribute:", ...declarations(matched.inlineStyle));
+      }
+    }
+    if (options.listeners) {
+      lines.push("", "Event listeners:");
+      const found = await listenerLines(cdp, nodeId, scripts, options.ancestors);
+      lines.push(...found.length ? found : ["  None found."]);
+      await cdp.send("Debugger.disable").catch(() => void 0);
+    }
+    return lines.join("\n");
+  } finally {
+    await cdp.detach().catch(() => void 0);
+  }
+}
+async function listenerLines(cdp, nodeId, scripts, ancestors) {
+  const lines = [];
+  const describe4 = (l, owner2) => {
+    const file2 = scripts.get(l.scriptId) || "an inline script";
+    const flags = [l.useCapture ? "capture" : "", l.passive ? "passive" : "", l.once ? "once" : ""].filter(Boolean).join(", ");
+    return `  ${l.type} on ${owner2}: ${file2}:${l.lineNumber + 1}:${l.columnNumber + 1}${flags ? ` (${flags})` : ""}`;
+  };
+  const { object: object3 } = await cdp.send("DOM.resolveNode", { nodeId });
+  let objectId = object3.objectId;
+  let owner = "this element";
+  for (let depth = 0; objectId && depth < 20 && lines.length < 40; depth++) {
+    const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId });
+    for (const l of listeners) lines.push(describe4(l, owner));
+    if (!ancestors) break;
+    const { result } = await cdp.send("Runtime.callFunctionOn", {
+      objectId,
+      functionDeclaration: "function () { return this.parentNode; }"
+    });
+    objectId = result.objectId;
+    if (objectId) {
+      const { node: node3 } = await cdp.send("DOM.describeNode", { objectId });
+      owner = node3.nodeName === "#document" ? "the document" : `the parent ${nodeLabel(node3)}`;
+    }
+  }
+  if (ancestors) {
+    const { result } = await cdp.send("Runtime.evaluate", { expression: "window" });
+    if (result.objectId) {
+      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", {
+        objectId: result.objectId
+      });
+      for (const l of listeners) lines.push(describe4(l, "the window"));
+    }
+  }
+  return lines;
+}
 
 // packages/server/src/evidence/har.ts
 import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
@@ -116188,10 +116721,10 @@ function writeHar(dir, label3, entries, secrets) {
 function defaultAskTimeoutSec(clientName) {
   return clientName === "claude-code" ? 300 : 50;
 }
-async function bugScreenshot(ctx, driver, tab, stepLabel) {
+async function bugScreenshot(ctx, driver, tab, stepLabel, pointed) {
   const config3 = await ctx.config();
   const last2 = driver.lastTarget?.tabId === tab.id ? driver.lastTarget : void 0;
-  const rect = last2 ? await elementRect(last2.handle) : void 0;
+  const rect = pointed ?? (last2 ? await elementRect(last2.handle) : void 0);
   return withCleanPage(
     driver,
     tab,
@@ -116211,6 +116744,46 @@ async function bugHar(ctx, entries, stepLabel) {
     await ctx.secrets()
   );
   return relative10(config3.projectDir, file2);
+}
+async function pointedRect(tab, point) {
+  if (point.backendNodeId) {
+    const cdp = await tab.page.createCDPSession();
+    try {
+      const { model } = await cdp.send("DOM.getBoxModel", { backendNodeId: point.backendNodeId });
+      const xs = [0, 2, 4, 6].map((i) => model.border[i] ?? 0);
+      const ys = [1, 3, 5, 7].map((i) => model.border[i] ?? 0);
+      const x2 = Math.min(...xs);
+      const y = Math.min(...ys);
+      return { x: x2, y, width: Math.max(...xs) - x2, height: Math.max(...ys) - y };
+    } catch {
+    } finally {
+      await cdp.detach().catch(() => void 0);
+    }
+  }
+  if (point.selector) {
+    const handle = await tab.page.$(point.selector).catch(() => null);
+    if (handle) return elementRect(handle);
+  }
+  return void 0;
+}
+async function pointedDetails(ctx, tab, point, stepLabel) {
+  if (!point.backendNodeId) return void 0;
+  try {
+    const text = await inspectElement(
+      tab,
+      { backendNodeId: point.backendNodeId },
+      { rules: true, listeners: false, ancestors: false }
+    );
+    const config3 = await ctx.config();
+    const file2 = join33(
+      ctx.evidenceDir(config3.projectDir),
+      `pointed-${slug(stepLabel, 40, "step")}.txt`
+    );
+    writeFileSync12(file2, (await ctx.secrets()).redact(text));
+    return relative10(config3.projectDir, file2);
+  } catch {
+    return void 0;
+  }
 }
 function startProgress(extra, message = "Walkthrough waits for the developer to answer in the browser.") {
   const token = extra._meta?.progressToken;
@@ -116449,6 +117022,12 @@ function registerDeveloperTools(server, ctx) {
       const mocked = isCard ? [] : driver.stepMocks;
       if (!isCard) driver.endStep(label3);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
+      const point = question.point;
+      if (point) {
+        lines.push(
+          `The developer pointed at: ${point.label}${point.selector ? ` (selector: ${point.selector})` : ""}.`
+        );
+      }
       if (answer.checklist?.length) {
         const open4 = answer.checklist.filter((item) => !item.checked);
         lines.push(
@@ -116462,6 +117041,22 @@ function registerDeveloperTools(server, ctx) {
         answer,
         logs: formatLogs(stepLogs)
       };
+      if (answer.result === "retry") {
+        const tried = recordTry(
+          ctx,
+          { id: question.stepId, index: question.step, title: question.title },
+          { notes: answer.note, logs: stepLogs }
+        );
+        ctx.stepAnswers.push(record2);
+        lines.push(
+          "The developer asked you to do this step again. Do it again, then call ask_developer again with the same stepId."
+        );
+        if (tried)
+          lines.push(
+            `Saved try ${tried.tries} of step ${tried.step.index}. The step is still open.`
+          );
+        return textResult(lines.join("\n"), extraContent);
+      }
       if (answer.result === "bug" && isCard) {
         lines.push("The developer reported a bug on a card. Ask what is wrong.");
       } else if (answer.result === "bug") {
@@ -116470,7 +117065,8 @@ function registerDeveloperTools(server, ctx) {
             ctx,
             driver,
             tab,
-            question.stepId ?? String(question.step ?? "step")
+            question.stepId ?? String(question.step ?? "step"),
+            point ? await pointedRect(tab, point) : void 0
           );
           record2.screenshot = shot.relativePath;
           lines.push(`Screenshot: ${shot.relativePath}`);
@@ -116482,6 +117078,11 @@ function registerDeveloperTools(server, ctx) {
         if (har) {
           record2.files = [har];
           lines.push(`Network requests (HAR): ${har}`);
+        }
+        const details2 = point ? await pointedDetails(ctx, tab, point, question.stepId ?? question.title) : void 0;
+        if (details2) {
+          record2.files = [...record2.files ?? [], details2];
+          lines.push(`Styles and CSS rules of the pointed element: ${details2}`);
         }
         const clip2 = await clipLine(ctx, question.stepId ?? question.title);
         if (clip2) {
@@ -116523,7 +117124,8 @@ function registerDeveloperTools(server, ctx) {
           mocked,
           logs: isCard ? void 0 : stepLogs,
           checklist: answer.checklist,
-          noActions: isCard
+          noActions: isCard,
+          ...point ? { pointed: { label: point.label, selector: point.selector } } : {}
         }
       );
       if (recorded)
@@ -116557,14 +117159,14 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown2 = join33(store.dir, "report.md");
-  const html2 = join33(store.dir, "report.html");
+  const markdown2 = join34(store.dir, "report.md");
+  const html2 = join34(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
-  const a11yReport = existsSync20(join33(store.dir, "accessibility.html"));
-  const lhReport = existsSync20(join33(store.dir, "lighthouse.html"));
+  const a11yReport = existsSync20(join34(store.dir, "accessibility.html"));
+  const lhReport = existsSync20(join34(store.dir, "lighthouse.html"));
   const md = markdownReport(run, { a11yReport, lhReport });
-  writeFileSync12(markdown2, secrets ? secrets.redact(md) : md);
-  writeFileSync12(html2, htmlReport(run, store.dir));
+  writeFileSync13(markdown2, secrets ? secrets.redact(md) : md);
+  writeFileSync13(html2, htmlReport(run, store.dir));
   return { markdown: relative11(store.projectDir, markdown2), html: relative11(store.projectDir, html2) };
 }
 async function closeFlow(ctx, store) {
@@ -116900,6 +117502,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         show: (text) => ctx.display(text)
       });
       const lh = ctx.run.run.lhPlan;
+      await pushProgress(ctx);
       await stopRing(ctx);
       if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
       else await startRing(ctx);
@@ -117069,6 +117672,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         await stopRing(ctx);
         store.finish(summary);
         ctx.run = void 0;
+        await ctx.driver?.panel?.setProgress(null);
       } else if (summary) {
         store.run.summary = summary;
         store.save();
@@ -117114,11 +117718,11 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
 // packages/server/src/tools/a11y-tools.ts
 var TIME_LIMIT_MS = Number(process.env.UIWALK_SCAN_LIMIT_MS) || 45e3;
 function latestA11yRunId(projectDir) {
-  const dir = join34(projectDir, ".walkthrough", "runs");
+  const dir = join35(projectDir, ".walkthrough", "runs");
   if (!existsSync21(dir)) return void 0;
   for (const id of readdirSync11(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync20(join34(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync20(join35(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
     } catch {
     }
@@ -117501,13 +118105,13 @@ function registerA11yTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join34(store.dir, "accessibility.html"),
-        md: join34(store.dir, "accessibility.md"),
-        json: join34(store.dir, "accessibility.json")
+        html: join35(store.dir, "accessibility.html"),
+        md: join35(store.dir, "accessibility.md"),
+        json: join35(store.dir, "accessibility.json")
       };
-      writeFileSync13(files.html, a11yHtmlReport(data));
-      writeFileSync13(files.md, secrets.redact(a11yMarkdownReport(data)));
-      writeFileSync13(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
+      writeFileSync14(files.html, a11yHtmlReport(data));
+      writeFileSync14(files.md, secrets.redact(a11yMarkdownReport(data)));
+      writeFileSync14(files.json, `${secrets.redact(JSON.stringify(jsonReport(data), null, 2))}
 `);
       writeReports(store, secrets);
       return [
@@ -117525,182 +118129,6 @@ function registerA11yTools(server, ctx) {
 
 // packages/server/src/tools/devtools-tools.ts
 import { relative as relative13 } from "node:path";
-
-// packages/server/src/devtools/inspect.ts
-import { randomBytes as randomBytes10 } from "node:crypto";
-var DEFAULT_PROPERTIES = [
-  "display",
-  "position",
-  "top",
-  "right",
-  "bottom",
-  "left",
-  "width",
-  "height",
-  "box-sizing",
-  "color",
-  "background-color",
-  "font-family",
-  "font-size",
-  "font-weight",
-  "line-height",
-  "text-align",
-  "opacity",
-  "visibility",
-  "overflow-x",
-  "overflow-y",
-  "z-index",
-  "cursor",
-  "pointer-events",
-  "flex-direction",
-  "justify-content",
-  "align-items",
-  "transform"
-];
-function edges(outer, inner) {
-  const n = (v2) => Math.round(v2 * 10) / 10;
-  const [ox1 = 0, oy1 = 0, ox2 = 0, , , oy3 = 0] = outer;
-  const [ix1 = 0, iy1 = 0, ix2 = 0, , , iy3 = 0] = inner;
-  return `${n(iy1 - oy1)} ${n(ox2 - ix2)} ${n(oy3 - iy3)} ${n(ix1 - ox1)}`;
-}
-function nodeLabel(node3) {
-  const attrs = node3.attributes ?? [];
-  const get = (name) => {
-    const i = attrs.indexOf(name);
-    return i >= 0 && i % 2 === 0 ? attrs[i + 1] : void 0;
-  };
-  const id = get("id");
-  const classes = (get("class") ?? "").split(/\s+/).filter(Boolean).slice(0, 2);
-  return `${node3.nodeName.toLowerCase()}${id ? `#${id}` : ""}${classes.map((c) => `.${c}`).join("")}`;
-}
-async function findNode(cdp, handle) {
-  const token = randomBytes10(6).toString("hex");
-  await handle.evaluate((el, t) => el.setAttribute("data-uiwalk-inspect", t), token);
-  try {
-    await cdp.send("DOM.getDocument", { depth: -1, pierce: true });
-    const { searchId, resultCount } = await cdp.send("DOM.performSearch", {
-      query: `[data-uiwalk-inspect="${token}"]`,
-      includeUserAgentShadowDOM: false
-    });
-    const { nodeIds } = resultCount ? await cdp.send("DOM.getSearchResults", { searchId, fromIndex: 0, toIndex: resultCount }) : { nodeIds: [] };
-    await cdp.send("DOM.discardSearchResults", { searchId }).catch(() => void 0);
-    const nodeId = nodeIds[0];
-    if (!nodeId) {
-      throw new ToolError(
-        "inspect works on elements of the page and of frames from the same site. Walkthrough could not reach this element.",
-        "not_found"
-      );
-    }
-    return nodeId;
-  } finally {
-    await handle.evaluate((el) => el.removeAttribute("data-uiwalk-inspect")).catch(() => void 0);
-  }
-}
-async function inspectElement(tab, handle, options) {
-  const cdp = await tab.page.createCDPSession();
-  const sheets = /* @__PURE__ */ new Map();
-  const scripts = /* @__PURE__ */ new Map();
-  cdp.on(
-    "CSS.styleSheetAdded",
-    ({ header }) => sheets.set(header.styleSheetId, header)
-  );
-  cdp.on(
-    "Debugger.scriptParsed",
-    (event) => scripts.set(event.scriptId, event.url)
-  );
-  try {
-    await cdp.send("DOM.enable");
-    await cdp.send("CSS.enable");
-    if (options.listeners) await cdp.send("Debugger.enable");
-    const nodeId = await findNode(cdp, handle);
-    const { node: node3 } = await cdp.send("DOM.describeNode", { nodeId });
-    const lines = [`Element: ${nodeLabel(node3)} (tab ${tab.id})`];
-    const box = await cdp.send("DOM.getBoxModel", { nodeId }).catch(() => void 0);
-    if (box) {
-      const m = box.model;
-      lines.push(
-        `Box: ${m.width} x ${m.height} px, at x ${Math.round(m.border[0] ?? 0)}, y ${Math.round(m.border[1] ?? 0)}.`,
-        `  Padding ${edges(m.padding, m.content)}. Border ${edges(m.border, m.padding)}. Margin ${edges(m.margin, m.border)} (top right bottom left).`
-      );
-    } else {
-      lines.push(
-        "Box: none. The page does not show the element, for example because of display: none."
-      );
-    }
-    const wanted = options.properties?.length ? options.properties : DEFAULT_PROPERTIES;
-    const { computedStyle } = await cdp.send("CSS.getComputedStyleForNode", { nodeId });
-    const computed = computedStyle.filter(
-      (p) => wanted.some((w2) => p.name === w2 || p.name.startsWith(`${w2}-`))
-    );
-    lines.push("", "Computed styles:", ...computed.map((p) => `  ${p.name}: ${p.value}`));
-    if (options.rules) {
-      const matched = await cdp.send("CSS.getMatchedStylesForNode", { nodeId });
-      const where3 = (rule) => {
-        const header = rule.styleSheetId ? sheets.get(rule.styleSheetId) : void 0;
-        if (!header) return "no file";
-        const line2 = (header.startLine ?? 0) + (rule.style.range?.startLine ?? 0) + 1;
-        return `${header.sourceURL || "(style tag)"}:${line2}`;
-      };
-      const declarations = (style) => style.cssProperties.filter((p) => !p.disabled && !p.implicit && p.parsedOk !== false && p.text).slice(0, 20).map((p) => `      ${p.name}: ${p.value}${p.important ? " !important" : ""};`);
-      const rules = (matched.matchedCSSRules ?? []).filter((m) => m.rule.origin === "regular");
-      lines.push("", "CSS rules, in cascade order (later rules win):");
-      if (rules.length === 0) lines.push("  No rules from the site style sheets.");
-      rules.forEach((m, i) => {
-        lines.push(
-          `  ${i + 1}. ${m.rule.selectorList.text} (${where3(m.rule)})`,
-          ...declarations(m.rule.style)
-        );
-      });
-      if (matched.inlineStyle?.cssProperties.length) {
-        lines.push("  Inline style attribute:", ...declarations(matched.inlineStyle));
-      }
-    }
-    if (options.listeners) {
-      lines.push("", "Event listeners:");
-      const found = await listenerLines(cdp, nodeId, scripts, options.ancestors);
-      lines.push(...found.length ? found : ["  None found."]);
-      await cdp.send("Debugger.disable").catch(() => void 0);
-    }
-    return lines.join("\n");
-  } finally {
-    await cdp.detach().catch(() => void 0);
-  }
-}
-async function listenerLines(cdp, nodeId, scripts, ancestors) {
-  const lines = [];
-  const describe4 = (l, owner2) => {
-    const file2 = scripts.get(l.scriptId) || "an inline script";
-    const flags = [l.useCapture ? "capture" : "", l.passive ? "passive" : "", l.once ? "once" : ""].filter(Boolean).join(", ");
-    return `  ${l.type} on ${owner2}: ${file2}:${l.lineNumber + 1}:${l.columnNumber + 1}${flags ? ` (${flags})` : ""}`;
-  };
-  const { object: object3 } = await cdp.send("DOM.resolveNode", { nodeId });
-  let objectId = object3.objectId;
-  let owner = "this element";
-  for (let depth = 0; objectId && depth < 20 && lines.length < 40; depth++) {
-    const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId });
-    for (const l of listeners) lines.push(describe4(l, owner));
-    if (!ancestors) break;
-    const { result } = await cdp.send("Runtime.callFunctionOn", {
-      objectId,
-      functionDeclaration: "function () { return this.parentNode; }"
-    });
-    objectId = result.objectId;
-    if (objectId) {
-      const { node: node3 } = await cdp.send("DOM.describeNode", { objectId });
-      owner = node3.nodeName === "#document" ? "the document" : `the parent ${nodeLabel(node3)}`;
-    }
-  }
-  if (ancestors) {
-    const { result } = await cdp.send("Runtime.evaluate", { expression: "window" });
-    if (result.objectId) {
-      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", {
-        objectId: result.objectId
-      });
-      for (const l of listeners) lines.push(describe4(l, "the window"));
-    }
-  }
-  return lines;
-}
 
 // packages/server/src/devtools/storage.ts
 import { createHash as createHash5 } from "node:crypto";
@@ -118348,14 +118776,14 @@ import {
   readFileSync as readFileSync22,
   realpathSync as realpathSync4,
   statSync as statSync8,
-  writeFileSync as writeFileSync15
+  writeFileSync as writeFileSync16
 } from "node:fs";
-import { join as join37, relative as relative14, resolve as resolve11, sep as sep6 } from "node:path";
+import { join as join38, relative as relative14, resolve as resolve11, sep as sep6 } from "node:path";
 
 // packages/server/src/lighthouse/findings.ts
 import { createHash as createHash6 } from "node:crypto";
 import { existsSync as existsSync22, readdirSync as readdirSync12, readFileSync as readFileSync21 } from "node:fs";
-import { join as join35 } from "node:path";
+import { join as join36 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
 function checkLabel(check2) {
   const page = pageKey(check2.url);
@@ -118433,9 +118861,9 @@ function lhId(n) {
   return `LH-${String(n).padStart(3, "0")}`;
 }
 function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "development") {
-  const runs = join35(projectDir, ".walkthrough", "runs");
+  const runs = join36(projectDir, ".walkthrough", "runs");
   const read = (id) => {
-    const file2 = join35(runs, id, "lighthouse.json");
+    const file2 = join36(runs, id, "lighthouse.json");
     if (!existsSync22(file2)) return void 0;
     try {
       return JSON.parse(readFileSync21(file2, "utf8"));
@@ -118484,8 +118912,8 @@ function compareLh(current2, previous) {
 }
 
 // packages/server/src/lighthouse/run.ts
-import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync14 } from "node:fs";
-import { join as join36 } from "node:path";
+import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync15 } from "node:fs";
+import { join as join37 } from "node:path";
 async function auditPage2(url2, options) {
   const lighthouse = await loadLighthouse();
   const { browser, profileDir } = await launchChrome(options.config, { background: true });
@@ -118529,7 +118957,7 @@ async function auditPage2(url2, options) {
     );
   }
   const [html2, json2] = Array.isArray(result.report) ? result.report : [result.report];
-  const dir = join36(options.runDir, "lighthouse");
+  const dir = join37(options.runDir, "lighthouse");
   mkdirSync14(dir, { recursive: true });
   let path14 = "/";
   try {
@@ -118539,11 +118967,11 @@ async function auditPage2(url2, options) {
   const base = `${String(options.index).padStart(2, "0")}-${slug(path14, 40, "home")}`;
   const files = {};
   if (html2) {
-    writeFileSync14(join36(dir, `${base}.report.html`), options.secrets.redact(html2));
+    writeFileSync15(join37(dir, `${base}.report.html`), options.secrets.redact(html2));
     files.html = `lighthouse/${base}.report.html`;
   }
   if (json2) {
-    writeFileSync14(join36(dir, `${base}.report.json`), options.secrets.redact(json2));
+    writeFileSync15(join37(dir, `${base}.report.json`), options.secrets.redact(json2));
     files.json = `lighthouse/${base}.report.json`;
   }
   return {
@@ -118560,11 +118988,11 @@ function scoresLine(scores) {
   return Object.entries(scores).map(([c, s]) => `${CATEGORY_LABELS[c] ?? c} ${s ?? "n/a"}`).join(", ");
 }
 function latestLhRunId(projectDir) {
-  const dir = join37(projectDir, ".walkthrough", "runs");
+  const dir = join38(projectDir, ".walkthrough", "runs");
   if (!existsSync23(dir)) return void 0;
   for (const id of readdirSync13(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync22(join37(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync22(join38(dir, id, "run.json"), "utf8"));
       if (run.lighthouse?.length) return id;
     } catch {
     }
@@ -119035,13 +119463,13 @@ function registerLighthouseTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join37(store.dir, "lighthouse.html"),
-        md: join37(store.dir, "lighthouse.md"),
-        json: join37(store.dir, "lighthouse.json")
+        html: join38(store.dir, "lighthouse.html"),
+        md: join38(store.dir, "lighthouse.md"),
+        json: join38(store.dir, "lighthouse.json")
       };
-      writeFileSync15(files.html, secrets.redact(lhHtml(data)));
-      writeFileSync15(files.md, secrets.redact(lhMarkdown(data)));
-      writeFileSync15(files.json, `${secrets.redact(JSON.stringify(lhJson(data), null, 2))}
+      writeFileSync16(files.html, secrets.redact(lhHtml(data)));
+      writeFileSync16(files.md, secrets.redact(lhMarkdown(data)));
+      writeFileSync16(files.json, `${secrets.redact(JSON.stringify(lhJson(data), null, 2))}
 `);
       writeReports(store, secrets);
       return [
@@ -119419,11 +119847,11 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 }
 
 // packages/server/src/tools/present-tools.ts
-import { basename as basename7, join as join42, relative as relative17 } from "node:path";
+import { basename as basename7, join as join43, relative as relative17 } from "node:path";
 
 // packages/server/src/presentation/handout.ts
-import { mkdirSync as mkdirSync15, writeFileSync as writeFileSync16 } from "node:fs";
-import { join as join38 } from "node:path";
+import { mkdirSync as mkdirSync15, writeFileSync as writeFileSync17 } from "node:fs";
+import { join as join39 } from "node:path";
 function handoutData(session, frames, redact, endedAt = Date.now()) {
   return {
     name: session.info.name,
@@ -119587,13 +120015,13 @@ function markdown(data) {
 `;
 }
 function writeHandout(dir, data) {
-  mkdirSync15(join38(dir, "frames"), { recursive: true });
+  mkdirSync15(join39(dir, "frames"), { recursive: true });
   for (const step of data.steps) {
-    if (step.frame) writeFileSync16(join38(dir, frameFile(step.index)), step.frame);
+    if (step.frame) writeFileSync17(join39(dir, frameFile(step.index)), step.frame);
   }
-  const files = { html: join38(dir, "presentation.html"), md: join38(dir, "presentation.md") };
-  writeFileSync16(files.html, html(data));
-  writeFileSync16(files.md, markdown(data));
+  const files = { html: join39(dir, "presentation.html"), md: join39(dir, "presentation.md") };
+  writeFileSync17(files.html, html(data));
+  writeFileSync17(files.md, markdown(data));
   return files;
 }
 
@@ -120703,7 +121131,7 @@ var LiveStage = class {
 import { randomBytes as randomBytes13 } from "node:crypto";
 
 // packages/server/src/presentation/presenter-source.ts
-import { dirname as dirname12, join as join39 } from "node:path";
+import { dirname as dirname12, join as join40 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 var built2;
 async function presenterSource() {
@@ -120711,7 +121139,7 @@ async function presenterSource() {
   if (built2) return built2;
   const esbuild = await import("esbuild");
   const result = await esbuild.build({
-    entryPoints: [join39(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
+    entryPoints: [join40(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -121197,7 +121625,7 @@ var PresenterWindow = class _PresenterWindow {
 
 // packages/server/src/presentation/recorder.ts
 import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync16 } from "node:fs";
-import { dirname as dirname13, join as join40 } from "node:path";
+import { dirname as dirname13, join as join41 } from "node:path";
 var PresentationRecorder = class {
   constructor(driver, session, config3) {
     this.session = session;
@@ -121259,7 +121687,7 @@ var PresentationRecorder = class {
         framesDir: this.capture.dir,
         samples,
         format: format3,
-        outFile: join40(dir, `presentation.${format3}`)
+        outFile: join41(dir, `presentation.${format3}`)
       });
       let copied;
       if (target2 && out.format === format3) {
@@ -121597,8 +122025,8 @@ var Rebaser = class _Rebaser {
 };
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync24, writeFileSync as writeFileSync17 } from "node:fs";
-import { dirname as dirname14, join as join41, relative as relative16 } from "node:path";
+import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync24, writeFileSync as writeFileSync18 } from "node:fs";
+import { dirname as dirname14, join as join42, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
   normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
@@ -121673,9 +122101,9 @@ async function replayRun(ctx, input3) {
     try {
       const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
       preview = Buffer.from(shot).toString("base64");
-      const file2 = join41(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      const file2 = join42(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
       mkdirSync17(dirname14(file2), { recursive: true });
-      writeFileSync17(file2, shot);
+      writeFileSync18(file2, shot);
       lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
     } catch {
     }
@@ -121703,7 +122131,7 @@ async function replayRun(ctx, input3) {
       { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
     ];
     const lines = [];
-    const videoDir = join41(store.dir, "video");
+    const videoDir = join42(store.dir, "video");
     mkdirSync17(videoDir, { recursive: true });
     const stamp3 = fileStamp("replay");
     let preview;
@@ -121726,13 +122154,13 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync24(join41(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync24(join42(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
         samples,
         format: format3,
-        outFile: join41(videoDir, `${stamp3}.${format3}`),
+        outFile: join42(videoDir, `${stamp3}.${format3}`),
         title: input3.titleCard ?? true ? run.name : void 0,
         width: format3 === "gif" ? config3.video.gifWidth : width
       });
@@ -122158,7 +122586,7 @@ async function saveHandout(o) {
     return ["The presentation did not start, so Walkthrough wrote no handout."];
   }
   const store = RunStore.open(o.projectDir, o.runId);
-  const dir = join42(
+  const dir = join43(
     store.dir,
     "presentations",
     handoutFolder(session.startedAt, session.info.environment.name)
@@ -122312,7 +122740,7 @@ ${statusText(session)}`;
 
 // packages/server/src/tools/project-tools.ts
 import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync25 } from "node:fs";
-import { join as join43 } from "node:path";
+import { join as join44 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -122350,16 +122778,16 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join43(projectDir, ".walkthrough", "runs");
+      const dir = join44(projectDir, ".walkthrough", "runs");
       if (!existsSync24(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync14(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join43(dir, id, "run.json");
+        const file2 = join44(dir, id, "run.json");
         if (!existsSync24(file2)) continue;
         try {
           const run = JSON.parse(readFileSync25(file2, "utf8"));
-          const report = existsSync24(join43(dir, id, "report.html")) ? `report written${existsSync24(join43(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join43(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
+          const report = existsSync24(join44(dir, id, "report.html")) ? `report written${existsSync24(join44(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join44(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
             `- ${id}: "${run.name}"${env2 === "development" ? "" : ` on ${env2}`}, ${run.status}, ${resultLine(run) || "no steps"} (${report})`
@@ -122375,8 +122803,8 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes14 } from "node:crypto";
-import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync26, writeFileSync as writeFileSync18 } from "node:fs";
-import { basename as basename8, dirname as dirname15, extname as extname10, join as join44, relative as relative18 } from "node:path";
+import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync26, writeFileSync as writeFileSync19 } from "node:fs";
+import { basename as basename8, dirname as dirname15, extname as extname10, join as join45, relative as relative18 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -122744,7 +123172,7 @@ function registerQualityTools(server, ctx) {
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
-      const baselinePath = join44(
+      const baselinePath = join45(
         config3.projectDir,
         ".walkthrough",
         "baselines",
@@ -122761,7 +123189,7 @@ function registerQualityTools(server, ctx) {
       if (!existsSync25(baselinePath) || input3.updateBaseline) {
         const existed = existsSync25(baselinePath);
         mkdirSync18(dirname15(baselinePath), { recursive: true });
-        writeFileSync18(baselinePath, capture.png);
+        writeFileSync19(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
 Saved a new baseline: ${baselineRel}` : `result: created
@@ -122774,7 +123202,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join44(dir, `${stamp3}-actual.png`);
+      const actualPath = join45(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -122784,7 +123212,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           `The page matches the baseline ${baselineRel} (${comparison.diffPercent.toFixed(3)}% of pixels changed, limit ${limit}%).`
         );
       } else {
-        writeFileSync18(actualPath, capture.png);
+        writeFileSync19(actualPath, capture.png);
         saved.push(actualPath);
         lines.push("result: mismatch");
         if (!comparison.sameSize) {
@@ -122797,8 +123225,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join44(dir, `${stamp3}-diff.png`);
-          writeFileSync18(diffPath, comparison.diffPng);
+          const diffPath = join45(dir, `${stamp3}-diff.png`);
+          writeFileSync19(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
             `Diff image (changed pixels in red): ${relative18(config3.projectDir, diffPath)}`
@@ -122911,7 +123339,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative18(config3.projectDir, join44(dirname15(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative18(config3.projectDir, join45(dirname15(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -122919,8 +123347,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync26, mkdirSync as mkdirSync19, writeFileSync as writeFileSync19 } from "node:fs";
-import { join as join45, relative as relative19 } from "node:path";
+import { existsSync as existsSync26, mkdirSync as mkdirSync19, writeFileSync as writeFileSync20 } from "node:fs";
+import { join as join46, relative as relative19 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
@@ -124171,9 +124599,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join45(projectDir, ".walkthrough", "exports");
+      const dir = join46(projectDir, ".walkthrough", "exports");
       mkdirSync19(dir, { recursive: true });
-      const file2 = join45(dir, `${name}.mjs`);
+      const file2 = join46(dir, `${name}.mjs`);
       const existed = existsSync26(file2);
       let target2;
       if (environment2) {
@@ -124193,7 +124621,7 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         }))
       });
       const rel = relative19(projectDir, file2);
-      writeFileSync19(file2, result.code.replace("<this file>", rel));
+      writeFileSync20(file2, result.code.replace("<this file>", rel));
       const pkg = installedChrome ? "puppeteer-core" : "puppeteer";
       return [
         `${existed ? "Replaced" : "Wrote"} ${rel} from the run ${store.run.id}.`,
@@ -124236,9 +124664,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync26(join45(store.dir, "report.md")) ? { markdown: relative19(projectDir, join45(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative19(projectDir, join45(store.dir, s)));
-      const files = (step.files ?? []).map((f) => relative19(projectDir, join45(store.dir, f)));
+      const reports = existsSync26(join46(store.dir, "report.md")) ? { markdown: relative19(projectDir, join46(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative19(projectDir, join46(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative19(projectDir, join46(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, {
@@ -124246,15 +124674,15 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         screenshots,
         files
       });
-      const bodyFile = join45(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
-      writeFileSync19(bodyFile, draft.body);
+      const bodyFile = join46(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      writeFileSync20(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
         `Body file: ${relative19(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join45(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join46(projectDir, s)}`).join("\n")}` : " none"}`,
         ...files.length ? [`Other files to attach:
-${files.map((f) => `- ${join45(projectDir, f)}`).join("\n")}`] : [],
+${files.map((f) => `- ${join46(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -124545,7 +124973,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join46(dirname16(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join47(dirname16(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

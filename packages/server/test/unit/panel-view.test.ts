@@ -97,9 +97,11 @@ describe('panel view', () => {
       'pass:Pass',
       'bug:Bug',
       'skip:Skip',
+      'retry:Retry',
       'stop:Stop',
     ]);
     expect(view.buttons.some((b) => b.color)).toBe(false);
+    expect(view).toMatchObject({ shortcuts: true, point: true });
   });
 
   it('hides empty parts and adds a closed "What\'s next"', () => {
@@ -133,7 +135,7 @@ describe('panel view', () => {
     });
     expect(view.sections.map((s) => s.label)).toEqual(['Setup', '', 'Then']);
     expect(view.sections[2]?.collapsed).toBe(false);
-    expect(view.buttons.map((b) => b.label)).toEqual(['Done', 'Bug', 'Stop']);
+    expect(view.buttons.map((b) => b.label)).toEqual(['Done', 'Bug', 'Retry', 'Stop']);
     expect(view.buttons[0]).toMatchObject({ color: '#15803d', textColor: '#ffffff' });
   });
 
@@ -168,7 +170,7 @@ describe('panel view', () => {
       layers: [{ buttons: { bug: { show: false } } }],
     });
     expect(viewText(view)).toBe(
-      'Step: Seed\nWhat I did:\nI ran it.\nWhat you should see:\n- [ ] It printed Done\nAnswers: Pass, Skip, Stop',
+      'Step: Seed\nWhat I did:\nI ran it.\nWhat you should see:\n- [ ] It printed Done\nAnswers: Pass, Skip, Retry, Stop',
     );
   });
 });
@@ -307,5 +309,18 @@ describe('check lists and images in the view', () => {
     expect(validatePlanText('name: I\nsteps:\n  - do: One\n    expectImage: docs/a.gif\n').ok).toBe(
       false,
     );
+  });
+});
+
+describe('shortcuts and pointing', () => {
+  it('turns shortcuts off from the plan, and Point off without Bug', () => {
+    const view = buildStepView({
+      title: 'T',
+      expected: 'x',
+      layers: [{ shortcuts: false, buttons: { bug: { show: false }, retry: { label: 'Again' } } }],
+    });
+    expect(view.shortcuts).toBe(false);
+    expect(view.point).toBe(false);
+    expect(view.buttons.map((b) => b.label)).toEqual(['Pass', 'Skip', 'Again', 'Stop']);
   });
 });

@@ -91,6 +91,26 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .card-modal .modal-head { border-bottom: none; padding: 18px 20px 0; }
 .card-modal .modal-body { padding: 4px 20px 20px; font-size: 15px; }
 .card-modal .subheading { margin: 0 0 10px; font-size: 15px; }
+.progress { margin: 0 0 10px; padding: 0 0 8px; list-style: none; max-height: 180px; overflow-y: auto;
+  border-bottom: 1px solid var(--line); font-size: 12px; }
+.progress[hidden], .point-row[hidden], .point-clear[hidden], .icon[hidden] { display: none; }
+.progress-item { display: flex; gap: 6px; padding: 1px 0; color: var(--muted); }
+.progress-item .mark { width: 14px; flex: none; text-align: center; }
+.progress-item.current { color: var(--fg); font-weight: 700; }
+.progress-item.status-pass .mark { color: var(--pass); }
+.progress-item.status-bug .mark, .progress-item.status-fail .mark, .progress-item.status-blocked .mark { color: var(--bug); }
+.progress-item .card-name { font-style: italic; }
+.point-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; }
+.point-row .point, .point-row .point-clear { padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--btn); color: var(--fg); font-size: 12px; font-weight: 600; cursor: pointer; }
+.point-row .point-clear { padding: 2px 6px; }
+.point-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.point-outline { position: fixed; z-index: 2147483646; pointer-events: none; border: 3px dashed #dc2626;
+  border-radius: 4px; background: rgba(220, 38, 38, 0.08); }
+.point-outline[hidden], .point-banner[hidden] { display: none; }
+.point-banner { position: fixed; z-index: 2147483647; top: 12px; left: 50%; transform: translateX(-50%);
+  pointer-events: none; padding: 6px 14px; border-radius: 6px; background: #dc2626; color: #ffffff;
+  font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
 .ref-big { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; margin: 0 auto; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }

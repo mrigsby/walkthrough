@@ -57,6 +57,15 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     color?: string;
     snippets: Record<string, { code: string; help?: Block[] }>;
     image?: boolean;
+    shortcuts?: boolean;
+    point?: boolean;
+  }
+  interface ProgressItem {
+    index: number;
+    title: string;
+    status: string;
+    card?: boolean;
+    current?: boolean;
   }
   interface Question {
     id: string;
@@ -65,6 +74,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     total?: number;
     view: View;
     ui: Record<string, boolean>;
+    point?: string | null;
   }
   interface Badge {
     label: string;
@@ -117,11 +127,16 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const brand = el('span', 'brand', 'Walkthrough');
   const envBadge = el('span', 'env');
   const stepBadge = el('span', 'step');
+  const progressButton = el('button', 'icon progress-toggle', '\u2630');
+  progressButton.title = 'Steps of the run';
+  progressButton.hidden = true;
   const moveButton = el('button', 'icon', '⇄');
   moveButton.title = 'Move to another corner';
   const collapseButton = el('button', 'icon', '\u2212');
   collapseButton.title = 'Collapse';
-  header.append(brand, envBadge, stepBadge, moveButton, collapseButton);
+  header.append(brand, envBadge, stepBadge, progressButton, moveButton, collapseButton);
+  const progressBox = el('ol', 'progress');
+  progressBox.hidden = true;
 
   const body = el('div', 'body');
   const status = el('p', 'status');
@@ -133,10 +148,18 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const sections = el('div', 'sections');
   const notes = el('textarea', 'notes');
   notes.rows = 3;
+  // Point at the element of a bug.
+  const pointRow = el('div', 'point-row');
+  const pointButton = el('button', 'point', 'Point at the problem');
+  pointButton.title = 'Click the element on the page that has the problem';
+  const pointLabel = el('span', 'point-label');
+  const pointClear = el('button', 'point-clear', '\u00D7');
+  pointClear.title = 'Forget the element';
+  pointRow.append(pointButton, pointLabel, pointClear);
   const error = el('p', 'error');
   const buttons = el('div', 'buttons');
   const questionBox = el('div', 'question');
-  questionBox.append(title, subtitle, cardNote, sections, notes, error, buttons);
+  questionBox.append(title, subtitle, cardNote, sections, notes, pointRow, error, buttons);
 
   // The recording view.
   const recordBox = el('div', 'recording');
@@ -151,7 +174,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const stopRecordButton = el('button', 'rec-stop', 'Stop recording');
   recordButtons.append(expectButton, secretButton, stopRecordButton);
   recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
-  body.append(status, questionBox, recordBox);
+  body.append(progressBox, status, questionBox, recordBox);
   card.append(header, body);
 
   // A window in the middle of the page, for snippet help and big images.
@@ -180,7 +203,25 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   cardBox.append(cardHead, cardBody);
   cardBackdrop.append(cardBox);
   cardBackdrop.hidden = true;
-  root.append(pulse, pulseLabel, annotation, card, cardBackdrop, backdrop);
+  // Point mode: an outline on the element under the pointer, and a note at the top.
+  const pointOutline = el('div', 'point-outline');
+  const pointBanner = el(
+    'div',
+    'point-banner',
+    'Click the element that has the problem. Esc cancels.',
+  );
+  pointOutline.hidden = true;
+  pointBanner.hidden = true;
+  root.append(
+    pulse,
+    pulseLabel,
+    annotation,
+    card,
+    cardBackdrop,
+    backdrop,
+    pointOutline,
+    pointBanner,
+  );
 
   // ---------- State ----------
   let question: Question | null = null;
@@ -219,9 +260,9 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const placeParts = (inModal: boolean): void => {
     if (inModal) {
       cardTitle.textContent = title.textContent;
-      cardBody.append(subtitle, sections, notes, error, buttons);
+      cardBody.append(subtitle, sections, notes, pointRow, error, buttons);
     } else {
-      questionBox.append(subtitle, sections, notes, error, buttons);
+      questionBox.append(subtitle, sections, notes, pointRow, error, buttons);
     }
     cardNote.hidden = !inModal;
     cardBackdrop.hidden = !inModal;
@@ -465,9 +506,13 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       parts.splice(at >= 0 ? at + 1 : parts.length, 0, imageBox);
     }
     sections.replaceChildren(...parts);
+    stopPicking();
+    const keys = view.kind !== 'confirm' && view.shortcuts !== false;
     buttons.replaceChildren(
       ...view.buttons.map((b) => {
         const button = el('button', b.result, b.label);
+        const key = Object.keys(KEYS).find((k) => KEYS[k] === b.result);
+        if (keys && key) button.title = `${b.label} (${MOD}+Shift+${key.slice(3)})`;
         if (b.color) {
           button.style.background = b.color;
           button.style.borderColor = b.color;
@@ -482,6 +527,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     error.hidden = !view.notes;
     const bug = view.buttons.find((b) => b.result === 'bug');
     notes.placeholder = bug ? `Notes (required for ${bug.label})` : 'Notes';
+    pointRow.hidden = !view.point;
     placeParts(view.kind === 'card' && view.size === 'modal');
   };
 
@@ -516,10 +562,13 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
           ? `Step ${question.step}${question.total ? ` of ${question.total}` : ''}`
           : 'Check';
       drawQuestion(question);
+      pointLabel.textContent = question.point ? `Pointed at: ${question.point}` : '';
+      pointClear.hidden = !question.point;
       questionBox.hidden = false;
       status.hidden = true;
     } else {
       if (drawnId) placeParts(false);
+      stopPicking();
       drawnId = '';
       stepBadge.textContent = '';
       questionBox.hidden = true;
@@ -557,6 +606,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       return;
     }
     closeModal();
+    stopPicking();
     send({ type: 'answer', id: question.id, nonce: question.nonce, result, note });
     const confirmed = question.view.kind === 'confirm';
     question = null;
@@ -597,6 +647,162 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   });
 
   onTrusted(modalClose, closeModal);
+
+  // ---------- Keys ----------
+  // Alt+Shift and a letter answers. Option on a Mac. They work only for buttons that show.
+  const KEYS: Record<string, string> = {
+    KeyP: 'pass',
+    KeyB: 'bug',
+    KeyS: 'skip',
+    KeyR: 'retry',
+    KeyX: 'stop',
+  };
+  const MOD = /Mac/i.test(navigator.platform) ? 'Option' : 'Alt';
+  // This listener comes before page scripts, so the app never sees these keys.
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!event.isTrusted || !question || recording) return;
+      if (picking && event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        stopPicking();
+        return;
+      }
+      const view = question.view;
+      if (view.kind === 'confirm' || view.shortcuts === false) return;
+      if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+      const result = KEYS[event.code];
+      if (!result || !view.buttons.some((b) => b.result === result)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      answer(result);
+    },
+    true,
+  );
+
+  // ---------- Progress list ----------
+  let progress: ProgressItem[] | null = null;
+  let progressOpen = false;
+  const MARKS: Record<string, string> = {
+    pass: '\u2713',
+    bug: '\u2717',
+    fail: '\u2717',
+    blocked: '!',
+    skip: '\u21B7',
+    stop: '\u25A0',
+    pending: '\u25CB',
+  };
+  const drawProgress = (): void => {
+    progressButton.hidden = !progress;
+    progressBox.hidden = !progress || !progressOpen;
+    progressButton.setAttribute('aria-expanded', String(progressOpen));
+    if (!progress) return;
+    progressBox.replaceChildren(
+      ...progress.map((item) => {
+        const li = el('li', `progress-item status-${item.status}${item.current ? ' current' : ''}`);
+        li.append(
+          el('span', 'mark', item.current ? '\u25B6' : (MARKS[item.status] ?? '')),
+          el('span', item.card ? 'name card-name' : 'name', `${item.index}. ${item.title}`),
+        );
+        return li;
+      }),
+    );
+  };
+  onTrusted(progressButton, () => {
+    progressOpen = !progressOpen;
+    send({ type: 'progress-open', open: progressOpen });
+    drawProgress();
+  });
+
+  // ---------- Point at the problem ----------
+  let picking = false;
+  const underPointer = (x: number, y: number): Element | null => {
+    const node = document.elementFromPoint(x, y);
+    return node && node !== host && !host.contains(node) ? node : null;
+  };
+  function stopPicking(): void {
+    picking = false;
+    pointOutline.hidden = true;
+    pointBanner.hidden = true;
+    pointButton.textContent = 'Point at the problem';
+  }
+  onTrusted(pointButton, () => {
+    if (picking) {
+      stopPicking();
+      return;
+    }
+    picking = true;
+    pointBanner.hidden = false;
+    pointButton.textContent = 'Cancel pointing';
+  });
+  onTrusted(pointClear, () => {
+    if (!question) return;
+    send({ type: 'point', id: question.id, nonce: question.nonce, clear: true });
+    question.point = null;
+    pointLabel.textContent = '';
+    pointClear.hidden = true;
+  });
+  window.addEventListener(
+    'mousemove',
+    (event) => {
+      if (!picking) return;
+      const node = underPointer(event.clientX, event.clientY);
+      if (!node) {
+        pointOutline.hidden = true;
+        return;
+      }
+      const r = node.getBoundingClientRect();
+      Object.assign(pointOutline.style, {
+        left: `${r.left - 3}px`,
+        top: `${r.top - 3}px`,
+        width: `${r.width + 6}px`,
+        height: `${r.height + 6}px`,
+      });
+      pointOutline.hidden = false;
+    },
+    true,
+  );
+  // While pointing, the app gets none of these events. The panel still gets its own.
+  for (const type of [
+    'pointerdown',
+    'mousedown',
+    'pointerup',
+    'mouseup',
+    'click',
+    'dblclick',
+    'auxclick',
+    'contextmenu',
+  ]) {
+    window.addEventListener(
+      type,
+      (event) => {
+        if (!picking || !event.isTrusted || inPanel(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (type !== 'click' || !question) return;
+        const mouse = event as MouseEvent;
+        const node = underPointer(mouse.clientX, mouse.clientY);
+        if (!node) return;
+        const target = targetOf(node);
+        const name = target.role ? `${target.role} "${target.name}"` : label(node);
+        send({
+          type: 'point',
+          id: question.id,
+          nonce: question.nonce,
+          x: mouse.clientX,
+          y: mouse.clientY,
+          label: name,
+          selector: target.selector ?? '',
+        });
+        question.point = name;
+        pointLabel.textContent = `Pointed at: ${name}`;
+        pointClear.hidden = false;
+        stopPicking();
+      },
+      true,
+    );
+  }
 
   // Keys typed in the panel must not reach the app's shortcuts.
   for (const type of ['keydown', 'keyup', 'keypress', 'input', 'beforeinput', 'paste']) {
@@ -677,6 +883,9 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         }
         question = next;
         env = (msg.env as Badge | null) ?? null;
+        progress = (msg.progress as ProgressItem[] | null) ?? null;
+        progressOpen = msg.progressOpen === true;
+        drawProgress();
         recording = (msg.recording as { count: number; last: string } | null) ?? null;
         if (!recording) addingExpect = false;
         setStatus((msg.status as string) ?? 'The agent is working.');
@@ -689,6 +898,8 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         void showImage(msg.id as string, msg.mime as string, msg.data as string);
         break;
       case 'hide':
+        pointOutline.style.visibility = msg.hidden ? 'hidden' : '';
+        pointBanner.style.visibility = msg.hidden ? 'hidden' : '';
         backdrop.style.visibility = msg.hidden ? 'hidden' : '';
         cardBackdrop.style.visibility = msg.hidden ? 'hidden' : '';
         card.style.visibility = msg.hidden ? 'hidden' : '';

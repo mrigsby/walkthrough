@@ -26,6 +26,16 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
     out.push(`- **Checklist:** ${ticked} of ${step.checklist.length} ticked`);
     for (const item of step.checklist) out.push(`  - [${item.checked ? 'x' : ' '}] ${item.text}`);
   }
+  if (step.pointed) {
+    const where = step.pointed.selector ? ` (\`${step.pointed.selector}\`)` : '';
+    out.push(`- **Pointed at:** ${step.pointed.label}${where}`);
+  }
+  if (step.tries?.length) {
+    out.push(`- **Tries:** ${step.tries.length + 1}. The developer asked to do the step again:`);
+    step.tries.forEach((t, i) => {
+      out.push(`  - Try ${i + 1}${t.notes ? `: ${t.notes}` : ''}`);
+    });
+  }
   if (step.mocked?.length)
     out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join('; ')}`);
   const a11y = stepAccessibility(run, step);

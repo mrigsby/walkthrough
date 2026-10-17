@@ -44,7 +44,7 @@ import {
   savePlan,
   validatePlanText,
 } from '../run/plans.js';
-import { nextStepHint, recordResult } from '../run/record.js';
+import { nextStepHint, pushProgress, recordResult } from '../run/record.js';
 import { needsConfirm, RunStore } from '../run/run-store.js';
 import { chooseFormat } from '../video/formats.js';
 import { startRing, startVideo, stopRing, stopVideo } from '../video/recording.js';
@@ -485,6 +485,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           show: (text) => ctx.display(text),
         });
         const lh = ctx.run.run.lhPlan;
+        await pushProgress(ctx);
 
         // A whole-run video gives the bug clips. Otherwise a buffer keeps the last minutes.
         await stopRing(ctx);
@@ -681,6 +682,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           await stopRing(ctx);
           store.finish(summary);
           ctx.run = undefined;
+          await ctx.driver?.panel?.setProgress(null);
         } else if (summary) {
           store.run.summary = summary;
           store.save();

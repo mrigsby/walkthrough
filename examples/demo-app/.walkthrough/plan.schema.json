@@ -728,6 +728,27 @@
               },
               "additionalProperties": false
             },
+            "retry": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "description": "The text on the button.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "color": {
+                  "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                },
+                "show": {
+                  "description": "false hides the button.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
             "stop": {
               "type": "object",
               "properties": {
@@ -771,6 +792,14 @@
             "top-left",
             "top-right"
           ]
+        },
+        "progress": {
+          "description": "A list of all steps and their results. A button in the panel header shows it. Default: true.",
+          "type": "boolean"
+        },
+        "shortcuts": {
+          "description": "Answer with Alt+Shift+P, B, S, R, and X (Option+Shift on a Mac). Default: true.",
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -1764,6 +1793,27 @@
                     "additionalProperties": false
                   },
                   "skip": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "description": "The text on the button.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      },
+                      "color": {
+                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      },
+                      "show": {
+                        "description": "false hides the button.",
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "retry": {
                     "type": "object",
                     "properties": {
                       "label": {

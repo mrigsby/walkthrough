@@ -1,11 +1,12 @@
-import { readFileSync } from 'node:fs';
-import { extname, relative } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { extname, join, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { Driver, Tab } from '../browser/driver.js';
 import type { Context } from '../context.js';
+import { inspectElement } from '../devtools/inspect.js';
 import { ToolError } from '../errors.js';
 import { elementRect, withCleanPage } from '../evidence/annotate.js';
 import { networkDir, writeHar } from '../evidence/har.js';
@@ -14,12 +15,13 @@ import type { NetEntry } from '../evidence/network.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { checkPanelImage } from '../guards/paths.js';
 import { untrusted } from '../guards/untrusted.js';
-import type { Answer, Question } from '../panel/controller.js';
+import type { Answer, PointedElement, Question, Rect } from '../panel/controller.js';
 import { type Snippets, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
 import { buildStepView, type PanelLayer, type SnippetText, viewText } from '../panel/view.js';
 import { isProblem } from '../report/common.js';
 import { stepTitle } from '../run/plan-schema.js';
-import { nextStepHint, recordResult } from '../run/record.js';
+import { nextStepHint, recordResult, recordTry } from '../run/record.js';
+import { slug } from '../text.js';
 import { bugClip, liveCaptures } from '../video/recording.js';
 import { type Content, runTool, textResult } from './util.js';
 
@@ -40,11 +42,18 @@ function defaultAskTimeoutSec(clientName?: string): number {
   return clientName === 'claude-code' ? 300 : 50;
 }
 
-// Saves a screenshot with a red box around the element of the last action.
-export async function bugScreenshot(ctx: Context, driver: Driver, tab: Tab, stepLabel: string) {
+// Saves a screenshot with a red box around the element of the last action,
+// or around the element that the developer pointed at.
+export async function bugScreenshot(
+  ctx: Context,
+  driver: Driver,
+  tab: Tab,
+  stepLabel: string,
+  pointed?: Rect,
+) {
   const config = await ctx.config();
   const last = driver.lastTarget?.tabId === tab.id ? driver.lastTarget : undefined;
-  const rect = last ? await elementRect(last.handle) : undefined;
+  const rect = pointed ?? (last ? await elementRect(last.handle) : undefined);
   return withCleanPage(driver, tab, { annotate: rect }, () =>
     takeScreenshot(tab, ctx.evidenceDir(config.projectDir), config.projectDir, {
       label: `bug-${stepLabel}`,
@@ -67,6 +76,56 @@ export async function bugHar(
     await ctx.secrets(),
   );
   return relative(config.projectDir, file);
+}
+
+// Where the pointed element is now. The page may have moved it since the click.
+async function pointedRect(tab: Tab, point: PointedElement): Promise<Rect | undefined> {
+  if (point.backendNodeId) {
+    const cdp = await tab.page.createCDPSession();
+    try {
+      const { model } = await cdp.send('DOM.getBoxModel', { backendNodeId: point.backendNodeId });
+      const xs = [0, 2, 4, 6].map((i) => model.border[i] ?? 0);
+      const ys = [1, 3, 5, 7].map((i) => model.border[i] ?? 0);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+    } catch {
+      // The element is gone. Try the selector.
+    } finally {
+      await cdp.detach().catch(() => undefined);
+    }
+  }
+  if (point.selector) {
+    const handle = await tab.page.$(point.selector).catch(() => null);
+    if (handle) return elementRect(handle);
+  }
+  return undefined;
+}
+
+// Saves the styles and CSS rules of the pointed element. Returns the file from the project.
+async function pointedDetails(
+  ctx: Context,
+  tab: Tab,
+  point: PointedElement,
+  stepLabel: string,
+): Promise<string | undefined> {
+  if (!point.backendNodeId) return undefined;
+  try {
+    const text = await inspectElement(
+      tab,
+      { backendNodeId: point.backendNodeId },
+      { rules: true, listeners: false, ancestors: false },
+    );
+    const config = await ctx.config();
+    const file = join(
+      ctx.evidenceDir(config.projectDir),
+      `pointed-${slug(stepLabel, 40, 'step')}.txt`,
+    );
+    writeFileSync(file, (await ctx.secrets()).redact(text));
+    return relative(config.projectDir, file);
+  } catch {
+    return undefined;
+  }
 }
 
 // Sends "still waiting" progress, if the client asked for progress.
@@ -394,6 +453,12 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         if (!isCard) driver.endStep(label);
 
         const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || '(none)'}`];
+        const point = question.point;
+        if (point) {
+          lines.push(
+            `The developer pointed at: ${point.label}${point.selector ? ` (selector: ${point.selector})` : ''}.`,
+          );
+        }
         if (answer.checklist?.length) {
           const open = answer.checklist.filter((item) => !item.checked);
           lines.push(
@@ -408,6 +473,23 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           logs: formatLogs(stepLogs),
         };
 
+        if (answer.result === 'retry') {
+          // The developer wants the step again. The step stays open.
+          const tried = recordTry(
+            ctx,
+            { id: question.stepId, index: question.step, title: question.title },
+            { notes: answer.note, logs: stepLogs },
+          );
+          ctx.stepAnswers.push(record);
+          lines.push(
+            'The developer asked you to do this step again. Do it again, then call ask_developer again with the same stepId.',
+          );
+          if (tried)
+            lines.push(
+              `Saved try ${tried.tries} of step ${tried.step.index}. The step is still open.`,
+            );
+          return textResult(lines.join('\n'), extraContent);
+        }
         if (answer.result === 'bug' && isCard) {
           lines.push('The developer reported a bug on a card. Ask what is wrong.');
         } else if (answer.result === 'bug') {
@@ -417,6 +499,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
               driver,
               tab,
               question.stepId ?? String(question.step ?? 'step'),
+              point ? await pointedRect(tab, point) : undefined,
             );
             record.screenshot = shot.relativePath;
             lines.push(`Screenshot: ${shot.relativePath}`);
@@ -428,6 +511,13 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           if (har) {
             record.files = [har];
             lines.push(`Network requests (HAR): ${har}`);
+          }
+          const details = point
+            ? await pointedDetails(ctx, tab, point, question.stepId ?? question.title)
+            : undefined;
+          if (details) {
+            record.files = [...(record.files ?? []), details];
+            lines.push(`Styles and CSS rules of the pointed element: ${details}`);
           }
           const clip = await clipLine(ctx, question.stepId ?? question.title);
           if (clip) {
@@ -471,6 +561,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             logs: isCard ? undefined : stepLogs,
             checklist: answer.checklist,
             noActions: isCard,
+            ...(point ? { pointed: { label: point.label, selector: point.selector } } : {}),
           },
         );
         if (recorded)

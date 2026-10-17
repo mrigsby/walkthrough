@@ -5,6 +5,14 @@ import { formatLogs } from '../evidence/logs.js';
 import { setRunCaption } from '../video/recording.js';
 import type { RunStep, StepStatus } from './run-store.js';
 
+export interface ProgressItem {
+  index: number;
+  title: string;
+  status: StepStatus;
+  card?: boolean;
+  current?: boolean;
+}
+
 export interface StepRef {
   id?: string;
   index?: number;
@@ -28,6 +36,70 @@ export interface StepResult {
   checklist?: Array<{ text: string; checked: boolean }>;
   // A card: the actions since the last step stay for the next step.
   noActions?: boolean;
+  // The element that the developer pointed at.
+  pointed?: { label: string; selector?: string };
+}
+
+// The steps of the run for the panel's progress list. Undefined hides the list.
+export function progressItems(ctx: Context): ProgressItem[] | undefined {
+  const store = ctx.run;
+  if (store?.run.status !== 'running' || !store.showProgress) return undefined;
+  const current = store.nextPending()?.id;
+  return store.run.steps.map((s) => ({
+    index: s.index,
+    title: s.title,
+    status: s.status,
+    ...(s.kind ? { card: true } : {}),
+    ...(s.id === current ? { current: true } : {}),
+  }));
+}
+
+// Shows the progress list in the panel, or hides it.
+export async function pushProgress(ctx: Context): Promise<void> {
+  await ctx.driver?.panel?.setProgress(progressItems(ctx) ?? null);
+}
+
+// Saves a try that the developer wants again. The step stays open, and its actions so far
+// go with the try, so a replay does the step once.
+export function recordTry(
+  ctx: Context,
+  ref: StepRef,
+  input: { notes?: string; logs?: LogEntry[] },
+): { step: RunStep; tries: number } | undefined {
+  const store = ctx.run;
+  if (store?.run.status !== 'running') return undefined;
+  const step = store.step(ref);
+  const actions = ctx.actionLog
+    .slice(ctx.actionCursor)
+    .map(({ tab, action, label, selector, value, files, frameUrl, url }) => ({
+      tab,
+      action,
+      label,
+      selector,
+      value,
+      files,
+      frameUrl,
+      url,
+    }));
+  ctx.actionCursor = ctx.actionLog.length;
+  step.tries = [
+    ...(step.tries ?? []),
+    {
+      at: new Date().toISOString(),
+      ...(input.notes ? { notes: input.notes } : {}),
+      actions: [...step.actions, ...actions],
+      ...(input.logs?.length
+        ? {
+            logs: formatLogs(input.logs),
+            errorCount: input.logs.filter((e) => e.level === 'error').length,
+          }
+        : {}),
+    },
+  ];
+  step.actions = [];
+  store.save();
+  void pushProgress(ctx);
+  return { step, tries: step.tries.length };
 }
 
 // Saves a step result in the active run, with the actions since the last result.
@@ -46,6 +118,7 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
     step.screenshots.push(relative(store.dir, full));
   }
   if (result.checklist?.length) step.checklist = result.checklist;
+  if (result.pointed) step.pointed = result.pointed;
   if (result.mocked?.length) step.mocked = [...new Set([...(step.mocked ?? []), ...result.mocked])];
   for (const file of result.files ?? []) {
     const full = isAbsolute(file) ? file : join(store.projectDir, file);
@@ -59,6 +132,7 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
     step.at = new Date().toISOString();
     store.save();
     setRunCaption(ctx, store);
+    void pushProgress(ctx);
     return step;
   }
   const actions = ctx.actionLog
@@ -79,6 +153,7 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
   store.save();
   // Videos of the run show the next step's caption.
   setRunCaption(ctx, store);
+  void pushProgress(ctx);
   return step;
 }
 

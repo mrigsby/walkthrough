@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { log } from '../log.js';
 import type { Recorder } from '../record/recorder.js';
+import type { ProgressItem } from '../run/record.js';
 import { PanelBridge, type PanelMessage } from './bridge.js';
 import {
   type AnswerResult,
@@ -33,6 +34,15 @@ export interface Question {
   ui?: Record<string, boolean>;
   // A reference image for the panel. It goes in a message of its own.
   image?: { mime: string; data: string };
+  // The element that the developer pointed at, for a bug.
+  point?: PointedElement;
+}
+
+export interface PointedElement {
+  label: string;
+  selector?: string;
+  // The node that the browser found at that place, while the page still has it.
+  backendNodeId?: number;
 }
 
 export interface EnvironmentBadge {
@@ -100,14 +110,20 @@ export class DeveloperPanel {
   private env: EnvironmentBadge | null = null;
   // The question whose image each tab has now. A page load clears it.
   private imageSent = new Map<string, string>();
+  private pages = new Map<string, Page>();
+  // The steps of the run, for the progress list. Null hides it.
+  private progress: ProgressItem[] | null = null;
+  private progressOpen = false;
 
   async attach(page: Page, tabId: string): Promise<void> {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
     if (bridge) this.bridges.set(tabId, bridge);
+    this.pages.set(tabId, page);
   }
 
   detach(tabId: string): void {
     this.bridges.delete(tabId);
+    this.pages.delete(tabId);
     this.imageSent.delete(tabId);
     this.hiddenIn.delete(tabId);
     this.suppressed.delete(tabId);
@@ -147,6 +163,8 @@ export class DeveloperPanel {
         ? { count: this.recorder.steps.length, last: this.recorder.lastLabel }
         : null,
       env: this.env,
+      progress: this.progress,
+      progressOpen: this.progressOpen,
       question: q
         ? {
             id: q.id,
@@ -155,6 +173,7 @@ export class DeveloperPanel {
             total: q.total,
             view: questionView(q),
             ui: q.ui ?? {},
+            point: q.point?.label ?? null,
           }
         : null,
     };
@@ -188,6 +207,14 @@ export class DeveloperPanel {
     }
     if (msg.type === 'ui') {
       this.onUi(tabId, msg);
+      return;
+    }
+    if (msg.type === 'point') {
+      await this.onPoint(tabId, msg);
+      return;
+    }
+    if (msg.type === 'progress-open') {
+      this.progressOpen = msg.open === true;
       return;
     }
     if (msg.type === 'moved' && typeof msg.corner === 'string') {
@@ -241,6 +268,41 @@ export class DeveloperPanel {
     if (!(msg.key in ui) && Object.keys(ui).length >= MAX_UI_KEYS) return;
     ui[msg.key] = msg.value;
     q.ui = ui;
+  }
+
+  // The developer clicked the element of a bug. The panel sends its place and a name.
+  // The browser finds the element at that place. Page scripts cannot change that.
+  private async onPoint(tabId: string, msg: PanelMessage): Promise<void> {
+    const q = this.question;
+    if (!q || q.tabId !== tabId || msg.id !== q.id || msg.nonce !== q.nonce) return;
+    if (!questionView(q).point || this.recorder) return;
+    if (msg.clear === true) {
+      q.point = undefined;
+      return;
+    }
+    const { x, y, label, selector } = msg;
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof label !== 'string') return;
+    const point: PointedElement = {
+      label: label.slice(0, 200),
+      ...(typeof selector === 'string' && selector ? { selector: selector.slice(0, 500) } : {}),
+    };
+    const page = this.pages.get(tabId);
+    const cdp = await page?.createCDPSession().catch(() => undefined);
+    try {
+      await cdp?.send('DOM.getDocument', { depth: 0 });
+      const found = await cdp?.send('DOM.getNodeForLocation', {
+        x: Math.round(x),
+        y: Math.round(y),
+        includeUserAgentShadowDOM: false,
+        ignorePointerEventsNone: true,
+      });
+      if (found) point.backendNodeId = found.backendNodeId;
+    } catch {
+      // The page changed. The selector still names the element.
+    } finally {
+      await cdp?.detach().catch(() => undefined);
+    }
+    q.point = point;
   }
 
   private finish(outcome: WaitOutcome): void {
@@ -379,6 +441,12 @@ export class DeveloperPanel {
     this.finishRecording('stopped');
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+
+  // The progress list in every tab. Null hides it.
+  async setProgress(items: ProgressItem[] | null): Promise<void> {
+    this.progress = items;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
 
   // Moves the panel to a corner in every tab, like a plan asks.

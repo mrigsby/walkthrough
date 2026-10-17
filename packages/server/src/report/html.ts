@@ -55,6 +55,17 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
       '</ul></dd>',
     );
   }
+  if (step.pointed) {
+    const where = step.pointed.selector ? ` <code>${esc(step.pointed.selector)}</code>` : '';
+    parts.push(`<dt>Pointed at</dt><dd>${esc(step.pointed.label)}${where}</dd>`);
+  }
+  if (step.tries?.length) {
+    parts.push(
+      `<dt>Tries</dt><dd>${step.tries.length + 1}. The developer asked to do the step again:<ul>`,
+      ...step.tries.map((t, i) => `<li>Try ${i + 1}${t.notes ? `: ${esc(t.notes)}` : ''}</li>`),
+      '</ul></dd>',
+    );
+  }
   if (step.mocked?.length) {
     parts.push(
       `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc(step.mocked.join('; '))}</dd>`,

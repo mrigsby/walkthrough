@@ -50,6 +50,8 @@ The developer can choose the mode when they ask for the run. Pass it to `run_sta
    - A `Checklist:` line names the boxes that the developer did not tick. Tell the developer about them in your summary.
    - `status: bug`: Walkthrough saved a screenshot and the errors from this step. Tell the developer the screenshot path and the main error. Ask whether to continue.
    - `status: skip`: continue with the next step.
+   - `status: retry`: the developer wants the step again. Do the step again, then call `ask_developer` again with the same `stepId`. Walkthrough keeps the earlier try in the report.
+   - A "The developer pointed at" line names the element with the problem. Use it in your summary and in a bug report.
    - `status: stop`: stop. Give a short summary of the steps and results.
    - `status: waiting`: the developer has not answered yet. Call `ask_developer` with `resume: true`. Do not do the next step.
    - `status: use_chat`: the panel is not available. Ask the same question in chat and wait for the reply.

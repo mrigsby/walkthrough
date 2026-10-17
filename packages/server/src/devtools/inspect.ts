@@ -90,10 +90,21 @@ async function findNode(cdp: CDPSession, handle: ElementHandle<Element>): Promis
   }
 }
 
+// A node that the browser found, like the element the developer pointed at.
+async function nodeFromBackend(cdp: CDPSession, backendNodeId: number): Promise<number> {
+  await cdp.send('DOM.getDocument', { depth: -1, pierce: true });
+  const { nodeIds } = await cdp.send('DOM.pushNodesByBackendIdsToFrontend', {
+    backendNodeIds: [backendNodeId],
+  });
+  const nodeId = nodeIds[0];
+  if (!nodeId) throw new ToolError('The element is not on the page anymore.', 'not_found');
+  return nodeId;
+}
+
 // Styles, box, CSS rules with file and line, and event listeners with file and line.
 export async function inspectElement(
   tab: Tab,
-  handle: ElementHandle<Element>,
+  target: ElementHandle<Element> | { backendNodeId: number },
   options: InspectOptions,
 ): Promise<string> {
   const cdp = await tab.page.createCDPSession();
@@ -109,7 +120,10 @@ export async function inspectElement(
     await cdp.send('DOM.enable');
     await cdp.send('CSS.enable');
     if (options.listeners) await cdp.send('Debugger.enable');
-    const nodeId = await findNode(cdp, handle);
+    const nodeId =
+      'backendNodeId' in target && typeof target.backendNodeId === 'number'
+        ? await nodeFromBackend(cdp, target.backendNodeId)
+        : await findNode(cdp, target as ElementHandle<Element>);
     const { node } = await cdp.send('DOM.describeNode', { nodeId });
     const lines = [`Element: ${nodeLabel(node)} (tab ${tab.id})`];
 

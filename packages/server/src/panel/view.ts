@@ -3,7 +3,7 @@ import { type Block, blocksText, copyRefs, parseRichText } from './rich-text.js'
 
 // What the panel shows for one question. The server builds it, and the panel only draws it.
 
-export type AnswerResult = 'pass' | 'bug' | 'skip' | 'stop';
+export type AnswerResult = 'pass' | 'bug' | 'skip' | 'retry' | 'stop';
 export type SectionKey = 'did' | 'expect' | 'next' | 'content';
 
 export interface ViewSection {
@@ -37,6 +37,10 @@ export interface PanelView {
   color?: string;
   // Snippets that the text uses with {{copy:name}}.
   snippets: Record<string, ViewSnippet>;
+  // Alt+Shift keys answer the question.
+  shortcuts?: boolean;
+  // A Point button, so the developer can show the element of a bug.
+  point?: boolean;
   // A reference image goes under "What you should see". Its bytes come in a message of their own.
   image?: boolean;
 }
@@ -59,16 +63,17 @@ export const DEFAULT_LABELS: Record<SectionKey, string> = {
   content: '',
 };
 
-const BUTTON_ORDER: AnswerResult[] = ['pass', 'bug', 'skip', 'stop'];
+const BUTTON_ORDER: AnswerResult[] = ['pass', 'bug', 'skip', 'retry', 'stop'];
 const DEFAULT_BUTTON_LABELS: Record<AnswerResult, string> = {
   pass: 'Pass',
   bug: 'Bug',
   skip: 'Skip',
+  retry: 'Retry',
   stop: 'Stop',
 };
 
 // Settings from the plan, the step, and the agent. Later layers win.
-export type PanelLayer = StepPanel & { next?: { collapsed?: boolean } };
+export type PanelLayer = StepPanel & { next?: { collapsed?: boolean }; shortcuts?: boolean };
 
 interface ButtonSetting {
   label?: string;
@@ -118,7 +123,7 @@ export interface StepViewInput {
 }
 
 // Buttons that a card shows only when the plan says show: true.
-const CARD_HIDDEN: AnswerResult[] = ['bug', 'skip'];
+const CARD_HIDDEN: AnswerResult[] = ['bug', 'skip', 'retry'];
 
 // The snippets that the sections use, and the ones that their help texts use.
 function usedSnippets(
@@ -186,6 +191,8 @@ export function buildStepView(input: StepViewInput): PanelView {
     buttons,
     // Bug needs notes. A card has no notes box unless it shows Bug.
     notes: !card || buttons.some((b) => b.result === 'bug'),
+    shortcuts: merged(layers, 'shortcuts').at(-1) ?? true,
+    point: !card && buttons.some((b) => b.result === 'bug'),
     snippets: usedSnippets(
       card ? [card.content, input.next] : [input.didWhat, input.expected, input.next],
       input.snippets ?? {},

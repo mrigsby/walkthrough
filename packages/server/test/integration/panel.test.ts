@@ -462,6 +462,97 @@ steps:
   }, 30_000);
 });
 
+describe('retry, keys, progress, and pointing', () => {
+  it('keeps a try that the developer wants again, and lists the steps', async () => {
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'again.yaml'),
+      'name: Again\nmode: interactive\nsteps:\n  - id: look\n    do: Look at the shop\n    expect: Three products.\n  - id: cart\n    do: Open the cart\n',
+    );
+    const start = await mcp.call('run_start', { plan: 'again' });
+    expect(start.isError, start.text).toBe(false);
+
+    const first = mcp.call('ask_developer', { stepId: 'look', didWhat: 'I opened the shop.' });
+    await waitForPanel(page, 'Three products.');
+    await clickPanel(page, 'progress-toggle');
+    let shown = await waitForPanel(page, '2. Open the cart');
+    expect(shown).toContain('1. Look at the shop');
+    await typeNotes(page, 'The page was still loading.');
+    await clickPanel(page, 'retry');
+    const retried = await first;
+    expect(retried.text).toMatch(/^status: retry/);
+    expect(retried.text).toContain('Saved try 1 of step 1. The step is still open.');
+
+    const second = mcp.call('ask_developer', { stepId: 'look', didWhat: 'I opened it again.' });
+    shown = await waitForPanel(page, 'I opened it again.');
+    // The list stays open after a new question.
+    expect(shown).toContain('2. Open the cart');
+    await clickPanel(page, 'pass');
+    expect((await second).text).toContain('Saved as step 1 in the run.');
+    await waitForPanel(page, '\u2713');
+    const finish = await mcp.call('run_finish');
+    const runDir = /Reports: (\S+)\/report\.md/.exec(finish.text)?.[1] as string;
+    const md = readFileSync(join(project, runDir, 'report.md'), 'utf8');
+    expect(md).toContain('Try 1: The page was still loading.');
+  }, 30_000);
+
+  it('answers with Alt+Shift keys, and the page does not see them', async () => {
+    await page.evaluate(() => {
+      const w = window as unknown as { seen: string[] };
+      w.seen = [];
+      addEventListener('keydown', (e) => w.seen.push(e.code), true);
+    });
+    const press = async (code: string) => {
+      await page.keyboard.down('Alt');
+      await page.keyboard.down('Shift');
+      await page.keyboard.press(code as never);
+      await page.keyboard.up('Shift');
+      await page.keyboard.up('Alt');
+    };
+    const reply = ask({ title: 'Keys', expected: 'Press keys.' });
+    await waitForPanel(page, 'Press keys.');
+    // Bug needs notes, as with a click.
+    await press('KeyB');
+    await waitForPanel(page, 'Describe the bug in the notes');
+    await press('KeyS');
+    expect((await reply).text).toMatch(/^status: skip/);
+    const seen = await page.evaluate(() => (window as unknown as { seen: string[] }).seen);
+    expect(seen).not.toContain('KeyS');
+    expect(seen).not.toContain('KeyB');
+  });
+
+  it('points at the element of a bug, and the app does not get the click', async () => {
+    await mcp.call('navigate', { url: '/' });
+    const before = page.url();
+    const reply = ask({ title: 'Point', didWhat: 'I opened the shop.', expected: 'A Help link.' });
+    await waitForPanel(page, 'A Help link.');
+    // Esc ends point mode.
+    await clickPanel(page, 'point');
+    expect(await panelProp(page, 'point-banner', 'hidden')).toBe(false);
+    await page.keyboard.press('Escape');
+    expect(await panelProp(page, 'point-banner', 'hidden')).toBe(true);
+
+    await clickPanel(page, 'point');
+    const tabs = (await chrome.pages()).length;
+    const box = await page.$eval('a[href="/help.html"]', (a) => {
+      const r = a.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    await page.mouse.click(box.x, box.y);
+    await waitForPanel(page, 'Pointed at: link "Help"');
+    // The link opens a new tab. While pointing, it must not.
+    expect(page.url()).toBe(before);
+    expect((await chrome.pages()).length).toBe(tabs);
+    await typeNotes(page, 'The link is too small.');
+    await clickPanel(page, 'bug');
+    const result = await reply;
+    expect(result.text).toContain('The developer pointed at: link "Help".');
+    const details = /Styles and CSS rules of the pointed element: (\S+)/.exec(result.text)?.[1];
+    expect(details).toBeDefined();
+    expect(readFileSync(join(project, details as string), 'utf8')).toMatch(/^Element: a/);
+    expect(result.images).toBe(1);
+  });
+});
+
 describe('ask_developer without a panel', () => {
   it('asks the agent to use chat when the browser is hidden', async () => {
     const quiet = await startClient({
