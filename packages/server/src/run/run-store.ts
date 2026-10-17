@@ -31,6 +31,8 @@ export type RunCapture = Capture & { element?: string };
 export interface RunStep {
   id: string;
   index: number;
+  // A card only shows text to the developer. It is not a test, and results do not count it.
+  kind?: 'card';
   title: string;
   expect?: string;
   // The text with its {{var:NAME}} tokens, when the values made it different.
@@ -244,7 +246,9 @@ export class RunStore {
       title: show(stepTitle(step)),
       expect: step.expect === undefined ? undefined : show(step.expect),
       ...template(step),
-      confirm: needsConfirm(input.mode, step.checkpoint),
+      // A card always waits for the developer, in every mode.
+      ...(step.card ? { kind: 'card' as const } : {}),
+      confirm: step.card ? true : needsConfirm(input.mode, step.checkpoint),
       // A step that is only a slide has nothing to test.
       ...(step.slide && !step.action
         ? { status: 'skip' as const, notes: 'A slide for presentations. Nothing to test.' }
@@ -443,6 +447,6 @@ export function countSteps(run: Run): Record<StepStatus, number> {
     stop: 0,
     blocked: 0,
   };
-  for (const step of run.steps) counts[step.status] += 1;
+  for (const step of run.steps) if (step.kind !== 'card') counts[step.status] += 1;
   return counts;
 }

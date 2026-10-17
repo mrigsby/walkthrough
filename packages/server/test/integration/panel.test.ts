@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -380,6 +380,86 @@ describe('snippets, check lists, and images in the panel', () => {
     await clickPanel(page, 'pass');
     expect((await reply).text).toMatch(/^status: pass/);
   });
+});
+
+describe('card steps', () => {
+  it('shows cards, waits for them in autonomous mode, and keeps them out of results', async () => {
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'cards.yaml'),
+      `name: Cards
+mode: autonomous
+steps:
+  - id: welcome
+    card:
+      heading: Checkout test
+      subheading: About one minute
+      content: |
+        This plan checks:
+        - the cart
+      size: modal
+    panel: { buttons: { pass: { label: Start }, stop: { label: Cancel } } }
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    expect: The cart page shows.
+  - id: all-good
+    card: { heading: All done, content: Every step passed., when: passed }
+  - id: problems
+    card: { heading: Some steps failed, when: problems }
+`,
+    );
+    const start = await mcp.call('run_start', { plan: 'cards' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain('Card steps still go to the developer.');
+    expect(start.text).toContain(
+      '1. [welcome] (card: call ask_developer with only the stepId, and do nothing in the browser) Checkout test',
+    );
+    const wrong = await mcp.call('run_step', { stepId: 'welcome', status: 'pass' });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.text).toMatch(/is a card/);
+
+    const welcome = mcp.call('ask_developer', { stepId: 'welcome' });
+    await waitForPanel(page, 'The card is open in the middle of the page.');
+    const end = Date.now() + 5000;
+    let shown = '';
+    while (Date.now() < end && !shown.includes('About one minute'))
+      shown = await modalText(page, 'card-backdrop');
+    expect(shown).toContain('Checkout test');
+    expect(shown).toContain('the cart');
+    expect(shown).toContain('Start');
+    expect(shown).not.toContain('Bug');
+    // A click outside does not close a card. It needs an answer.
+    await page.mouse.click(5, 5);
+    expect(await modalText(page, 'card-backdrop')).toContain('Checkout test');
+    await clickPanel(page, 'pass');
+    const answered = await welcome;
+    expect(answered.text).toMatch(/^status: pass/);
+    expect(answered.text).toContain('Next: step 2 [open-cart]');
+    expect(await modalText(page, 'card-backdrop')).toBe('');
+
+    await mcp.call('navigate', { url: '/cart' });
+    const step = await mcp.call('run_step', { stepId: 'open-cart', status: 'pass' });
+    expect(step.text).toContain('Saved step 2 [open-cart] as pass.');
+
+    const good = mcp.call('ask_developer', { stepId: 'all-good' });
+    await waitForPanel(page, 'Every step passed.');
+    await clickPanel(page, 'pass');
+    expect((await good).text).toMatch(/^status: pass/);
+    const bad = await mcp.call('ask_developer', { stepId: 'problems' });
+    expect(bad.text).toMatch(/^status: skip/);
+    expect(bad.text).toContain('Not shown: the run had no problems.');
+
+    const finish = await mcp.call('run_finish');
+    expect(finish.text).toContain('Result: 1 passed.');
+    const runDir = /Reports: (\S+)\/report\.md/.exec(finish.text)?.[1] as string;
+    const md = readFileSync(join(project, runDir, 'report.md'), 'utf8');
+    expect(md).toContain('| 1 | Checkout test | Card: Seen |');
+    expect(md).toContain('| 4 | Some steps failed | Card: Not shown |');
+    // The card did not take the actions of the next step.
+    const run = JSON.parse(readFileSync(join(project, runDir, 'run.json'), 'utf8'));
+    expect(run.steps[0].actions).toEqual([]);
+    expect(run.steps[1].actions.map((a: { action: string }) => a.action)).toEqual(['navigate']);
+  }, 30_000);
 });
 
 describe('ask_developer without a panel', () => {

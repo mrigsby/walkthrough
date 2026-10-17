@@ -198,6 +198,9 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
       if (isSlideOnly(step)) {
         return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${stepTitle(step)}`;
       }
+      if (step.card) {
+        return `${i + 1}. [${id}] (card: call ask_developer with only the stepId, and do nothing in the browser) ${show(stepTitle(step))}`;
+      }
       const flags = [
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
         describeCapture(plan, step),
@@ -236,7 +239,7 @@ const HOW_TO: Record<Mode, string> = {
   checkpoints:
     'Checkpoints mode: the developer confirms the steps marked "confirm". You check the other steps.',
   autonomous:
-    'Autonomous mode: you check every step yourself. Do not ask the developer, unless something blocks you.',
+    'Autonomous mode: you check every step yourself. Do not ask the developer, unless something blocks you. Card steps still go to the developer.',
 };
 
 export function registerRunTools(server: McpServer, ctx: Context): void {
@@ -583,6 +586,12 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         }
         if (!stepId && !step && !title)
           throw new ToolError('Give the stepId, the step number, or a title.', 'bad_input');
+        if (stepId && store.planStep(stepId)?.step.card) {
+          throw new ToolError(
+            `Step "${stepId}" is a card. Call ask_developer with its stepId. The developer answers it.`,
+            'card_step',
+          );
+        }
         const driver = ctx.requireDriver();
         const tab = driver.activeTab();
         const stepLogs = driver.logs.currentStep();

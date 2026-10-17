@@ -5,12 +5,14 @@ import { FLOW_REPORT } from '../lighthouse/flow.js';
 import type { Run, RunStep } from '../run/run-store.js';
 import {
   accessibilityRows,
+  countsInResults,
   duration,
   environmentText,
   esc,
   isProblem,
   RUN_STATUS_LABELS,
   reproSteps,
+  resultLabel,
   resultLine,
   runEnvironment,
   STATUS_LABELS,
@@ -32,7 +34,7 @@ function image(runDir: string, path: string, alt: string): string {
 function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): string {
   const parts = [
     `<details class="step ${step.status}"${open ? ' open' : ''}>`,
-    `<summary><span class="badge ${step.status}">${esc(STATUS_LABELS[step.status])}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''} Step ${step.index}: ${esc(step.title)}</summary>`,
+    `<summary><span class="badge ${step.status}">${esc(resultLabel(step))}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''} Step ${step.index}: ${esc(step.title)}</summary>`,
     '<dl>',
   ];
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc(step.expect)}</dd>`);
@@ -170,7 +172,8 @@ ${body}
 export function htmlReport(run: Run, runDir: string): string {
   const problems = run.steps.filter(isProblem);
   const counts = new Map<string, number>();
-  for (const step of run.steps) counts.set(step.status, (counts.get(step.status) ?? 0) + 1);
+  for (const step of run.steps.filter(countsInResults))
+    counts.set(step.status, (counts.get(step.status) ?? 0) + 1);
   const meta: Array<[string, string]> = [
     ['Status', RUN_STATUS_LABELS[run.status]],
     ['Mode', run.mode],
@@ -209,7 +212,7 @@ ${problems.length ? `<h2>Bugs and failures</h2>\n${problems.map((s) => stepCard(
 ${run.steps
   .map(
     (s) =>
-      `<tr><td>${s.index}</td><td>${esc(s.title)}</td><td><span class="badge ${s.status}">${esc(STATUS_LABELS[s.status])}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''}</td><td>${s.checkedBy === 'developer' ? 'Developer' : s.checkedBy === 'agent' ? 'Agent' : ''}</td><td>${esc(s.notes ?? '')}</td></tr>`,
+      `<tr><td>${s.index}</td><td>${esc(s.title)}</td><td><span class="badge ${s.status}">${esc(resultLabel(s))}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''}</td><td>${s.checkedBy === 'developer' ? 'Developer' : s.checkedBy === 'agent' ? 'Agent' : ''}</td><td>${esc(s.notes ?? '')}</td></tr>`,
   )
   .join('\n')}
 </tbody>

@@ -19,7 +19,7 @@ export function isSlideOnly(step: PlanStep): boolean {
 export function executionHash(plan: Plan): string {
   const steps = plan.steps
     .map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` }))
-    .filter(({ step }) => !isSlideOnly(step))
+    .filter(({ step }) => !isSlideOnly(step) && !step.card)
     .map(({ step, id }) => ({
       id,
       action: step.action,
@@ -51,6 +51,8 @@ export function rehearsalProblems(run: Run, plan?: Plan): string[] {
       .filter(Boolean),
   );
   for (const step of run.steps) {
+    // Cards are not part of a presentation.
+    if (step.kind === 'card') continue;
     if (step.status === 'pass' || (step.status === 'skip' && slides.has(step.id))) continue;
     problems.push(`Step ${step.index} "${step.title}" is ${step.status}.`);
   }

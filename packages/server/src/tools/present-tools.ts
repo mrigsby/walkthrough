@@ -302,22 +302,25 @@ async function startPresentation(
     signal: abort.signal,
   });
   const show = (text: string) => new TokenResolver(engine.unique, vars).display(text);
-  const steps: PresentStep[] = plan.steps.map((step, i) => {
-    const id = step.id ?? `step-${i + 1}`;
-    return {
-      index: i + 1,
-      id,
-      title: show(stepTitle(step)),
-      ...(step.caption ? { caption: show(step.caption) } : {}),
-      ...(step.notes ? { notes: show(step.notes) } : {}),
-      ...(step.slide ? { slide: step.slide } : {}),
-      hasAction: Boolean(ops.get(id)?.ops.some((o) => o.type === 'action')),
-      pause: step.pause ?? settings.pause !== 'none',
-      spotlight: step.spotlight ?? settings.spotlight ?? true,
-      ...(step.zoom ? { zoom: step.zoom } : {}),
-      ...(step.timeBudget ? { timeBudgetSec: durationSeconds(step.timeBudget) } : {}),
-    };
-  });
+  // Cards are for test runs. The ids come first, so they match the rehearsal.
+  const steps: PresentStep[] = plan.steps
+    .map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` }))
+    .filter(({ step }) => !step.card)
+    .map(({ step, id }, i) => {
+      return {
+        index: i + 1,
+        id,
+        title: show(stepTitle(step)),
+        ...(step.caption ? { caption: show(step.caption) } : {}),
+        ...(step.notes ? { notes: show(step.notes) } : {}),
+        ...(step.slide ? { slide: step.slide } : {}),
+        hasAction: Boolean(ops.get(id)?.ops.some((o) => o.type === 'action')),
+        pause: step.pause ?? settings.pause !== 'none',
+        spotlight: step.spotlight ?? settings.spotlight ?? true,
+        ...(step.zoom ? { zoom: step.zoom } : {}),
+        ...(step.timeBudget ? { timeBudgetSec: durationSeconds(step.timeBudget) } : {}),
+      };
+    });
   const session = new PresentationSession(
     steps,
     {

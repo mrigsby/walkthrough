@@ -57,6 +57,26 @@ export function isProblem(step: RunStep): boolean {
   return step.status === 'bug' || step.status === 'fail' || step.status === 'blocked';
 }
 
+// A card is not a test, so its result has other words.
+const CARD_LABELS: Record<StepStatus, string> = {
+  pass: 'Seen',
+  skip: 'Not shown',
+  stop: 'Stopped',
+  bug: 'Bug',
+  fail: 'Failed',
+  blocked: 'Blocked',
+  pending: 'Not run',
+};
+
+export function resultLabel(step: RunStep): string {
+  return step.kind === 'card' ? `Card: ${CARD_LABELS[step.status]}` : STATUS_LABELS[step.status];
+}
+
+// Steps that count in results. A card counts only when the developer found a bug on it.
+export function countsInResults(step: RunStep): boolean {
+  return step.kind !== 'card' || isProblem(step);
+}
+
 const ACTION_WORDS: Record<string, string> = {
   click: 'Click',
   dblclick: 'Double-click',
@@ -86,7 +106,7 @@ const SELF_DESCRIBED = new Set([
 // Steps to reproduce a problem: the steps before it, then its own actions.
 export function reproSteps(run: Run, step: RunStep): string[] {
   const before = run.steps
-    .filter((s) => s.index < step.index && s.status !== 'pending')
+    .filter((s) => s.index < step.index && s.status !== 'pending' && s.kind !== 'card')
     .map((s) => s.title);
   const own = step.actions.length
     ? step.actions.map((a) => {
@@ -115,7 +135,8 @@ export function duration(run: Run): string {
 
 export function resultLine(run: Run): string {
   const counts: Partial<Record<StepStatus, number>> = {};
-  for (const step of run.steps) counts[step.status] = (counts[step.status] ?? 0) + 1;
+  for (const step of run.steps.filter(countsInResults))
+    counts[step.status] = (counts[step.status] ?? 0) + 1;
   const order: StepStatus[] = ['pass', 'bug', 'fail', 'blocked', 'skip', 'stop', 'pending'];
   return order
     .filter((s) => counts[s])

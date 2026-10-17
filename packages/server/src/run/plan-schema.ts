@@ -282,6 +282,54 @@ export const presentationSchema = z
   });
 export type PresentationSettings = z.infer<typeof presentationSchema>;
 
+// A card shows a heading and text in the panel, and waits for the developer.
+// It does nothing in the browser.
+const cardSchema = z
+  .object({
+    heading: z.string().min(1).max(200).describe('Big text at the top of the card.'),
+    subheading: z.string().max(300).optional().describe('Smaller text under the heading.'),
+    content: z
+      .string()
+      .max(8000)
+      .optional()
+      .describe('The text of the card. It can have lists, check lists, and code.'),
+    size: z
+      .enum(['panel', 'modal'])
+      .optional()
+      .describe(
+        'panel (default): in the Walkthrough panel. modal: big, in the middle of the page.',
+      ),
+    when: z
+      .enum(['always', 'passed', 'problems'])
+      .optional()
+      .describe(
+        'always (default). passed: only when no step so far has a bug or failed. problems: only when one has.',
+      ),
+  })
+  .strict();
+
+// Keys that a card step cannot have. A card only shows text and waits.
+const NOT_FOR_CARDS = [
+  'action',
+  'expect',
+  'expectImage',
+  'checkpoint',
+  'screenshot',
+  'visual',
+  'emulate',
+  'cookies',
+  'mock',
+  'a11y',
+  'caption',
+  'lighthouse',
+  'notes',
+  'pause',
+  'slide',
+  'spotlight',
+  'zoom',
+  'timeBudget',
+] as const;
+
 export const stepSchema = z
   .object({
     id: z
@@ -292,7 +340,14 @@ export const stepSchema = z
       )
       .optional()
       .describe('A short id for the step. Reports and scripts use it.'),
-    do: z.string().min(1).describe('What to do, in plain words.'),
+    do: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('What to do, in plain words. A card step does not need it.'),
+    card: cardSchema
+      .optional()
+      .describe('Show a card, like a start or end message, and wait for the developer.'),
     expect: z
       .string()
       .optional()
@@ -404,6 +459,21 @@ export const stepSchema = z
       ),
   })
   .strict()
+  .superRefine((step, ctx) => {
+    if (!step.do && !step.card) {
+      ctx.addIssue({ code: 'custom', message: 'A step needs "do", or a "card".', path: ['do'] });
+    }
+    if (!step.card) return;
+    for (const key of NOT_FOR_CARDS) {
+      if (step[key] !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `A card step cannot have "${key}". A card only shows text and waits for the developer.`,
+          path: [key],
+        });
+      }
+    }
+  })
   .refine((step) => step.lighthouse !== 'navigation' || Boolean(step.action?.navigate), {
     message:
       'A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.',
@@ -542,8 +612,9 @@ export const planSchema = z
       );
     plan.steps.forEach((step, i) => {
       const names = new Set([...known(plan.snippets), ...known(step.snippets)]);
-      for (const key of ['expect', 'next'] as const) {
-        for (const ref of copyRefs(step[key] ?? '')) {
+      for (const key of ['expect', 'next', 'card'] as const) {
+        const text = key === 'card' ? step.card?.content : step[key];
+        for (const ref of copyRefs(text ?? '')) {
           if (!names.has(ref)) {
             ctx.addIssue({
               code: 'custom',
@@ -572,7 +643,7 @@ export type PlanStep = z.infer<typeof stepSchema>;
 
 // The name of a step in lists, reports, and the panel.
 export function stepTitle(step: PlanStep): string {
-  return step.do;
+  return step.card?.heading ?? step.do ?? '';
 }
 
 // A screenshot saved to an exact file.

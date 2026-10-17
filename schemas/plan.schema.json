@@ -787,9 +787,52 @@
             "pattern": "^[a-z0-9][a-z0-9-]*$"
           },
           "do": {
+            "description": "What to do, in plain words. A card step does not need it.",
             "type": "string",
-            "minLength": 1,
-            "description": "What to do, in plain words."
+            "minLength": 1
+          },
+          "card": {
+            "description": "Show a card, like a start or end message, and wait for the developer.",
+            "type": "object",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Big text at the top of the card."
+              },
+              "subheading": {
+                "description": "Smaller text under the heading.",
+                "type": "string",
+                "maxLength": 300
+              },
+              "content": {
+                "description": "The text of the card. It can have lists, check lists, and code.",
+                "type": "string",
+                "maxLength": 8000
+              },
+              "size": {
+                "description": "panel (default): in the Walkthrough panel. modal: big, in the middle of the page.",
+                "type": "string",
+                "enum": [
+                  "panel",
+                  "modal"
+                ]
+              },
+              "when": {
+                "description": "always (default). passed: only when no step so far has a bug or failed. problems: only when one has.",
+                "type": "string",
+                "enum": [
+                  "always",
+                  "passed",
+                  "problems"
+                ]
+              }
+            },
+            "required": [
+              "heading"
+            ],
+            "additionalProperties": false
           },
           "expect": {
             "description": "What the developer should see after the step. Make it specific.",
@@ -1775,9 +1818,6 @@
             "additionalProperties": false
           }
         },
-        "required": [
-          "do"
-        ],
         "additionalProperties": false
       }
     }

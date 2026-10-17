@@ -17,6 +17,7 @@ import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
 import { type Snippets, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
 import { buildStepView, type PanelLayer, type SnippetText, viewText } from '../panel/view.js';
+import { isProblem } from '../report/common.js';
 import { stepTitle } from '../run/plan-schema.js';
 import { nextStepHint, recordResult } from '../run/record.js';
 import { bugClip, liveCaptures } from '../video/recording.js';
@@ -126,16 +127,34 @@ async function buildQuestion(
   const plan = found?.plan;
   const step = found?.step;
   // A plan with "next: { auto: true }" shows the next step when a step has no "next".
-  const following = found ? plan?.steps[found.index + 1] : undefined;
+  // A card with "when" may not show, so it is not "next".
+  const following = found
+    ? plan?.steps.slice(found.index + 1).find((s) => !s.card?.when || s.card.when === 'always')
+    : undefined;
   const autoNext =
     plan?.panel?.next?.auto && step && !step.next
       ? following
         ? stepTitle(following)
         : 'This is the last step.'
       : undefined;
-  const title = await panelText(ctx, input.title ?? (step ? stepTitle(step) : undefined));
-  const didWhat = await panelText(ctx, input.didWhat);
-  const expected = await panelText(ctx, input.expected ?? step?.expect);
+  const card = step?.card;
+  // A card with "when" shows only after a run with or without problems.
+  if (card?.when && card.when !== 'always' && found && store) {
+    const problems = store.run.steps.some((s) => s.index <= found.index && isProblem(s));
+    if ((card.when === 'passed') === problems) {
+      return {
+        notShown: problems
+          ? 'Not shown: the run had problems.'
+          : 'Not shown: the run had no problems.',
+      } as const;
+    }
+  }
+  const title = await panelText(
+    ctx,
+    card ? stepTitle(step) : (input.title ?? (step ? stepTitle(step) : undefined)),
+  );
+  const didWhat = card ? undefined : await panelText(ctx, input.didWhat);
+  const expected = card ? undefined : await panelText(ctx, input.expected ?? step?.expect);
   const next = await panelText(ctx, input.next ?? step?.next ?? autoNext);
   if (!title || (!found && (!didWhat || !expected))) {
     throw new ToolError(
@@ -178,6 +197,15 @@ async function buildQuestion(
     layers: [plan?.panel, step?.panel, input.panel],
     snippets,
     image: Boolean(image),
+    ...(card
+      ? {
+          card: {
+            subheading: await panelText(ctx, card.subheading),
+            content: await panelText(ctx, card.content),
+            size: card.size,
+          },
+        }
+      : {}),
   });
   return {
     image,
@@ -284,7 +312,23 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             'recording',
           );
         }
-        const asked = input.resume ? undefined : await buildQuestion(ctx, input);
+        const built = input.resume ? undefined : await buildQuestion(ctx, input);
+        if (built && 'notShown' in built) {
+          // A card whose "when" does not match the run. Nothing shows.
+          const skipped = recordResult(
+            ctx,
+            { id: input.stepId },
+            { status: 'skip', checkedBy: 'agent', notes: built.notShown, noActions: true },
+          );
+          return [
+            'status: skip',
+            `${built.notShown} The card has "when" set, so Walkthrough did not show it.`,
+            skipped ? `Saved as step ${skipped.index} in the run. ${nextStepHint(ctx)}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        }
+        const asked = built;
         if (!panel || !(await panel.waitReady(tab.id))) {
           const why = config.browser.headless
             ? 'the browser is hidden (headless)'
@@ -342,10 +386,12 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
 
         const { answer, question } = outcome;
         const label = question.stepId ?? question.title;
-        const stepLogs = driver.logs.currentStep();
-        const stepRequests = driver.network.currentStep();
-        const mocked = driver.stepMocks;
-        driver.endStep(label);
+        // A card does nothing in the browser. Its actions and errors stay with the real steps.
+        const isCard = question.view?.kind === 'card';
+        const stepLogs = isCard ? [] : driver.logs.currentStep();
+        const stepRequests = isCard ? [] : driver.network.currentStep();
+        const mocked = isCard ? [] : driver.stepMocks;
+        if (!isCard) driver.endStep(label);
 
         const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || '(none)'}`];
         if (answer.checklist?.length) {
@@ -362,7 +408,9 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           logs: formatLogs(stepLogs),
         };
 
-        if (answer.result === 'bug') {
+        if (answer.result === 'bug' && isCard) {
+          lines.push('The developer reported a bug on a card. Ask what is wrong.');
+        } else if (answer.result === 'bug') {
           try {
             const shot = await bugScreenshot(
               ctx,
@@ -420,8 +468,9 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             screenshot: record.screenshot,
             files: record.files,
             mocked,
-            logs: stepLogs,
+            logs: isCard ? undefined : stepLogs,
             checklist: answer.checklist,
+            noActions: isCard,
           },
         );
         if (recorded)

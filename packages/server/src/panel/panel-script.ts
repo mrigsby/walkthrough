@@ -47,8 +47,10 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     textColor?: string;
   }
   interface View {
-    kind: 'step' | 'confirm';
+    kind: 'step' | 'confirm' | 'card';
     title: string;
+    subheading?: string;
+    size?: 'panel' | 'modal';
     sections: Section[];
     buttons: ViewButton[];
     notes: boolean;
@@ -124,13 +126,17 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const body = el('div', 'body');
   const status = el('p', 'status');
   const title = el('h2', 'title');
+  const subtitle = el('p', 'subheading');
+  // In the panel while a card shows in the middle of the page.
+  const cardNote = el('p', 'text card-note', 'The card is open in the middle of the page.');
+  cardNote.hidden = true;
   const sections = el('div', 'sections');
   const notes = el('textarea', 'notes');
   notes.rows = 3;
   const error = el('p', 'error');
   const buttons = el('div', 'buttons');
   const questionBox = el('div', 'question');
-  questionBox.append(title, sections, notes, error, buttons);
+  questionBox.append(title, subtitle, cardNote, sections, notes, error, buttons);
 
   // The recording view.
   const recordBox = el('div', 'recording');
@@ -162,7 +168,19 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   modal.append(modalHead, modalBody);
   backdrop.append(modal);
   backdrop.hidden = true;
-  root.append(pulse, pulseLabel, annotation, card, backdrop);
+
+  // A card with size "modal". It stays until the developer answers, under any help window.
+  const cardBackdrop = el('div', 'card-backdrop');
+  const cardBox = el('div', 'modal card-modal');
+  cardBox.setAttribute('role', 'dialog');
+  const cardHead = el('div', 'modal-head');
+  const cardTitle = el('h2', 'modal-title card-title');
+  cardHead.append(cardTitle);
+  const cardBody = el('div', 'modal-body');
+  cardBox.append(cardHead, cardBody);
+  cardBackdrop.append(cardBox);
+  cardBackdrop.hidden = true;
+  root.append(pulse, pulseLabel, annotation, card, cardBackdrop, backdrop);
 
   // ---------- State ----------
   let question: Question | null = null;
@@ -196,6 +214,18 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   backdrop.addEventListener('keydown', (event) => {
     if (event.isTrusted && event.key === 'Escape') closeModal();
   });
+
+  // Puts the question parts in the big card window, or back in the panel.
+  const placeParts = (inModal: boolean): void => {
+    if (inModal) {
+      cardTitle.textContent = title.textContent;
+      cardBody.append(subtitle, sections, notes, error, buttons);
+    } else {
+      questionBox.append(subtitle, sections, notes, error, buttons);
+    }
+    cardNote.hidden = !inModal;
+    cardBackdrop.hidden = !inModal;
+  };
 
   // ---------- Copy ----------
   // A short note next to a button, like "Copied".
@@ -423,6 +453,8 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     bitmap = null;
     closeModal();
     title.textContent = view.title;
+    subtitle.textContent = view.subheading ?? '';
+    subtitle.hidden = !view.subheading;
     const parts = view.sections.map(drawSection);
     imageBox = null;
     if (view.image) {
@@ -450,6 +482,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     error.hidden = !view.notes;
     const bug = view.buttons.find((b) => b.result === 'bug');
     notes.placeholder = bug ? `Notes (required for ${bug.label})` : 'Notes';
+    placeParts(view.kind === 'card' && view.size === 'modal');
   };
 
   const render = (): void => {
@@ -486,6 +519,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       questionBox.hidden = false;
       status.hidden = true;
     } else {
+      if (drawnId) placeParts(false);
       drawnId = '';
       stepBadge.textContent = '';
       questionBox.hidden = true;
@@ -566,8 +600,8 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
 
   // Keys typed in the panel must not reach the app's shortcuts.
   for (const type of ['keydown', 'keyup', 'keypress', 'input', 'beforeinput', 'paste']) {
-    card.addEventListener(type, (event) => event.stopPropagation());
-    backdrop.addEventListener(type, (event) => event.stopPropagation());
+    for (const part of [card, backdrop, cardBackdrop])
+      part.addEventListener(type, (event) => event.stopPropagation());
   }
 
   // Drag the panel by its header.
@@ -656,6 +690,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         break;
       case 'hide':
         backdrop.style.visibility = msg.hidden ? 'hidden' : '';
+        cardBackdrop.style.visibility = msg.hidden ? 'hidden' : '';
         card.style.visibility = msg.hidden ? 'hidden' : '';
         pulse.style.visibility = msg.hidden ? 'hidden' : '';
         pulseLabel.style.visibility = msg.hidden ? 'hidden' : '';

@@ -98593,12 +98593,44 @@ var presentationSchema = external_exports.object({
   message: 'A kiosk presentation cannot record a video. Remove "record" or "kiosk".',
   path: ["record"]
 });
+var cardSchema = external_exports.object({
+  heading: external_exports.string().min(1).max(200).describe("Big text at the top of the card."),
+  subheading: external_exports.string().max(300).optional().describe("Smaller text under the heading."),
+  content: external_exports.string().max(8e3).optional().describe("The text of the card. It can have lists, check lists, and code."),
+  size: external_exports.enum(["panel", "modal"]).optional().describe(
+    "panel (default): in the Walkthrough panel. modal: big, in the middle of the page."
+  ),
+  when: external_exports.enum(["always", "passed", "problems"]).optional().describe(
+    "always (default). passed: only when no step so far has a bug or failed. problems: only when one has."
+  )
+}).strict();
+var NOT_FOR_CARDS = [
+  "action",
+  "expect",
+  "expectImage",
+  "checkpoint",
+  "screenshot",
+  "visual",
+  "emulate",
+  "cookies",
+  "mock",
+  "a11y",
+  "caption",
+  "lighthouse",
+  "notes",
+  "pause",
+  "slide",
+  "spotlight",
+  "zoom",
+  "timeBudget"
+];
 var stepSchema = external_exports.object({
   id: external_exports.string().regex(
     /^[a-z0-9][a-z0-9-]*$/,
     'Use lowercase letters, numbers, and dashes, like "open-cart".'
   ).optional().describe("A short id for the step. Reports and scripts use it."),
-  do: external_exports.string().min(1).describe("What to do, in plain words."),
+  do: external_exports.string().min(1).optional().describe("What to do, in plain words. A card step does not need it."),
+  card: cardSchema.optional().describe("Show a card, like a start or end message, and wait for the developer."),
   expect: external_exports.string().optional().describe("What the developer should see after the step. Make it specific."),
   checkpoint: external_exports.boolean().optional().describe("In checkpoints mode, ask the developer to confirm this step."),
   action: action.optional(),
@@ -98644,7 +98676,21 @@ var stepSchema = external_exports.object({
   panel: stepPanelSchema.optional().describe(
     'Panel labels and buttons for this step. They replace the same settings in the plan "panel".'
   )
-}).strict().refine((step) => step.lighthouse !== "navigation" || Boolean(step.action?.navigate), {
+}).strict().superRefine((step, ctx) => {
+  if (!step.do && !step.card) {
+    ctx.addIssue({ code: "custom", message: 'A step needs "do", or a "card".', path: ["do"] });
+  }
+  if (!step.card) return;
+  for (const key2 of NOT_FOR_CARDS) {
+    if (step[key2] !== void 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A card step cannot have "${key2}". A card only shows text and waits for the developer.`,
+        path: [key2]
+      });
+    }
+  }
+}).refine((step) => step.lighthouse !== "navigation" || Boolean(step.action?.navigate), {
   message: "A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.",
   path: ["lighthouse"]
 });
@@ -98714,8 +98760,9 @@ var planSchema = external_exports.object({
   );
   plan.steps.forEach((step, i) => {
     const names = /* @__PURE__ */ new Set([...known(plan.snippets), ...known(step.snippets)]);
-    for (const key2 of ["expect", "next"]) {
-      for (const ref of copyRefs(step[key2] ?? "")) {
+    for (const key2 of ["expect", "next", "card"]) {
+      const text = key2 === "card" ? step.card?.content : step[key2];
+      for (const ref of copyRefs(text ?? "")) {
         if (!names.has(ref)) {
           ctx.addIssue({
             code: "custom",
@@ -98739,7 +98786,7 @@ var planSchema = external_exports.object({
   });
 });
 function stepTitle(step) {
-  return step.do;
+  return step.card?.heading ?? step.do ?? "";
 }
 function stepCapture(plan, step) {
   const shot = step.screenshot;
@@ -107601,9 +107648,9 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .ref-thumb { display: block; max-width: 100%; max-height: 140px; width: auto; height: auto;
   border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center;
+.modal-backdrop, .card-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center;
   justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); }
-.modal-backdrop[hidden] { display: none; }
+.modal-backdrop[hidden], .card-backdrop[hidden] { display: none; }
 .modal { display: flex; flex-direction: column; width: min(720px, 100%); max-height: 88vh;
   background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35); font-size: 14px; line-height: 1.5; outline: none; }
@@ -107611,6 +107658,13 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .modal-title { flex: 1; margin: 0; font-size: 16px; }
 .modal-body { padding: 12px 14px 16px; overflow-y: auto; min-height: 0; }
 .modal-body > * + * { margin-top: 8px; }
+.subheading { margin: -4px 0 8px; color: var(--muted); }
+.subheading[hidden], .card-note[hidden] { display: none; }
+.card-note { color: var(--muted); }
+.card-modal .card-title { font-size: 22px; }
+.card-modal .modal-head { border-bottom: none; padding: 18px 20px 0; }
+.card-modal .modal-body { padding: 4px 20px 20px; font-size: 15px; }
+.card-modal .subheading { margin: 0 0 10px; font-size: 15px; }
 .ref-big { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; margin: 0 auto; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
@@ -107695,13 +107749,16 @@ function panelMain(opts, candidates) {
   const body = el("div", "body");
   const status = el("p", "status");
   const title = el("h2", "title");
+  const subtitle = el("p", "subheading");
+  const cardNote = el("p", "text card-note", "The card is open in the middle of the page.");
+  cardNote.hidden = true;
   const sections = el("div", "sections");
   const notes = el("textarea", "notes");
   notes.rows = 3;
   const error62 = el("p", "error");
   const buttons = el("div", "buttons");
   const questionBox = el("div", "question");
-  questionBox.append(title, sections, notes, error62, buttons);
+  questionBox.append(title, subtitle, cardNote, sections, notes, error62, buttons);
   const recordBox = el("div", "recording");
   const recordText = el("p", "text");
   const expectInput = el("textarea", "notes rec-notes");
@@ -107729,7 +107786,17 @@ function panelMain(opts, candidates) {
   modal.append(modalHead, modalBody);
   backdrop.append(modal);
   backdrop.hidden = true;
-  root.append(pulse, pulseLabel, annotation, card, backdrop);
+  const cardBackdrop = el("div", "card-backdrop");
+  const cardBox = el("div", "modal card-modal");
+  cardBox.setAttribute("role", "dialog");
+  const cardHead = el("div", "modal-head");
+  const cardTitle = el("h2", "modal-title card-title");
+  cardHead.append(cardTitle);
+  const cardBody = el("div", "modal-body");
+  cardBox.append(cardHead, cardBody);
+  cardBackdrop.append(cardBox);
+  cardBackdrop.hidden = true;
+  root.append(pulse, pulseLabel, annotation, card, cardBackdrop, backdrop);
   let question = null;
   let env2 = null;
   let recording = null;
@@ -107758,6 +107825,16 @@ function panelMain(opts, candidates) {
   backdrop.addEventListener("keydown", (event) => {
     if (event.isTrusted && event.key === "Escape") closeModal();
   });
+  const placeParts = (inModal) => {
+    if (inModal) {
+      cardTitle.textContent = title.textContent;
+      cardBody.append(subtitle, sections, notes, error62, buttons);
+    } else {
+      questionBox.append(subtitle, sections, notes, error62, buttons);
+    }
+    cardNote.hidden = !inModal;
+    cardBackdrop.hidden = !inModal;
+  };
   const flash = (button2, text, ms = 1500) => {
     const note = el("span", "copy-note", text);
     button2.after(note);
@@ -107963,6 +108040,8 @@ function panelMain(opts, candidates) {
     bitmap = null;
     closeModal();
     title.textContent = view.title;
+    subtitle.textContent = view.subheading ?? "";
+    subtitle.hidden = !view.subheading;
     const parts = view.sections.map(drawSection);
     imageBox = null;
     if (view.image) {
@@ -107989,6 +108068,7 @@ function panelMain(opts, candidates) {
     error62.hidden = !view.notes;
     const bug = view.buttons.find((b2) => b2.result === "bug");
     notes.placeholder = bug ? `Notes (required for ${bug.label})` : "Notes";
+    placeParts(view.kind === "card" && view.size === "modal");
   };
   const render = () => {
     envBadge.hidden = !env2;
@@ -108018,6 +108098,7 @@ function panelMain(opts, candidates) {
       questionBox.hidden = false;
       status.hidden = true;
     } else {
+      if (drawnId) placeParts(false);
       drawnId = "";
       stepBadge.textContent = "";
       questionBox.hidden = true;
@@ -108088,8 +108169,8 @@ function panelMain(opts, candidates) {
   });
   onTrusted(modalClose, closeModal);
   for (const type of ["keydown", "keyup", "keypress", "input", "beforeinput", "paste"]) {
-    card.addEventListener(type, (event) => event.stopPropagation());
-    backdrop.addEventListener(type, (event) => event.stopPropagation());
+    for (const part of [card, backdrop, cardBackdrop])
+      part.addEventListener(type, (event) => event.stopPropagation());
   }
   header.addEventListener("pointerdown", (event) => {
     if (!event.isTrusted || event.target.tagName === "BUTTON") return;
@@ -108166,6 +108247,7 @@ function panelMain(opts, candidates) {
         break;
       case "hide":
         backdrop.style.visibility = msg.hidden ? "hidden" : "";
+        cardBackdrop.style.visibility = msg.hidden ? "hidden" : "";
         card.style.visibility = msg.hidden ? "hidden" : "";
         pulse.style.visibility = msg.hidden ? "hidden" : "";
         pulseLabel.style.visibility = msg.hidden ? "hidden" : "";
@@ -108381,7 +108463,8 @@ var PanelBridge = class _PanelBridge {
 var DEFAULT_LABELS = {
   did: "What I did",
   expect: "What you should see",
-  next: "What's next"
+  next: "What's next",
+  content: ""
 };
 var BUTTON_ORDER = ["pass", "bug", "skip", "stop"];
 var DEFAULT_BUTTON_LABELS = {
@@ -108404,6 +108487,7 @@ function textColorFor(hex3) {
 function merged(layers, key2) {
   return layers.map((l) => l?.[key2]).filter((v2) => v2 !== void 0);
 }
+var CARD_HIDDEN = ["bug", "skip"];
 function usedSnippets(texts, all) {
   const names = new Set(texts.flatMap((t) => copyRefs(t ?? "")));
   for (const name of [...names]) for (const ref of copyRefs(all[name]?.help ?? "")) names.add(ref);
@@ -108427,14 +108511,19 @@ function buildStepView(input3) {
     if (!text?.trim()) return;
     sections.push({ key: key2, label: labels[key2] ?? "", blocks: parseRichText(text), ...extra });
   };
-  add2("did", input3.didWhat);
-  add2("expect", input3.expected);
+  const card = input3.card;
+  if (card) {
+    add2("content", card.content);
+  } else {
+    add2("did", input3.didWhat);
+    add2("expect", input3.expected);
+  }
   add2("next", input3.next, { collapsible: true, collapsed: nextSettings.collapsed });
   const buttonLayers = merged(layers, "buttons");
   const buttons = [];
   for (const result of BUTTON_ORDER) {
     const set2 = Object.assign({}, ...buttonLayers.map((b2) => b2[result] ?? {}));
-    if (set2.show === false) continue;
+    if (set2.show === false || card && CARD_HIDDEN.includes(result) && set2.show !== true) continue;
     const button2 = { result, label: set2.label ?? DEFAULT_BUTTON_LABELS[result] };
     if (set2.color) {
       button2.color = set2.color;
@@ -108443,12 +108532,18 @@ function buildStepView(input3) {
     buttons.push(button2);
   }
   return {
-    kind: "step",
+    kind: card ? "card" : "step",
     title: input3.title,
+    ...card?.subheading ? { subheading: card.subheading } : {},
+    ...card ? { size: card.size ?? "panel" } : {},
     sections,
     buttons,
-    notes: true,
-    snippets: usedSnippets([input3.didWhat, input3.expected, input3.next], input3.snippets ?? {}),
+    // Bug needs notes. A card has no notes box unless it shows Bug.
+    notes: !card || buttons.some((b2) => b2.result === "bug"),
+    snippets: usedSnippets(
+      card ? [card.content, input3.next] : [input3.didWhat, input3.expected, input3.next],
+      input3.snippets ?? {}
+    ),
     ...input3.image ? { image: true } : {}
   };
 }
@@ -108484,7 +108579,8 @@ function buildConfirmView(input3) {
   };
 }
 function viewText(view) {
-  const lines = [`Step: ${view.title}`];
+  const lines = [view.kind === "card" ? `Card: ${view.title}` : `Step: ${view.title}`];
+  if (view.subheading) lines.push(view.subheading);
   for (const section2 of view.sections) {
     const text = blocksText(section2.blocks, view.snippets);
     lines.push(section2.label ? `${section2.label}:
@@ -111358,7 +111454,9 @@ var RunStore = class _RunStore {
       title: show(stepTitle(step)),
       expect: step.expect === void 0 ? void 0 : show(step.expect),
       ...template(step),
-      confirm: needsConfirm(input3.mode, step.checkpoint),
+      // A card always waits for the developer, in every mode.
+      ...step.card ? { kind: "card" } : {},
+      confirm: step.card ? true : needsConfirm(input3.mode, step.checkpoint),
       // A step that is only a slide has nothing to test.
       ...step.slide && !step.action ? { status: "skip", notes: "A slide for presentations. Nothing to test." } : { status: "pending" },
       screenshots: [],
@@ -111849,6 +111947,21 @@ var STATUS_LABELS = {
 function isProblem(step) {
   return step.status === "bug" || step.status === "fail" || step.status === "blocked";
 }
+var CARD_LABELS = {
+  pass: "Seen",
+  skip: "Not shown",
+  stop: "Stopped",
+  bug: "Bug",
+  fail: "Failed",
+  blocked: "Blocked",
+  pending: "Not run"
+};
+function resultLabel(step) {
+  return step.kind === "card" ? `Card: ${CARD_LABELS[step.status]}` : STATUS_LABELS[step.status];
+}
+function countsInResults(step) {
+  return step.kind !== "card" || isProblem(step);
+}
 var ACTION_WORDS = {
   click: "Click",
   dblclick: "Double-click",
@@ -111873,7 +111986,7 @@ var SELF_DESCRIBED = /* @__PURE__ */ new Set([
   "storage"
 ]);
 function reproSteps(run, step) {
-  const before = run.steps.filter((s) => s.index < step.index && s.status !== "pending").map((s) => s.title);
+  const before = run.steps.filter((s) => s.index < step.index && s.status !== "pending" && s.kind !== "card").map((s) => s.title);
   const own2 = step.actions.length ? step.actions.map((a2) => {
     const value = a2.value && a2.action !== "press" ? ` "${a2.value}"` : a2.action === "press" ? ` (${a2.value})` : "";
     if (a2.action === "navigate") return `Go to ${a2.value ?? a2.label}`;
@@ -111892,7 +112005,8 @@ function duration4(run) {
 }
 function resultLine(run) {
   const counts = {};
-  for (const step of run.steps) counts[step.status] = (counts[step.status] ?? 0) + 1;
+  for (const step of run.steps.filter(countsInResults))
+    counts[step.status] = (counts[step.status] ?? 0) + 1;
   const order2 = ["pass", "bug", "fail", "blocked", "skip", "stop", "pending"];
   return order2.filter((s) => counts[s]).map((s) => `${counts[s]} ${STATUS_LABELS[s].toLowerCase()}`).join(", ");
 }
@@ -114698,6 +114812,7 @@ function buildOps(run) {
   const missingSelectors = [];
   let lastUrl = run.baseUrl ?? "";
   for (const step of run.steps) {
+    if (step.kind === "card") continue;
     const shots = step.captures ?? [];
     if ((step.status === "pending" || step.status === "skip") && shots.length === 0) continue;
     const ops = [];
@@ -114761,7 +114876,7 @@ function isSlideOnly(step) {
   return Boolean(step.slide) && !step.action;
 }
 function executionHash(plan) {
-  const steps = plan.steps.map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` })).filter(({ step }) => !isSlideOnly(step)).map(({ step, id }) => ({
+  const steps = plan.steps.map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` })).filter(({ step }) => !isSlideOnly(step) && !step.card).map(({ step, id }) => ({
     id,
     action: step.action,
     expect: step.expect,
@@ -114788,6 +114903,7 @@ function rehearsalProblems(run, plan) {
     (plan?.steps ?? []).map((step, i) => isSlideOnly(step) ? step.id ?? `step-${i + 1}` : void 0).filter(Boolean)
   );
   for (const step of run.steps) {
+    if (step.kind === "card") continue;
     if (step.status === "pass" || step.status === "skip" && slides.has(step.id)) continue;
     problems.push(`Step ${step.index} "${step.title}" is ${step.status}.`);
   }
@@ -115161,7 +115277,7 @@ function image(runDir, path14, alt) {
 function stepCard(run, runDir, step, open4) {
   const parts = [
     `<details class="step ${step.status}"${open4 ? " open" : ""}>`,
-    `<summary><span class="badge ${step.status}">${esc2(STATUS_LABELS[step.status])}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""} Step ${step.index}: ${esc2(step.title)}</summary>`,
+    `<summary><span class="badge ${step.status}">${esc2(resultLabel(step))}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""} Step ${step.index}: ${esc2(step.title)}</summary>`,
     "<dl>"
   ];
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc2(step.expect)}</dd>`);
@@ -115284,7 +115400,8 @@ ${body}
 function htmlReport(run, runDir) {
   const problems = run.steps.filter(isProblem);
   const counts = /* @__PURE__ */ new Map();
-  for (const step of run.steps) counts.set(step.status, (counts.get(step.status) ?? 0) + 1);
+  for (const step of run.steps.filter(countsInResults))
+    counts.set(step.status, (counts.get(step.status) ?? 0) + 1);
   const meta3 = [
     ["Status", RUN_STATUS_LABELS[run.status]],
     ["Mode", run.mode],
@@ -115321,7 +115438,7 @@ ${problems.map((s) => stepCard(run, runDir, s, true)).join("\n")}` : ""}
 <thead><tr><th scope="col">#</th><th scope="col">Step</th><th scope="col">Result</th><th scope="col">Checked by</th><th scope="col">Notes</th></tr></thead>
 <tbody>
 ${run.steps.map(
-    (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(STATUS_LABELS[s.status])}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""}</td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
+    (s) => `<tr><td>${s.index}</td><td>${esc2(s.title)}</td><td><span class="badge ${s.status}">${esc2(resultLabel(s))}</span>${s.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""}</td><td>${s.checkedBy === "developer" ? "Developer" : s.checkedBy === "agent" ? "Agent" : ""}</td><td>${esc2(s.notes ?? "")}</td></tr>`
   ).join("\n")}
 </tbody>
 </table>
@@ -115685,7 +115802,7 @@ ${data.kinds.flow ? `<li><a href="${esc2(FLOW_REPORT)}">Lighthouse flow report</
 
 // packages/server/src/report/markdown.ts
 function stepDetails(run, step, withRepro) {
-  const out = [`### Step ${step.index}: ${step.title} (${STATUS_LABELS[step.status]})`, ""];
+  const out = [`### Step ${step.index}: ${step.title} (${resultLabel(step)})`, ""];
   if (step.expect) out.push(`- **Expected:** ${step.expect}`);
   if (step.actual) out.push(`- **Actual:** ${step.actual}`);
   if (step.checkedBy)
@@ -115762,7 +115879,7 @@ function markdownReport(run, options = {}) {
   for (const step of run.steps) {
     const who = step.checkedBy === "developer" ? "Developer" : step.checkedBy === "agent" ? "Agent" : "";
     lines.push(
-      `| ${step.index} | ${cell(step.title)} | ${STATUS_LABELS[step.status]} | ${who} | ${cell(step.notes)} |`
+      `| ${step.index} | ${cell(step.title)} | ${resultLabel(step)} | ${who} | ${cell(step.notes)} |`
     );
   }
   lines.push("");
@@ -115940,6 +116057,12 @@ function recordResult(ctx, ref, result) {
   if (result.logs) {
     step.logs = formatLogs(result.logs);
     step.errorCount = result.logs.filter((e) => e.level === "error").length;
+  }
+  if (result.noActions) {
+    step.at = (/* @__PURE__ */ new Date()).toISOString();
+    store.save();
+    setRunCaption(ctx, store);
+    return step;
   }
   const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ tab, action: action2, label: label3, selector, value, files, frameUrl: frameUrl2, url: url2 }) => ({
     tab,
@@ -116120,11 +116243,23 @@ async function buildQuestion(ctx, input3) {
   const found = input3.stepId ? store?.planStep(input3.stepId) : void 0;
   const plan = found?.plan;
   const step = found?.step;
-  const following = found ? plan?.steps[found.index + 1] : void 0;
+  const following = found ? plan?.steps.slice(found.index + 1).find((s) => !s.card?.when || s.card.when === "always") : void 0;
   const autoNext = plan?.panel?.next?.auto && step && !step.next ? following ? stepTitle(following) : "This is the last step." : void 0;
-  const title = await panelText(ctx, input3.title ?? (step ? stepTitle(step) : void 0));
-  const didWhat = await panelText(ctx, input3.didWhat);
-  const expected = await panelText(ctx, input3.expected ?? step?.expect);
+  const card = step?.card;
+  if (card?.when && card.when !== "always" && found && store) {
+    const problems = store.run.steps.some((s) => s.index <= found.index && isProblem(s));
+    if (card.when === "passed" === problems) {
+      return {
+        notShown: problems ? "Not shown: the run had problems." : "Not shown: the run had no problems."
+      };
+    }
+  }
+  const title = await panelText(
+    ctx,
+    card ? stepTitle(step) : input3.title ?? (step ? stepTitle(step) : void 0)
+  );
+  const didWhat = card ? void 0 : await panelText(ctx, input3.didWhat);
+  const expected = card ? void 0 : await panelText(ctx, input3.expected ?? step?.expect);
   const next = await panelText(ctx, input3.next ?? step?.next ?? autoNext);
   if (!title || !found && (!didWhat || !expected)) {
     throw new ToolError(
@@ -116163,7 +116298,14 @@ async function buildQuestion(ctx, input3) {
     next,
     layers: [plan?.panel, step?.panel, input3.panel],
     snippets,
-    image: Boolean(image2)
+    image: Boolean(image2),
+    ...card ? {
+      card: {
+        subheading: await panelText(ctx, card.subheading),
+        content: await panelText(ctx, card.content),
+        size: card.size
+      }
+    } : {}
   });
   return {
     image: image2,
@@ -116238,7 +116380,20 @@ function registerDeveloperTools(server, ctx) {
           "recording"
         );
       }
-      const asked = input3.resume ? void 0 : await buildQuestion(ctx, input3);
+      const built3 = input3.resume ? void 0 : await buildQuestion(ctx, input3);
+      if (built3 && "notShown" in built3) {
+        const skipped = recordResult(
+          ctx,
+          { id: input3.stepId },
+          { status: "skip", checkedBy: "agent", notes: built3.notShown, noActions: true }
+        );
+        return [
+          "status: skip",
+          `${built3.notShown} The card has "when" set, so Walkthrough did not show it.`,
+          skipped ? `Saved as step ${skipped.index} in the run. ${nextStepHint(ctx)}` : ""
+        ].filter(Boolean).join("\n");
+      }
+      const asked = built3;
       if (!panel || !await panel.waitReady(tab.id)) {
         const why = config3.browser.headless ? "the browser is hidden (headless)" : "the panel could not start on this page";
         const view = asked?.view ?? panel?.pending?.view;
@@ -116288,10 +116443,11 @@ function registerDeveloperTools(server, ctx) {
       }
       const { answer, question } = outcome;
       const label3 = question.stepId ?? question.title;
-      const stepLogs = driver.logs.currentStep();
-      const stepRequests = driver.network.currentStep();
-      const mocked = driver.stepMocks;
-      driver.endStep(label3);
+      const isCard = question.view?.kind === "card";
+      const stepLogs = isCard ? [] : driver.logs.currentStep();
+      const stepRequests = isCard ? [] : driver.network.currentStep();
+      const mocked = isCard ? [] : driver.stepMocks;
+      if (!isCard) driver.endStep(label3);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
       if (answer.checklist?.length) {
         const open4 = answer.checklist.filter((item) => !item.checked);
@@ -116306,7 +116462,9 @@ function registerDeveloperTools(server, ctx) {
         answer,
         logs: formatLogs(stepLogs)
       };
-      if (answer.result === "bug") {
+      if (answer.result === "bug" && isCard) {
+        lines.push("The developer reported a bug on a card. Ask what is wrong.");
+      } else if (answer.result === "bug") {
         try {
           const shot = await bugScreenshot(
             ctx,
@@ -116363,8 +116521,9 @@ function registerDeveloperTools(server, ctx) {
           screenshot: record2.screenshot,
           files: record2.files,
           mocked,
-          logs: stepLogs,
-          checklist: answer.checklist
+          logs: isCard ? void 0 : stepLogs,
+          checklist: answer.checklist,
+          noActions: isCard
         }
       );
       if (recorded)
@@ -116513,6 +116672,9 @@ function stepList(plan, mode, show = (t) => t) {
     if (isSlideOnly(step)) {
       return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${stepTitle(step)}`;
     }
+    if (step.card) {
+      return `${i + 1}. [${id}] (card: call ask_developer with only the stepId, and do nothing in the browser) ${show(stepTitle(step))}`;
+    }
     const flags = [
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
       describeCapture(plan, step),
@@ -116544,7 +116706,7 @@ function stepList(plan, mode, show = (t) => t) {
 var HOW_TO = {
   interactive: "Interactive mode: the developer confirms every step in the panel.",
   checkpoints: 'Checkpoints mode: the developer confirms the steps marked "confirm". You check the other steps.',
-  autonomous: "Autonomous mode: you check every step yourself. Do not ask the developer, unless something blocks you."
+  autonomous: "Autonomous mode: you check every step yourself. Do not ask the developer, unless something blocks you. Card steps still go to the developer."
 };
 function registerRunTools(server, ctx) {
   server.registerTool(
@@ -116820,6 +116982,12 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       }
       if (!stepId && !step && !title)
         throw new ToolError("Give the stepId, the step number, or a title.", "bad_input");
+      if (stepId && store.planStep(stepId)?.step.card) {
+        throw new ToolError(
+          `Step "${stepId}" is a card. Call ask_developer with its stepId. The developer answers it.`,
+          "card_step"
+        );
+      }
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const stepLogs = driver.logs.currentStep();
@@ -121820,8 +121988,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     signal: abort.signal
   });
   const show = (text) => new TokenResolver(engine.unique, vars).display(text);
-  const steps = plan.steps.map((step, i) => {
-    const id = step.id ?? `step-${i + 1}`;
+  const steps = plan.steps.map((step, i) => ({ step, id: step.id ?? `step-${i + 1}` })).filter(({ step }) => !step.card).map(({ step, id }, i) => {
     return {
       index: i + 1,
       id,

@@ -54,6 +54,8 @@ export function buildOps(run: Run): RunOps {
   const missingSelectors: string[] = [];
   let lastUrl = run.baseUrl ?? '';
   for (const step of run.steps) {
+    // A card did nothing in the browser. Replays, videos, and scripts leave it out.
+    if (step.kind === 'card') continue;
     const shots = step.captures ?? [];
     if ((step.status === 'pending' || step.status === 'skip') && shots.length === 0) continue;
     const ops: Op[] = [];

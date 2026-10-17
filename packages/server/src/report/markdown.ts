@@ -7,15 +7,15 @@ import {
   isProblem,
   RUN_STATUS_LABELS,
   reproSteps,
+  resultLabel,
   resultLine,
   runEnvironment,
-  STATUS_LABELS,
   stepAccessibility,
   stepLighthouse,
 } from './common.js';
 
 function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
-  const out = [`### Step ${step.index}: ${step.title} (${STATUS_LABELS[step.status]})`, ''];
+  const out = [`### Step ${step.index}: ${step.title} (${resultLabel(step)})`, ''];
   if (step.expect) out.push(`- **Expected:** ${step.expect}`);
   if (step.actual) out.push(`- **Actual:** ${step.actual}`);
   if (step.checkedBy)
@@ -104,7 +104,7 @@ export function markdownReport(
     const who =
       step.checkedBy === 'developer' ? 'Developer' : step.checkedBy === 'agent' ? 'Agent' : '';
     lines.push(
-      `| ${step.index} | ${cell(step.title)} | ${STATUS_LABELS[step.status]} | ${who} | ${cell(step.notes)} |`,
+      `| ${step.index} | ${cell(step.title)} | ${resultLabel(step)} | ${who} | ${cell(step.notes)} |`,
     );
   }
   lines.push('');

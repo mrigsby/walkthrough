@@ -112,10 +112,11 @@ export async function fakeClickPanel(page: Page, className: string): Promise<voi
 }
 
 // The text of the window in the middle of the page, or "" when it is closed.
-export async function modalText(page: Page): Promise<string> {
+// "card-backdrop" reads a card that shows in the middle of the page.
+export async function modalText(page: Page, className = 'modal-backdrop'): Promise<string> {
   const cdp = await page.createCDPSession();
   try {
-    const [node] = await findNodes(cdp, (n) => hasClass(n, 'modal-backdrop'));
+    const [node] = await findNodes(cdp, (n) => hasClass(n, className));
     if (!node) return '';
     const { object } = await cdp.send('DOM.resolveNode', { backendNodeId: node.backendNodeId });
     const { result } = await cdp.send('Runtime.callFunctionOn', {

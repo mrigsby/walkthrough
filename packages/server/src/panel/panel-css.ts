@@ -74,9 +74,9 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .ref-thumb { display: block; max-width: 100%; max-height: 140px; width: auto; height: auto;
   border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center;
+.modal-backdrop, .card-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center;
   justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); }
-.modal-backdrop[hidden] { display: none; }
+.modal-backdrop[hidden], .card-backdrop[hidden] { display: none; }
 .modal { display: flex; flex-direction: column; width: min(720px, 100%); max-height: 88vh;
   background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35); font-size: 14px; line-height: 1.5; outline: none; }
@@ -84,6 +84,13 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .modal-title { flex: 1; margin: 0; font-size: 16px; }
 .modal-body { padding: 12px 14px 16px; overflow-y: auto; min-height: 0; }
 .modal-body > * + * { margin-top: 8px; }
+.subheading { margin: -4px 0 8px; color: var(--muted); }
+.subheading[hidden], .card-note[hidden] { display: none; }
+.card-note { color: var(--muted); }
+.card-modal .card-title { font-size: 22px; }
+.card-modal .modal-head { border-bottom: none; padding: 18px 20px 0; }
+.card-modal .modal-body { padding: 4px 20px 20px; font-size: 15px; }
+.card-modal .subheading { margin: 0 0 10px; font-size: 15px; }
 .ref-big { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; margin: 0 auto; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }

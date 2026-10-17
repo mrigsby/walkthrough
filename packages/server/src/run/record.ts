@@ -26,6 +26,8 @@ export interface StepResult {
   logs?: LogEntry[];
   // The check list of the panel, with the developer's ticks.
   checklist?: Array<{ text: string; checked: boolean }>;
+  // A card: the actions since the last step stay for the next step.
+  noActions?: boolean;
 }
 
 // Saves a step result in the active run, with the actions since the last result.
@@ -52,6 +54,12 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
   if (result.logs) {
     step.logs = formatLogs(result.logs);
     step.errorCount = result.logs.filter((e) => e.level === 'error').length;
+  }
+  if (result.noActions) {
+    step.at = new Date().toISOString();
+    store.save();
+    setRunCaption(ctx, store);
+    return step;
   }
   const actions = ctx.actionLog
     .slice(ctx.actionCursor)

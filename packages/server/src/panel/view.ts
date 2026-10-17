@@ -4,7 +4,7 @@ import { type Block, blocksText, copyRefs, parseRichText } from './rich-text.js'
 // What the panel shows for one question. The server builds it, and the panel only draws it.
 
 export type AnswerResult = 'pass' | 'bug' | 'skip' | 'stop';
-export type SectionKey = 'did' | 'expect' | 'next';
+export type SectionKey = 'did' | 'expect' | 'next' | 'content';
 
 export interface ViewSection {
   key: SectionKey;
@@ -24,8 +24,11 @@ export interface ViewButton {
 }
 
 export interface PanelView {
-  kind: 'step' | 'confirm';
+  kind: 'step' | 'confirm' | 'card';
   title: string;
+  // A card: smaller text under the title, and where the card shows.
+  subheading?: string;
+  size?: 'panel' | 'modal';
   sections: ViewSection[];
   buttons: ViewButton[];
   // A notes box, for step questions.
@@ -53,6 +56,7 @@ export const DEFAULT_LABELS: Record<SectionKey, string> = {
   did: 'What I did',
   expect: 'What you should see',
   next: "What's next",
+  content: '',
 };
 
 const BUTTON_ORDER: AnswerResult[] = ['pass', 'bug', 'skip', 'stop'];
@@ -109,7 +113,12 @@ export interface StepViewInput {
   // All snippets that the plan, the step, and the agent give. Later ones win.
   snippets?: Record<string, SnippetText>;
   image?: boolean;
+  // A card instead of a step question.
+  card?: { subheading?: string; content?: string; size?: 'panel' | 'modal' };
 }
+
+// Buttons that a card shows only when the plan says show: true.
+const CARD_HIDDEN: AnswerResult[] = ['bug', 'skip'];
 
 // The snippets that the sections use, and the ones that their help texts use.
 function usedSnippets(
@@ -144,8 +153,13 @@ export function buildStepView(input: StepViewInput): PanelView {
     if (!text?.trim()) return;
     sections.push({ key, label: labels[key] ?? '', blocks: parseRichText(text), ...extra });
   };
-  add('did', input.didWhat);
-  add('expect', input.expected);
+  const card = input.card;
+  if (card) {
+    add('content', card.content);
+  } else {
+    add('did', input.didWhat);
+    add('expect', input.expected);
+  }
   add('next', input.next, { collapsible: true, collapsed: nextSettings.collapsed });
 
   // Each layer can change part of one button, so merge button by button.
@@ -155,7 +169,7 @@ export function buildStepView(input: StepViewInput): PanelView {
   const buttons: ViewButton[] = [];
   for (const result of BUTTON_ORDER) {
     const set: ButtonSetting = Object.assign({}, ...buttonLayers.map((b) => b[result] ?? {}));
-    if (set.show === false) continue;
+    if (set.show === false || (card && CARD_HIDDEN.includes(result) && set.show !== true)) continue;
     const button: ViewButton = { result, label: set.label ?? DEFAULT_BUTTON_LABELS[result] };
     if (set.color) {
       button.color = set.color;
@@ -164,12 +178,18 @@ export function buildStepView(input: StepViewInput): PanelView {
     buttons.push(button);
   }
   return {
-    kind: 'step',
+    kind: card ? 'card' : 'step',
     title: input.title,
+    ...(card?.subheading ? { subheading: card.subheading } : {}),
+    ...(card ? { size: card.size ?? 'panel' } : {}),
     sections,
     buttons,
-    notes: true,
-    snippets: usedSnippets([input.didWhat, input.expected, input.next], input.snippets ?? {}),
+    // Bug needs notes. A card has no notes box unless it shows Bug.
+    notes: !card || buttons.some((b) => b.result === 'bug'),
+    snippets: usedSnippets(
+      card ? [card.content, input.next] : [input.didWhat, input.expected, input.next],
+      input.snippets ?? {},
+    ),
     ...(input.image ? { image: true } : {}),
   };
 }
@@ -222,7 +242,8 @@ export function buildConfirmView(input: {
 
 // The question as plain text, for chat when the panel is not available.
 export function viewText(view: PanelView): string {
-  const lines = [`Step: ${view.title}`];
+  const lines = [view.kind === 'card' ? `Card: ${view.title}` : `Step: ${view.title}`];
+  if (view.subheading) lines.push(view.subheading);
   for (const section of view.sections) {
     const text = blocksText(section.blocks, view.snippets);
     lines.push(section.label ? `${section.label}:\n${text}` : text);
