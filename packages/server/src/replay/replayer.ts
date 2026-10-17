@@ -224,6 +224,11 @@ export async function replayRun(ctx: Context, input: ReplayInput): Promise<Repla
     lines.push(
       `The replay used a new login and a new {{unique}} value (${replay.unique}), at the ${input.pace} pace.`,
     );
+    for (const step of run.steps.filter((s) => s.command)) {
+      lines.push(
+        `Step ${step.index} needs a command first: ${step.command}. The replay did not run it.`,
+      );
+    }
     return { ok: true, lines, preview, previewType: preview ? 'image/jpeg' : undefined, store };
   } catch (error) {
     if (error instanceof StepError) return failure('(setup)', error.message);

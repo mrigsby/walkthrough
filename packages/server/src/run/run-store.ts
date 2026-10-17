@@ -20,7 +20,14 @@ import type { LhMode } from '../lighthouse/categories.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
 import { slug } from '../text.js';
-import { type Capture, type Mode, type Plan, type PlanStep, stepTitle } from './plan-schema.js';
+import {
+  type Capture,
+  type Mode,
+  type Plan,
+  type PlanStep,
+  stepCommand,
+  stepTitle,
+} from './plan-schema.js';
 
 export type StepStatus = 'pending' | 'pass' | 'fail' | 'bug' | 'skip' | 'stop' | 'blocked';
 export type RunStatus = 'running' | 'finished' | 'stopped' | 'incomplete';
@@ -69,6 +76,8 @@ export interface RunStep {
   caption?: string;
   // The check list in the panel, with the developer's ticks.
   checklist?: Array<{ text: string; checked: boolean }>;
+  // A command for a terminal that the step needs first.
+  command?: string;
   // Earlier tries that the developer asked to do again, oldest first.
   tries?: StepTry[];
   // The element that the developer pointed at in the panel.
@@ -269,6 +278,7 @@ export class RunStore {
       actions: [],
       ...(step.cookies ? { cookies: step.cookies } : {}),
       ...(step.caption ? { caption: show(step.caption) } : {}),
+      ...(stepCommand(step) ? { command: show(stepCommand(step) as string) } : {}),
       ...(step.lighthouse
         ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } }
         : {}),

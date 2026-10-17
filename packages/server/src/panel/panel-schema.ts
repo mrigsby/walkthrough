@@ -27,6 +27,7 @@ const panelLayer = {
       did: label('what the agent did. The default is "What I did"'),
       expect: label('what the developer should see. The default is "What you should see"'),
       next: label(`what comes next. The default is "What's next"`),
+      command: label('the terminal command of the step. The default is "Run this command"'),
     })
     .strict()
     .optional()
@@ -128,6 +129,30 @@ export const snippetsSchema = z
   .describe('Snippets for {{copy:name}} in panel text, like { seed: "npm run db:seed" }.');
 
 export type Snippets = z.infer<typeof snippetsSchema>;
+
+// A command that the developer runs in a terminal, or that the agent runs after the
+// developer says yes. Walkthrough itself never runs it.
+const COMMAND_SECRET = 'A command cannot hold a {{secret:NAME}}. Walkthrough never copies secrets.';
+const commandText = z.string().min(1).max(2000).refine(noSecret, COMMAND_SECRET);
+
+export const commandSchema = z.union(
+  [
+    commandText,
+    z
+      .object({
+        run: commandText.describe('The command, like "npm run db:seed".'),
+        help: z
+          .string()
+          .max(4000)
+          .refine(noSecret, COMMAND_SECRET)
+          .optional()
+          .describe('What the command does. A "?" button shows it.'),
+      })
+      .strict(),
+  ],
+  { error: 'A command is the text to run, or { run, help }.' },
+);
+export type StepCommand = z.infer<typeof commandSchema>;
 
 export type StepPanel = z.infer<typeof stepPanelSchema>;
 export type PlanPanel = z.infer<typeof planPanelSchema>;

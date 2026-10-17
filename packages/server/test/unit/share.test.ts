@@ -69,6 +69,16 @@ describe('checkableText', () => {
 });
 
 describe('exportScript', () => {
+  it('names the command of a step, and does not run it', () => {
+    const withCommand: Run = {
+      ...run,
+      steps: run.steps.map((s) => (s.id === 'add-mug' ? { ...s, command: 'npm run seed' } : s)),
+    };
+    const code = exportScript(withCommand).code;
+    expect(code).toContain('// Run this first, in a terminal: npm run seed');
+    expect(code).not.toContain('execSync');
+  });
+
   it('writes steps with a navigation, a click, and checks', () => {
     const result = exportScript(run, { installedChrome: true });
     expect(result.code).toContain("import puppeteer from 'puppeteer-core';");

@@ -661,6 +661,11 @@
               "description": "The label above what comes next. The default is \"What's next\". \"\" shows no label.",
               "type": "string",
               "maxLength": 40
+            },
+            "command": {
+              "description": "The label above the terminal command of the step. The default is \"Run this command\". \"\" shows no label.",
+              "type": "string",
+              "maxLength": 40
             }
           },
           "additionalProperties": false
@@ -808,1067 +813,1120 @@
       "minItems": 1,
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "description": "A short id for the step. Reports and scripts use it.",
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]*$"
-          },
-          "do": {
-            "description": "What to do, in plain words. A card step does not need it.",
-            "type": "string",
-            "minLength": 1
-          },
-          "card": {
-            "description": "Show a card, like a start or end message, and wait for the developer.",
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "heading": {
+              "id": {
+                "description": "A short id for the step. Reports and scripts use it.",
                 "type": "string",
-                "minLength": 1,
-                "maxLength": 200,
-                "description": "Big text at the top of the card."
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
               },
-              "subheading": {
-                "description": "Smaller text under the heading.",
+              "do": {
+                "description": "What to do, in plain words. A card step does not need it.",
                 "type": "string",
-                "maxLength": 300
+                "minLength": 1
               },
-              "content": {
-                "description": "The text of the card. It can have lists, check lists, and code.",
-                "type": "string",
-                "maxLength": 8000
-              },
-              "size": {
-                "description": "panel (default): in the Walkthrough panel. modal: big, in the middle of the page.",
-                "type": "string",
-                "enum": [
-                  "panel",
-                  "modal"
-                ]
-              },
-              "when": {
-                "description": "always (default). passed: only when no step so far has a bug or failed. problems: only when one has.",
-                "type": "string",
-                "enum": [
-                  "always",
-                  "passed",
-                  "problems"
-                ]
-              }
-            },
-            "required": [
-              "heading"
-            ],
-            "additionalProperties": false
-          },
-          "expect": {
-            "description": "What the developer should see after the step. Make it specific.",
-            "type": "string"
-          },
-          "checkpoint": {
-            "description": "In checkpoints mode, ask the developer to confirm this step.",
-            "type": "boolean"
-          },
-          "action": {
-            "type": "object",
-            "properties": {
-              "navigate": {
-                "description": "A URL or a path like \"/cart\".",
-                "type": "string"
-              },
-              "click": {
+              "card": {
+                "description": "Show a card, like a start or end message, and wait for the developer.",
                 "type": "object",
                 "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "dblclick": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "hover": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "fill": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "select": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "check": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "uncheck": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "press": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "scroll": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "upload": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "description": "ARIA role, like \"button\" or \"textbox\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "The name the user sees, like \"Checkout\".",
-                    "type": "string"
-                  },
-                  "selector": {
-                    "description": "A CSS or Puppeteer selector.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Text to type, option to choose, or key to press.",
-                    "type": "string"
-                  },
-                  "files": {
-                    "description": "Files to upload, from the project folder.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
-              },
-              "wait": {
-                "description": "Text to wait for on the page.",
-                "type": "string"
-              },
-              "newTab": {
-                "type": "object",
-                "properties": {
-                  "url": {
-                    "description": "The page to open. A full URL, or a path like \"/login\".",
-                    "type": "string"
-                  },
-                  "name": {
-                    "description": "A name for the tab. Later steps switch to it by name.",
+                  "heading": {
                     "type": "string",
-                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Big text at the top of the card."
                   },
-                  "isolated": {
-                    "description": "true for a new login of its own. A name for a login that tabs share.",
-                    "anyOf": [
-                      {
-                        "type": "boolean",
-                        "const": true
+                  "subheading": {
+                    "description": "Smaller text under the heading.",
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "content": {
+                    "description": "The text of the card. It can have lists, check lists, and code.",
+                    "type": "string",
+                    "maxLength": 8000
+                  },
+                  "size": {
+                    "description": "panel (default): in the Walkthrough panel. modal: big, in the middle of the page.",
+                    "type": "string",
+                    "enum": [
+                      "panel",
+                      "modal"
+                    ]
+                  },
+                  "when": {
+                    "description": "always (default). passed: only when no step so far has a bug or failed. problems: only when one has.",
+                    "type": "string",
+                    "enum": [
+                      "always",
+                      "passed",
+                      "problems"
+                    ]
+                  }
+                },
+                "required": [
+                  "heading"
+                ],
+                "additionalProperties": false
+              },
+              "expect": {
+                "description": "What the developer should see after the step. Make it specific.",
+                "type": "string"
+              },
+              "checkpoint": {
+                "description": "In checkpoints mode, ask the developer to confirm this step.",
+                "type": "boolean"
+              },
+              "action": {
+                "type": "object",
+                "properties": {
+                  "navigate": {
+                    "description": "A URL or a path like \"/cart\".",
+                    "type": "string"
+                  },
+                  "click": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
                       },
-                      {
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "dblclick": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "hover": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fill": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "select": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "check": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "uncheck": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "press": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "scroll": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "upload": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "description": "ARIA role, like \"button\" or \"textbox\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name the user sees, like \"Checkout\".",
+                        "type": "string"
+                      },
+                      "selector": {
+                        "description": "A CSS or Puppeteer selector.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Text to type, option to choose, or key to press.",
+                        "type": "string"
+                      },
+                      "files": {
+                        "description": "Files to upload, from the project folder.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "wait": {
+                    "description": "Text to wait for on the page.",
+                    "type": "string"
+                  },
+                  "newTab": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "description": "The page to open. A full URL, or a path like \"/login\".",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "A name for the tab. Later steps switch to it by name.",
                         "type": "string",
                         "pattern": "^[a-z0-9][a-z0-9-]*$"
+                      },
+                      "isolated": {
+                        "description": "true for a new login of its own. A name for a login that tabs share.",
+                        "anyOf": [
+                          {
+                            "type": "boolean",
+                            "const": true
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z0-9][a-z0-9-]*$"
+                          }
+                        ]
+                      },
+                      "session": {
+                        "description": "A saved login to load into the tab.",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "switchTab": {
+                    "description": "The tab to use now: a name, or \"newest\" for the tab that opened last. { tab: newest, name: help } also names it.",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tab": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "A tab name, an id, or \"newest\"."
+                          },
+                          "name": {
+                            "description": "A name to give the tab.",
+                            "type": "string",
+                            "pattern": "^[a-z0-9][a-z0-9-]*$"
+                          }
+                        },
+                        "required": [
+                          "tab"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   },
-                  "session": {
-                    "description": "A saved login to load into the tab.",
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              },
-              "switchTab": {
-                "description": "The tab to use now: a name, or \"newest\" for the tab that opened last. { tab: newest, name: help } also names it.",
-                "anyOf": [
-                  {
+                  "closeTab": {
+                    "description": "The name or id of the tab to close.",
                     "type": "string",
                     "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "description": "An exact action for this step. The agent uses it instead of guessing."
+              },
+              "screenshot": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
                   },
                   {
-                    "type": "object",
-                    "properties": {
-                      "tab": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "A tab name, an id, or \"newest\"."
-                      },
-                      "name": {
-                        "description": "A name to give the tab.",
-                        "type": "string",
-                        "pattern": "^[a-z0-9][a-z0-9-]*$"
-                      }
-                    },
-                    "required": [
-                      "tab"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "closeTab": {
-                "description": "The name or id of the tab to close.",
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "additionalProperties": false,
-            "description": "An exact action for this step. The agent uses it instead of guessing."
-          },
-          "screenshot": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "\\.(png|jpe?g|webp)$",
-                "description": "Where to save the file, from the project folder or from screenshotDir."
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "path": {
                     "type": "string",
                     "minLength": 1,
                     "pattern": "\\.(png|jpe?g|webp)$",
                     "description": "Where to save the file, from the project folder or from screenshotDir."
                   },
-                  "selector": {
-                    "description": "Capture only this element.",
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "\\.(png|jpe?g|webp)$",
+                        "description": "Where to save the file, from the project folder or from screenshotDir."
+                      },
+                      "selector": {
+                        "description": "Capture only this element.",
+                        "type": "string"
+                      },
+                      "fullPage": {
+                        "description": "Capture the whole page, not only the visible part.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists."
+              },
+              "visual": {
+                "description": "Compare a screenshot with the saved baseline after this step.",
+                "type": "boolean"
+              },
+              "emulate": {
+                "description": "Settings for the tab of this step, like { device: mobile }. They apply before the step.",
+                "type": "object",
+                "properties": {
+                  "device": {
+                    "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
                     "type": "string"
                   },
-                  "fullPage": {
-                    "description": "Capture the whole page, not only the visible part.",
-                    "type": "boolean"
+                  "colorScheme": {
+                    "description": "Light or dark mode.",
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark",
+                      "system"
+                    ]
+                  },
+                  "network": {
+                    "description": "Network speed.",
+                    "type": "string",
+                    "enum": [
+                      "normal",
+                      "slow-3g",
+                      "fast-3g",
+                      "slow-4g",
+                      "fast-4g",
+                      "offline"
+                    ]
+                  },
+                  "cpu": {
+                    "description": "Make the CPU slower by this factor, like 4. 1 is normal speed.",
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "timezone": {
+                    "description": "A time zone like \"Europe/Berlin\", or \"system\".",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "locale": {
+                    "description": "A language and region like \"de-DE\", or \"system\". It changes date and number formats and the Accept-Language header.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "geolocation": {
+                    "description": "A place like { latitude: 52.52, longitude: 13.4 }. It also allows location for the login. \"off\" blocks location for the login.",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "off"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "latitude": {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          },
+                          "longitude": {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          "accuracy": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "latitude",
+                          "longitude"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "reducedMotion": {
+                    "description": "The prefers-reduced-motion setting.",
+                    "type": "string",
+                    "enum": [
+                      "reduce",
+                      "no-preference",
+                      "system"
+                    ]
+                  },
+                  "media": {
+                    "description": "Show the page as on screen or as printed.",
+                    "type": "string",
+                    "enum": [
+                      "screen",
+                      "print"
+                    ]
+                  },
+                  "permissions": {
+                    "description": "Browser permissions. They apply to every tab of the same login.",
+                    "type": "object",
+                    "properties": {
+                      "geolocation": {
+                        "type": "string",
+                        "enum": [
+                          "grant",
+                          "deny",
+                          "prompt"
+                        ]
+                      },
+                      "notifications": {
+                        "type": "string",
+                        "enum": [
+                          "grant",
+                          "deny",
+                          "prompt"
+                        ]
+                      },
+                      "clipboard": {
+                        "type": "string",
+                        "enum": [
+                          "grant",
+                          "deny",
+                          "prompt"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
                   }
                 },
-                "required": [
-                  "path"
-                ],
                 "additionalProperties": false
-              }
-            ],
-            "description": "Save a screenshot after this step. true saves it with the run. A path saves it to that exact file, and replaces the file if it exists."
-          },
-          "visual": {
-            "description": "Compare a screenshot with the saved baseline after this step.",
-            "type": "boolean"
-          },
-          "emulate": {
-            "description": "Settings for the tab of this step, like { device: mobile }. They apply before the step.",
-            "type": "object",
-            "properties": {
-              "device": {
-                "description": "desktop, laptop, tablet, mobile, default, or a Puppeteer device name like \"Pixel 5\".",
-                "type": "string"
               },
-              "colorScheme": {
-                "description": "Light or dark mode.",
-                "type": "string",
-                "enum": [
-                  "light",
-                  "dark",
-                  "system"
-                ]
+              "cookies": {
+                "description": "Cookie checks after this step, like [{ name: session, httpOnly: true }].",
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The cookie name, like \"session\"."
+                    },
+                    "exists": {
+                      "description": "false checks that the cookie is gone. The default is true.",
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "description": "The exact value. {{secret:NAME}} and {{unique}} work here.",
+                      "type": "string"
+                    },
+                    "contains": {
+                      "description": "Text that the value has in it.",
+                      "type": "string"
+                    },
+                    "httpOnly": {
+                      "type": "boolean"
+                    },
+                    "secure": {
+                      "type": "boolean"
+                    },
+                    "sameSite": {
+                      "type": "string",
+                      "enum": [
+                        "Strict",
+                        "Lax",
+                        "None"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
               },
-              "network": {
-                "description": "Network speed.",
-                "type": "string",
-                "enum": [
-                  "normal",
-                  "slow-3g",
-                  "fast-3g",
-                  "slow-4g",
-                  "fast-4g",
-                  "offline"
-                ]
-              },
-              "cpu": {
-                "description": "Make the CPU slower by this factor, like 4. 1 is normal speed.",
-                "type": "number",
-                "minimum": 1,
-                "maximum": 20
-              },
-              "timezone": {
-                "description": "A time zone like \"Europe/Berlin\", or \"system\".",
-                "type": "string",
-                "minLength": 1
-              },
-              "locale": {
-                "description": "A language and region like \"de-DE\", or \"system\". It changes date and number formats and the Accept-Language header.",
-                "type": "string",
-                "minLength": 1
-              },
-              "geolocation": {
-                "description": "A place like { latitude: 52.52, longitude: 13.4 }. It also allows location for the login. \"off\" blocks location for the login.",
+              "mock": {
+                "description": "Mock rules to add before this step, like [{ url: /api/stock, status: 500 }]. They stay on for later steps. \"off\" removes all mocks.",
                 "anyOf": [
                   {
                     "type": "string",
                     "const": "off"
                   },
                   {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "description": "The address to match. \"/api/stock\" matches the path on any site. A full URL or a pattern with * matches the whole address.",
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "urlRegex": {
+                          "description": "A regular expression for the whole address.",
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "method": {
+                          "description": "Only this method, like \"POST\".",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Only this resource type, like \"fetch\", \"xhr\", \"document\", \"image\", or \"script\".",
+                          "type": "string"
+                        },
+                        "tab": {
+                          "description": "Only this tab, by name or id. Default: every tab.",
+                          "type": "string"
+                        },
+                        "status": {
+                          "description": "The status to answer with.",
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599
+                        },
+                        "json": {
+                          "description": "A JSON body to answer with."
+                        },
+                        "body": {
+                          "description": "A text body to answer with.",
+                          "type": "string"
+                        },
+                        "headers": {
+                          "description": "Headers to answer with.",
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "contentType": {
+                          "description": "The content type. Default: from json or text.",
+                          "type": "string"
+                        },
+                        "delayMs": {
+                          "description": "Wait this long first.",
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 60000
+                        },
+                        "block": {
+                          "description": "Fail the request, as if the network blocked it.",
+                          "type": "boolean"
+                        },
+                        "times": {
+                          "description": "Use the rule this many times, then stop.",
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                ]
+              },
+              "a11y": {
+                "description": "Check accessibility after this step.",
+                "anyOf": [
+                  {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  {
                     "type": "object",
                     "properties": {
-                      "latitude": {
-                        "type": "number",
-                        "minimum": -90,
-                        "maximum": 90
+                      "selector": {
+                        "description": "Check only this part of the page.",
+                        "type": "string",
+                        "minLength": 1
                       },
-                      "longitude": {
-                        "type": "number",
-                        "minimum": -180,
-                        "maximum": 180
+                      "checks": {
+                        "description": "Extra checks for this step, like [keyboard, darkMode].",
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "keyboard",
+                            "darkMode",
+                            "reflow",
+                            "frames",
+                            "screenshots"
+                          ]
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "caption": {
+                "description": "The text viewers see in a video of this step. Without it, videos show \"do\".",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "lighthouse": {
+                "description": "Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.",
+                "type": "string",
+                "enum": [
+                  "navigation",
+                  "timespan",
+                  "snapshot"
+                ]
+              },
+              "notes": {
+                "description": "Notes for the presenter. Only the presenter window shows them.",
+                "type": "string",
+                "maxLength": 4000
+              },
+              "pause": {
+                "description": "In a presentation, wait for the presenter before this step. false goes on by itself. The default comes from presentation.pause.",
+                "type": "boolean"
+              },
+              "slide": {
+                "description": "A slide before the action of this step, or the whole step when it has no action. Test runs skip a step that is only a slide.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "An image file from the project folder, like \".walkthrough/slides/title.png\"."
                       },
-                      "accuracy": {
-                        "type": "number",
-                        "minimum": 0
+                      "fit": {
+                        "description": "contain shows all of the image (default). cover fills the window and can cut the edges.",
+                        "type": "string",
+                        "enum": [
+                          "contain",
+                          "cover"
+                        ]
+                      },
+                      "background": {
+                        "description": "The color around the image. The default is black.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
                       }
                     },
                     "required": [
-                      "latitude",
-                      "longitude"
+                      "image"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120,
+                        "description": "Big text in the middle of the screen."
+                      },
+                      "text": {
+                        "description": "Smaller text under the title.",
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      "background": {
+                        "description": "The color of the slide. The default is dark gray.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      },
+                      "color": {
+                        "description": "The color of the text. The default is white.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      }
+                    },
+                    "required": [
+                      "title"
                     ],
                     "additionalProperties": false
                   }
                 ]
               },
-              "reducedMotion": {
-                "description": "The prefers-reduced-motion setting.",
-                "type": "string",
-                "enum": [
-                  "reduce",
-                  "no-preference",
-                  "system"
-                ]
+              "spotlight": {
+                "description": "In a presentation, dim the page except the element of this step during the pause.",
+                "type": "boolean"
               },
-              "media": {
-                "description": "Show the page as on screen or as printed.",
-                "type": "string",
-                "enum": [
-                  "screen",
-                  "print"
-                ]
+              "zoom": {
+                "description": "In a presentation, show the area of the next action this many times bigger during the pause.",
+                "type": "number",
+                "minimum": 1.25,
+                "maximum": 4
               },
-              "permissions": {
-                "description": "Browser permissions. They apply to every tab of the same login.",
-                "type": "object",
-                "properties": {
-                  "geolocation": {
+              "timeBudget": {
+                "description": "The time for this step in a presentation, like \"45s\".",
+                "type": "string",
+                "pattern": "^(?=\\d)(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$"
+              },
+              "next": {
+                "description": "What comes after this step. The panel shows it under \"What's next\".",
+                "type": "string",
+                "maxLength": 2000
+              },
+              "command": {
+                "description": "A command for a terminal, like \"npm run db:seed\". The panel shows it with a Copy button. The agent can run it after the developer says yes.",
+                "anyOf": [
+                  {
                     "type": "string",
-                    "enum": [
-                      "grant",
-                      "deny",
-                      "prompt"
-                    ]
+                    "minLength": 1,
+                    "maxLength": 2000
                   },
-                  "notifications": {
-                    "type": "string",
-                    "enum": [
-                      "grant",
-                      "deny",
-                      "prompt"
-                    ]
-                  },
-                  "clipboard": {
-                    "type": "string",
-                    "enum": [
-                      "grant",
-                      "deny",
-                      "prompt"
-                    ]
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          "cookies": {
-            "description": "Cookie checks after this step, like [{ name: session, httpOnly: true }].",
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "The cookie name, like \"session\"."
-                },
-                "exists": {
-                  "description": "false checks that the cookie is gone. The default is true.",
-                  "type": "boolean"
-                },
-                "value": {
-                  "description": "The exact value. {{secret:NAME}} and {{unique}} work here.",
-                  "type": "string"
-                },
-                "contains": {
-                  "description": "Text that the value has in it.",
-                  "type": "string"
-                },
-                "httpOnly": {
-                  "type": "boolean"
-                },
-                "secure": {
-                  "type": "boolean"
-                },
-                "sameSite": {
-                  "type": "string",
-                  "enum": [
-                    "Strict",
-                    "Lax",
-                    "None"
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "mock": {
-            "description": "Mock rules to add before this step, like [{ url: /api/stock, status: 500 }]. They stay on for later steps. \"off\" removes all mocks.",
-            "anyOf": [
-              {
-                "type": "string",
-                "const": "off"
-              },
-              {
-                "minItems": 1,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "url": {
-                      "description": "The address to match. \"/api/stock\" matches the path on any site. A full URL or a pattern with * matches the whole address.",
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "urlRegex": {
-                      "description": "A regular expression for the whole address.",
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "method": {
-                      "description": "Only this method, like \"POST\".",
-                      "type": "string"
-                    },
-                    "type": {
-                      "description": "Only this resource type, like \"fetch\", \"xhr\", \"document\", \"image\", or \"script\".",
-                      "type": "string"
-                    },
-                    "tab": {
-                      "description": "Only this tab, by name or id. Default: every tab.",
-                      "type": "string"
-                    },
-                    "status": {
-                      "description": "The status to answer with.",
-                      "type": "integer",
-                      "minimum": 100,
-                      "maximum": 599
-                    },
-                    "json": {
-                      "description": "A JSON body to answer with."
-                    },
-                    "body": {
-                      "description": "A text body to answer with.",
-                      "type": "string"
-                    },
-                    "headers": {
-                      "description": "Headers to answer with.",
-                      "type": "object",
-                      "propertyNames": {
-                        "type": "string"
+                  {
+                    "type": "object",
+                    "properties": {
+                      "run": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000,
+                        "description": "The command, like \"npm run db:seed\"."
                       },
-                      "additionalProperties": {
-                        "type": "string"
+                      "help": {
+                        "description": "What the command does. A \"?\" button shows it.",
+                        "type": "string",
+                        "maxLength": 4000
                       }
                     },
-                    "contentType": {
-                      "description": "The content type. Default: from json or text.",
-                      "type": "string"
-                    },
-                    "delayMs": {
-                      "description": "Wait this long first.",
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 60000
-                    },
-                    "block": {
-                      "description": "Fail the request, as if the network blocked it.",
-                      "type": "boolean"
-                    },
-                    "times": {
-                      "description": "Use the rule this many times, then stop.",
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            ]
-          },
-          "a11y": {
-            "description": "Check accessibility after this step.",
-            "anyOf": [
-              {
-                "type": "boolean",
-                "const": true
+                    "required": [
+                      "run"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
-              {
+              "snippets": {
                 "type": "object",
-                "properties": {
-                  "selector": {
-                    "description": "Check only this part of the page.",
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "checks": {
-                    "description": "Extra checks for this step, like [keyboard, darkMode].",
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "keyboard",
-                        "darkMode",
-                        "reflow",
-                        "frames",
-                        "screenshots"
-                      ]
-                    }
-                  }
-                },
-                "additionalProperties": false
-              }
-            ]
-          },
-          "caption": {
-            "description": "The text viewers see in a video of this step. Without it, videos show \"do\".",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "lighthouse": {
-            "description": "Measure this step with Lighthouse. navigation: Lighthouse loads the page of the navigate action. timespan: it measures what the step does. snapshot: it checks the page after the step.",
-            "type": "string",
-            "enum": [
-              "navigation",
-              "timespan",
-              "snapshot"
-            ]
-          },
-          "notes": {
-            "description": "Notes for the presenter. Only the presenter window shows them.",
-            "type": "string",
-            "maxLength": 4000
-          },
-          "pause": {
-            "description": "In a presentation, wait for the presenter before this step. false goes on by itself. The default comes from presentation.pause.",
-            "type": "boolean"
-          },
-          "slide": {
-            "description": "A slide before the action of this step, or the whole step when it has no action. Test runs skip a step that is only a slide.",
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "image": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "An image file from the project folder, like \".walkthrough/slides/title.png\"."
-                  },
-                  "fit": {
-                    "description": "contain shows all of the image (default). cover fills the window and can cut the edges.",
-                    "type": "string",
-                    "enum": [
-                      "contain",
-                      "cover"
-                    ]
-                  },
-                  "background": {
-                    "description": "The color around the image. The default is black.",
-                    "type": "string",
-                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120,
-                    "description": "Big text in the middle of the screen."
-                  },
-                  "text": {
-                    "description": "Smaller text under the title.",
-                    "type": "string",
-                    "maxLength": 1000
-                  },
-                  "background": {
-                    "description": "The color of the slide. The default is dark gray.",
-                    "type": "string",
-                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                  },
-                  "color": {
-                    "description": "The color of the text. The default is white.",
-                    "type": "string",
-                    "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                  }
-                },
-                "required": [
-                  "title"
-                ],
-                "additionalProperties": false
-              }
-            ]
-          },
-          "spotlight": {
-            "description": "In a presentation, dim the page except the element of this step during the pause.",
-            "type": "boolean"
-          },
-          "zoom": {
-            "description": "In a presentation, show the area of the next action this many times bigger during the pause.",
-            "type": "number",
-            "minimum": 1.25,
-            "maximum": 4
-          },
-          "timeBudget": {
-            "description": "The time for this step in a presentation, like \"45s\".",
-            "type": "string",
-            "pattern": "^(?=\\d)(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$"
-          },
-          "next": {
-            "description": "What comes after this step. The panel shows it under \"What's next\".",
-            "type": "string",
-            "maxLength": 2000
-          },
-          "snippets": {
-            "type": "object",
-            "propertyNames": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]+$"
-            },
-            "additionalProperties": {
-              "anyOf": [
-                {
+                "propertyNames": {
                   "type": "string",
-                  "minLength": 1,
-                  "maxLength": 4000,
-                  "description": "The text to copy, like a terminal command."
+                  "pattern": "^[A-Za-z0-9_-]+$"
                 },
-                {
-                  "type": "object",
-                  "properties": {
-                    "code": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 4000,
                       "description": "The text to copy, like a terminal command."
                     },
-                    "help": {
-                      "description": "More about the snippet. A \"?\" next to the copy button shows it.",
-                      "type": "string",
-                      "maxLength": 4000
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "description": "The text to copy, like a terminal command."
+                        },
+                        "help": {
+                          "description": "More about the snippet. A \"?\" next to the copy button shows it.",
+                          "type": "string",
+                          "maxLength": 4000
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": [
-                    "code"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            },
-            "description": "Snippets for {{copy:name}} in panel text, like { seed: \"npm run db:seed\" }."
-          },
-          "expectImage": {
-            "description": "An image of what the page should look like, from the project folder. The panel shows it under \"What you should see\".",
-            "type": "string",
-            "minLength": 1,
-            "pattern": "\\.(png|jpe?g|webp)$"
-          },
-          "panel": {
-            "description": "Panel labels and buttons for this step. They replace the same settings in the plan \"panel\".",
-            "type": "object",
-            "properties": {
-              "labels": {
-                "description": "Labels of the parts of the panel.",
+                  ]
+                },
+                "description": "Snippets for {{copy:name}} in panel text, like { seed: \"npm run db:seed\" }."
+              },
+              "expectImage": {
+                "description": "An image of what the page should look like, from the project folder. The panel shows it under \"What you should see\".",
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\.(png|jpe?g|webp)$"
+              },
+              "panel": {
+                "description": "Panel labels and buttons for this step. They replace the same settings in the plan \"panel\".",
                 "type": "object",
                 "properties": {
-                  "did": {
-                    "description": "The label above what the agent did. The default is \"What I did\". \"\" shows no label.",
-                    "type": "string",
-                    "maxLength": 40
+                  "labels": {
+                    "description": "Labels of the parts of the panel.",
+                    "type": "object",
+                    "properties": {
+                      "did": {
+                        "description": "The label above what the agent did. The default is \"What I did\". \"\" shows no label.",
+                        "type": "string",
+                        "maxLength": 40
+                      },
+                      "expect": {
+                        "description": "The label above what the developer should see. The default is \"What you should see\". \"\" shows no label.",
+                        "type": "string",
+                        "maxLength": 40
+                      },
+                      "next": {
+                        "description": "The label above what comes next. The default is \"What's next\". \"\" shows no label.",
+                        "type": "string",
+                        "maxLength": 40
+                      },
+                      "command": {
+                        "description": "The label above the terminal command of the step. The default is \"Run this command\". \"\" shows no label.",
+                        "type": "string",
+                        "maxLength": 40
+                      }
+                    },
+                    "additionalProperties": false
                   },
-                  "expect": {
-                    "description": "The label above what the developer should see. The default is \"What you should see\". \"\" shows no label.",
-                    "type": "string",
-                    "maxLength": 40
+                  "buttons": {
+                    "description": "Text and colors of the answer buttons, like { pass: { label: Done } }.",
+                    "type": "object",
+                    "properties": {
+                      "pass": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "description": "The text on the button.",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 24
+                          },
+                          "color": {
+                            "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                            "type": "string",
+                            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "bug": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "description": "The text on the button.",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 24
+                          },
+                          "color": {
+                            "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                            "type": "string",
+                            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                          },
+                          "show": {
+                            "description": "false hides the button.",
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "skip": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "description": "The text on the button.",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 24
+                          },
+                          "color": {
+                            "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                            "type": "string",
+                            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                          },
+                          "show": {
+                            "description": "false hides the button.",
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "retry": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "description": "The text on the button.",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 24
+                          },
+                          "color": {
+                            "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                            "type": "string",
+                            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                          },
+                          "show": {
+                            "description": "false hides the button.",
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "stop": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "description": "The text on the button.",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 24
+                          },
+                          "color": {
+                            "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                            "type": "string",
+                            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "next": {
-                    "description": "The label above what comes next. The default is \"What's next\". \"\" shows no label.",
-                    "type": "string",
-                    "maxLength": 40
-                  }
-                },
-                "additionalProperties": false
-              },
-              "buttons": {
-                "description": "Text and colors of the answer buttons, like { pass: { label: Done } }.",
-                "type": "object",
-                "properties": {
-                  "pass": {
                     "type": "object",
                     "properties": {
-                      "label": {
-                        "description": "The text on the button.",
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      },
-                      "color": {
-                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
-                        "type": "string",
-                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "bug": {
-                    "type": "object",
-                    "properties": {
-                      "label": {
-                        "description": "The text on the button.",
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      },
-                      "color": {
-                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
-                        "type": "string",
-                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                      },
-                      "show": {
-                        "description": "false hides the button.",
+                      "collapsed": {
+                        "description": "Start with \"What's next\" closed.",
                         "type": "boolean"
                       }
                     },
                     "additionalProperties": false
-                  },
-                  "skip": {
-                    "type": "object",
-                    "properties": {
-                      "label": {
-                        "description": "The text on the button.",
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      },
-                      "color": {
-                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
-                        "type": "string",
-                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                      },
-                      "show": {
-                        "description": "false hides the button.",
-                        "type": "boolean"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "retry": {
-                    "type": "object",
-                    "properties": {
-                      "label": {
-                        "description": "The text on the button.",
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      },
-                      "color": {
-                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
-                        "type": "string",
-                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                      },
-                      "show": {
-                        "description": "false hides the button.",
-                        "type": "boolean"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "stop": {
-                    "type": "object",
-                    "properties": {
-                      "label": {
-                        "description": "The text on the button.",
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      },
-                      "color": {
-                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
-                        "type": "string",
-                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "additionalProperties": false
-              },
-              "next": {
-                "type": "object",
-                "properties": {
-                  "collapsed": {
-                    "description": "Start with \"What's next\" closed.",
-                    "type": "boolean"
                   }
                 },
                 "additionalProperties": false
               }
             },
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "include": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "The name of a plan in .walkthrough/plans. Its steps go here."
+              }
+            },
+            "required": [
+              "include"
+            ],
+            "additionalProperties": false
           }
-        },
-        "additionalProperties": false
+        ]
       }
     }
   },

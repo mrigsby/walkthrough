@@ -18,7 +18,8 @@ export type Block =
   | { t: 'ul'; items: Inline[][] }
   | { t: 'ol'; start: number; items: Inline[][] }
   | { t: 'check'; items: Array<{ text: Inline[]; checked: boolean }> }
-  | { t: 'code'; v: string };
+  // A code block. "help" is for a "?" button, like for a terminal command.
+  | { t: 'code'; v: string; help?: Block[] };
 
 // Long text is cut, so one question cannot fill the panel with a huge message.
 const MAX_TEXT = 8000;

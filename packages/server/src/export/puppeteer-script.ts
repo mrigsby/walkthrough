@@ -758,6 +758,8 @@ export function exportScript(
         }
       }
     }
+    // A script cannot answer questions, so it does not run commands. It names them.
+    if (step.command) lines.unshift(`// Run this first, in a terminal: ${step.command}`);
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
     body.push(

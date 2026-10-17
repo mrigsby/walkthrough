@@ -4,7 +4,7 @@ import { type Block, blocksText, copyRefs, parseRichText } from './rich-text.js'
 // What the panel shows for one question. The server builds it, and the panel only draws it.
 
 export type AnswerResult = 'pass' | 'bug' | 'skip' | 'retry' | 'stop';
-export type SectionKey = 'did' | 'expect' | 'next' | 'content';
+export type SectionKey = 'did' | 'command' | 'expect' | 'next' | 'content';
 
 export interface ViewSection {
   key: SectionKey;
@@ -58,6 +58,7 @@ export interface SnippetText {
 
 export const DEFAULT_LABELS: Record<SectionKey, string> = {
   did: 'What I did',
+  command: 'Run this command',
   expect: 'What you should see',
   next: "What's next",
   content: '',
@@ -120,6 +121,8 @@ export interface StepViewInput {
   image?: boolean;
   // A card instead of a step question.
   card?: { subheading?: string; content?: string; size?: 'panel' | 'modal' };
+  // A terminal command for the step, with a Copy button.
+  command?: { run: string; help?: string };
 }
 
 // Buttons that a card shows only when the plan says show: true.
@@ -163,6 +166,14 @@ export function buildStepView(input: StepViewInput): PanelView {
     add('content', card.content);
   } else {
     add('did', input.didWhat);
+    if (input.command) {
+      const help = input.command.help ? parseRichText(input.command.help) : undefined;
+      sections.push({
+        key: 'command',
+        label: labels.command ?? '',
+        blocks: [{ t: 'code', v: input.command.run, ...(help ? { help } : {}) }],
+      });
+    }
     add('expect', input.expected);
   }
   add('next', input.next, { collapsible: true, collapsed: nextSettings.collapsed });

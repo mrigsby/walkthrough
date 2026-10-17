@@ -16,6 +16,7 @@ import {
 
 function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
   const out = [`### Step ${step.index}: ${step.title} (${resultLabel(step)})`, ''];
+  if (step.command) out.push(`- **Command:** \`${step.command}\``);
   if (step.expect) out.push(`- **Expected:** ${step.expect}`);
   if (step.actual) out.push(`- **Actual:** ${step.actual}`);
   if (step.checkedBy)

@@ -37,6 +37,7 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
     `<summary><span class="badge ${step.status}">${esc(resultLabel(step))}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ''} Step ${step.index}: ${esc(step.title)}</summary>`,
     '<dl>',
   ];
+  if (step.command) parts.push(`<dt>Command</dt><dd><code>${esc(step.command)}</code></dd>`);
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc(step.expect)}</dd>`);
   if (step.actual) parts.push(`<dt>Actual</dt><dd>${esc(step.actual)}</dd>`);
   if (step.checkedBy)

@@ -2,7 +2,14 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { basename, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { LineCounter, parseDocument } from 'yaml';
 import { issueMessage, ToolError } from '../errors.js';
-import { LATER_KEYS, LATER_STEP_KEYS, type Plan, planSchema } from './plan-schema.js';
+import {
+  includeStepSchema,
+  LATER_KEYS,
+  LATER_STEP_KEYS,
+  type Plan,
+  type PlanStep,
+  planSchema,
+} from './plan-schema.js';
 
 export interface PlanProblem {
   line?: number;
@@ -16,8 +23,18 @@ export function plansDir(projectDir: string): string {
   return join(projectDir, '.walkthrough', 'plans');
 }
 
-// Checks plan text. Each problem has a line number when we can find one.
-export function validatePlanText(text: string): PlanResult {
+interface ParsedFile {
+  plan: Plan;
+  // { include: name } items, by their place in "steps". The plan has a stand-in step there.
+  includes: Array<{ index: number; name: string; line?: number }>;
+  // The line of each step in the file.
+  stepLines: Array<number | undefined>;
+}
+
+type Parsed = { ok: true; parsed: ParsedFile } | { ok: false; problems: PlanProblem[] };
+
+// Checks the text of one plan file. Include items are checked here, but not expanded.
+function parseFile(text: string): Parsed {
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter, prettyErrors: false });
   if (doc.errors.length > 0) {
@@ -30,28 +47,200 @@ export function validatePlanText(text: string): PlanResult {
       })),
     };
   }
-
-  const result = planSchema.safeParse(doc.toJS());
-  if (result.success) return { ok: true, plan: result.data };
-
-  const problems = result.error.issues.map((issue) => {
-    const path = issue.path.map((p) => (typeof p === 'number' ? p : String(p)));
-    // Use the deepest part of the path that exists in the file.
-    let line: number | undefined;
-    for (let depth = path.length; depth >= 0 && line === undefined; depth--) {
+  // The line of the deepest part of the path that exists in the file.
+  const lineOf = (path: Array<string | number>): number | undefined => {
+    for (let depth = path.length; depth >= 0; depth--) {
       const node = depth === 0 ? doc.contents : doc.getIn(path.slice(0, depth), true);
       const range = (node as { range?: [number, number, number] } | undefined)?.range;
-      if (range) line = lineCounter.linePos(range[0]).line;
+      if (range) return lineCounter.linePos(range[0]).line;
     }
-    const where = path.length
+    return undefined;
+  };
+  const pathText = (path: Array<string | number>) =>
+    path.length
       ? path
           .map((p) => (typeof p === 'number' ? `[${p}]` : `.${p}`))
           .join('')
           .replace(/^\./, '')
       : '(top)';
-    return { line, path: where, message: issueMessage(issue) };
+
+  const raw = doc.toJS() as Record<string, unknown> | null;
+  const includes: ParsedFile['includes'] = [];
+  const problems: PlanProblem[] = [];
+  let data: unknown = raw;
+  if (raw && typeof raw === 'object' && Array.isArray(raw.steps)) {
+    const steps = raw.steps.map((step: unknown, index: number) => {
+      if (!step || typeof step !== 'object' || Array.isArray(step) || !('include' in step))
+        return step;
+      const check = includeStepSchema.safeParse(step);
+      if (check.success) {
+        includes.push({ index, name: check.data.include, line: lineOf(['steps', index]) });
+      } else {
+        for (const issue of check.error.issues) {
+          const path = [
+            'steps',
+            index,
+            ...issue.path.map((p) => (typeof p === 'number' ? p : String(p))),
+          ];
+          problems.push({ line: lineOf(path), path: pathText(path), message: issueMessage(issue) });
+        }
+      }
+      // A stand-in, so the other steps get checked with their own numbers.
+      return { do: '(include)' };
+    });
+    data = { ...raw, steps };
+  }
+
+  const result = planSchema.safeParse(data);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const path = issue.path.map((p) => (typeof p === 'number' ? p : String(p)));
+      problems.push({ line: lineOf(path), path: pathText(path), message: issueMessage(issue) });
+    }
+  }
+  if (problems.length || !result.success) return { ok: false, problems };
+  const stepLines = result.data.steps.map((_, i) => lineOf(['steps', i]));
+  return { ok: true, parsed: { plan: result.data, includes, stepLines } };
+}
+
+export interface PlanOptions {
+  // The project folder. Plans with { include: name } need it.
+  projectDir?: string;
+  // The file of the plan, so a plan that includes itself is found.
+  file?: string;
+}
+
+// Includes can go this deep: a plan, a part, a part of the part.
+const MAX_INCLUDE_DEPTH = 3;
+
+interface Origin {
+  file: string;
+  line?: number;
+}
+
+// A plan in .walkthrough/plans, by name only.
+function partFile(projectDir: string, name: string): string | undefined {
+  const dir = plansDir(projectDir);
+  return [join(dir, `${name}.yaml`), join(dir, `${name}.yml`)].find((f) => existsSync(f));
+}
+
+// A step from a part keeps the part's snippets and its screenshot folder.
+function partStep(step: PlanStep, part: Plan, projectDir: string): PlanStep {
+  const out: PlanStep = { ...step };
+  if (part.snippets) out.snippets = { ...part.snippets, ...step.snippets };
+  const shot = step.screenshot;
+  const shotPath =
+    typeof shot === 'string' ? shot : typeof shot === 'object' ? shot.path : undefined;
+  if (shotPath && !isAbsolute(shotPath)) {
+    // A full path, so the screenshotDir of the outer plan does not change it.
+    const full = join(projectDir, part.screenshotDir ?? '', shotPath);
+    out.screenshot = typeof shot === 'object' ? { ...shot, path: full } : full;
+  }
+  return out;
+}
+
+function expand(
+  parsed: ParsedFile,
+  label: string,
+  projectDir: string,
+  chain: string[],
+): { ok: true; plan: Plan; origins: Origin[] } | { ok: false; problems: PlanProblem[] } {
+  const problems: PlanProblem[] = [];
+  const steps: PlanStep[] = [];
+  const origins: Origin[] = [];
+  let vars = parsed.plan.vars;
+  parsed.plan.steps.forEach((step, i) => {
+    const include = parsed.includes.find((inc) => inc.index === i);
+    if (!include) {
+      steps.push(step);
+      origins.push({ file: label, line: parsed.stepLines[i] });
+      return;
+    }
+    const at = { line: include.line, path: `steps[${i}].include` };
+    const file = partFile(projectDir, include.name);
+    if (!file) {
+      problems.push({
+        ...at,
+        message: `There is no plan "${include.name}" in .walkthrough/plans to include.`,
+      });
+      return;
+    }
+    if (chain.includes(file)) {
+      const names = [...chain, file].map((f) => basename(f, extname(f)));
+      problems.push({ ...at, message: `The plans include each other: ${names.join(' > ')}.` });
+      return;
+    }
+    if (chain.length >= MAX_INCLUDE_DEPTH) {
+      problems.push({
+        ...at,
+        message: `Includes can go only ${MAX_INCLUDE_DEPTH} levels deep. Put the steps of "${include.name}" in a plan nearer the top.`,
+      });
+      return;
+    }
+    const partLabel = basename(file);
+    const part = parseFile(readFileSync(file, 'utf8'));
+    if (!part.ok) {
+      problems.push(...part.problems.map((p) => ({ ...p, path: `${partLabel} ${p.path}` })));
+      return;
+    }
+    const inner = expand(part.parsed, partLabel, projectDir, [...chain, file]);
+    if (!inner.ok) {
+      problems.push(...inner.problems);
+      return;
+    }
+    steps.push(...inner.plan.steps.map((s) => partStep(s, inner.plan, projectDir)));
+    origins.push(...inner.origins);
+    // Values of the part are defaults. The outer plan wins.
+    if (inner.plan.vars) vars = { ...inner.plan.vars, ...vars };
   });
-  return { ok: false, problems };
+  if (problems.length) return { ok: false, problems };
+
+  // Each step id must be used once, also across parts.
+  const seen = new Map<string, Origin>();
+  steps.forEach((step, i) => {
+    if (!step.id) return;
+    const here = origins[i] as Origin;
+    const first = seen.get(step.id);
+    if (!first) {
+      seen.set(step.id, here);
+      return;
+    }
+    const where = (o: Origin) => `${o.file}${o.line ? ` line ${o.line}` : ''}`;
+    problems.push({
+      line: here.file === label ? here.line : undefined,
+      path: `steps (id "${step.id}")`,
+      message: `The step id "${step.id}" is in ${where(first)} and in ${where(here)}. Give each step its own id.`,
+    });
+  });
+  if (problems.length) return { ok: false, problems };
+  return { ok: true, plan: { ...parsed.plan, steps, ...(vars ? { vars } : {}) }, origins };
+}
+
+// Checks plan text. Each problem has a line number when we can find one.
+// With a project folder, the steps of { include: name } go in.
+export function validatePlanText(text: string, options: PlanOptions = {}): PlanResult {
+  const parsed = parseFile(text);
+  if (!parsed.ok) return parsed;
+  const { includes } = parsed.parsed;
+  if (includes.length === 0) return { ok: true, plan: parsed.parsed.plan };
+  if (!options.projectDir) {
+    return {
+      ok: false,
+      problems: includes.map((inc) => ({
+        line: inc.line,
+        path: `steps[${inc.index}].include`,
+        message: 'Walkthrough needs the project folder to check "include".',
+      })),
+    };
+  }
+  const label = options.file ? basename(options.file) : '(this plan)';
+  const result = expand(
+    parsed.parsed,
+    label,
+    options.projectDir,
+    options.file ? [options.file] : [],
+  );
+  return result.ok ? { ok: true, plan: result.plan } : { ok: false, problems: result.problems };
 }
 
 export function formatProblems(file: string, problems: PlanProblem[]): string {
@@ -87,7 +276,7 @@ export function findPlanFile(projectDir: string, name: string): string {
 
 export function loadPlan(projectDir: string, name: string): { file: string; plan: Plan } {
   const file = findPlanFile(projectDir, name);
-  const result = validatePlanText(readFileSync(file, 'utf8'));
+  const result = validatePlanText(readFileSync(file, 'utf8'), { projectDir, file });
   if (!result.ok)
     throw new ToolError(
       formatProblems(relative(projectDir, file), result.problems),
@@ -126,7 +315,10 @@ export function listPlans(projectDir: string): PlanSummary[] {
     .filter((f) => ['.yaml', '.yml'].includes(extname(f)))
     .sort()
     .map((f) => {
-      const result = validatePlanText(readFileSync(join(dir, f), 'utf8'));
+      const result = validatePlanText(readFileSync(join(dir, f), 'utf8'), {
+        projectDir,
+        file: join(dir, f),
+      });
       const name = basename(f, extname(f));
       const file = relative(projectDir, join(dir, f));
       return result.ok
@@ -148,10 +340,10 @@ export function savePlan(
       'bad_input',
     );
   }
-  const result = validatePlanText(text);
+  const dir = plansDir(projectDir);
+  const result = validatePlanText(text, { projectDir, file: join(dir, `${name}.yaml`) });
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), 'plan_invalid');
-  const dir = plansDir(projectDir);
   mkdirSync(dir, { recursive: true });
   const file = join(dir, `${name}.yaml`);
   if (existsSync(file) && !overwrite) {

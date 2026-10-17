@@ -6,7 +6,12 @@ import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
 import { envNameSchema, varsSchema } from '../environments.js';
 import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
-import { planPanelSchema, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
+import {
+  commandSchema,
+  planPanelSchema,
+  snippetsSchema,
+  stepPanelSchema,
+} from '../panel/panel-schema.js';
 import { copyRefs } from '../panel/rich-text.js';
 import { VIDEO_FORMATS } from '../video/formats.js';
 
@@ -328,6 +333,7 @@ const NOT_FOR_CARDS = [
   'spotlight',
   'zoom',
   'timeBudget',
+  'command',
 ] as const;
 
 export const stepSchema = z
@@ -443,6 +449,11 @@ export const stepSchema = z
       .max(2000)
       .optional()
       .describe('What comes after this step. The panel shows it under "What\'s next".'),
+    command: commandSchema
+      .optional()
+      .describe(
+        'A command for a terminal, like "npm run db:seed". The panel shows it with a Copy button. The agent can run it after the developer says yes.',
+      ),
     snippets: snippetsSchema.optional(),
     expectImage: z
       .string()
@@ -480,119 +491,128 @@ export const stepSchema = z
     path: ['lighthouse'],
   });
 
-export const planSchema = z
+// Puts the steps of another plan here, like a shared login. See docs/plan-format.md.
+export const includeStepSchema = z
   .object({
-    name: z.string().min(1).describe('The name of the test.'),
-    description: z.string().optional(),
-    baseUrl: z
-      .union([z.url(), z.string().regex(/^\/(?!\/)/)], {
-        error: 'Use a full URL or a path that starts with "/".',
-      })
-      .optional()
-      .describe(
-        'The start page: a full URL, or a path like "/admin" on the site of the environment.',
-      ),
-    environment: envNameSchema
-      .optional()
-      .describe(
-        'The environment to run in, like staging, when the tool call and the session do not choose one.',
-      ),
-    environments: z
-      .array(envNameSchema)
-      .min(1)
-      .optional()
-      .describe('The only environments this plan may run in, like [development, staging].'),
-    vars: varsSchema
-      .optional()
-      .describe(
-        'Values for {{var:NAME}} in this plan. An environment in config.yaml can change them.',
-      ),
-    mode: z
-      .enum(MODES)
-      .optional()
-      .describe(
-        'interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step.',
-      ),
-    device: z
+    include: z
       .string()
-      .optional()
-      .describe('Screen preset: desktop, laptop, tablet, mobile, or a Puppeteer device name.'),
-    colorScheme: z.enum(['light', 'dark']).optional().describe('Light or dark mode.'),
-    network: z
-      .enum(['normal', 'slow-3g', 'fast-3g', 'slow-4g', 'fast-4g', 'offline'])
-      .optional()
-      .describe('Network speed.'),
-    emulate: emulationSchema
-      .optional()
-      .describe(
-        'More settings for every tab, like { timezone: Europe/Berlin, cpu: 4 }. device, colorScheme, and network above win over the same keys here.',
-      ),
-    session: z
-      .string()
-      .optional()
-      .describe('A saved login to use. Save one with the session tool.'),
-    screenshotDir: z
-      .string()
-      .min(1)
-      .optional()
-      .describe(
-        'The folder for step screenshot paths, from the project folder, like "docs/images/help".',
-      ),
-    accessibility: z
-      .object({
-        report: z.boolean().optional().describe('Write an accessibility report when the run ends.'),
-        standard: z.enum(STANDARDS).optional().describe('The standard to check against.'),
-        checks: checksSchema.optional(),
-      })
-      .strict()
-      .optional()
-      .describe('Settings for accessibility checks in this plan.'),
-    lighthouse: z
-      .object({
-        device: z
-          .enum(LH_DEVICES)
-          .optional()
-          .describe('desktop or mobile scores. The default comes from config.yaml.'),
-        categories: z
-          .array(z.enum(LH_CATEGORIES))
-          .min(1)
-          .optional()
-          .describe('The categories to check. The default comes from config.yaml.'),
-        report: z.boolean().optional().describe('Write a Lighthouse report when the run ends.'),
-      })
-      .strict()
-      .optional()
-      .describe('Settings for the Lighthouse steps in this plan.'),
-    video: z
-      .union([
-        z.boolean(),
-        z
-          .object({
-            format: z.enum(VIDEO_FORMATS).optional().describe('mp4, webm, or gif.'),
-            path: z
-              .string()
-              .min(1)
-              .regex(/\.(mp4|webm|gif)$/i, 'End the path with .mp4, .webm, or .gif.')
-              .optional()
-              .describe('Also save the video to this file, from the project folder.'),
-            showPanel: z.boolean().optional().describe('Show the Walkthrough panel in the video.'),
-            captions: z.boolean().optional().describe('Show step captions at the bottom.'),
-          })
-          .strict(),
-      ])
-      .optional()
-      .describe('Record the whole run as a video. The report shows it.'),
-    presentation: presentationSchema
-      .optional()
-      .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
-    snippets: snippetsSchema.optional(),
-    panel: planPanelSchema
-      .optional()
-      .describe(
-        'Panel labels, buttons, and the "What\'s next" part for every step. A step "panel" replaces the same settings for that step.',
-      ),
-    steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
+      .regex(/^[a-z0-9][a-z0-9-]*$/, 'Use the name of a plan in .walkthrough/plans, like "login".')
+      .describe('The name of a plan in .walkthrough/plans. Its steps go here.'),
   })
+  .strict();
+
+const planShape = {
+  name: z.string().min(1).describe('The name of the test.'),
+  description: z.string().optional(),
+  baseUrl: z
+    .union([z.url(), z.string().regex(/^\/(?!\/)/)], {
+      error: 'Use a full URL or a path that starts with "/".',
+    })
+    .optional()
+    .describe(
+      'The start page: a full URL, or a path like "/admin" on the site of the environment.',
+    ),
+  environment: envNameSchema
+    .optional()
+    .describe(
+      'The environment to run in, like staging, when the tool call and the session do not choose one.',
+    ),
+  environments: z
+    .array(envNameSchema)
+    .min(1)
+    .optional()
+    .describe('The only environments this plan may run in, like [development, staging].'),
+  vars: varsSchema
+    .optional()
+    .describe(
+      'Values for {{var:NAME}} in this plan. An environment in config.yaml can change them.',
+    ),
+  mode: z
+    .enum(MODES)
+    .optional()
+    .describe(
+      'interactive: confirm every step. checkpoints: confirm marked steps. autonomous: the agent checks each step.',
+    ),
+  device: z
+    .string()
+    .optional()
+    .describe('Screen preset: desktop, laptop, tablet, mobile, or a Puppeteer device name.'),
+  colorScheme: z.enum(['light', 'dark']).optional().describe('Light or dark mode.'),
+  network: z
+    .enum(['normal', 'slow-3g', 'fast-3g', 'slow-4g', 'fast-4g', 'offline'])
+    .optional()
+    .describe('Network speed.'),
+  emulate: emulationSchema
+    .optional()
+    .describe(
+      'More settings for every tab, like { timezone: Europe/Berlin, cpu: 4 }. device, colorScheme, and network above win over the same keys here.',
+    ),
+  session: z.string().optional().describe('A saved login to use. Save one with the session tool.'),
+  screenshotDir: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      'The folder for step screenshot paths, from the project folder, like "docs/images/help".',
+    ),
+  accessibility: z
+    .object({
+      report: z.boolean().optional().describe('Write an accessibility report when the run ends.'),
+      standard: z.enum(STANDARDS).optional().describe('The standard to check against.'),
+      checks: checksSchema.optional(),
+    })
+    .strict()
+    .optional()
+    .describe('Settings for accessibility checks in this plan.'),
+  lighthouse: z
+    .object({
+      device: z
+        .enum(LH_DEVICES)
+        .optional()
+        .describe('desktop or mobile scores. The default comes from config.yaml.'),
+      categories: z
+        .array(z.enum(LH_CATEGORIES))
+        .min(1)
+        .optional()
+        .describe('The categories to check. The default comes from config.yaml.'),
+      report: z.boolean().optional().describe('Write a Lighthouse report when the run ends.'),
+    })
+    .strict()
+    .optional()
+    .describe('Settings for the Lighthouse steps in this plan.'),
+  video: z
+    .union([
+      z.boolean(),
+      z
+        .object({
+          format: z.enum(VIDEO_FORMATS).optional().describe('mp4, webm, or gif.'),
+          path: z
+            .string()
+            .min(1)
+            .regex(/\.(mp4|webm|gif)$/i, 'End the path with .mp4, .webm, or .gif.')
+            .optional()
+            .describe('Also save the video to this file, from the project folder.'),
+          showPanel: z.boolean().optional().describe('Show the Walkthrough panel in the video.'),
+          captions: z.boolean().optional().describe('Show step captions at the bottom.'),
+        })
+        .strict(),
+    ])
+    .optional()
+    .describe('Record the whole run as a video. The report shows it.'),
+  presentation: presentationSchema
+    .optional()
+    .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
+  snippets: snippetsSchema.optional(),
+  panel: planPanelSchema
+    .optional()
+    .describe(
+      'Panel labels, buttons, and the "What\'s next" part for every step. A step "panel" replaces the same settings for that step.',
+    ),
+  steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
+};
+
+export const planSchema = z
+  .object(planShape)
   .strict()
   .refine(
     (plan) =>
@@ -641,6 +661,31 @@ export const planSchema = z
 export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
 
+// The number of a step in the panel, and the number of steps. A card with "when" that does
+// not fit the run so far does not count, so the last step shows "6 of 6", not "6 of 7".
+export function shownStepNumber(
+  plan: Plan,
+  index: number,
+  problems: boolean,
+): { step: number; total: number } {
+  const counts = plan.steps.map(
+    (s, i) =>
+      i === index ||
+      !s.card?.when ||
+      s.card.when === 'always' ||
+      (s.card.when === 'problems') === problems,
+  );
+  return {
+    step: counts.slice(0, index + 1).filter(Boolean).length,
+    total: counts.filter(Boolean).length,
+  };
+}
+
+// The terminal command of a step, as text.
+export function stepCommand(step: PlanStep): string | undefined {
+  return typeof step.command === 'string' ? step.command : step.command?.run;
+}
+
 // The name of a step in lists, reports, and the panel.
 export function stepTitle(step: PlanStep): string {
   return step.card?.heading ?? step.do ?? '';
@@ -673,10 +718,20 @@ export function stepCapture(
 export const LATER_KEYS: Record<string, string> = {};
 export const LATER_STEP_KEYS: Record<string, string> = {};
 
+// The plan as a file. A step can also be { include: name }. Editors use this form.
+const planFileSchema = z
+  .object({
+    ...planShape,
+    steps: z
+      .array(z.union([stepSchema, includeStepSchema]))
+      .min(1, 'A plan needs at least one step.'),
+  })
+  .strict();
+
 // JSON Schema for editors, from the same rules.
 export function planJsonSchema(): Record<string, unknown> {
   return {
-    ...(z.toJSONSchema(planSchema, { target: 'draft-7' }) as Record<string, unknown>),
+    ...(z.toJSONSchema(planFileSchema, { target: 'draft-7' }) as Record<string, unknown>),
     title: 'Walkthrough test plan',
   };
 }

@@ -67,6 +67,9 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .code-wrap { position: relative; }
 .code-wrap pre.code { padding-right: 56px; }
 .code-wrap .copy-button { position: absolute; top: 5px; right: 5px; margin: 0; }
+.code-wrap .help-button { position: absolute; top: 5px; right: 56px; padding: 1px 6px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-size: 11px; font-weight: 600; cursor: pointer; }
+.code-wrap:has(.help-button) pre.code { padding-right: 84px; }
 .code-wrap .copy-note { position: absolute; right: 5px; top: 30px; margin: 0; }
 .copy-area { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
 

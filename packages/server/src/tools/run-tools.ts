@@ -33,6 +33,7 @@ import {
   type Plan,
   type PlanStep,
   stepCapture,
+  stepCommand,
   stepTitle,
 } from '../run/plan-schema.js';
 import {
@@ -209,6 +210,7 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
         step.cookies ? 'cookie check' : '',
         step.mock ? 'mock' : '',
         step.lighthouse ? `Lighthouse ${step.lighthouse}` : '',
+        step.command ? 'command' : '',
       ]
         .filter(Boolean)
         .join(', ');
@@ -217,6 +219,8 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
       if (step.expect)
         lines.push(`   Expect: ${show(step.expect).trimEnd().replace(/\n/g, '\n     ')}`);
       if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
+      const command = stepCommand(step);
+      if (command) lines.push(`   Command: ${show(command)}`);
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       if (step.cookies)
         lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join('; ')}`);
@@ -283,7 +287,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           return `Saved the plan: ${relative(projectDir, file)}`;
         }
         if (action === 'validate' && content) {
-          const result = validatePlanText(content);
+          const result = validatePlanText(content, { projectDir });
           return result.ok
             ? `The plan is valid. It has ${result.plan.steps.length} step(s).`
             : formatProblems('(content)', result.problems);
@@ -521,6 +525,11 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '',
           'For each step:',
           '1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.',
+          ...(plan?.steps.some((s) => s.command)
+            ? [
+                '   If the step has a Command, ask the developer in chat first: should you run it with your Bash tool (Claude Code asks them to approve it), or will they run it themselves? The panel shows the command with a Copy button. Walkthrough never runs commands. Then do the rest of the step.',
+              ]
+            : []),
           '2. For a "confirm" step, call ask_developer with the stepId and didWhat (what you did). Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan. Give title or expected only to change them.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',

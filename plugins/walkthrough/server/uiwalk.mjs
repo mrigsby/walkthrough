@@ -954,7 +954,7 @@ function maybeSchedule(scheduler, execute, subscription) {
     execute();
   }
 }
-function mergeInternals(source2, subscriber, project, concurrent, onBeforeNext, expand, innerSubScheduler, additionalFinalizer) {
+function mergeInternals(source2, subscriber, project, concurrent, onBeforeNext, expand2, innerSubScheduler, additionalFinalizer) {
   var buffer = [];
   var active = 0;
   var index = 0;
@@ -968,12 +968,12 @@ function mergeInternals(source2, subscriber, project, concurrent, onBeforeNext, 
     return active < concurrent ? doInnerSub(value) : buffer.push(value);
   };
   var doInnerSub = function(value) {
-    expand && subscriber.next(value);
+    expand2 && subscriber.next(value);
     active++;
     var innerComplete = false;
     innerFrom(project(value, index++)).subscribe(createOperatorSubscriber(subscriber, function(innerValue) {
       onBeforeNext === null || onBeforeNext === void 0 ? void 0 : onBeforeNext(innerValue);
-      if (expand) {
+      if (expand2) {
         outerNext(innerValue);
       } else {
         subscriber.next(innerValue);
@@ -98312,7 +98312,8 @@ var panelLayer = {
   labels: external_exports.object({
     did: label('what the agent did. The default is "What I did"'),
     expect: label('what the developer should see. The default is "What you should see"'),
-    next: label(`what comes next. The default is "What's next"`)
+    next: label(`what comes next. The default is "What's next"`),
+    command: label('the terminal command of the step. The default is "Run this command"')
   }).strict().optional().describe("Labels of the parts of the panel."),
   buttons: external_exports.object({
     pass: button.optional(),
@@ -98359,6 +98360,18 @@ var snippetsSchema = external_exports.record(
   external_exports.string().regex(/^[A-Za-z0-9_-]+$/, 'Use letters, numbers, "-", and "_" in a snippet name.'),
   snippetSchema
 ).describe('Snippets for {{copy:name}} in panel text, like { seed: "npm run db:seed" }.');
+var COMMAND_SECRET = "A command cannot hold a {{secret:NAME}}. Walkthrough never copies secrets.";
+var commandText = external_exports.string().min(1).max(2e3).refine(noSecret, COMMAND_SECRET);
+var commandSchema = external_exports.union(
+  [
+    commandText,
+    external_exports.object({
+      run: commandText.describe('The command, like "npm run db:seed".'),
+      help: external_exports.string().max(4e3).refine(noSecret, COMMAND_SECRET).optional().describe('What the command does. A "?" button shows it.')
+    }).strict()
+  ],
+  { error: "A command is the text to run, or { run, help }." }
+);
 
 // packages/server/src/panel/rich-text.ts
 var MAX_TEXT = 8e3;
@@ -98627,7 +98640,8 @@ var NOT_FOR_CARDS = [
   "slide",
   "spotlight",
   "zoom",
-  "timeBudget"
+  "timeBudget",
+  "command"
 ];
 var stepSchema = external_exports.object({
   id: external_exports.string().regex(
@@ -98674,6 +98688,9 @@ var stepSchema = external_exports.object({
   ),
   timeBudget: duration3.optional().describe('The time for this step in a presentation, like "45s".'),
   next: external_exports.string().max(2e3).optional().describe(`What comes after this step. The panel shows it under "What's next".`),
+  command: commandSchema.optional().describe(
+    'A command for a terminal, like "npm run db:seed". The panel shows it with a Copy button. The agent can run it after the developer says yes.'
+  ),
   snippets: snippetsSchema.optional(),
   expectImage: external_exports.string().min(1).regex(/\.(png|jpe?g|webp)$/i, "Use a .png, .jpg, .jpeg, or .webp file.").optional().describe(
     'An image of what the page should look like, from the project folder. The panel shows it under "What you should see".'
@@ -98699,7 +98716,10 @@ var stepSchema = external_exports.object({
   message: "A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.",
   path: ["lighthouse"]
 });
-var planSchema = external_exports.object({
+var includeStepSchema = external_exports.object({
+  include: external_exports.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'Use the name of a plan in .walkthrough/plans, like "login".').describe("The name of a plan in .walkthrough/plans. Its steps go here.")
+}).strict();
+var planShape = {
   name: external_exports.string().min(1).describe("The name of the test."),
   description: external_exports.string().optional(),
   baseUrl: external_exports.union([external_exports.url(), external_exports.string().regex(/^\/(?!\/)/)], {
@@ -98752,7 +98772,8 @@ var planSchema = external_exports.object({
     `Panel labels, buttons, and the "What's next" part for every step. A step "panel" replaces the same settings for that step.`
   ),
   steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
-}).strict().refine(
+};
+var planSchema = external_exports.object(planShape).strict().refine(
   (plan) => !plan.environment || !plan.environments || plan.environments.includes(plan.environment),
   {
     message: 'Put the plan environment in the "environments" list too.',
@@ -98790,6 +98811,18 @@ var planSchema = external_exports.object({
     }
   });
 });
+function shownStepNumber(plan, index, problems) {
+  const counts = plan.steps.map(
+    (s, i) => i === index || !s.card?.when || s.card.when === "always" || s.card.when === "problems" === problems
+  );
+  return {
+    step: counts.slice(0, index + 1).filter(Boolean).length,
+    total: counts.filter(Boolean).length
+  };
+}
+function stepCommand(step) {
+  return typeof step.command === "string" ? step.command : step.command?.run;
+}
 function stepTitle(step) {
   return step.card?.heading ?? step.do ?? "";
 }
@@ -98804,9 +98837,13 @@ function stepCapture(plan, step) {
 }
 var LATER_KEYS = {};
 var LATER_STEP_KEYS = {};
+var planFileSchema = external_exports.object({
+  ...planShape,
+  steps: external_exports.array(external_exports.union([stepSchema, includeStepSchema])).min(1, "A plan needs at least one step.")
+}).strict();
 function planJsonSchema() {
   return {
-    ...external_exports.toJSONSchema(planSchema, { target: "draft-7" }),
+    ...external_exports.toJSONSchema(planFileSchema, { target: "draft-7" }),
     title: "Walkthrough test plan"
   };
 }
@@ -107646,6 +107683,9 @@ pre.code code { padding: 0; background: none; white-space: pre; }
 .code-wrap { position: relative; }
 .code-wrap pre.code { padding-right: 56px; }
 .code-wrap .copy-button { position: absolute; top: 5px; right: 5px; margin: 0; }
+.code-wrap .help-button { position: absolute; top: 5px; right: 56px; padding: 1px 6px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-size: 11px; font-weight: 600; cursor: pointer; }
+.code-wrap:has(.help-button) pre.code { padding-right: 84px; }
 .code-wrap .copy-note { position: absolute; right: 5px; top: 30px; margin: 0; }
 .copy-area { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
 
@@ -107933,9 +107973,9 @@ function panelMain(opts, candidates) {
     question.ui[key2] = value;
     send({ type: "ui", id: question.id, nonce: question.nonce, key: key2, value });
   };
-  const snippetHelp = (code, help) => {
+  const snippetHelp = (code, help, heading = "About this snippet") => {
     const wrap = codeBlock2(code, "copy-modal");
-    openModal("About this snippet", [wrap, ...help.map((b2) => drawBlock(b2))]);
+    openModal(heading, [wrap, ...help.map((b2) => drawBlock(b2))]);
   };
   const inlineNodes = (parts) => parts.map((part) => {
     if (part.t === "copy") {
@@ -107960,7 +108000,7 @@ function panelMain(opts, candidates) {
     if (part.t === "code") return el("code", void 0, part.v);
     return document.createTextNode(part.v);
   });
-  function codeBlock2(code, buttonClass) {
+  function codeBlock2(code, buttonClass, help) {
     const wrap = el("div", "code-wrap");
     const pre = el("pre", "code");
     pre.append(el("code", void 0, code));
@@ -107968,6 +108008,12 @@ function panelMain(opts, candidates) {
     copy.title = "Copy to the clipboard";
     onTrusted(copy, () => void copyText(code, copy));
     wrap.append(pre, copy);
+    if (help) {
+      const about = el("button", "help-button help-code", "?");
+      about.title = "About this command";
+      onTrusted(about, () => snippetHelp(code, help, "About this command"));
+      wrap.append(about);
+    }
     return wrap;
   }
   function drawBlock(block, where3) {
@@ -108020,7 +108066,7 @@ function panelMain(opts, candidates) {
         return list2;
       }
       case "code":
-        return codeBlock2(block.v, "copy-code");
+        return codeBlock2(block.v, "copy-code", block.help);
     }
   }
   let imageBox = null;
@@ -108677,6 +108723,7 @@ var PanelBridge = class _PanelBridge {
 // packages/server/src/panel/view.ts
 var DEFAULT_LABELS = {
   did: "What I did",
+  command: "Run this command",
   expect: "What you should see",
   next: "What's next",
   content: ""
@@ -108732,6 +108779,14 @@ function buildStepView(input3) {
     add2("content", card.content);
   } else {
     add2("did", input3.didWhat);
+    if (input3.command) {
+      const help = input3.command.help ? parseRichText(input3.command.help) : void 0;
+      sections.push({
+        key: "command",
+        label: labels.command ?? "",
+        blocks: [{ t: "code", v: input3.command.run, ...help ? { help } : {} }]
+      });
+    }
     add2("expect", input3.expected);
   }
   add2("next", input3.next, { collapsible: true, collapsed: nextSettings.collapsed });
@@ -111736,6 +111791,7 @@ var RunStore = class _RunStore {
       actions: [],
       ...step.cookies ? { cookies: step.cookies } : {},
       ...step.caption ? { caption: show(step.caption) } : {},
+      ...stepCommand(step) ? { command: show(stepCommand(step)) } : {},
       ...step.lighthouse ? { lighthouse: { mode: step.lighthouse, url: step.action?.navigate } } : {},
       ...step.a11y ? {
         a11y: {
@@ -115557,6 +115613,7 @@ function stepCard(run, runDir, step, open4) {
     `<summary><span class="badge ${step.status}">${esc2(resultLabel(step))}</span>${step.mocked?.length ? ' <span class="badge mocked">Mocked</span>' : ""} Step ${step.index}: ${esc2(step.title)}</summary>`,
     "<dl>"
   ];
+  if (step.command) parts.push(`<dt>Command</dt><dd><code>${esc2(step.command)}</code></dd>`);
   if (step.expect) parts.push(`<dt>Expected</dt><dd>${esc2(step.expect)}</dd>`);
   if (step.actual) parts.push(`<dt>Actual</dt><dd>${esc2(step.actual)}</dd>`);
   if (step.checkedBy)
@@ -116091,6 +116148,7 @@ ${data.kinds.flow ? `<li><a href="${esc2(FLOW_REPORT)}">Lighthouse flow report</
 // packages/server/src/report/markdown.ts
 function stepDetails(run, step, withRepro) {
   const out = [`### Step ${step.index}: ${step.title} (${resultLabel(step)})`, ""];
+  if (step.command) out.push(`- **Command:** \`${step.command}\``);
   if (step.expect) out.push(`- **Expected:** ${step.expect}`);
   if (step.actual) out.push(`- **Actual:** ${step.actual}`);
   if (step.checkedBy)
@@ -116211,7 +116269,7 @@ import { basename as basename6, extname as extname7, isAbsolute as isAbsolute6, 
 function plansDir(projectDir) {
   return join30(projectDir, ".walkthrough", "plans");
 }
-function validatePlanText(text) {
+function parseFile(text) {
   const lineCounter = new import_yaml2.LineCounter();
   const doc = (0, import_yaml2.parseDocument)(text, { lineCounter, prettyErrors: false });
   if (doc.errors.length > 0) {
@@ -116224,20 +116282,158 @@ function validatePlanText(text) {
       }))
     };
   }
-  const result = planSchema.safeParse(doc.toJS());
-  if (result.success) return { ok: true, plan: result.data };
-  const problems = result.error.issues.map((issue3) => {
-    const path14 = issue3.path.map((p) => typeof p === "number" ? p : String(p));
-    let line2;
-    for (let depth = path14.length; depth >= 0 && line2 === void 0; depth--) {
+  const lineOf = (path14) => {
+    for (let depth = path14.length; depth >= 0; depth--) {
       const node3 = depth === 0 ? doc.contents : doc.getIn(path14.slice(0, depth), true);
       const range = node3?.range;
-      if (range) line2 = lineCounter.linePos(range[0]).line;
+      if (range) return lineCounter.linePos(range[0]).line;
     }
-    const where3 = path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
-    return { line: line2, path: where3, message: issueMessage(issue3) };
+    return void 0;
+  };
+  const pathText = (path14) => path14.length ? path14.map((p) => typeof p === "number" ? `[${p}]` : `.${p}`).join("").replace(/^\./, "") : "(top)";
+  const raw = doc.toJS();
+  const includes = [];
+  const problems = [];
+  let data = raw;
+  if (raw && typeof raw === "object" && Array.isArray(raw.steps)) {
+    const steps = raw.steps.map((step, index) => {
+      if (!step || typeof step !== "object" || Array.isArray(step) || !("include" in step))
+        return step;
+      const check2 = includeStepSchema.safeParse(step);
+      if (check2.success) {
+        includes.push({ index, name: check2.data.include, line: lineOf(["steps", index]) });
+      } else {
+        for (const issue3 of check2.error.issues) {
+          const path14 = [
+            "steps",
+            index,
+            ...issue3.path.map((p) => typeof p === "number" ? p : String(p))
+          ];
+          problems.push({ line: lineOf(path14), path: pathText(path14), message: issueMessage(issue3) });
+        }
+      }
+      return { do: "(include)" };
+    });
+    data = { ...raw, steps };
+  }
+  const result = planSchema.safeParse(data);
+  if (!result.success) {
+    for (const issue3 of result.error.issues) {
+      const path14 = issue3.path.map((p) => typeof p === "number" ? p : String(p));
+      problems.push({ line: lineOf(path14), path: pathText(path14), message: issueMessage(issue3) });
+    }
+  }
+  if (problems.length || !result.success) return { ok: false, problems };
+  const stepLines = result.data.steps.map((_2, i) => lineOf(["steps", i]));
+  return { ok: true, parsed: { plan: result.data, includes, stepLines } };
+}
+var MAX_INCLUDE_DEPTH = 3;
+function partFile(projectDir, name) {
+  const dir = plansDir(projectDir);
+  return [join30(dir, `${name}.yaml`), join30(dir, `${name}.yml`)].find((f) => existsSync19(f));
+}
+function partStep(step, part, projectDir) {
+  const out = { ...step };
+  if (part.snippets) out.snippets = { ...part.snippets, ...step.snippets };
+  const shot = step.screenshot;
+  const shotPath = typeof shot === "string" ? shot : typeof shot === "object" ? shot.path : void 0;
+  if (shotPath && !isAbsolute6(shotPath)) {
+    const full = join30(projectDir, part.screenshotDir ?? "", shotPath);
+    out.screenshot = typeof shot === "object" ? { ...shot, path: full } : full;
+  }
+  return out;
+}
+function expand(parsed, label3, projectDir, chain) {
+  const problems = [];
+  const steps = [];
+  const origins = [];
+  let vars = parsed.plan.vars;
+  parsed.plan.steps.forEach((step, i) => {
+    const include = parsed.includes.find((inc) => inc.index === i);
+    if (!include) {
+      steps.push(step);
+      origins.push({ file: label3, line: parsed.stepLines[i] });
+      return;
+    }
+    const at = { line: include.line, path: `steps[${i}].include` };
+    const file2 = partFile(projectDir, include.name);
+    if (!file2) {
+      problems.push({
+        ...at,
+        message: `There is no plan "${include.name}" in .walkthrough/plans to include.`
+      });
+      return;
+    }
+    if (chain.includes(file2)) {
+      const names = [...chain, file2].map((f) => basename6(f, extname7(f)));
+      problems.push({ ...at, message: `The plans include each other: ${names.join(" > ")}.` });
+      return;
+    }
+    if (chain.length >= MAX_INCLUDE_DEPTH) {
+      problems.push({
+        ...at,
+        message: `Includes can go only ${MAX_INCLUDE_DEPTH} levels deep. Put the steps of "${include.name}" in a plan nearer the top.`
+      });
+      return;
+    }
+    const partLabel = basename6(file2);
+    const part = parseFile(readFileSync18(file2, "utf8"));
+    if (!part.ok) {
+      problems.push(...part.problems.map((p) => ({ ...p, path: `${partLabel} ${p.path}` })));
+      return;
+    }
+    const inner = expand(part.parsed, partLabel, projectDir, [...chain, file2]);
+    if (!inner.ok) {
+      problems.push(...inner.problems);
+      return;
+    }
+    steps.push(...inner.plan.steps.map((s) => partStep(s, inner.plan, projectDir)));
+    origins.push(...inner.origins);
+    if (inner.plan.vars) vars = { ...inner.plan.vars, ...vars };
   });
-  return { ok: false, problems };
+  if (problems.length) return { ok: false, problems };
+  const seen = /* @__PURE__ */ new Map();
+  steps.forEach((step, i) => {
+    if (!step.id) return;
+    const here = origins[i];
+    const first2 = seen.get(step.id);
+    if (!first2) {
+      seen.set(step.id, here);
+      return;
+    }
+    const where3 = (o) => `${o.file}${o.line ? ` line ${o.line}` : ""}`;
+    problems.push({
+      line: here.file === label3 ? here.line : void 0,
+      path: `steps (id "${step.id}")`,
+      message: `The step id "${step.id}" is in ${where3(first2)} and in ${where3(here)}. Give each step its own id.`
+    });
+  });
+  if (problems.length) return { ok: false, problems };
+  return { ok: true, plan: { ...parsed.plan, steps, ...vars ? { vars } : {} }, origins };
+}
+function validatePlanText(text, options = {}) {
+  const parsed = parseFile(text);
+  if (!parsed.ok) return parsed;
+  const { includes } = parsed.parsed;
+  if (includes.length === 0) return { ok: true, plan: parsed.parsed.plan };
+  if (!options.projectDir) {
+    return {
+      ok: false,
+      problems: includes.map((inc) => ({
+        line: inc.line,
+        path: `steps[${inc.index}].include`,
+        message: 'Walkthrough needs the project folder to check "include".'
+      }))
+    };
+  }
+  const label3 = options.file ? basename6(options.file) : "(this plan)";
+  const result = expand(
+    parsed.parsed,
+    label3,
+    options.projectDir,
+    options.file ? [options.file] : []
+  );
+  return result.ok ? { ok: true, plan: result.plan } : { ok: false, problems: result.problems };
 }
 function formatProblems(file2, problems) {
   return [
@@ -116269,7 +116465,7 @@ function findPlanFile(projectDir, name) {
 }
 function loadPlan(projectDir, name) {
   const file2 = findPlanFile(projectDir, name);
-  const result = validatePlanText(readFileSync18(file2, "utf8"));
+  const result = validatePlanText(readFileSync18(file2, "utf8"), { projectDir, file: file2 });
   if (!result.ok)
     throw new ToolError(
       formatProblems(relative8(projectDir, file2), result.problems),
@@ -116294,7 +116490,10 @@ function listPlans(projectDir) {
   const dir = plansDir(projectDir);
   if (!existsSync19(dir)) return [];
   return readdirSync10(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync18(join30(dir, f), "utf8"));
+    const result = validatePlanText(readFileSync18(join30(dir, f), "utf8"), {
+      projectDir,
+      file: join30(dir, f)
+    });
     const name = basename6(f, extname7(f));
     const file2 = relative8(projectDir, join30(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
@@ -116307,10 +116506,10 @@ function savePlan(projectDir, name, text, overwrite = false) {
       "bad_input"
     );
   }
-  const result = validatePlanText(text);
+  const dir = plansDir(projectDir);
+  const result = validatePlanText(text, { projectDir, file: join30(dir, `${name}.yaml`) });
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
-  const dir = plansDir(projectDir);
   mkdirSync12(dir, { recursive: true });
   const file2 = join30(dir, `${name}.yaml`);
   if (existsSync19(file2) && !overwrite) {
@@ -116853,6 +117052,7 @@ async function buildQuestion(ctx, input3) {
       ...help ? { help: await panelText(ctx, help) } : {}
     };
   }
+  const command2 = step?.command ? typeof step.command === "string" ? { run: step.command } : step.command : void 0;
   const imagePath2 = input3.image ?? step?.expectImage;
   let image2;
   if (imagePath2) {
@@ -116872,6 +117072,12 @@ async function buildQuestion(ctx, input3) {
     layers: [plan?.panel, step?.panel, input3.panel],
     snippets,
     image: Boolean(image2),
+    ...command2 ? {
+      command: {
+        run: await panelText(ctx, command2.run) ?? "",
+        ...command2.help ? { help: await panelText(ctx, command2.help) } : {}
+      }
+    } : {},
     ...card ? {
       card: {
         subheading: await panelText(ctx, card.subheading),
@@ -116880,13 +117086,14 @@ async function buildQuestion(ctx, input3) {
       }
     } : {}
   });
+  const numbers = found && store ? shownStepNumber(found.plan, found.index, store.run.steps.some(isProblem)) : void 0;
   return {
     image: image2,
     title,
     didWhat: didWhat ?? "",
     expected: expected ?? "",
-    step: input3.step ?? (found ? found.index + 1 : void 0),
-    total: input3.total ?? plan?.steps.length,
+    step: numbers?.step ?? input3.step,
+    total: numbers?.total ?? input3.total,
     stepId: input3.stepId,
     view
   };
@@ -117284,12 +117491,15 @@ function stepList(plan, mode, show = (t) => t) {
       step.a11y ? describeA11y(step) : "",
       step.cookies ? "cookie check" : "",
       step.mock ? "mock" : "",
-      step.lighthouse ? `Lighthouse ${step.lighthouse}` : ""
+      step.lighthouse ? `Lighthouse ${step.lighthouse}` : "",
+      step.command ? "command" : ""
     ].filter(Boolean).join(", ");
     const lines = [`${i + 1}. [${id}] (${flags}) ${stepTitle(step)}`];
     if (step.expect)
       lines.push(`   Expect: ${show(step.expect).trimEnd().replace(/\n/g, "\n     ")}`);
     if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
+    const command2 = stepCommand(step);
+    if (command2) lines.push(`   Command: ${show(command2)}`);
     if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
     if (step.cookies)
       lines.push(`   Cookies: ${step.cookies.map(describeCookieCheck).join("; ")}`);
@@ -117339,7 +117549,7 @@ function registerRunTools(server, ctx) {
         return `Saved the plan: ${relative11(projectDir, file3)}`;
       }
       if (action2 === "validate" && content) {
-        const result = validatePlanText(content);
+        const result = validatePlanText(content, { projectDir });
         return result.ok ? `The plan is valid. It has ${result.plan.steps.length} step(s).` : formatProblems("(content)", result.problems);
       }
       if (!name) throw new ToolError("Give the name of a plan.", "bad_input");
@@ -117530,6 +117740,9 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         "",
         "For each step:",
         "1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.",
+        ...plan?.steps.some((s) => s.command) ? [
+          "   If the step has a Command, ask the developer in chat first: should you run it with your Bash tool (Claude Code asks them to approve it), or will they run it themselves? The panel shows the command with a Copy button. Walkthrough never runs commands. Then do the rest of the step."
+        ] : [],
         '2. For a "confirm" step, call ask_developer with the stepId and didWhat (what you did). Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan. Give title or expected only to change them.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
@@ -122189,6 +122402,11 @@ async function replayRun(ctx, input3) {
     lines.push(
       `The replay used a new login and a new {{unique}} value (${replay.unique}), at the ${input3.pace} pace.`
     );
+    for (const step of run.steps.filter((s) => s.command)) {
+      lines.push(
+        `Step ${step.index} needs a command first: ${step.command}. The replay did not run it.`
+      );
+    }
     return { ok: true, lines, preview, previewType: preview ? "image/jpeg" : void 0, store };
   } catch (error62) {
     if (error62 instanceof StepError) return failure2("(setup)", error62.message);
@@ -123999,6 +124217,7 @@ function exportScript(run, options = {}) {
         }
       }
     }
+    if (step.command) lines.unshift(`// Run this first, in a terminal: ${step.command}`);
     if (lines.length === 0) continue;
     const title = `${step.index}. ${step.title}`;
     body.push(

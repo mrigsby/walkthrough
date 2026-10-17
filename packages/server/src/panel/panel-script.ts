@@ -32,7 +32,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     | { t: 'ul'; items: Inline[][] }
     | { t: 'ol'; start: number; items: Inline[][] }
     | { t: 'check'; items: Array<{ text: Inline[]; checked: boolean }> }
-    | { t: 'code'; v: string };
+    | { t: 'code'; v: string; help?: Block[] };
   interface Section {
     key: string;
     label: string;
@@ -322,9 +322,9 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     send({ type: 'ui', id: question.id, nonce: question.nonce, key, value });
   };
 
-  const snippetHelp = (code: string, help: Block[]): void => {
+  const snippetHelp = (code: string, help: Block[], heading = 'About this snippet'): void => {
     const wrap = codeBlock(code, 'copy-modal');
-    openModal('About this snippet', [wrap, ...help.map((b) => drawBlock(b))]);
+    openModal(heading, [wrap, ...help.map((b) => drawBlock(b))]);
   };
 
   const inlineNodes = (parts: Inline[]): Node[] =>
@@ -352,7 +352,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       return document.createTextNode(part.v);
     });
 
-  function codeBlock(code: string, buttonClass: string): HTMLElement {
+  function codeBlock(code: string, buttonClass: string, help?: Block[]): HTMLElement {
     const wrap = el('div', 'code-wrap');
     const pre = el('pre', 'code');
     pre.append(el('code', undefined, code));
@@ -360,6 +360,12 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     copy.title = 'Copy to the clipboard';
     onTrusted(copy, () => void copyText(code, copy));
     wrap.append(pre, copy);
+    if (help) {
+      const about = el('button', 'help-button help-code', '?');
+      about.title = 'About this command';
+      onTrusted(about, () => snippetHelp(code, help, 'About this command'));
+      wrap.append(about);
+    }
     return wrap;
   }
 
@@ -414,7 +420,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         return list;
       }
       case 'code':
-        return codeBlock(block.v, 'copy-code');
+        return codeBlock(block.v, 'copy-code', block.help);
     }
   }
 

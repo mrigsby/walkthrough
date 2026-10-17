@@ -419,7 +419,10 @@ steps:
     expect(wrong.text).toMatch(/is a card/);
 
     const welcome = mcp.call('ask_developer', { stepId: 'welcome' });
-    await waitForPanel(page, 'The card is open in the middle of the page.');
+    // Only one of the two end cards can show, so the run has 3 steps to show.
+    expect(await waitForPanel(page, 'The card is open in the middle of the page.')).toContain(
+      'Step 1 of 3',
+    );
     const end = Date.now() + 5000;
     let shown = '';
     while (Date.now() < end && !shown.includes('About one minute'))
@@ -441,8 +444,9 @@ steps:
     const step = await mcp.call('run_step', { stepId: 'open-cart', status: 'pass' });
     expect(step.text).toContain('Saved step 2 [open-cart] as pass.');
 
-    const good = mcp.call('ask_developer', { stepId: 'all-good' });
-    await waitForPanel(page, 'Every step passed.');
+    const good = mcp.call('ask_developer', { stepId: 'all-good', step: 3, total: 4 });
+    // Walkthrough counts plan steps itself, also when the agent gives numbers.
+    expect(await waitForPanel(page, 'Every step passed.')).toContain('Step 3 of 3');
     await clickPanel(page, 'pass');
     expect((await good).text).toMatch(/^status: pass/);
     const bad = await mcp.call('ask_developer', { stepId: 'problems' });
@@ -551,6 +555,55 @@ describe('retry, keys, progress, and pointing', () => {
     expect(readFileSync(join(project, details as string), 'utf8')).toMatch(/^Element: a/);
     expect(result.images).toBe(1);
   });
+});
+
+describe('included plans and terminal commands', () => {
+  it('runs the steps of an included plan, and shows a command to copy', async () => {
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'seed-part.yaml'),
+      `name: Seed part
+steps:
+  - id: seed
+    do: Fill the test data
+    command: { run: npm run seed, help: Fills the **test** data. }
+    expect: The script prints Done.
+`,
+    );
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'with-part.yaml'),
+      'name: With part\nmode: interactive\nsteps:\n  - include: seed-part\n  - id: look\n    do: Look at the shop\n',
+    );
+    const list = await mcp.call('plan', { action: 'list' });
+    expect(list.text).toContain(
+      'with-part (.walkthrough/plans/with-part.yaml): "With part", 2 step(s)',
+    );
+    const start = await mcp.call('run_start', { plan: 'with-part' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain('1. [seed] (confirm, command) Fill the test data');
+    expect(start.text).toContain('   Command: npm run seed');
+    expect(start.text).toContain('Walkthrough never runs commands.');
+
+    const reply = mcp.call('ask_developer', { stepId: 'seed', didWhat: 'Nothing yet.' });
+    const shown = await waitForPanel(page, 'npm run seed');
+    expect(shown).toMatch(/run this command/i);
+    await clickPanel(page, 'copy-code');
+    await new Promise((r) => setTimeout(r, 300));
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npm run seed');
+    await clickPanel(page, 'help-code');
+    const end = Date.now() + 5000;
+    let help = '';
+    while (Date.now() < end && !help.includes('Fills the test data.')) help = await modalText(page);
+    expect(help).toContain('About this command');
+    await page.keyboard.press('Escape');
+    await clickPanel(page, 'pass');
+    expect((await reply).text).toContain('Saved as step 1 in the run.');
+    await mcp.call('run_step', { stepId: 'look', status: 'pass' });
+    const finish = await mcp.call('run_finish');
+    const runDir = /Reports: (\S+)\/report\.md/.exec(finish.text)?.[1] as string;
+    expect(readFileSync(join(project, runDir, 'report.md'), 'utf8')).toContain(
+      '- **Command:** `npm run seed`',
+    );
+  }, 30_000);
 });
 
 describe('ask_developer without a panel', () => {

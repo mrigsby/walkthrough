@@ -19,7 +19,7 @@ import type { Answer, PointedElement, Question, Rect } from '../panel/controller
 import { type Snippets, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
 import { buildStepView, type PanelLayer, type SnippetText, viewText } from '../panel/view.js';
 import { isProblem } from '../report/common.js';
-import { stepTitle } from '../run/plan-schema.js';
+import { shownStepNumber, stepTitle } from '../run/plan-schema.js';
 import { nextStepHint, recordResult, recordTry } from '../run/record.js';
 import { slug } from '../text.js';
 import { bugClip, liveCaptures } from '../video/recording.js';
@@ -237,6 +237,11 @@ async function buildQuestion(
       ...(help ? { help: await panelText(ctx, help) } : {}),
     };
   }
+  const command = step?.command
+    ? typeof step.command === 'string'
+      ? { run: step.command }
+      : step.command
+    : undefined;
   const imagePath = input.image ?? step?.expectImage;
   let image: { mime: string; data: string } | undefined;
   if (imagePath) {
@@ -256,6 +261,14 @@ async function buildQuestion(
     layers: [plan?.panel, step?.panel, input.panel],
     snippets,
     image: Boolean(image),
+    ...(command
+      ? {
+          command: {
+            run: (await panelText(ctx, command.run)) ?? '',
+            ...(command.help ? { help: await panelText(ctx, command.help) } : {}),
+          },
+        }
+      : {}),
     ...(card
       ? {
           card: {
@@ -266,13 +279,18 @@ async function buildQuestion(
         }
       : {}),
   });
+  // For a plan step, Walkthrough counts the steps itself.
+  const numbers =
+    found && store
+      ? shownStepNumber(found.plan, found.index, store.run.steps.some(isProblem))
+      : undefined;
   return {
     image,
     title,
     didWhat: didWhat ?? '',
     expected: expected ?? '',
-    step: input.step ?? (found ? found.index + 1 : undefined),
-    total: input.total ?? plan?.steps.length,
+    step: numbers?.step ?? input.step,
+    total: numbers?.total ?? input.total,
     stepId: input.stepId,
     view,
   };

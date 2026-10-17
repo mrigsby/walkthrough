@@ -3,7 +3,7 @@ import { buildStepView } from '../../src/panel/view.js';
 import { executionHash, rehearsalProblems } from '../../src/presentation/rehearsal.js';
 import { buildOps } from '../../src/replay/ops.js';
 import { reproSteps, resultLabel, resultLine } from '../../src/report/common.js';
-import { stepTitle } from '../../src/run/plan-schema.js';
+import { shownStepNumber, stepTitle } from '../../src/run/plan-schema.js';
 import { validatePlanText } from '../../src/run/plans.js';
 import { countSteps, type Run, RunStore } from '../../src/run/run-store.js';
 import { tempDir } from '../helpers/temp.js';
@@ -59,6 +59,20 @@ describe('card steps in plans', () => {
     expect(
       problems('name: C\nsteps:\n  - card: { heading: Hi, content: "Run {{copy:x}}" }\n')[0],
     ).toMatch(/There is no snippet "x"/);
+  });
+});
+
+describe('step numbers in the panel', () => {
+  it('leave out a "when" card that does not fit the run so far', () => {
+    const plan = parse(
+      `${PLAN}  - id: problems\n    card: { heading: Some steps failed, when: problems }\n`,
+    );
+    // welcome, open-cart, done (passed), problems (problems)
+    expect(shownStepNumber(plan, 0, false)).toEqual({ step: 1, total: 3 });
+    expect(shownStepNumber(plan, 2, false)).toEqual({ step: 3, total: 3 });
+    // After a bug, the "problems" card is the last one.
+    expect(shownStepNumber(plan, 1, true)).toEqual({ step: 2, total: 3 });
+    expect(shownStepNumber(plan, 3, true)).toEqual({ step: 3, total: 3 });
   });
 });
 
