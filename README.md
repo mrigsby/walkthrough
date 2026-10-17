@@ -2,7 +2,7 @@
 
 ![How Walkthrough works: the agent plans a step, runs it in a visible browser, and explains it. You answer Pass, Bug, Skip, or Stop in a panel. For a bug, Walkthrough saves a screenshot, console errors, and network requests. At the end, it writes a report.](docs/images/walkthrough-infographic.png)
 
-Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the network requests. During a test run, it also saves a short video. Then it writes a report.
+Walkthrough lets an AI agent test your web app in a real, visible browser, one step at a time, with you. After each step, the agent tells you what it did and what you should see. You answer in a small panel in the browser: **Pass**, **Bug**, **Skip**, **Retry**, or **Stop**. When you report a bug, Walkthrough saves a screenshot, the console errors, and the network requests. During a test run, it also saves a short video. Then it writes a report.
 
 ![The Walkthrough panel in the browser, with a step to confirm](docs/images/panel.png)
 
@@ -14,11 +14,15 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 
 - **Step-by-step testing.** The agent does a step, checks it, and asks you to confirm it. You watch in a real browser, and a pulsing box shows each element before the agent uses it.
 - **Environments.** Run the same plans on development, staging, production, or any copy of your app. Each environment has its own address, test data, and passwords, and production asks you before Walkthrough works there. Every report names the environment. See [Environments](docs/environments.md).
-- **Test plans in YAML.** Save a test in `.walkthrough/plans/` and run it again later. Your editor gives autocomplete. Three modes set how many steps you confirm: every step, only marked steps, or none.
+- **Test plans in YAML.** Save a test in `.walkthrough/plans/` and run it again later. Your editor gives autocomplete. Three modes set how many steps you confirm: every step, only marked steps, or none. A plan can include another plan, like a shared login.
+- **A panel you can shape.** A plan sets the labels, the buttons and their colors, and a "What's next" part. Panel text can have lists, check lists that you tick, and code. A snippet, like a terminal command, gets a Copy button and a "?" for its help. A step can show a reference image of the page.
+- **Cards.** Start and end messages, as a card in the panel or a big card in the middle of the page. An end card can show only when the run passed, or only when it had problems.
+- **Faster answers.** Keyboard shortcuts, a list of all steps with their results, and a Retry button. "Point at the problem" marks the element of a bug in the screenshot.
+- **Browser settings.** The window fits the page, also for phone and tablet screens in portrait or landscape. Chrome does not ask to save passwords, addresses, or cards. A plan can set the language, downloads, DevTools (also with its device toolbar), extensions, host names, and more. See [Settings](docs/config.md#browser).
 - **Reports.** Each run writes `report.md` and a single-file `report.html`, with bugs first, steps to reproduce, screenshots, and errors.
 - **Evidence.** Screenshots with a red box on the element, console errors, page errors, and Chrome issues. Bugs also get a HAR file of the network requests and a video clip of the last seconds.
 - **Record mode.** Use the app yourself, and Walkthrough turns your clicks and typing into a draft plan.
-- **Videos.** Ask for "a recording demo of the checkout workflow", and get a clean MP4 and GIF with captions and a pointer. Record part of a session, save GIFs for your docs, or make the video again in CI. See [Videos](docs/video.md).
+- **Videos.** Ask for "a recording demo of the checkout workflow", and get a clean MP4 and GIF with captions and a pointer. Record part of a session, save GIFs for your docs, or make the video again in CI. Videos blur secrets that a page shows, and the parts that you name. See [Videos](docs/video.md).
 - **Live presentations.** Show a flow to your team or your customers. The app plays step by step in an audience window, with a spotlight, a pointer, captions, and slides. You control it from a presenter window with your notes, a timer, and a chat where the agent answers questions about the app. You get a handout and a video. See [Presentations](docs/presentations.md).
 - **Accessibility reports.** Check one page or many with axe-core, a keyboard walk, dark mode, and reflow checks. Get scores, a short explanation and fix for each issue, and a prompt to plan the fixes in a new session. See [Accessibility reports](docs/accessibility.md).
 - **Lighthouse reports.** Check the performance, best practices, and SEO of pages or of a user flow, with an explanation and a fix for each issue. See [Lighthouse reports](docs/lighthouse.md).
@@ -32,7 +36,9 @@ Walkthrough is a [Claude Code](https://code.claude.com) plugin with an MCP serve
 ## Safe by default
 
 - Walkthrough opens only the sites that you allow. By default, that is `localhost`. A protected environment, such as production, needs your OK first.
-- Passwords go in `.walkthrough/.env` and appear in plans as `{{secret:NAME}}`. The agent never sees the values.
+- Passwords go in `.walkthrough/.env` and appear in plans as `{{secret:NAME}}`. The agent never sees the values. The panel never shows them, and videos blur them.
+- Chrome does not offer to save passwords, addresses, or cards, and it says no to camera, location, and notification prompts. A plan can turn each one back on.
+- Walkthrough never runs terminal commands. A plan step can name one, and the agent asks you first.
 - Text from web pages is marked as data, so the agent does not follow instructions from a page.
 - Page scripts cannot see the panel or fake your answers.
 - The tool that runs page JavaScript is off unless you turn it on for yourself.
@@ -62,6 +68,15 @@ Read more in [Safety](docs/safety.md).
    /plugin marketplace add mrigsby/walkthrough
    /plugin install walkthrough@walkthrough
    ```
+
+   **Update the plugin.** To get a new version later, run these commands in a terminal, and then restart Claude Code:
+
+   ```sh
+   claude plugin marketplace update walkthrough
+   claude plugin update walkthrough@walkthrough
+   ```
+
+   The first command gets the newest list of versions. The second command installs the newest version. Run `claude plugin list` to see the version that you have.
 
 2. Start your app. Then, in your project, set up Walkthrough with the address of your app:
 

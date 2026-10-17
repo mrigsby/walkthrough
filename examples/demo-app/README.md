@@ -64,6 +64,15 @@ Undo your fix when you are done, so the demo keeps its planted issues.
 
 The `.walkthrough/` folder holds the settings and test plans for this project. Copy `.walkthrough/.env.example` to `.walkthrough/.env` to set the demo password as a secret.
 
+## Try the panel
+
+1. Start the demo shop, and open Claude Code in this folder.
+2. Run `/walkthrough:run panel-tour`. A start card opens in the middle of the page.
+3. Follow the steps. Copy a snippet, tick a check list, open the reference image, and click **Retry** once.
+4. At the end, a card shows whether every step passed.
+
+The `account` plan includes the steps of the `login` plan with `include: login`, and then logs out. See [Reusable plan parts](../../docs/plan-format.md#reusable-plan-parts).
+
 ## Screenshots for docs
 
 The `help-shots` plan saves two screenshots to exact files in `docs/images/help/`: the cart page, and the cart total only. Ask the agent to "run the help-shots plan", then export the run as a script. The script saves the screenshots again without an agent:

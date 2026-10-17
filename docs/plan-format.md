@@ -33,7 +33,7 @@ steps:
 | `environments` | No | The only environments this plan may run in, such as `[development, staging]`. Use it for plans that make data. |
 | `vars` | No | Values for `{{var:NAME}}` in this plan, such as `{ shopper: Demo Shopper }`. An environment can change them. |
 | `mode` | No | `interactive`, `checkpoints` (default), or `autonomous`. See [Run modes](#run-modes). |
-| `steps` | Yes | The list of steps. |
+| `steps` | Yes | The list of steps. An item can also be `include: <plan>`. See [Reusable plan parts](#reusable-plan-parts). |
 | `device` | No | Screen preset: `desktop`, `laptop`, `tablet`, `mobile`, or a Puppeteer device name, such as `Pixel 5`. |
 | `colorScheme` | No | `light` or `dark`. |
 | `network` | No | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
@@ -42,22 +42,31 @@ steps:
 | `screenshotDir` | No | The folder for step screenshot paths, from the project folder, such as `docs/images/help`. See [Screenshots for docs](#screenshots-for-docs). |
 | `accessibility` | No | Settings for accessibility checks: `report`, `standard`, and `checks`. See [Accessibility checks](#accessibility-checks). |
 | `lighthouse` | No | Settings for the Lighthouse steps: `device`, `categories`, and `report`. See [Lighthouse flows](#lighthouse-flows). |
-| `video` | No | Record the whole run as a video: `true`, or `{ format, path, showPanel, captions }`. See [Videos](#videos). |
+| `video` | No | Record the whole run as a video: `true`, or `{ format, path, showPanel, captions, mask }`. See [Videos](#videos). |
+| `panel` | No | Labels, buttons, and the "What's next" part of the panel for every step, and `corner`, `progress`, and `shortcuts`. See [The panel](#the-panel). |
+| `snippets` | No | Text that the developer can copy, like terminal commands, for `{{copy:name}}` in panel text. See [Snippets](#snippets). |
+| `browser` | No | Browser settings for this plan, like `{ language: de-DE, devtools: true }`. They win over `config.yaml`. See [Browser settings](#browser-settings). |
 | `presentation` | No | Settings to play the plan as a live presentation, such as `title`, `end`, `timeBudget`, and `record`. See [Presentations](#presentations). |
 
 ## Step keys
 
 | Key | Required | What it does |
 | --- | --- | --- |
-| `do` | Yes | What to do, in plain words. |
+| `do` | Yes | What to do, in plain words. A card step does not need it. |
 | `id` | No | A short id, like `open-cart`. Use lowercase letters, numbers, and dashes. Reports use it. |
-| `expect` | No | What you should see after the step. Make it specific, such as "The total is $10.00". |
+| `expect` | No | What you should see after the step. Make it specific, such as "The total is $10.00". It can have lists, check lists, and code. See [Text in the panel](#text-in-the-panel). |
+| `next` | No | What comes after this step. The panel shows it under "What's next". |
+| `panel` | No | Labels and buttons for this step only. See [The panel](#the-panel). |
+| `snippets` | No | Snippets for this step only. See [Snippets](#snippets). |
+| `expectImage` | No | An image of what the page should look like, such as `docs/images/cart.png`. See [Reference images](#reference-images). |
+| `command` | No | A terminal command that the step needs, such as `npm run db:seed`. See [Terminal commands](#terminal-commands). |
+| `card` | No | Show a card, like a start or end message, and wait for the developer. See [Cards](#cards). |
 | `checkpoint` | No | In `checkpoints` mode, the developer confirms this step in the panel. |
 | `action` | No | An exact action, so the agent does not have to guess. See below. |
 | `screenshot` | No | Save a screenshot after the step. `true` saves it with the run. A path saves it to that exact file. See [Screenshots for docs](#screenshots-for-docs). |
 | `visual` | No | Compare a screenshot with the saved baseline after the step. See [Visual checks](#visual-checks). |
 | `a11y` | No | Check accessibility after the step. `true`, or `{ selector, checks }`. See [Accessibility checks](#accessibility-checks). |
-| `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
+| `emulate` | No | Settings for the tab of this step, such as `{ device: mobile, orientation: landscape, locale: de-DE }`. The agent sets them before the step. See [Tabs and logins](#tabs-and-logins). |
 | `cookies` | No | Cookie checks after the step, such as `[{ name: session, httpOnly: true }]`. See [Cookie checks](#cookie-checks). |
 | `mock` | No | Mock rules to add before the step, or `off` to remove all rules. See [Mocked requests](#mocked-requests). |
 | `lighthouse` | No | Measure the step with Lighthouse: `navigation`, `timespan`, or `snapshot`. See [Lighthouse flows](#lighthouse-flows). |
@@ -73,6 +82,181 @@ steps:
 
 - Say what a person can check in a few seconds: exact text, numbers, or what is visible.
 - Put exact text in quotes, such as `The page says "Order placed"`. An [exported script](sharing.md#run-tests-in-ci) checks quoted text and amounts such as `$30.00`. Other words become a comment to check by hand.
+
+## The panel
+
+The panel shows each step that the developer confirms. A plan can change its labels, its buttons, and the "What's next" part. A step can change them for itself, and its settings win.
+
+```yaml
+panel:
+  labels: { did: What I did, expect: What you should see, next: What's next }
+  next: { collapsed: true, auto: true }
+  buttons:
+    pass: { label: Looks good, color: "#15803d" }
+    retry: { show: false }
+  corner: top-right
+steps:
+  - id: seed
+    do: Fill the test database
+    command: npm run db:seed
+    expect: The script prints "Done".
+    next: The agent opens the admin page.
+    panel:
+      labels: { did: Setup, expect: Your part }
+      buttons: { pass: { label: Done } }
+```
+
+- `labels` names the parts of the panel: `did`, `expect`, `next`, and `command`. An empty label (`""`) shows no label.
+- `next` is the "What's next" part. It starts closed, unless `collapsed: false`. With `auto: true`, a step without its own `next` shows the `do` text of the step after it, or "This is the last step."
+- `buttons` sets the text and the color of `pass`, `bug`, `skip`, `retry`, and `stop`. The text color follows the button color, so it is easy to read. `show: false` hides `bug`, `skip`, or `retry`.
+- `corner` is where the panel starts: `bottom-right` (default), `bottom-left`, `top-left`, or `top-right`.
+- `progress: false` hides the list of all steps. The list opens with the button in the panel header.
+- `shortcuts: false` turns off the keys that answer a question. See [Answer in the panel](#answer-in-the-panel).
+- During a run, the agent gives only the step id and what it did. Walkthrough takes the title, `expect`, and the step number from the plan. The agent can also change the panel for one question.
+
+### Text in the panel
+
+`expect`, `next`, the content of a card, and the help of a snippet can use a small part of Markdown:
+
+- `- item` or `* item` for a list, and `1. item` for a numbered list
+- `- [ ] item` and `- [x] item` for a check list. The developer can tick the boxes. A box that is not ticked asks for a second click on Pass. The answer and the reports show the ticks.
+- three backticks before and after a code block. Each code block gets a Copy button.
+- `**bold**`, `*italic*`, and `` `code` ``
+- `{{copy:name}}` for a snippet
+
+Raw HTML shows as text, and links show as text too. Walkthrough removes secret values from all panel text.
+
+### Snippets
+
+A snippet is text that the developer can copy with one click, like a terminal command. Put `{{copy:name}}` in panel text. The panel shows the snippet with a Copy button, and with a "?" button when it has `help`.
+
+```yaml
+snippets:
+  seed: npm run db:seed
+  reset:
+    code: npm run db:reset -- --env=test
+    help: |
+      Clears the **test** database.
+      - It does not change other environments.
+steps:
+  - id: prepare
+    do: Ask the developer to reset and seed the database
+    expect: |
+      Run {{copy:reset}}, then {{copy:seed}}.
+```
+
+- A plan has `snippets` for all steps. A step can add its own, and they win over the plan's.
+- Each `{{copy:name}}` needs a snippet. A missing one is a plan error.
+- A snippet cannot hold a `{{secret:NAME}}`, because Walkthrough never copies secrets.
+- The "?" button opens a window in the middle of the page with the snippet, its Copy button, and the help.
+- The Copy button uses the clipboard of the browser. On a page that blocks it, the panel uses another way. If a page script could change the text, the panel says "Check the text before you paste it."
+
+### Reference images
+
+A step can show an image of what the page should look like. The panel shows it small under "What you should see". A click shows it large.
+
+```yaml
+  - id: open-cart
+    do: Open the cart
+    expect: The cart looks like the picture.
+    expectImage: docs/images/cart.png
+```
+
+The image must be a `.png`, `.jpg`, `.jpeg`, or `.webp` file of up to 1.5 MB, in the project folder.
+
+## Cards
+
+A card step shows a heading and text, like a start message or an end message, and waits for the developer. It does nothing in the browser.
+
+```yaml
+steps:
+  - id: welcome
+    card:
+      heading: Checkout test
+      subheading: About 5 minutes
+      content: |
+        This plan checks:
+        - the cart total
+        - the coupon
+      size: modal
+    panel: { buttons: { pass: { label: Start }, stop: { label: Cancel } } }
+
+  # ... the test steps ...
+
+  - id: done
+    card: { heading: Done, content: Every step passed., when: passed }
+  - id: done-with-problems
+    card: { heading: Done, with problems, content: The report lists them first., when: problems }
+```
+
+- `heading` is required. `subheading` and `content` are optional. `content` can use [Text in the panel](#text-in-the-panel).
+- `size: panel` (default) shows the card in the panel. `size: modal` shows a big card in the middle of the page. It stays until the developer answers.
+- `when: passed` shows the card only when no step so far had a bug or failed. `when: problems` shows it only when one did. Otherwise the run records the card as "Not shown".
+- A card has Pass and Stop buttons. `panel.buttons` can show `bug` and `skip` with `show: true`, and change the text and colors.
+- A card waits for the developer in every mode, also in `autonomous` mode.
+- A card step cannot have `action`, `expect`, `screenshot`, or other keys that test the page.
+- Reports show a card as "Card: Seen", "Card: Not shown", or "Card: Stopped", and leave cards out of the result counts. Presentations, replays, videos, and exported scripts skip cards.
+
+## Answer in the panel
+
+- **Pass**, **Bug**, **Skip**, **Retry**, and **Stop** answer a question. Bug needs notes.
+- **Retry** asks the agent to do the step again. The report keeps the earlier try and its notes.
+- **Point at the problem** lets the developer click the element of a bug. The app does not get that click. Esc stops pointing. On Bug, the screenshot puts a red box on that element, and Walkthrough saves its styles and CSS rules next to the screenshot.
+- Keys: Option+Shift (Alt+Shift on Windows and Linux) with P, B, S, R, or X answer Pass, Bug, Skip, Retry, or Stop. The app does not get these keys. The confirm question of a protected environment takes no keys.
+- The list button in the panel header shows every step of the run, with its result.
+
+## Reusable plan parts
+
+A step item `include: <plan>` puts the steps of another plan in that place. Use it for steps that many plans share, like a login.
+
+```yaml
+name: Checkout as a customer
+steps:
+  - include: login
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+```
+
+- Use the name of a plan in `.walkthrough/plans`, such as `login`. A path does not work.
+- The part is a normal plan, so it still runs alone.
+- Parts can include parts, up to three levels.
+- The `vars` of the part are defaults. The outer plan's `vars` win. The part keeps its own `snippets` and `screenshotDir` for its own steps. Other plan keys of the part, like `mode`, do not count.
+- Two steps cannot have the same id, also when they come from different files. A problem in a part names the file and the line, such as `login.yaml steps[0].do`.
+
+## Terminal commands
+
+A step can need a command in a terminal, like a script that fills the database.
+
+```yaml
+  - id: seed
+    do: Fill the test database
+    command:
+      run: npm run db:seed -- --env=test
+      help: Fills the test database with sample products.
+    expect: The script prints "Done".
+```
+
+- `command` is the text of the command, or `{ run, help }`.
+- The panel shows the command with a Copy button, and a "?" button for its help.
+- Before the step, the agent asks the developer in chat. Should the agent run the command with its own tool, or will the developer run it? Claude Code asks the developer to approve a command that the agent runs.
+- Walkthrough itself never runs commands.
+- A command cannot hold a `{{secret:NAME}}`.
+- Reports show the command. Exported scripts and replays name it, but do not run it.
+
+## Browser settings
+
+A plan can set how Chrome runs in a `browser` block. The plan wins over the `browser` block of `config.yaml`, key by key.
+
+```yaml
+browser:
+  window: { width: 1440, height: 900 }
+  language: de-DE
+  downloads: true
+  devtools: { dock: window }
+```
+
+See [Browser settings](config.md#browser) for all keys. A run that needs other launch settings than the open browser starts a new browser, and says so.
 
 ## Exact actions
 
@@ -127,7 +311,7 @@ Record mode writes these steps when you use more than one tab. Exported scripts 
 | --- | --- |
 | `interactive` | You confirm every step in the panel. |
 | `checkpoints` | You confirm the steps with `checkpoint: true`. The agent checks the rest. |
-| `autonomous` | The agent checks every step. It saves a screenshot when a step fails. |
+| `autonomous` | The agent checks every step. It saves a screenshot when a step fails. Cards still wait for you. |
 
 You can change the mode when you ask for a run, for example: "Run the checkout plan in autonomous mode."
 
@@ -300,9 +484,10 @@ steps:
     caption: Add the coffee mug to the cart
 ```
 
-- `video: true` uses the format from `config.yaml`. The object form takes `format` (`mp4`, `webm`, or `gif`), `path` (also save the video to this file), `showPanel`, and `captions`.
+- `video: true` uses the format from `config.yaml`. The object form takes `format` (`mp4`, `webm`, or `gif`), `path` (also save the video to this file), `showPanel`, `captions`, and `mask`.
+- `mask` lists CSS selectors of things to blur in the videos and bug clips of the run, like `[".customer-name", "#email"]`. Videos also blur secret values that a page shows. The live page does not change.
 - Each step shows its `caption` at the bottom of the video, or its `do` text. Write captions for viewers: short, and about what happens on the screen.
-- Walkthrough cuts wait time and question time, hides the panel, and hides typed secrets.
+- Walkthrough cuts wait time and question time, hides the panel, hides typed secrets, and blurs secrets that the page shows.
 - `run_finish` saves the video as `video/run.<format>` in the run folder.
 - For a clean demo video, use `/walkthrough:video`. It records the run again with `video` action `replay`: a new login, an even pace, and a title card. See [Videos](video.md).
 
@@ -352,6 +537,7 @@ Each run gets a folder in `.walkthrough/runs/`. It holds:
 - `lighthouse.html`, `lighthouse.md`, `lighthouse.json`: the Lighthouse report, when the agent writes one.
 - `lighthouse/`: Lighthouse's own reports, including `flow.report.html` for a flow.
 - `video/`: videos of the run, such as `run.mp4`, bug clips such as `bug-check-total.gif`, and `slideshow.gif`.
+- `downloads/`: files that the app downloaded, when the plan sets `browser.downloads`. The reports list them.
 
 If a run ends early, Walkthrough still writes the reports and marks the run "Incomplete".
 

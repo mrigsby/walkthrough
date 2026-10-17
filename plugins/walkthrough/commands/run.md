@@ -13,8 +13,11 @@ Arguments: $ARGUMENTS
 3. If the arguments name an environment, such as `staging` or `on staging`, use it. Call `environment` with action `list` if you are not sure that it exists.
 4. Call `run_start` with the plan, the mode, and the `environment` if there is one. If it says that a protected environment needs the developer's OK, tell the developer to answer in the browser, then call `run_start` again.
 5. Do each step in the order that `run_start` gives:
-   - For a "confirm" step, call `ask_developer`.
+   - For a "confirm" step, call `ask_developer` with the `stepId` and what you did.
+   - For a "card" step, call `ask_developer` with only the `stepId`. Do nothing in the browser. Cards wait for the developer in every mode.
+   - For a step with a Command, ask the developer in chat first. Should you run it with your Bash tool, or will they run it? Then do the step.
    - For an "agent checks" step, check the result yourself and call `run_step`.
+   - On `status: retry`, do the step again and ask again with the same `stepId`.
    - For an "accessibility check" step, call `a11y_audit` with the `stepId`.
    - For a Lighthouse step, call `lighthouse` as `run_start` says.
 6. When every step has a result, or the developer says stop, call `run_finish` with a short summary.

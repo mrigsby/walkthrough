@@ -2,6 +2,37 @@
 
 This file lists all notable changes to the project.
 
+## Unreleased
+
+### Added
+
+- A plan can shape the panel with a `panel` block. It sets the section labels, the text and color of each button, which buttons show, and the start corner. It also turns the progress list and the keyboard shortcuts on or off. A step can change these settings for itself, and the agent can change them for one question. See [The panel](docs/plan-format.md#the-panel).
+- A collapsible "What's next" section. It shows the step's `next` text, or with `next.auto`, the `do` of the step after it. It is closed by default.
+- Panel text can have bullet lists, numbered lists, check lists, code blocks, `**bold**`, `*italic*`, and `` `code` ``. The developer can tick the check lists. The ticks survive page loads, Pass asks for a second click while a box is open, and the answer and the reports keep the ticks.
+- Snippets: `{{copy:name}}` shows a value with a Copy button, and a "?" button opens its help in the middle of the page. Code blocks also have a Copy button. The panel guards its copy, so a page script cannot change the copied text.
+- `expectImage` shows a reference image of what the page should look like. A click shows it large.
+- Card steps show a heading, a subheading, and text, such as a start or end message. A card shows in the panel, or with `size: modal` in the middle of the page. It has Pass and Stop buttons, and a plan can show the others. With `when`, a card shows only after a run with no problems, or only after a run with problems. Cards wait for the developer in every mode.
+- A Retry button asks the agent to do the step again. The reports show how many tries a step had.
+- Keyboard shortcuts: Option+Shift (Alt+Shift) with P, B, S, R, or X answers a question. The app never sees these keys.
+- A button in the panel header shows each step of the run with its result.
+- "Point at the problem" lets the developer click the element of a bug. The app does not get that click. The bug screenshot draws a box on the element, and the report gets its selector and CSS rules.
+- `include: <plan>` puts the steps of another plan in that place, such as a shared login. Parts can include parts, up to three levels. Errors name the file and the line.
+- A step can have a terminal `command`. The panel shows it with a Copy button. The agent asks the developer whether to run it or to let the developer run it. Walkthrough never runs commands.
+- A `browser` block in `config.yaml` or in a plan sets how Chrome runs. It sets the page size, language, downloads, a fake camera and microphone, and autoplay. It also sets third-party cookies, font sizes, page zoom, extensions, host mapping, secure origins, the automation bar, and DevTools. DevTools can dock or open in its own window, and can show its device toolbar. See [Browser](docs/config.md#browser).
+- Downloads go to the `downloads` folder of the run, and the reports list them.
+- `orientation: portrait | landscape` turns a device, in `emulate` and in plans.
+- Videos, bug clips, and replays blur text and field values that contain a secret, and the parts that `video.mask` names. The live page does not change.
+- The demo has a `panel-tour` plan and an `account` plan that includes `login`.
+- The install steps also say how to update the plugin.
+
+### Changed
+
+- Chrome's address and card autofill, permission prompts, and spellcheck are off by default. The page also keeps focus when the developer clicks in another window. A plan can turn each one back on.
+- A visible browser starts with a page area of 1280 x 800, the same as headless runs, videos, and exported scripts. When a device is on, the window resizes to fit the page, and it stays on the screen.
+- During a run, `ask_developer` finds the plan step by its `stepId`. It takes the title, the expected text, and the step number from the plan, so the agent only says what it did.
+- Walkthrough removes secret values from all panel text.
+- `run_start` starts a new browser when the browser settings of the plan differ from the open browser.
+
 ## 0.4.0 (2026-10-02)
 
 ### Added

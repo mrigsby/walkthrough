@@ -43,6 +43,8 @@ The `uiwalk` server works with any MCP client that can start a local (stdio) ser
 
 The server is on npm as `walkthrough-ui`. The client starts it with `npx -y walkthrough-ui`, so you do not install it first. You need Node.js 22.19 or later.
 
+To update the server, restart the client. If the client still starts an old version, npx kept it in its cache. Then use `walkthrough-ui@latest` in `args` once, or a version like `walkthrough-ui@0.5.0`, and restart the client again.
+
 You can also run the server from a clone of the repository. The server is one file, and it needs no `npm install`. Use `"command": "node"` and `"args": ["/path/to/walkthrough/plugins/walkthrough/server/uiwalk.mjs"]`.
 
 Most clients do not tell the server which project is open, so set `UIWALK_PROJECT_DIR`.

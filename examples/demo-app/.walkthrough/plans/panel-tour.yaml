@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Panel tour
+description: A short tour of the panel. It shows cards, a snippet, a check list, a reference image, and Retry.
+mode: interactive
+panel:
+  # A step with no "next" shows the "do" of the step after it.
+  next: { auto: true }
+snippets:
+  demo:
+    code: npm run demo
+    help: |
+      This command starts the demo shop at http://localhost:4321.
+      - Run it in the root folder of the Walkthrough repo.
+      - Keep it running while you test.
+steps:
+  - id: welcome
+    card:
+      heading: Panel tour
+      subheading: About 3 minutes
+      content: |
+        This plan shows what the panel can do:
+        - cards like this one
+        - snippets that you can copy
+        - check lists that you can tick
+        - a reference image
+        - the **Retry** button
+
+        Make sure that the demo shop runs. To start it, run {{copy:demo}} in a terminal.
+      size: modal
+    panel:
+      buttons:
+        pass: { label: Start }
+        stop: { label: Cancel }
+
+  - id: open-shop
+    do: Open the shop page
+    action: { navigate: / }
+    expect: |
+      Tick each item that you see:
+      - [ ] a Coffee Mug
+      - [ ] a T-Shirt
+      - [ ] an "Add to cart" button on each product
+
+  - id: add-mug
+    do: Click "Add to cart" on the Coffee Mug
+    expect: The cart count in the header goes up by 1. If it does not, click **Retry**. The agent then does the step again.
+
+  - id: open-cart
+    do: Open the cart
+    action: { navigate: /cart }
+    expect: The cart shows the Coffee Mug, as in the reference image. Click the image to make it bigger.
+    expectImage: docs/images/help/cart.png
+    panel:
+      labels: { expect: Compare the cart }
+
+  - id: done
+    card:
+      heading: Tour complete
+      subheading: Every step passed.
+      content: |
+        Next:
+        1. Read the report. The agent tells you where it is.
+        2. Read "The panel" in the plan format docs to make a panel of your own.
+      when: passed
+    panel: { buttons: { pass: { label: Finish } } }
+
+  - id: done-with-problems
+    card:
+      heading: Tour complete, with problems
+      subheading: Some steps have a bug or failed.
+      content: The report lists them first.
+      when: problems
+    panel: { buttons: { pass: { label: Finish } } }

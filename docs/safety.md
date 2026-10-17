@@ -31,6 +31,7 @@ Extra headers and basic auth logins of an environment go only to the site of tha
 - Walkthrough removes secret values from everything it sends to the agent: page outlines, element values, logs, and reports. It also removes the URL-encoded and Base64 forms of each value.
 - Report files and issue drafts hide the values in `.walkthrough/.env` and in every `.walkthrough/.env.<name>`. They also hide secrets from environment variables that the server used during the run. When Walkthrough writes a report again later, such as with `/walkthrough:report`, it knows only the values in `.walkthrough/.env`.
 - A text field that got a secret shows dots in screenshots. Password fields show dots anyway.
+- The panel removes secret values from all its text. Snippets and terminal commands cannot hold a `{{secret:NAME}}`, so a Copy button never copies a secret.
 - Run records keep `{{secret:NAME}}`, never the value.
 - In record mode, the value of a password field never leaves the page. For other private fields, click **Mark last field as secret**. Walkthrough throws the value away.
 - Logs hide the values of URL parameters such as `token`, `key`, and `password`, and text that looks like a token.
@@ -53,13 +54,18 @@ The page under test could try to click **Pass** for you. Walkthrough stops this:
 - The panel runs in an isolated world. Page scripts cannot see its code or call it.
 - The panel uses a closed shadow root, so page scripts cannot reach its buttons.
 - The panel ignores clicks that a script makes. Only real clicks count.
-- Each question has a one-time code. An answer without the current code does not count.
+- Each question has a one-time code. An answer without the current code does not count. The same goes for ticks in a check list and for the element that you point at.
+- The panel's Copy button guards the text it copies, so a page script cannot change it. Sometimes a page blocks the clipboard, and the panel starts after the page's own scripts. Then the panel asks you to check the text before you paste it.
+- While you point at the problem, the app gets no clicks or keys. The browser itself finds the element at the place you clicked, so a page script cannot change which element it is.
+- The keyboard shortcuts work only while a question is open, and the app does not get those keys. The confirm question of a protected environment takes no keys.
 - The agent cannot use the panel either. Page outlines leave it out, and the `act` tool refuses to click it.
 
 ## Videos
 
 - Walkthrough hides the panel in videos, except in bug clips. It hides a field before the agent types a secret into it.
-- A video shows everything else on the screen, such as names and email addresses. Walkthrough removes secrets from text, but it does not check the pictures of a video. Use test data, and watch a video before you share it.
+- Run videos, bug clips, and replays blur text and field values that contain a secret. They blur the secrets of the environment in use and the secrets that steps used. Walkthrough does not blur values shorter than 6 characters, because they could be normal words. `video.mask` blurs more parts, such as customer names.
+- A small script finds these parts in an isolated world, which page scripts cannot see. It holds the secret values only while something records. The blur happens when Walkthrough makes the video, so the page in the browser does not change.
+- Walkthrough does not look in frames from other sites. A video can still show names, email addresses, and data that are not secrets. Use test data, and watch a video before you share it.
 - Videos stay in the run folder, which Git does not track, unless you give a `path`.
 
 See [Videos](video.md#privacy).
@@ -99,6 +105,14 @@ Lighthouse, ffmpeg, and Chrome for Testing are optional downloads. Walkthrough d
 - Lighthouse comes from npm, at a fixed version. npm checks the package. Walkthrough turns off the error reports that Lighthouse can send to its team.
 - ffmpeg comes from a fixed release. Walkthrough checks the SHA-256 hash of the download against a hash in its code, and refuses a file that does not match.
 - All downloads go in `~/.cache/uiwalk`, or in `UIWALK_CACHE_DIR`.
+
+## Terminal commands
+
+Walkthrough never runs a terminal command. A plan step can name one with `command`. The panel shows it with a Copy button, and the agent asks you whether it may run the command with its own tool. Claude Code then asks you to approve the command.
+
+## Chrome prompts
+
+Chrome does not offer to save passwords, addresses, or cards, and it says no to camera, location, and notification prompts. A plan can turn each one back on in its `browser` block. Extensions load only from the project folder, unless you name a full path in `config.local.yaml`.
 
 ## Your own Chrome
 

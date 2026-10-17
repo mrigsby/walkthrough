@@ -78,6 +78,9 @@ When the developer asks for a new plan:
 - Use `{{secret:NAME}}` for passwords, never the real value.
 - Use `{{var:NAME}}` for test data that is different in each environment, such as a test user. Add the value to the plan's `vars`, and ask the developer for the values of other environments.
 - Do not put a full URL in `baseUrl` or `navigate`. Paths like `/cart` work in every environment.
+- If another plan already has the steps, like a login, use `include: <plan>` instead of a copy of them.
+- If the developer must run something in a terminal, put it in the step's `command`.
+- Add start and end cards, panel labels, and `browser` settings only when the developer asks for them.
 
 ## Evidence
 

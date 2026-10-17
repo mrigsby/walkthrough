@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../plan.schema.json
+name: Account
+description: Logs in with the steps of the login plan, checks the header, and logs out. Before you run it, copy .walkthrough/.env.example to .walkthrough/.env.
+mode: interactive
+steps:
+  # The steps of login.yaml run here.
+  - include: login
+
+  - id: check-header
+    do: Read the header
+    expect: The header says "Hi, {{var:userName}}" and shows a "Log out" button.
+
+  - id: log-out
+    do: Click "Log out"
+    action: { click: { role: button, name: Log out } }
+    expect: The shop page opens, and the header shows a "Log in" link again.

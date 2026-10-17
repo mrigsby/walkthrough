@@ -30,7 +30,29 @@ This command needs Claude Code 2.1.275 or later. With an earlier version, add th
 
 If Claude Code asks you to restart, restart it.
 
-Then run `/walkthrough:doctor`. Each line starts with `OK`, `INFO`, or `FIX`. If a line starts with `FIX`, the agent explains how to fix it. See [Troubleshooting](troubleshooting.md) for more help.
+### Update the plugin
+
+To get a new version of Walkthrough later:
+
+1. In a terminal, get the newest list of versions:
+
+   ```sh
+   claude plugin marketplace update walkthrough
+   ```
+
+2. Install the newest version:
+
+   ```sh
+   claude plugin update walkthrough@walkthrough
+   ```
+
+3. Restart Claude Code.
+
+To see the version that you have, run `claude plugin list`. The [changelog](../CHANGELOG.md) tells what each version changed.
+
+### Check the setup
+
+Run `/walkthrough:doctor`. Each line starts with `OK`, `INFO`, or `FIX`. If a line starts with `FIX`, the agent explains how to fix it. See [Troubleshooting](troubleshooting.md) for more help.
 
 ## 2. Set up your project
 

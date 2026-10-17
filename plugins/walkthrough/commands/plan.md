@@ -16,6 +16,9 @@ What to test: $ARGUMENTS
    - For passwords, use `{{secret:NAME}}`, never the real value.
    - For test data that is different in each environment, such as a test user, use `{{var:NAME}}` and add the value to `vars`.
    - Use paths like `/cart`, not full URLs, so the plan works in every environment.
+   - If the developer must do something by hand, like run a script, add a `command` to the step, or a snippet with `{{copy:name}}`.
+   - If other plans already do some steps, like a login, use `include: <plan>` instead of the same steps again.
+   - Add a start or end `card` only when the developer asks for one.
 4. Call `plan` with action `validate` and the YAML as `content`. Fix any problems.
 5. Show the plan to the developer. Ask for a plan name, such as `change-name`, and for any changes.
 6. Call `plan` with action `save`. If a plan with that name exists, ask before you replace it.

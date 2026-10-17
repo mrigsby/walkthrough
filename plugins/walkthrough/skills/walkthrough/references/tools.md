@@ -32,7 +32,7 @@ All tools come from the `uiwalk` MCP server.
 
 | Tool | Use it to |
 | --- | --- |
-| `emulate` | Set the active tab's `device`, `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, or `permissions`. `allTabs: true` sets every tab. |
+| `emulate` | Set the active tab's `device`, `orientation`, `colorScheme`, `network`, `cpu`, `timezone`, `locale`, `geolocation`, `reducedMotion`, `media`, or `permissions`. `allTabs: true` sets every tab. The window fits the page of a device. |
 | `session` | `save`, `list`, or `delete` saved logins. |
 | `storage` | `list`, `get`, `set`, `delete`, or `clear` cookies (or `kind: local` or `session` storage) of the sites under test. `check` checks cookies. `clearSiteData` clears the site's data. Values show as a fingerprint. |
 | `visual_check` | Compare the page or one element with a baseline screenshot. |
@@ -46,7 +46,7 @@ All tools come from the `uiwalk` MCP server.
 
 | Tool | Use it to |
 | --- | --- |
-| `ask_developer` | Show a step in the browser panel and wait for Pass, Bug, Skip, or Stop. On Bug, it saves a screenshot, a HAR file, and a video of the last seconds. |
+| `ask_developer` | Show a step in the browser panel and wait for Pass, Bug, Skip, Retry, or Stop. During a run, give the `stepId`. The plan gives the title, expected, and panel settings. A card needs only the `stepId`. Optional: `next`, `panel`, `snippets`, `image`. On Bug, it saves a screenshot, a HAR file, and a video of the last seconds. |
 | `plan` | `list`, `show`, `validate`, or `save` test plans. |
 | `run_start` | Start a run from a plan, or an ad hoc run with a `name`. |
 | `run_step` | Record a step that you checked yourself: `pass`, `fail`, `skip`, or `blocked`. On fail or blocked, it saves a screenshot, a HAR file, and a video of the last seconds. |

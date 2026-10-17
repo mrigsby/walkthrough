@@ -165,17 +165,28 @@ Runs a JavaScript expression (`script`) in the page, such as `document.title`. I
 
 ### `ask_developer`
 
-Shows a step in the panel and waits for your answer.
+Shows a step in the panel and waits for your answer. During a run, the `stepId` is enough: Walkthrough takes the title, the expected text, the step number, and the panel settings from the plan. A card step needs only the `stepId`.
 
 | Parameter | What it does |
 | --- | --- |
-| `title` | A short name for the step. |
+| `stepId` | The step id in a plan. |
 | `didWhat` | What the agent did. |
-| `expected` | What you should see. |
-| `step`, `total`, `stepId` | The step number, the number of steps, and the step id in a plan. |
+| `title` | A short name for the step. Not needed for a plan step. |
+| `expected` | What you should see. Not needed when the plan step has `expect`. |
+| `next` | What comes after this step, for the "What's next" part. |
+| `panel` | Labels and buttons for this question, like `{ buttons: { pass: { label: Done } } }`. |
+| `snippets` | Text to copy, for `{{copy:name}}` in the text. |
+| `image` | An image of what the page should look like, from the project folder. |
+| `step`, `total` | The step number and the number of steps, for a question that is not a plan step. |
 | `resume` | Keep waiting for the question that is already in the panel. |
 
-The reply starts with `status:` and then `pass`, `bug`, `skip`, `stop`, `waiting`, `use_chat`, or `canceled`. On `bug`, Walkthrough saves a screenshot, the errors from the step, and a HAR file with the network requests of the step. During a run, it also saves a video of the last seconds before the bug. See [Bug clips](#bug-clips).
+The reply starts with `status:` and then `pass`, `bug`, `skip`, `retry`, `stop`, `waiting`, `use_chat`, or `canceled`.
+
+- On `bug`, Walkthrough saves a screenshot, the errors from the step, and a HAR file with the network requests of the step. During a run, it also saves a video of the last seconds before the bug. See [Bug clips](#bug-clips).
+- When you pointed at an element, the reply names it, the screenshot boxes it, and a file holds its styles and CSS rules.
+- On `retry`, the agent does the step again and asks again. The run keeps the earlier try.
+- A `Checklist:` line names the boxes that you did not tick.
+- A card with `when` that does not fit the run returns `status: skip` at once.
 
 ## Test plans and runs
 
@@ -187,9 +198,11 @@ With `action`: `list` the plans, `show` one, `validate` one by `name` or by `con
 
 Starts a run from a `plan`, or an ad hoc run with a `name`. `mode` is `interactive`, `checkpoints`, or `autonomous`. It opens the browser at the start page and lists the steps. `video: true` records the whole run as a video, like the plan's `video` key. `environment` runs it in that environment, such as `staging`, and switches the session. The reply shows the environment and the values of `{{var:NAME}}`.
 
+The run uses the plan's `browser` settings and window size. When the plan needs other launch settings than the open browser, the run starts in a new browser. The step list marks cards and steps with a `command`. For a command, the agent asks you first whether it may run the command.
+
 ### `run_step`
 
-Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. Give `stepId` (or `step` or `title`), `actual` for a failure, and `notes` for anything else. `screenshot` saves a screenshot. It is on by default for `fail` and `blocked`. On a failure, it saves a screenshot, the errors, and a HAR file with the network requests of the step. It also saves a video of the last seconds. See [Bug clips](#bug-clips).
+Records a step that the agent checked: `status` is `pass`, `fail`, `skip`, or `blocked`. It refuses a card step, because you answer cards in the panel. Give `stepId` (or `step` or `title`), `actual` for a failure, and `notes` for anything else. `screenshot` saves a screenshot. It is on by default for `fail` and `blocked`. On a failure, it saves a screenshot, the errors, and a HAR file with the network requests of the step. It also saves a video of the last seconds. See [Bug clips](#bug-clips).
 
 ### `run_finish`
 
@@ -203,11 +216,12 @@ Lists recent runs with their results. A run on an environment other than develop
 
 ### `emulate`
 
-Changes the settings of the active tab. With `allTabs: true`, it changes every tab and the tabs that open later. Without settings, it shows the settings of the active tab.
+Changes the settings of the active tab. With `allTabs: true`, it changes every tab and the tabs that open later. Without settings, it shows the settings of the active tab. A new device or orientation also resizes the window of a visible browser, so the page fits. The reply says when the screen is too small.
 
 | Parameter | What it does |
 | --- | --- |
 | `device` | `desktop`, `laptop`, `tablet`, `mobile`, `default`, or a Puppeteer device name such as `Pixel 5`. |
+| `orientation` | `portrait` or `landscape`. It turns the device, so it needs a device. |
 | `colorScheme` | `light`, `dark`, or `system`. |
 | `network` | `normal`, `slow-3g`, `fast-3g`, `slow-4g`, `fast-4g`, or `offline`. |
 | `cpu` | Makes the CPU slower by this factor, such as `4`. `1` is normal speed. |
@@ -330,7 +344,7 @@ A new report compares itself with the last report of the same pages. A flow repo
 
 ### `video`
 
-Records the active tab as a video. The video follows the active tab to other tabs. See [Videos](video.md) for examples of each use.
+Records the active tab as a video. The video follows the active tab to other tabs. It blurs secrets that the page shows, and the parts that `video.mask` names. See [Videos](video.md) for examples of each use.
 
 | Parameter | What it does |
 | --- | --- |
@@ -420,7 +434,7 @@ Makes the `.walkthrough` folder with `config.yaml`, a sample plan, the plan sche
 
 ### `doctor`
 
-Checks Node, Chrome, the project folder, the settings, the environments, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`. `projectDir` checks another project folder. It checks that each environment answers, except a protected one, and that Git ignores the secret files of each environment.
+Checks Node, Chrome, the project folder, the settings, the browser settings, the environments, the secrets, Lighthouse, and ffmpeg. Each line starts with `OK`, `INFO`, or `FIX`. `projectDir` checks another project folder. It checks that each environment answers, except a protected one, and that Git ignores the secret files of each environment.
 
 Lighthouse and ffmpeg are optional downloads. Install them from a terminal:
 

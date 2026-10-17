@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { planJsonSchema, stepCapture } from '../../src/run/plan-schema.js';
-import { laterFeatures, validatePlanText } from '../../src/run/plans.js';
+import { laterFeatures, loadPlan, validatePlanText } from '../../src/run/plans.js';
 import { repoRoot } from '../helpers/demo-server.js';
 
 const good = `name: Demo
@@ -146,14 +146,33 @@ describe('environment keys', () => {
 
 describe('sample plans and schema', () => {
   it('has valid sample plans in the demo project', () => {
-    for (const name of ['checkout', 'checkout-demo', 'login', 'mobile', 'performance']) {
-      const text = readFileSync(
-        join(repoRoot, `examples/demo-app/.walkthrough/plans/${name}.yaml`),
-        'utf8',
-      );
-      const result = validatePlanText(text);
+    const projectDir = join(repoRoot, 'examples/demo-app');
+    for (const name of [
+      'checkout',
+      'checkout-demo',
+      'login',
+      'mobile',
+      'performance',
+      'panel-tour',
+      'account',
+    ]) {
+      const file = join(projectDir, `.walkthrough/plans/${name}.yaml`);
+      const result = validatePlanText(readFileSync(file, 'utf8'), { projectDir, file });
       expect(result.ok, JSON.stringify(result)).toBe(true);
     }
+  });
+
+  it('puts the login steps into the account sample plan', () => {
+    const projectDir = join(repoRoot, 'examples/demo-app');
+    const { plan } = loadPlan(projectDir, 'account');
+    expect(plan.steps.map((s) => s.id)).toEqual([
+      'open-login',
+      'enter-username',
+      'enter-password',
+      'submit',
+      'check-header',
+      'log-out',
+    ]);
   });
 
   it('keeps the saved JSON Schema up to date', () => {

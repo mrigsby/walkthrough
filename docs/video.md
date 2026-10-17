@@ -346,7 +346,11 @@ The command downloads a pinned ffmpeg build and checks its SHA-256 hash. On Linu
 
 - Walkthrough hides the panel in videos, except in bug clips.
 - Walkthrough hides a field before the agent types a secret into it. Password fields show dots.
-- A video shows everything else on the screen, such as names, email addresses, and data. Walkthrough removes secrets from text, but it does not check the pictures of a video. A secret that the page shows, such as an API key on a settings page, shows in the video.
+- Run videos, bug clips, and replays blur text and field values that show a secret of the environment in use. An example is an API key on a settings page. They also blur the secrets that steps used. Walkthrough does not blur values shorter than 6 characters.
+- `video.mask` in `config.yaml`, or `mask` in a plan's `video` block, blurs more parts, such as `[".customer-name", "#email"]`.
+- The blur happens when Walkthrough makes the video. The page in the browser does not change, so you can read everything while you test. Around a move, the old and the new place are both blurred.
+- Walkthrough does not look in frames from other sites. Presentations blur on the audience screen with `presentation.mask` instead.
+- A video shows everything else on the screen, such as names, email addresses, and data.
 - Use test accounts and test data, and watch a video before you share it.
 - Videos stay in the run folder, which Git does not track. A `path` puts a copy where you choose, such as a docs folder that Git tracks.
 

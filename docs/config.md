@@ -28,6 +28,8 @@ highlightMs: 600
 browser:
   headless: false
   slowMo: 0
+  window: { width: 1280, height: 800 }
+  language: en-US
 accessibility:
   standard: wcag22aa
   checks: { keyboard: true, darkMode: true, reflow: true, frames: true, screenshots: true }
@@ -49,13 +51,48 @@ lighthouse:
 | `environment` | `development` | The environment to use when nothing else chooses one. `config.local.yaml` can set your own default. |
 | `vars` | none | Values for `{{var:NAME}}` in plans, such as `{ shopper: Demo Shopper }`. Plans and environments can change them. |
 | `dialogs` | `ask` | How to answer confirm and prompt dialogs: `ask` (the agent asks you), `accept`, or `dismiss`. Walkthrough always accepts alerts. |
-| `panel` | `true` | Show the Pass, Bug, Skip, and Stop panel in the browser. |
+| `panel` | `true` | Show the panel in the browser, where you answer each step. |
 | `highlightMs` | `600`, or `0` when the browser is hidden | How long a box shows on an element before the agent uses it. |
 | `askTimeoutSec` | `300` in Claude Code, `50` in other clients | How long the agent waits for your answer in the panel before it waits again. From 10 to 3600. |
 | `actionTimeoutMs` | `10000` | How long an action waits for its element. From 1000 to 120000. |
 | `browser.headless` | `false` | `true` hides the browser. With a hidden browser there is no panel, so the agent asks in the chat. |
 | `browser.slowMo` | `0` | Milliseconds to wait between browser steps, so you can watch each one. Up to 5000. |
 | `browser.executablePath` | none | The path to a Chrome that Walkthrough uses instead of the installed Chrome. |
+| `browser.*` | see below | How Chrome runs: the window, prompts, the language, DevTools, and more. See [Browser](#browser). |
+
+### Browser
+
+These settings set how Chrome runs. A plan's `browser` block wins over them, key by key. See [Browser settings](plan-format.md#browser-settings).
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `browser.window` | `{ width: 1280, height: 800 }` | The page area of the window. The window fits it, and also fits the page of a device, like `mobile`. Hidden Chrome uses it as the page size. |
+| `browser.autofill` | `false` | Chrome offers to save and fill addresses and cards. |
+| `browser.passwords` | `false` | Chrome offers to save passwords, and checks them for leaks. |
+| `browser.permissionPrompts` | `deny` | `deny`: Chrome says no to camera, location, and notification prompts. `emulate` permissions still grant them. `ask`: Chrome asks. |
+| `browser.spellcheck` | `false` | Red lines under words that Chrome thinks are wrong. Off, so screenshots stay the same. |
+| `browser.keepFocus` | `true` | The page acts as if it has focus while you type in another window, so menus and popups stay open. |
+| `browser.language` | none | The language of Chrome and of the `Accept-Language` header, such as `de-DE`. |
+| `browser.downloads` | `false` | During a run, save downloads in the run folder with no Save dialog. The reports list them. |
+| `browser.fakeMedia` | `false` | A fake camera and microphone, with no prompt. |
+| `browser.autoplay` | `false` | Video and sound can play without a click. |
+| `browser.thirdPartyCookies` | `allow` | `block` blocks the cookies of other sites in frames. |
+| `browser.fontSize` | none | Chrome font sizes, such as `{ default: 20, minimum: 12 }`, to test larger text. |
+| `browser.zoom` | none | Page zoom for the sites of the app, such as `1.25`. |
+| `browser.devtools` | none | `true`, or `{ dock, deviceToolbar }`. Opens DevTools in each tab of a visible browser. `dock` is `right` (default), `bottom`, or `window`. When DevTools is docked, the window grows so the page keeps its size, as far as the screen allows. |
+| `browser.devtools.deviceToolbar` | `false` | Shows the device toolbar of DevTools. Then DevTools controls the page size, so `emulate` does not set a device or an orientation. Choose them in the toolbar. |
+| `browser.extensions` | none | Folders of unpacked extensions, such as React DevTools, from the project folder. Full paths work only in `config.local.yaml`. |
+| `browser.hosts` | none | Send a host name to another address, such as `{ "api.example.com": "127.0.0.1" }`. |
+| `browser.secureOrigins` | none | http sites that Chrome treats as secure, such as `http://dev.test:8080`, so the clipboard and service workers work there. |
+| `browser.automationBar` | `true` | The "Chrome is being controlled by automated test software" bar. `false` hides it. |
+
+Notes:
+
+- Chrome needs these settings when it starts, except `window`, `keepFocus`, and `downloads`. A run with other settings than the open browser starts a new browser.
+- With your own Chrome (`browser_open` with `attach`), these settings do not apply. The reply lists the ones that you set.
+- When the screen is too small for the page, the window gets as big as the screen allows, and the reply says so.
+- Lighthouse uses `hosts` and `secureOrigins`. Presentations and exported scripts use the settings that change pages, such as the language.
+- `/walkthrough:doctor` shows the settings in use.
 
 ### Accessibility
 
@@ -87,6 +124,7 @@ These settings are for videos and GIFs. See [Videos](video.md).
 | `video.showPanel` | `false` | Show the Walkthrough panel in videos. |
 | `video.pointer` | `true` | Draw the mouse pointer and a mark for each click. |
 | `video.captions` | `true` | Show step titles at the bottom of the video. |
+| `video.mask` | none | CSS selectors of things that videos and bug clips blur, such as `[".customer-name"]`. Videos also blur secret values that a page shows. |
 
 `config.local.yaml` can change one video setting. The others keep their values.
 

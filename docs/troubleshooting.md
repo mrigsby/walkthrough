@@ -48,6 +48,28 @@ Each environment reads `.walkthrough/.env.<name>` first, such as `.env.staging`.
 - The panel does not show when `panel: false` is set in `.walkthrough/config.yaml`.
 - If the panel is still missing, ask the agent to run `doctor` and to reload the page.
 
+## The window is smaller than the page
+
+Walkthrough fits the window to the page: 1280 x 800 by default, or the size of a device, like `desktop`. When the screen is too small, the window gets as big as the screen allows, and the reply says so. Chrome can open a new window on another screen. Move it to the bigger screen, or use a smaller size in `browser.window`.
+
+With DevTools docked at the right, the window grows by the width of DevTools. On a small screen, dock DevTools at the bottom or in its own window: `devtools: { dock: window }`.
+
+## Device settings do nothing
+
+When DevTools shows its device toolbar (`devtools: { deviceToolbar: true }`), DevTools controls the page size. `emulate` then does not set a device or an orientation, and says so. Choose the device and turn it in the toolbar, or turn the toolbar off.
+
+An `orientation` needs a device, such as `mobile` or `tablet`.
+
+## A download is missing
+
+Downloads go to the run folder only when the plan or `config.yaml` sets `browser.downloads: true`, and only during a run. Look in the `downloads` folder of the run. With your own Chrome (`attach`), downloads go where your Chrome puts them.
+
+## An extension does not load
+
+- An extension must be an unpacked folder with a `manifest.json`.
+- A plan can name only folders in the project. Put a full path in `browser.extensions` in `config.local.yaml`.
+- With extensions, Chrome starts in another way (a pipe), so tools that connect to Chrome by its address cannot reach it.
+
 ## The agent stops waiting for my answer
 
 `ask_developer` waits for your answer in the panel. After `askTimeoutSec` seconds, it tells the agent to wait again with `resume: true`. The question stays in the panel, so you can answer at any time.
