@@ -130,7 +130,7 @@ export function registerVideoTools(server: McpServer, ctx: Context): void {
             `Recording the tab "${tab.name}" (${tab.id}). The video follows the active tab.`,
             started.capture.options.showPanel
               ? 'The video shows the panel, but hides typed secrets.'
-              : 'The video hides the panel and typed secrets.',
+              : 'The video hides the panel and typed secrets. It also blurs secrets that the page shows, and the parts that video.mask names.',
             started.runId
               ? `The video belongs to the run ${started.runId}. Step titles become captions.`
               : 'Use video with action caption to show text at the bottom.',

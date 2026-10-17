@@ -13,7 +13,7 @@ import { openBrowser } from '../tools/browser-tools.js';
 import { VideoCapture } from '../video/capture.js';
 import { encodeVideo } from '../video/encoder.js';
 import { chooseFormat, type VideoFormat } from '../video/formats.js';
-import { liveCaptures, size } from '../video/recording.js';
+import { liveCaptures, size, videoMask } from '../video/recording.js';
 import { buildSamples } from '../video/timeline.js';
 import { ReplayEngine, StepError, sleep } from './engine.js';
 import { buildOps } from './ops.js';
@@ -149,7 +149,12 @@ export async function replayRun(ctx: Context, input: ReplayInput): Promise<Repla
       startUrl: run.baseUrl ?? config.baseUrl,
     });
 
-    capture = new VideoCapture(driver, { maxWidth: width, showPanel: false });
+    const planVideo = planOf(run, config)?.video;
+    capture = new VideoCapture(driver, {
+      maxWidth: width,
+      showPanel: false,
+      mask: await videoMask(ctx, typeof planVideo === 'object' ? planVideo.mask : undefined),
+    });
     await capture.start();
     for (const stepOps of plan.steps) {
       const { step } = stepOps;

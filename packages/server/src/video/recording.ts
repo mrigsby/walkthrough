@@ -15,6 +15,7 @@ import { VideoCapture } from './capture.js';
 import type { Sample } from './encode-job.js';
 import { type EncodeOutput, encodeVideo } from './encoder.js';
 import { chooseFormat, type VideoFormat } from './formats.js';
+import type { MaskConfig } from './masker.js';
 import { buildSamples, lastSeconds } from './timeline.js';
 
 // Pictures each second in WebM and MP4. GIF uses the gifFps setting.
@@ -45,6 +46,23 @@ export function stepCaption(store: RunStore): string {
   return next ? (next.caption ?? next.title) : '';
 }
 
+// What videos blur: the secret values of this environment and the ones a step used, and the
+// mask selectors of config.yaml and the plan.
+export async function videoMask(ctx: Context, planMask: string[] = []): Promise<MaskConfig> {
+  const config = await ctx.config();
+  const secrets = await ctx.secrets();
+  return {
+    secrets: secrets.videoValues(),
+    selectors: [...new Set([...config.video.mask, ...planMask])],
+  };
+}
+
+// Gives the recordings new values to blur, like a secret that a step just used.
+async function refreshMasks(ctx: Context): Promise<void> {
+  const mask = await videoMask(ctx, ctx.run?.planVideoMask);
+  for (const capture of liveCaptures(ctx)) await capture.updateMask(mask);
+}
+
 // The recordings that watch the page now: a video, and the bug clip buffer of a run.
 export function liveCaptures(ctx: Context): VideoCapture[] {
   return [ctx.video?.capture, ctx.ring].filter((c): c is VideoCapture => Boolean(c?.recording));
@@ -66,6 +84,7 @@ export function videoHooks(ctx: Context): VideoHooks | undefined {
     },
     maskSecret: async (handle) => {
       ctx.videoMasks.push(await maskSecretFields([handle]));
+      await refreshMasks(ctx);
     },
   };
 }
@@ -119,6 +138,7 @@ export async function startVideo(
   const capture = new VideoCapture(driver, {
     maxWidth: config.video.width,
     showPanel: options.showPanel ?? config.video.showPanel,
+    mask: await videoMask(ctx, run?.planVideoMask),
   });
   const recording: VideoRecording = {
     capture,
@@ -288,6 +308,7 @@ export async function startRing(ctx: Context): Promise<void> {
     maxWidth: config.video.width,
     showPanel: true,
     keepMs: RING_KEEP_MS,
+    mask: await videoMask(ctx, store.planVideoMask),
   });
   await maskTypedSecrets(ctx);
   await ring.start();

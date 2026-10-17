@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { CDPSession, Protocol } from 'puppeteer-core';
 import type { Driver } from '../browser/driver.js';
 import type { Rect } from '../panel/controller.js';
+import { hasMask, type MaskConfig, VideoMasker } from './masker.js';
 import type { CaptureFrame, TimelineEvent } from './timeline.js';
 
 // Chrome sends a picture each time the page paints. More than about 30 each second
@@ -15,6 +16,8 @@ export interface CaptureOptions {
   showPanel: boolean;
   // For the bug clip buffer: pictures older than this many milliseconds go away.
   keepMs?: number;
+  // What the video blurs. The live page does not change.
+  mask?: MaskConfig;
 }
 
 // Records the active tab with Chrome's screencast, and follows it to other tabs.
@@ -32,6 +35,11 @@ export class VideoCapture {
   // While a clip is made, old pictures stay.
   private holds = 0;
   private work: Promise<void> = Promise.resolve();
+  // The tabs whose mask boxes this recording hears, and how to stop hearing them.
+  private readonly masked = new Map<
+    string,
+    { update: (config: MaskConfig) => Promise<void>; stop: () => Promise<void> }
+  >();
   private readonly onActive = (id?: string) => {
     this.work = this.work.then(() => this.follow(id)).catch(() => undefined);
   };
@@ -65,6 +73,7 @@ export class VideoCapture {
       this.hiddenTabs.add(tab.id);
       await this.driver.panel?.suppress(tab.id, true, 'video');
     }
+    await this.watchMask(tab.id);
     const cdp = await tab.page.createCDPSession();
     this.session = { tabId: tab.id, cdp };
     // A minimized window paints nothing, so it gets its normal size again.
@@ -120,6 +129,32 @@ export class VideoCapture {
         unlinkSync(join(this.dir, old.file));
       } catch {}
     }
+  }
+
+  // Hears where the secrets and masked elements of a tab are, for the blur in the video.
+  private async watchMask(tabId: string): Promise<void> {
+    const mask = this.options.mask;
+    if (!hasMask(mask) || this.masked.has(tabId)) return;
+    const page = this.driver.tabs.get(tabId)?.page;
+    const masker = page ? await VideoMasker.for(page) : undefined;
+    if (!masker) return;
+    const watch = await masker.subscribe(mask, (boxes) => {
+      if (this.recording) this.events.push({ type: 'mask', t: Date.now(), tabId, boxes });
+    });
+    this.masked.set(tabId, watch);
+  }
+
+  // New values to blur, like a secret that a step just used. The tabs keep their blur.
+  async updateMask(mask: MaskConfig): Promise<void> {
+    if (JSON.stringify(mask) === JSON.stringify(this.options.mask)) return;
+    this.options.mask = mask;
+    for (const watch of this.masked.values()) await watch.update(mask).catch(() => undefined);
+    if (this.session && hasMask(mask)) await this.watchMask(this.session.tabId);
+  }
+
+  private async stopMasks(): Promise<void> {
+    for (const watch of this.masked.values()) await watch.stop().catch(() => undefined);
+    this.masked.clear();
   }
 
   // The time that the pictures cover now.
@@ -180,6 +215,7 @@ export class VideoCapture {
     for (const tabId of this.hiddenTabs) {
       await this.driver.panel?.suppress(tabId, false, 'video').catch(() => undefined);
     }
+    await this.stopMasks();
   }
 
   private async screenshotFrame(tabId: string): Promise<void> {

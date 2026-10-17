@@ -397,6 +397,12 @@ export class RunStore {
     return added;
   }
 
+  // The mask selectors of the plan's video block, for videos and bug clips of this run.
+  get planVideoMask(): string[] {
+    const video = this.plan?.video;
+    return typeof video === 'object' ? (video.mask ?? []) : [];
+  }
+
   // The plan asks for the progress list in the panel, or does not say.
   get showProgress(): boolean {
     return this.plan?.panel?.progress !== false;

@@ -118,6 +118,76 @@ describe('video', () => {
     expect(await panelHidden(page)).toBe(false);
   }, 90_000);
 
+  it('blurs a secret that the page shows, and leaves other text sharp', async () => {
+    await mcp.call('navigate', { url: '/' });
+    // Big text, so the test can measure the blur in the GIF.
+    const boxes = await page.evaluate(() => {
+      const add = (text: string, top: number) => {
+        const p = document.createElement('p');
+        p.textContent = text;
+        Object.assign(p.style, {
+          position: 'fixed',
+          left: '20px',
+          top: `${top}px`,
+          margin: '0',
+          font: 'bold 48px monospace',
+          background: '#ffffff',
+          color: '#000000',
+          zIndex: '2147483000',
+        });
+        document.body.append(p);
+        const r = p.getBoundingClientRect();
+        return { x: r.x, y: r.y, width: r.width, height: r.height };
+      };
+      return {
+        secret: add('Key: demo123', 40),
+        plain: add('Hello world', 160),
+        width: innerWidth,
+      };
+    });
+    await mcp.call('video', { action: 'start', name: 'secret' });
+    await pause(1500);
+    const stop = await mcp.call(
+      'video',
+      { action: 'stop', path: 'docs/secret.gif' },
+      { timeoutMs: 120_000 },
+    );
+    expect(stop.isError, stop.text).toBe(false);
+    const gif = readFileSync(join(project, 'docs', 'secret.gif')).toString('base64');
+    // How much the brightness changes in each box. Sharp text changes a lot. A blur does not.
+    const spread = await page.evaluate(
+      async (data, boxes) => {
+        const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+        const image = await createImageBitmap(new Blob([bytes], { type: 'image/gif' }));
+        const canvas = new OffscreenCanvas(image.width, image.height);
+        const g = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+        g.drawImage(image, 0, 0);
+        const k = image.width / boxes.width;
+        const measure = (b: { x: number; y: number; width: number; height: number }) => {
+          const px = g.getImageData(
+            Math.round(b.x * k),
+            Math.round(b.y * k),
+            Math.max(1, Math.round(b.width * k)),
+            Math.max(1, Math.round(b.height * k)),
+          ).data;
+          const values: number[] = [];
+          for (let i = 0; i < px.length; i += 4)
+            values.push(0.3 * (px[i] ?? 0) + 0.59 * (px[i + 1] ?? 0) + 0.11 * (px[i + 2] ?? 0));
+          const mean = values.reduce((a, b) => a + b, 0) / values.length;
+          return Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length);
+        };
+        return { secret: measure(boxes.secret), plain: measure(boxes.plain) };
+      },
+      gif,
+      boxes,
+    );
+    expect(spread.plain).toBeGreaterThan(40);
+    expect(spread.secret).toBeLessThan(spread.plain / 2);
+    await page.evaluate(() => {
+      for (const p of document.querySelectorAll('p[style*="2147483000"]')) p.remove();
+    });
+  }, 120_000);
+
   it('refuses a long GIF, and keeps the recording for another format', async () => {
     // Its own server, with a low GIF limit that the other tests must not hit.
     const short = tempDir('video-short');

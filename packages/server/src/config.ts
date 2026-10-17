@@ -96,6 +96,8 @@ export interface VideoConfig {
   showPanel: boolean;
   pointer: boolean;
   captions: boolean;
+  // CSS selectors of things that videos blur, like customer names.
+  mask: string[];
 }
 
 export interface LighthouseConfig {
@@ -151,6 +153,7 @@ const sharedSchema = z
         showPanel: z.boolean().optional(),
         pointer: z.boolean().optional(),
         captions: z.boolean().optional(),
+        mask: z.array(z.string().min(1)).optional(),
       })
       .strict()
       .optional(),
@@ -436,6 +439,7 @@ export function loadConfig(
       showPanel: video.showPanel ?? false,
       pointer: video.pointer ?? true,
       captions: video.captions ?? true,
+      mask: video.mask ?? [],
     },
     lighthouse: {
       device: lighthouse.device ?? 'desktop',

@@ -89,6 +89,7 @@ describe('loadConfig', () => {
       showPanel: false,
       pointer: true,
       captions: true,
+      mask: [],
     });
     expect(plain.lighthouse).toEqual({
       device: 'desktop',

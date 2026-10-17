@@ -17,7 +17,36 @@ export type TimelineEvent =
   | { type: 'activity'; start: number; end: number }
   | { type: 'caption'; t: number; text: string }
   // A question for the developer. Its frames and its wait time are cut.
-  | { type: 'question'; t: number; open: boolean };
+  | { type: 'question'; t: number; open: boolean }
+  // Where the page shows secrets or masked elements now, in CSS pixels. The video blurs them.
+  | { type: 'mask'; t: number; tabId: string; boxes: Box[] };
+
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// A page can move a box between two reports. Around a change, both places get the blur.
+const MASK_BEFORE = 300;
+const MASK_AFTER = 200;
+
+// The boxes to blur in a picture of a tab, taken at time t.
+export function blurAt(masks: Array<{ t: number; boxes: Box[] }>, t: number): Box[] | undefined {
+  if (masks.length === 0) return undefined;
+  let i = -1;
+  while (i + 1 < masks.length && (masks[i + 1] as { t: number }).t <= t) i += 1;
+  // Pictures from before the first report get the first boxes.
+  const at = Math.max(i, 0);
+  const now = masks[at] as { t: number; boxes: Box[] };
+  const out = [...now.boxes];
+  const before = at > 0 ? masks[at - 1] : undefined;
+  if (before && t - now.t < MASK_BEFORE) out.push(...before.boxes);
+  const after = masks[at + 1];
+  if (after && after.t - t < MASK_AFTER) out.push(...after.boxes);
+  return out.length ? out : undefined;
+}
 
 export interface TimelineOptions {
   start: number;
@@ -158,6 +187,11 @@ export function buildSamples(
   const actions = sorted.filter(
     (e): e is Extract<TimelineEvent, { type: 'action' }> => e.type === 'action',
   );
+  const masks = new Map<string, Array<{ t: number; boxes: Box[] }>>();
+  for (const e of sorted) {
+    if (e.type !== 'mask') continue;
+    masks.set(e.tabId, [...(masks.get(e.tabId) ?? []), { t: e.t, boxes: e.boxes }]);
+  }
   const active: Span[] = [
     [options.start, options.start + AFTER_ACTION],
     [options.end - AFTER_ACTION, options.end],
@@ -192,6 +226,8 @@ export function buildSamples(
     };
     const caption = [...captions].reverse().find((c) => c.t <= t);
     if (caption?.text) sample.caption = caption.text;
+    const blur = blurAt(masks.get(frame.tabId) ?? [], frame.t);
+    if (blur) sample.blur = blur;
     if (options.pointer) {
       const onTab = actions.filter(
         (a) => a.tabId === frame.tabId && a.x !== undefined && a.y !== undefined,
@@ -225,6 +261,7 @@ export function buildSamples(
   const same = (a: Sample, b: Sample) =>
     a.file === b.file &&
     a.caption === b.caption &&
+    JSON.stringify(a.blur) === JSON.stringify(b.blur) &&
     !a.ripple &&
     !b.ripple &&
     a.pointer?.x === b.pointer?.x &&

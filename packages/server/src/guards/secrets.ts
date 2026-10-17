@@ -108,6 +108,14 @@ export class SecretStore {
     return [...all].filter((v) => v.length >= 4);
   }
 
+  // Values that a video blurs when a page shows them: the values for this environment and
+  // the ones that a step used. Short values would blur normal words.
+  videoValues(): string[] {
+    return [...new Set([...Object.values(this.fileValues), ...this.used.values()])].filter(
+      (v) => v.length >= 6,
+    );
+  }
+
   // Replaces each secret value, and its common encoded forms, with ****.
   redact(text: string): string {
     let out = text;

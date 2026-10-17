@@ -336,6 +336,14 @@
               "description": "Show the Walkthrough panel in the video.",
               "type": "boolean"
             },
+            "mask": {
+              "description": "CSS selectors of things to blur in videos of this run, like customer names. Secrets are always blurred.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
             "captions": {
               "description": "Show step captions at the bottom.",
               "type": "boolean"

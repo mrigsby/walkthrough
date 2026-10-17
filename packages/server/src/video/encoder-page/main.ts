@@ -121,6 +121,45 @@ function drawTitle(g: Ctx2D, title: string, w: number, h: number): void {
   });
 }
 
+// Blurs parts of the picture, like secrets. The blur is strong, so text cannot be read.
+function drawBlur(
+  g: Ctx2D,
+  bitmap: ImageBitmap,
+  sample: Sample,
+  at: { dx: number; dy: number; dw: number; k: number },
+): void {
+  // Picture pixels for each CSS pixel. The screencast can be smaller than the page.
+  const s = sample.width ? bitmap.width / sample.width : 1;
+  const radius = Math.max(8, Math.round(at.dw / 100));
+  for (const box of sample.blur ?? []) {
+    const x = Math.max(0, box.x);
+    const y = Math.max(0, box.y);
+    const width = Math.min(box.x + box.width, sample.width || bitmap.width / s) - x;
+    const height = Math.min(box.y + box.height, sample.height || bitmap.height / s) - y;
+    if (width <= 0 || height <= 0) continue;
+    const dest = { x: at.dx + x * at.k, y: at.dy + y * at.k, w: width * at.k, h: height * at.k };
+    g.save();
+    g.beginPath();
+    g.rect(dest.x, dest.y, dest.w, dest.h);
+    g.clip();
+    g.filter = `blur(${radius}px)`;
+    // Draw a larger area than the box, so the blur at its edges has picture to use.
+    const m = radius * 2;
+    g.drawImage(
+      bitmap,
+      (x - m / at.k) * s,
+      (y - m / at.k) * s,
+      (width + (2 * m) / at.k) * s,
+      (height + (2 * m) / at.k) * s,
+      dest.x - m,
+      dest.y - m,
+      dest.w + 2 * m,
+      dest.h + 2 * m,
+    );
+    g.restore();
+  }
+}
+
 async function drawSample(
   g: Ctx2D,
   job: EncodeJob,
@@ -140,6 +179,7 @@ async function drawSample(
   g.drawImage(bitmap, dx, dy, dw, dh);
   // CSS pixels to video pixels.
   const k = sample.width ? dw / sample.width : 1;
+  if (sample.blur?.length) drawBlur(g, bitmap, sample, { dx, dy, dw, k });
   const size = Math.max(14, Math.round(h * 0.03));
   if (sample.ripple)
     drawRipple(g, dx + sample.ripple.x * k, dy + sample.ripple.y * k, sample.ripple.p, size);

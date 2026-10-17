@@ -1,6 +1,12 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { loadConfig } from '../../src/config.js';
+import { SecretStore } from '../../src/guards/secrets.js';
+import { validatePlanText } from '../../src/run/plans.js';
 import { chooseFormat } from '../../src/video/formats.js';
 import {
+  blurAt,
   buildSamples,
   type CaptureFrame,
   captionTimes,
@@ -9,6 +15,8 @@ import {
   type TimelineEvent,
   TimeMap,
 } from '../../src/video/timeline.js';
+
+import { tempDir } from '../helpers/temp.js';
 
 const frame = (file: string, t: number, tabId = 't1'): CaptureFrame => ({
   file,
@@ -112,5 +120,62 @@ describe('video format', () => {
     expect(chooseFormat(undefined, 'docs/cart.webm', 'mp4')).toBe('webm');
     expect(chooseFormat(undefined, undefined, 'mp4')).toBe('mp4');
     expect(() => chooseFormat('gif', 'docs/cart.mp4', 'mp4')).toThrow(/ends in \.mp4/);
+  });
+});
+
+describe('blurred secrets in videos', () => {
+  const box = (x: number) => ({ x, y: 10, width: 100, height: 20 });
+
+  it('blurs the boxes of the time of each picture, and both places around a move', () => {
+    const masks = [
+      { t: 100, boxes: [box(1)] },
+      { t: 1000, boxes: [box(2)] },
+    ];
+    // Before the first report, the first boxes count.
+    expect(blurAt(masks, 50)).toEqual([box(1)]);
+    expect(blurAt(masks, 500)).toEqual([box(1)]);
+    // Just before a move and just after it, both places are blurred.
+    expect(blurAt(masks, 900)).toEqual([box(1), box(2)]);
+    expect(blurAt(masks, 1100)).toEqual([box(2), box(1)]);
+    expect(blurAt(masks, 2000)).toEqual([box(2)]);
+    expect(blurAt([], 100)).toBeUndefined();
+    expect(blurAt([{ t: 0, boxes: [] }], 100)).toBeUndefined();
+  });
+
+  it('puts the boxes of the right tab on each picture', () => {
+    const events: TimelineEvent[] = [
+      { type: 'mask', t: 10, tabId: 't1', boxes: [box(5)] },
+      { type: 'mask', t: 10, tabId: 't2', boxes: [box(9)] },
+    ];
+    const samples = buildSamples(
+      [frame('a.jpg', 20), frame('b.jpg', 600, 't2')],
+      events,
+      options(1000),
+    );
+    expect(samples.find((x) => x.file === 'a.jpg')?.blur).toEqual([box(5)]);
+    expect(samples.find((x) => x.file === 'b.jpg')?.blur).toEqual([box(9)]);
+  });
+
+  it('gives videos the secrets of this environment, long ones only', () => {
+    const dir = tempDir('video-secrets');
+    mkdirSync(join(dir, '.walkthrough'));
+    writeFileSync(join(dir, '.walkthrough', '.env'), 'API_KEY=sk_test_123456\nPIN=1234\n');
+    writeFileSync(join(dir, '.walkthrough', '.env.staging'), 'STAGING_KEY=staging-only-value\n');
+    const store = SecretStore.forProject(dir);
+    expect(store.videoValues()).toEqual(['sk_test_123456']);
+    const staging = SecretStore.forProject(dir, { name: 'staging', protected: false, rename: {} });
+    expect(staging.videoValues().sort()).toEqual(['sk_test_123456', 'staging-only-value']);
+  });
+
+  it('reads mask selectors from config.yaml and from a plan', () => {
+    const dir = tempDir('video-mask');
+    mkdirSync(join(dir, '.walkthrough'));
+    writeFileSync(join(dir, '.walkthrough', 'config.yaml'), 'video:\n  mask: [".customer-name"]\n');
+    expect(loadConfig(dir).video.mask).toEqual(['.customer-name']);
+    expect(loadConfig(tempDir('video-mask-none')).video.mask).toEqual([]);
+    const plan = validatePlanText(
+      'name: V\nvideo: { mask: [".email", "#phone"] }\nsteps:\n  - do: x\n',
+    );
+    expect(plan.ok).toBe(true);
   });
 });

@@ -594,6 +594,12 @@ const planShape = {
             .optional()
             .describe('Also save the video to this file, from the project folder.'),
           showPanel: z.boolean().optional().describe('Show the Walkthrough panel in the video.'),
+          mask: z
+            .array(z.string().min(1))
+            .optional()
+            .describe(
+              'CSS selectors of things to blur in videos of this run, like customer names. Secrets are always blurred.',
+            ),
           captions: z.boolean().optional().describe('Show step captions at the bottom.'),
         })
         .strict(),

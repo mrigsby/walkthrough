@@ -12,6 +12,8 @@ export interface Sample {
   pointer?: { x: number; y: number };
   // A click mark. "p" goes from 0 to 1 while it grows and fades.
   ripple?: { x: number; y: number; p: number };
+  // Parts to blur, like secrets on the page. CSS pixels, like the pointer.
+  blur?: Array<{ x: number; y: number; width: number; height: number }>;
 }
 
 // What the encoder page makes. Frames come from frameUrl + file, and the file goes to outUrl.
