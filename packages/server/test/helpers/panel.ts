@@ -85,6 +85,8 @@ export async function clickPanel(page: Page, className: string): Promise<void> {
   try {
     const [node] = await findNodes(cdp, (n) => hasClass(n, className));
     if (!node) throw new Error(`No panel element with class ${className}`);
+    // The panel body can scroll. Bring the element into view first.
+    await cdp.send('DOM.scrollIntoViewIfNeeded', { backendNodeId: node.backendNodeId });
     const { model } = await cdp.send('DOM.getBoxModel', { backendNodeId: node.backendNodeId });
     const [x1, y1, , , x3, y3] = model.content;
     await page.mouse.click(((x1 ?? 0) + (x3 ?? 0)) / 2, ((y1 ?? 0) + (y3 ?? 0)) / 2);
@@ -104,6 +106,42 @@ export async function fakeClickPanel(page: Page, className: string): Promise<voi
       objectId: object.objectId as string,
       functionDeclaration: 'function () { this.click(); }',
     });
+  } finally {
+    await cdp.detach();
+  }
+}
+
+// The text of the window in the middle of the page, or "" when it is closed.
+export async function modalText(page: Page): Promise<string> {
+  const cdp = await page.createCDPSession();
+  try {
+    const [node] = await findNodes(cdp, (n) => hasClass(n, 'modal-backdrop'));
+    if (!node) return '';
+    const { object } = await cdp.send('DOM.resolveNode', { backendNodeId: node.backendNodeId });
+    const { result } = await cdp.send('Runtime.callFunctionOn', {
+      objectId: object.objectId as string,
+      functionDeclaration: 'function () { return this.hidden ? "" : this.innerText; }',
+      returnByValue: true,
+    });
+    return String(result.value ?? '');
+  } finally {
+    await cdp.detach();
+  }
+}
+
+// A property of the first panel element with this class, like "checked" or "width".
+export async function panelProp(page: Page, className: string, prop: string): Promise<unknown> {
+  const cdp = await page.createCDPSession();
+  try {
+    const [node] = await findNodes(cdp, (n) => hasClass(n, className));
+    if (!node) return undefined;
+    const { object } = await cdp.send('DOM.resolveNode', { backendNodeId: node.backendNodeId });
+    const { result } = await cdp.send('Runtime.callFunctionOn', {
+      objectId: object.objectId as string,
+      functionDeclaration: `function () { return this[${JSON.stringify(prop)}]; }`,
+      returnByValue: true,
+    });
+    return result.value;
   } finally {
     await cdp.detach();
   }

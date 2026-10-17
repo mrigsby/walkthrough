@@ -1,8 +1,12 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { checkPanelImage } from '../../src/guards/paths.js';
 import { questionView } from '../../src/panel/controller.js';
-import { blocksText, parseInline, parseRichText } from '../../src/panel/rich-text.js';
-import { buildStepView, textColorFor, viewText } from '../../src/panel/view.js';
+import { blocksText, copyRefs, parseInline, parseRichText } from '../../src/panel/rich-text.js';
+import { buildStepView, textColorFor, viewChecklist, viewText } from '../../src/panel/view.js';
 import { validatePlanText } from '../../src/run/plans.js';
+import { tempDir } from '../helpers/temp.js';
 
 describe('rich text', () => {
   it('reads paragraphs, line breaks, and inline marks', () => {
@@ -202,5 +206,106 @@ steps:
       bad('name: P\npanel: { buttons: { pass: { color: green } } }\nsteps:\n  - do: One\n')[0],
     ).toMatch(/hex color/);
     expect(bad('name: P\nsteps:\n  - do: One\n    panel: { corner: top-left }\n')).not.toEqual([]);
+  });
+});
+
+describe('snippets', () => {
+  it('reads {{copy:name}} as a snippet chip', () => {
+    expect(parseInline('Run {{copy:seed}} and {{ copy:db_reset }}.')).toEqual([
+      { t: 'text', v: 'Run ' },
+      { t: 'copy', id: 'seed' },
+      { t: 'text', v: ' and ' },
+      { t: 'copy', id: 'db_reset' },
+      { t: 'text', v: '.' },
+    ]);
+    expect(copyRefs('{{copy:a}} {{copy:b}} {{copy:a}}')).toEqual(['a', 'b']);
+    expect(blocksText(parseRichText('Run {{copy:a}}.'), { a: { code: 'npm test' } })).toBe(
+      'Run `npm test`.',
+    );
+  });
+
+  it('puts only the snippets that the text uses in the view', () => {
+    const view = buildStepView({
+      title: 'Seed',
+      expected: 'Run {{copy:seed}}.',
+      snippets: {
+        seed: { code: 'npm run seed', help: 'Then run {{copy:check}}.' },
+        check: { code: 'npm run check' },
+        unused: { code: 'rm -rf x' },
+      },
+    });
+    expect(Object.keys(view.snippets).sort()).toEqual(['check', 'seed']);
+    expect(view.snippets.seed?.help?.[0]?.t).toBe('p');
+    expect(viewText(view)).toContain('Run `npm run seed`.');
+  });
+
+  it('checks snippets in plans', () => {
+    const problems = (text: string) => {
+      const result = validatePlanText(text);
+      return result.ok ? [] : result.problems.map((p) => `${p.line}: ${p.message}`);
+    };
+    expect(
+      problems(`name: S
+snippets:
+  seed: npm run seed
+steps:
+  - do: One
+    expect: Run {{copy:seed}} and {{copy:own}}.
+    next: Then {{copy:seed}}.
+    snippets:
+      own: { code: echo hi, help: "Says hi. See {{copy:seed}}." }
+`),
+    ).toEqual([]);
+    expect(problems('name: S\nsteps:\n  - do: One\n    expect: Run {{copy:nope}}.\n')[0]).toBe(
+      '4: There is no snippet "nope". Add it to "snippets" in the plan or in this step.',
+    );
+    expect(
+      problems('name: S\nsnippets:\n  login: "pw {{secret:PASSWORD}}"\nsteps:\n  - do: One\n')[0],
+    ).toMatch(/never copies secrets/);
+    expect(problems('name: S\nsnippets:\n  bad name: x\nsteps:\n  - do: One\n')[0]).toMatch(
+      /snippet name/,
+    );
+  });
+});
+
+describe('check lists and images in the view', () => {
+  it('gives each check list item an id, and uses the ticks', () => {
+    const view = buildStepView({
+      title: 'T',
+      didWhat: '- [x] did it',
+      expected: 'Look:\n- [ ] one\n- [ ] `two`',
+    });
+    expect(viewChecklist(view)).toEqual([
+      { id: 'did:0:0', text: 'did it', checked: true },
+      { id: 'expect:1:0', text: 'one', checked: false },
+      { id: 'expect:1:1', text: '`two`', checked: false },
+    ]);
+    expect(
+      viewChecklist(view, { 'check:did:0:0': false, 'check:expect:1:1': true }).map(
+        (i) => i.checked,
+      ),
+    ).toEqual([false, false, true]);
+  });
+
+  it('marks a reference image and checks its file', () => {
+    expect(buildStepView({ title: 'T', expected: 'x', image: true }).image).toBe(true);
+    const dir = tempDir('panel-image');
+    mkdirSync(join(dir, 'docs'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'a.png'), 'x');
+    writeFileSync(join(dir, 'docs', 'b.svg'), 'x');
+    writeFileSync(join(dir, 'docs', 'big.png'), Buffer.alloc(2 * 1024 * 1024));
+    expect(checkPanelImage('docs/a.png', dir)).toContain('a.png');
+    expect(() => checkPanelImage('docs/b.svg', dir)).toThrow(/reference image ends with/);
+    expect(() => checkPanelImage('docs/big.png', dir)).toThrow(/larger than 1.5 MB/);
+    expect(() => checkPanelImage('docs/none.png', dir)).toThrow(/does not exist/);
+  });
+
+  it('accepts expectImage in plans, and only images', () => {
+    expect(
+      validatePlanText('name: I\nsteps:\n  - do: One\n    expectImage: docs/a.webp\n').ok,
+    ).toBe(true);
+    expect(validatePlanText('name: I\nsteps:\n  - do: One\n    expectImage: docs/a.gif\n').ok).toBe(
+      false,
+    );
   });
 });

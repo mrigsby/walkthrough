@@ -21,6 +21,11 @@ function stepDetails(run: Run, step: RunStep, withRepro: boolean): string[] {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === 'developer' ? 'the developer' : 'the agent'}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  if (step.checklist?.length) {
+    const ticked = step.checklist.filter((item) => item.checked).length;
+    out.push(`- **Checklist:** ${ticked} of ${step.checklist.length} ticked`);
+    for (const item of step.checklist) out.push(`  - [${item.checked ? 'x' : ' '}] ${item.text}`);
+  }
   if (step.mocked?.length)
     out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join('; ')}`);
   const a11y = stepAccessibility(run, step);

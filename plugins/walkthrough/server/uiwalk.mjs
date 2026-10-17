@@ -98336,6 +98336,124 @@ var planPanelSchema = external_exports.object({
   }).strict().optional(),
   corner: external_exports.enum(CORNERS).optional().describe("Where the panel starts. Default: bottom-right.")
 }).strict();
+var SECRET = /\{\{\s*secret:/;
+var noSecret = (text) => !SECRET.test(text);
+var SECRET_MESSAGE = "A snippet cannot hold a {{secret:NAME}}. Walkthrough never copies secrets.";
+var snippetCode = external_exports.string().min(1).max(4e3).refine(noSecret, SECRET_MESSAGE).describe("The text to copy, like a terminal command.");
+var snippetSchema = external_exports.union(
+  [
+    snippetCode,
+    external_exports.object({
+      code: snippetCode,
+      help: external_exports.string().max(4e3).refine(noSecret, SECRET_MESSAGE).optional().describe('More about the snippet. A "?" next to the copy button shows it.')
+    }).strict()
+  ],
+  { error: "A snippet is the text to copy, or { code, help }." }
+);
+var snippetsSchema = external_exports.record(
+  external_exports.string().regex(/^[A-Za-z0-9_-]+$/, 'Use letters, numbers, "-", and "_" in a snippet name.'),
+  snippetSchema
+).describe('Snippets for {{copy:name}} in panel text, like { seed: "npm run db:seed" }.');
+
+// packages/server/src/panel/rich-text.ts
+var MAX_TEXT = 8e3;
+var INLINE = /(\{\{\s*copy:[A-Za-z0-9_-]+\s*\}\}|\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`)/g;
+var COPY = /\{\{\s*copy:([A-Za-z0-9_-]+)\s*\}\}/g;
+function copyRefs(text) {
+  return [...new Set([...text.matchAll(COPY)].map((m) => m[1]))];
+}
+function parseInline(text) {
+  const out = [];
+  let last2 = 0;
+  for (const match of text.matchAll(INLINE)) {
+    const at = match.index ?? 0;
+    if (at > last2) out.push({ t: "text", v: text.slice(last2, at) });
+    const token = match[0];
+    if (token.startsWith("{{")) out.push({ t: "copy", id: copyRefs(token)[0] });
+    else if (token.startsWith("**")) out.push({ t: "b", v: token.slice(2, -2) });
+    else if (token.startsWith("`")) out.push({ t: "code", v: token.slice(1, -1) });
+    else out.push({ t: "i", v: token.slice(1, -1) });
+    last2 = at + token.length;
+  }
+  if (last2 < text.length) out.push({ t: "text", v: text.slice(last2) });
+  return out;
+}
+var FENCE = /^\s*```\s*([\w+-]*)\s*$/;
+var CHECK = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/;
+var BULLET = /^\s*[-*]\s+(.*)$/;
+var NUMBER = /^\s*(\d{1,6})[.)]\s+(.*)$/;
+function parseRichText(input3) {
+  const text = input3.replace(/\r\n?/g, "\n").slice(0, MAX_TEXT);
+  const blocks = [];
+  const lines = text.split("\n");
+  let open4;
+  const block = (kind, make) => {
+    if (open4?.t !== kind) {
+      open4 = make();
+      blocks.push(open4);
+    }
+    return open4;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line2 = lines[i];
+    if (FENCE.test(line2)) {
+      const code = [];
+      for (i += 1; i < lines.length && !FENCE.test(lines[i]); i++) {
+        code.push(lines[i]);
+      }
+      blocks.push({ t: "code", v: code.join("\n") });
+      open4 = void 0;
+      continue;
+    }
+    if (!line2.trim()) {
+      open4 = void 0;
+      continue;
+    }
+    const check2 = CHECK.exec(line2);
+    if (check2) {
+      block("check", () => ({ t: "check", items: [] })).items.push({
+        text: parseInline(check2[2]),
+        checked: check2[1] !== " "
+      });
+      continue;
+    }
+    const bullet = BULLET.exec(line2);
+    if (bullet) {
+      block("ul", () => ({ t: "ul", items: [] })).items.push(parseInline(bullet[1]));
+      continue;
+    }
+    const number4 = NUMBER.exec(line2);
+    if (number4) {
+      block("ol", () => ({ t: "ol", start: Number(number4[1]), items: [] })).items.push(
+        parseInline(number4[2])
+      );
+      continue;
+    }
+    block("p", () => ({ t: "p", lines: [] })).lines.push(parseInline(line2.trim()));
+  }
+  return blocks;
+}
+function blocksText(blocks, snippets = {}) {
+  const inline = (parts) => parts.map(
+    (p) => p.t === "copy" ? `\`${snippets[p.id]?.code ?? `{{copy:${p.id}}}`}\`` : p.t === "code" ? `\`${p.v}\`` : p.v
+  ).join("");
+  return blocks.map((block) => {
+    switch (block.t) {
+      case "p":
+        return block.lines.map(inline).join("\n");
+      case "ul":
+        return block.items.map((item) => `- ${inline(item)}`).join("\n");
+      case "ol":
+        return block.items.map((item, i) => `${block.start + i}. ${inline(item)}`).join("\n");
+      case "check":
+        return block.items.map((item) => `- [${item.checked ? "x" : " "}] ${inline(item.text)}`).join("\n");
+      default:
+        return `\`\`\`
+${block.v}
+\`\`\``;
+    }
+  }).join("\n\n");
+}
 
 // packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
@@ -98519,6 +98637,10 @@ var stepSchema = external_exports.object({
   ),
   timeBudget: duration3.optional().describe('The time for this step in a presentation, like "45s".'),
   next: external_exports.string().max(2e3).optional().describe(`What comes after this step. The panel shows it under "What's next".`),
+  snippets: snippetsSchema.optional(),
+  expectImage: external_exports.string().min(1).regex(/\.(png|jpe?g|webp)$/i, "Use a .png, .jpg, .jpeg, or .webp file.").optional().describe(
+    'An image of what the page should look like, from the project folder. The panel shows it under "What you should see".'
+  ),
   panel: stepPanelSchema.optional().describe(
     'Panel labels and buttons for this step. They replace the same settings in the plan "panel".'
   )
@@ -98574,6 +98696,7 @@ var planSchema = external_exports.object({
     }).strict()
   ]).optional().describe("Record the whole run as a video. The report shows it."),
   presentation: presentationSchema.optional().describe("Settings to play this plan as a live presentation. See docs/presentations.md."),
+  snippets: snippetsSchema.optional(),
   panel: planPanelSchema.optional().describe(
     `Panel labels, buttons, and the "What's next" part for every step. A step "panel" replaces the same settings for that step.`
   ),
@@ -98584,7 +98707,37 @@ var planSchema = external_exports.object({
     message: 'Put the plan environment in the "environments" list too.',
     path: ["environment"]
   }
-);
+).superRefine((plan, ctx) => {
+  const known = (names) => Object.keys(names ?? {});
+  const helps = (names) => Object.entries(names ?? {}).map(
+    ([name, s]) => [name, typeof s === "object" ? s.help : void 0]
+  );
+  plan.steps.forEach((step, i) => {
+    const names = /* @__PURE__ */ new Set([...known(plan.snippets), ...known(step.snippets)]);
+    for (const key2 of ["expect", "next"]) {
+      for (const ref of copyRefs(step[key2] ?? "")) {
+        if (!names.has(ref)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `There is no snippet "${ref}". Add it to "snippets" in the plan or in this step.`,
+            path: ["steps", i, key2]
+          });
+        }
+      }
+    }
+    for (const [name, help] of helps(step.snippets)) {
+      for (const ref of copyRefs(help ?? "")) {
+        if (!names.has(ref)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `There is no snippet "${ref}". Add it to "snippets" in the plan or in this step.`,
+            path: ["steps", i, "snippets", name]
+          });
+        }
+      }
+    }
+  });
+});
 function stepTitle(step) {
   return step.do;
 }
@@ -107208,6 +107361,7 @@ import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 import { randomBytes } from "node:crypto";
 
 // packages/server/src/browser/isolated-bridge.ts
+var MAX_PAYLOAD = 64 * 1024;
 var IsolatedBridge = class _IsolatedBridge {
   constructor(cdp, script, onMessage) {
     this.cdp = cdp;
@@ -107253,7 +107407,7 @@ var IsolatedBridge = class _IsolatedBridge {
     }
   }
   onBinding(event) {
-    if (event.name !== this.script.binding) return;
+    if (event.name !== this.script.binding || event.payload.length > MAX_PAYLOAD) return;
     let msg;
     try {
       msg = JSON.parse(event.payload);
@@ -107377,16 +107531,18 @@ var PANEL_CSS = `
 :host { all: initial; }
 * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 
-.card {
+.card, .modal {
   --bg: #ffffff; --fg: #0f172a; --muted: #475569; --line: #cbd5e1;
   --pass: #15803d; --bug: #b91c1c; --btn: #e2e8f0; --focus: #2563eb;
+}
+.card {
   position: fixed; z-index: 2147483647; width: 340px; max-width: calc(100vw - 24px);
   display: flex; flex-direction: column; max-height: calc(100vh - 24px);
   background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25); font-size: 14px; line-height: 1.4;
 }
 @media (prefers-color-scheme: dark) {
-  .card { --bg: #111827; --fg: #f1f5f9; --muted: #94a3b8; --line: #334155; --btn: #1f2937; --focus: #60a5fa; }
+  .card, .modal { --bg: #111827; --fg: #f1f5f9; --muted: #94a3b8; --line: #334155; --btn: #1f2937; --focus: #60a5fa; }
 }
 .card[data-corner="bottom-right"] { right: 12px; bottom: 12px; }
 .card[data-corner="bottom-left"] { left: 12px; bottom: 12px; }
@@ -107426,6 +107582,36 @@ pre.code code { padding: 0; background: none; white-space: pre; }
   font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); text-align: left; }
 .toggle:focus-visible { outline: 2px solid var(--focus); }
 .toggle .arrow { display: inline-block; width: 14px; font-size: 14px; line-height: 1; }
+.checks .check:not(:disabled) { cursor: pointer; }
+
+.snip { display: inline; }
+.snip code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.snip button, .copy-button { margin-left: 4px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); font-size: 11px; font-weight: 600; line-height: 1.4; cursor: pointer; vertical-align: 1px; }
+.snip .help-snip { padding: 1px 5px; border-radius: 9px; }
+.snip button:focus-visible, .copy-button:focus-visible { outline: 2px solid var(--focus); }
+.copy-note { margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--pass); }
+.code-wrap { position: relative; }
+.code-wrap pre.code { padding-right: 56px; }
+.code-wrap .copy-button { position: absolute; top: 5px; right: 5px; margin: 0; }
+.code-wrap .copy-note { position: absolute; right: 5px; top: 30px; margin: 0; }
+.copy-area { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
+
+.ref-image .caption { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
+.ref-thumb { display: block; max-width: 100%; max-height: 140px; width: auto; height: auto;
+  border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center;
+  justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); }
+.modal-backdrop[hidden] { display: none; }
+.modal { display: flex; flex-direction: column; width: min(720px, 100%); max-height: 88vh;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35); font-size: 14px; line-height: 1.5; outline: none; }
+.modal-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.modal-title { flex: 1; margin: 0; font-size: 16px; }
+.modal-body { padding: 12px 14px 16px; overflow-y: auto; min-height: 0; }
+.modal-body > * + * { margin-top: 8px; }
+.ref-big { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; margin: 0 auto; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
 .notes:focus { outline: 2px solid var(--focus); outline-offset: 0; }
@@ -107461,6 +107647,15 @@ function panelMain(opts, candidates) {
   if (window !== window.top) return;
   const w2 = window;
   if (w2.__uiwalkPanel) return;
+  const late2 = document.readyState !== "loading";
+  let copying = false;
+  window.addEventListener(
+    "copy",
+    (event) => {
+      if (copying) event.stopImmediatePropagation();
+    },
+    true
+  );
   const send = (msg) => {
     const fn = w2[opts.binding];
     if (typeof fn === "function") fn(JSON.stringify(msg));
@@ -107521,7 +107716,20 @@ function panelMain(opts, candidates) {
   recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
   body.append(status, questionBox, recordBox);
   card.append(header, body);
-  root.append(pulse, pulseLabel, annotation, card);
+  const backdrop = el("div", "modal-backdrop");
+  const modal = el("div", "modal");
+  modal.setAttribute("role", "dialog");
+  modal.tabIndex = -1;
+  const modalHead = el("div", "modal-head");
+  const modalTitle = el("h2", "modal-title");
+  const modalClose = el("button", "icon modal-close", "\xD7");
+  modalClose.title = "Close";
+  modalHead.append(modalTitle, modalClose);
+  const modalBody = el("div", "modal-body");
+  modal.append(modalHead, modalBody);
+  backdrop.append(modal);
+  backdrop.hidden = true;
+  root.append(pulse, pulseLabel, annotation, card, backdrop);
   let question = null;
   let env2 = null;
   let recording = null;
@@ -107534,13 +107742,104 @@ function panelMain(opts, candidates) {
     card.style.top = "";
     card.dataset.corner = corner;
   };
+  const openModal = (heading, nodes) => {
+    modalTitle.textContent = heading;
+    modalBody.replaceChildren(...nodes);
+    backdrop.hidden = false;
+    modal.focus();
+  };
+  const closeModal = () => {
+    backdrop.hidden = true;
+    modalBody.replaceChildren();
+  };
+  backdrop.addEventListener("click", (event) => {
+    if (event.isTrusted && event.target === backdrop) closeModal();
+  });
+  backdrop.addEventListener("keydown", (event) => {
+    if (event.isTrusted && event.key === "Escape") closeModal();
+  });
+  const flash = (button2, text, ms = 1500) => {
+    const note = el("span", "copy-note", text);
+    button2.after(note);
+    window.setTimeout(() => note.remove(), ms);
+  };
+  const copyText = async (text, button2) => {
+    let ok = false;
+    let fallback = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch {
+    }
+    if (!ok) {
+      fallback = true;
+      const area = el("textarea", "copy-area");
+      area.value = text;
+      root.append(area);
+      area.select();
+      copying = true;
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      } finally {
+        copying = false;
+        area.remove();
+      }
+    }
+    if (!ok) flash(button2, "Could not copy. Select the text and copy it.", 4e3);
+    else if (fallback && late2) flash(button2, "Copied. Check the text before you paste it.", 4e3);
+    else flash(button2, "Copied");
+  };
+  let snippets = {};
+  let ui2 = {};
+  let boxes = [];
+  let passWarned = false;
+  const sendUi = (key2, value) => {
+    if (!question) return;
+    question.ui[key2] = value;
+    send({ type: "ui", id: question.id, nonce: question.nonce, key: key2, value });
+  };
+  const snippetHelp = (code, help) => {
+    const wrap = codeBlock2(code, "copy-modal");
+    openModal("About this snippet", [wrap, ...help.map((b2) => drawBlock(b2))]);
+  };
   const inlineNodes = (parts) => parts.map((part) => {
+    if (part.t === "copy") {
+      const snippet = snippets[part.id];
+      if (!snippet) return el("code", void 0, `{{copy:${part.id}}}`);
+      const chip = el("span", "snip");
+      const copy = el("button", "copy-snip", "Copy");
+      copy.title = "Copy to the clipboard";
+      onTrusted(copy, () => void copyText(snippet.code, copy));
+      chip.append(el("code", void 0, snippet.code), copy);
+      if (snippet.help) {
+        const help = el("button", "help-snip", "?");
+        help.title = "About this snippet";
+        const blocks = snippet.help;
+        onTrusted(help, () => snippetHelp(snippet.code, blocks));
+        chip.append(help);
+      }
+      return chip;
+    }
     if (part.t === "b") return el("strong", void 0, part.v);
     if (part.t === "i") return el("em", void 0, part.v);
     if (part.t === "code") return el("code", void 0, part.v);
     return document.createTextNode(part.v);
   });
-  const drawBlock = (block) => {
+  function codeBlock2(code, buttonClass) {
+    const wrap = el("div", "code-wrap");
+    const pre = el("pre", "code");
+    pre.append(el("code", void 0, code));
+    const copy = el("button", `copy-button ${buttonClass}`, "Copy");
+    copy.title = "Copy to the clipboard";
+    onTrusted(copy, () => void copyText(code, copy));
+    wrap.append(pre, copy);
+    return wrap;
+  }
+  function drawBlock(block, where3) {
     switch (block.t) {
       case "p": {
         const p = el("p", "text");
@@ -107563,32 +107862,72 @@ function panelMain(opts, candidates) {
       }
       case "check": {
         const list2 = el("ul", "checks");
-        for (const item of block.items) {
-          const box = el("input", "check");
+        block.items.forEach((item, i) => {
+          const key2 = `check:${where3}:${i}`;
+          const box = el("input", `check ${key2.replace(/:/g, "-")}`);
           box.type = "checkbox";
-          box.checked = item.checked;
-          box.disabled = true;
+          box.checked = ui2[key2] ?? item.checked;
+          box.disabled = !where3;
+          if (where3) {
+            boxes.push(box);
+            box.addEventListener("click", (event) => {
+              if (!event.isTrusted) {
+                event.preventDefault();
+                return;
+              }
+              passWarned = false;
+              error62.textContent = "";
+              sendUi(key2, box.checked);
+            });
+          }
           const text = el("span", void 0);
           text.append(...inlineNodes(item.text));
           const li = el("li", void 0);
           li.append(box, text);
           list2.append(li);
-        }
+        });
         return list2;
       }
-      case "code": {
-        const pre = el("pre", "code");
-        pre.append(el("code", void 0, block.v));
-        return pre;
-      }
+      case "code":
+        return codeBlock2(block.v, "copy-code");
+    }
+  }
+  let imageBox = null;
+  let bitmap = null;
+  const canvasOf = (image2, className) => {
+    const canvas = el("canvas", className);
+    canvas.width = image2.width;
+    canvas.height = image2.height;
+    canvas.getContext("2d")?.drawImage(image2, 0, 0);
+    return canvas;
+  };
+  const showImage = async (id, mime, data) => {
+    try {
+      const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+      const image2 = await createImageBitmap(new Blob([bytes], { type: mime }));
+      if (question?.id !== id || !imageBox) return;
+      bitmap = image2;
+      const thumb = canvasOf(image2, "ref-thumb");
+      thumb.title = "Show it bigger";
+      onTrusted(thumb, () => {
+        if (bitmap) openModal("What the page should look like", [canvasOf(bitmap, "ref-big")]);
+      });
+      imageBox.replaceChildren(
+        thumb,
+        el("span", "caption", "Reference image. Click to make it bigger.")
+      );
+    } catch {
+      imageBox?.replaceChildren(
+        el("span", "caption", "Walkthrough could not show the reference image.")
+      );
     }
   };
   const drawSection = (section2) => {
     const box = el("div", `section section-${section2.key}`);
     const content = el("div", "section-body");
-    content.append(...section2.blocks.map(drawBlock));
+    content.append(...section2.blocks.map((b2, i) => drawBlock(b2, `${section2.key}:${i}`)));
     if (section2.collapsible) {
-      let open4 = !section2.collapsed;
+      let open4 = ui2[`open:${section2.key}`] ?? !section2.collapsed;
       const toggle = el("button", `toggle toggle-${section2.key}`);
       const arrow = el("span", "arrow");
       const label4 = el("span", void 0, section2.label || "More");
@@ -107601,6 +107940,7 @@ function panelMain(opts, candidates) {
       onTrusted(toggle, () => {
         open4 = !open4;
         sync();
+        sendUi(`open:${section2.key}`, open4);
       });
       sync();
       box.append(toggle, content);
@@ -107615,8 +107955,23 @@ function panelMain(opts, candidates) {
     if (drawnId === q2.id) return;
     drawnId = q2.id;
     const view = q2.view;
+    snippets = view.snippets ?? {};
+    ui2 = q2.ui ?? {};
+    q2.ui = ui2;
+    boxes = [];
+    passWarned = false;
+    bitmap = null;
+    closeModal();
     title.textContent = view.title;
-    sections.replaceChildren(...view.sections.map(drawSection));
+    const parts = view.sections.map(drawSection);
+    imageBox = null;
+    if (view.image) {
+      imageBox = el("div", "ref-image");
+      imageBox.append(el("span", "caption", "Loading the reference image..."));
+      const at = view.sections.findIndex((s) => s.key === "expect");
+      parts.splice(at >= 0 ? at + 1 : parts.length, 0, imageBox);
+    }
+    sections.replaceChildren(...parts);
     buttons.replaceChildren(
       ...view.buttons.map((b2) => {
         const button2 = el("button", b2.result, b2.label);
@@ -107688,6 +108043,13 @@ function panelMain(opts, candidates) {
       notes.focus();
       return;
     }
+    const open4 = boxes.filter((b2) => !b2.checked).length;
+    if (result === "pass" && open4 && !passWarned) {
+      passWarned = true;
+      error62.textContent = `${open4} item${open4 === 1 ? " is" : "s are"} not ticked. Click ${label4} again to pass anyway.`;
+      return;
+    }
+    closeModal();
     send({ type: "answer", id: question.id, nonce: question.nonce, result, note });
     const confirmed = question.view.kind === "confirm";
     question = null;
@@ -107724,8 +108086,10 @@ function panelMain(opts, candidates) {
     placeCard();
     send({ type: "moved", corner });
   });
+  onTrusted(modalClose, closeModal);
   for (const type of ["keydown", "keyup", "keypress", "input", "beforeinput", "paste"]) {
     card.addEventListener(type, (event) => event.stopPropagation());
+    backdrop.addEventListener(type, (event) => event.stopPropagation());
   }
   header.addEventListener("pointerdown", (event) => {
     if (!event.isTrusted || event.target.tagName === "BUTTON") return;
@@ -107797,7 +108161,11 @@ function panelMain(opts, candidates) {
         render();
         break;
       }
+      case "image":
+        void showImage(msg.id, msg.mime, msg.data);
+        break;
       case "hide":
+        backdrop.style.visibility = msg.hidden ? "hidden" : "";
         card.style.visibility = msg.hidden ? "hidden" : "";
         pulse.style.visibility = msg.hidden ? "hidden" : "";
         pulseLabel.style.visibility = msg.hidden ? "hidden" : "";
@@ -108009,99 +108377,6 @@ var PanelBridge = class _PanelBridge {
   }
 };
 
-// packages/server/src/panel/rich-text.ts
-var MAX_TEXT = 8e3;
-var INLINE = /(\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`)/g;
-function parseInline(text) {
-  const out = [];
-  let last2 = 0;
-  for (const match of text.matchAll(INLINE)) {
-    const at = match.index ?? 0;
-    if (at > last2) out.push({ t: "text", v: text.slice(last2, at) });
-    const token = match[0];
-    if (token.startsWith("**")) out.push({ t: "b", v: token.slice(2, -2) });
-    else if (token.startsWith("`")) out.push({ t: "code", v: token.slice(1, -1) });
-    else out.push({ t: "i", v: token.slice(1, -1) });
-    last2 = at + token.length;
-  }
-  if (last2 < text.length) out.push({ t: "text", v: text.slice(last2) });
-  return out;
-}
-var FENCE = /^\s*```\s*([\w+-]*)\s*$/;
-var CHECK = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/;
-var BULLET = /^\s*[-*]\s+(.*)$/;
-var NUMBER = /^\s*(\d{1,6})[.)]\s+(.*)$/;
-function parseRichText(input3) {
-  const text = input3.replace(/\r\n?/g, "\n").slice(0, MAX_TEXT);
-  const blocks = [];
-  const lines = text.split("\n");
-  let open4;
-  const block = (kind, make) => {
-    if (open4?.t !== kind) {
-      open4 = make();
-      blocks.push(open4);
-    }
-    return open4;
-  };
-  for (let i = 0; i < lines.length; i++) {
-    const line2 = lines[i];
-    if (FENCE.test(line2)) {
-      const code = [];
-      for (i += 1; i < lines.length && !FENCE.test(lines[i]); i++) {
-        code.push(lines[i]);
-      }
-      blocks.push({ t: "code", v: code.join("\n") });
-      open4 = void 0;
-      continue;
-    }
-    if (!line2.trim()) {
-      open4 = void 0;
-      continue;
-    }
-    const check2 = CHECK.exec(line2);
-    if (check2) {
-      block("check", () => ({ t: "check", items: [] })).items.push({
-        text: parseInline(check2[2]),
-        checked: check2[1] !== " "
-      });
-      continue;
-    }
-    const bullet = BULLET.exec(line2);
-    if (bullet) {
-      block("ul", () => ({ t: "ul", items: [] })).items.push(parseInline(bullet[1]));
-      continue;
-    }
-    const number4 = NUMBER.exec(line2);
-    if (number4) {
-      block("ol", () => ({ t: "ol", start: Number(number4[1]), items: [] })).items.push(
-        parseInline(number4[2])
-      );
-      continue;
-    }
-    block("p", () => ({ t: "p", lines: [] })).lines.push(parseInline(line2.trim()));
-  }
-  return blocks;
-}
-function blocksText(blocks) {
-  const inline = (parts) => parts.map((p) => p.t === "code" ? `\`${p.v}\`` : p.v).join("");
-  return blocks.map((block) => {
-    switch (block.t) {
-      case "p":
-        return block.lines.map(inline).join("\n");
-      case "ul":
-        return block.items.map((item) => `- ${inline(item)}`).join("\n");
-      case "ol":
-        return block.items.map((item, i) => `${block.start + i}. ${inline(item)}`).join("\n");
-      case "check":
-        return block.items.map((item) => `- [${item.checked ? "x" : " "}] ${inline(item.text)}`).join("\n");
-      default:
-        return `\`\`\`
-${block.v}
-\`\`\``;
-    }
-  }).join("\n\n");
-}
-
 // packages/server/src/panel/view.ts
 var DEFAULT_LABELS = {
   did: "What I did",
@@ -108129,6 +108404,20 @@ function textColorFor(hex3) {
 function merged(layers, key2) {
   return layers.map((l) => l?.[key2]).filter((v2) => v2 !== void 0);
 }
+function usedSnippets(texts, all) {
+  const names = new Set(texts.flatMap((t) => copyRefs(t ?? "")));
+  for (const name of [...names]) for (const ref of copyRefs(all[name]?.help ?? "")) names.add(ref);
+  const out = {};
+  for (const name of names) {
+    const snippet = all[name];
+    if (!snippet) continue;
+    out[name] = {
+      code: snippet.code,
+      ...snippet.help ? { help: parseRichText(snippet.help) } : {}
+    };
+  }
+  return out;
+}
 function buildStepView(input3) {
   const layers = input3.layers ?? [];
   const labels = Object.assign({}, DEFAULT_LABELS, ...merged(layers, "labels"));
@@ -108153,7 +108442,32 @@ function buildStepView(input3) {
     }
     buttons.push(button2);
   }
-  return { kind: "step", title: input3.title, sections, buttons, notes: true };
+  return {
+    kind: "step",
+    title: input3.title,
+    sections,
+    buttons,
+    notes: true,
+    snippets: usedSnippets([input3.didWhat, input3.expected, input3.next], input3.snippets ?? {}),
+    ...input3.image ? { image: true } : {}
+  };
+}
+function viewChecklist(view, ui2 = {}) {
+  const items = [];
+  for (const section2 of view.sections) {
+    section2.blocks.forEach((block, b2) => {
+      if (block.t !== "check") return;
+      block.items.forEach((item, i) => {
+        const id = `${section2.key}:${b2}:${i}`;
+        items.push({
+          id,
+          text: blocksText([{ t: "p", lines: [item.text] }], view.snippets),
+          checked: ui2[`check:${id}`] ?? item.checked
+        });
+      });
+    });
+  }
+  return items;
 }
 function buildConfirmView(input3) {
   return {
@@ -108165,13 +108479,14 @@ function buildConfirmView(input3) {
       { result: "stop", label: "Cancel" }
     ],
     notes: false,
-    color: input3.color
+    color: input3.color,
+    snippets: {}
   };
 }
 function viewText(view) {
   const lines = [`Step: ${view.title}`];
   for (const section2 of view.sections) {
-    const text = blocksText(section2.blocks);
+    const text = blocksText(section2.blocks, view.snippets);
     lines.push(section2.label ? `${section2.label}:
 ${text}` : text);
   }
@@ -108181,6 +108496,7 @@ ${text}` : text);
 
 // packages/server/src/panel/controller.ts
 var WORKING = "The agent is working.";
+var MAX_UI_KEYS = 500;
 function questionView(q2) {
   if (q2.view) return q2.view;
   if (q2.kind === "confirm") {
@@ -108209,12 +108525,15 @@ var DeveloperPanel = class {
   suppressed = /* @__PURE__ */ new Map();
   recordWaiter;
   env = null;
+  // The question whose image each tab has now. A page load clears it.
+  imageSent = /* @__PURE__ */ new Map();
   async attach(page, tabId) {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
     if (bridge) this.bridges.set(tabId, bridge);
   }
   detach(tabId) {
     this.bridges.delete(tabId);
+    this.imageSent.delete(tabId);
     this.hiddenIn.delete(tabId);
     this.suppressed.delete(tabId);
     if (this.question?.tabId === tabId) {
@@ -108252,12 +108571,19 @@ var DeveloperPanel = class {
         nonce: q2.nonce,
         step: q2.step,
         total: q2.total,
-        view: questionView(q2)
+        view: questionView(q2),
+        ui: q2.ui ?? {}
       } : null
     };
   }
   async push(tabId) {
-    await this.bridges.get(tabId)?.send(this.stateFor(tabId));
+    const bridge = this.bridges.get(tabId);
+    await bridge?.send(this.stateFor(tabId));
+    const q2 = this.question;
+    if (bridge && q2?.tabId === tabId && q2.image && this.imageSent.get(tabId) !== q2.id) {
+      if (await bridge.send({ type: "image", id: q2.id, ...q2.image }))
+        this.imageSent.set(tabId, q2.id);
+    }
     if (this.suppressed.has(tabId)) await this.sendHidden(tabId);
   }
   // A question for the developer shows, even while Lighthouse measures.
@@ -108267,7 +108593,12 @@ var DeveloperPanel = class {
   }
   async onMessage(tabId, msg) {
     if (msg.type === "hello") {
+      this.imageSent.delete(tabId);
       await this.push(tabId);
+      return;
+    }
+    if (msg.type === "ui") {
+      this.onUi(tabId, msg);
       return;
     }
     if (msg.type === "moved" && typeof msg.corner === "string") {
@@ -108287,9 +108618,14 @@ var DeveloperPanel = class {
       }
       const result = msg.result;
       if (!questionView(q2).buttons.some((b2) => b2.result === result)) return;
+      const checklist = viewChecklist(questionView(q2), q2.ui).map(({ text, checked }) => ({
+        text,
+        checked
+      }));
       const answer = {
         result,
-        note: typeof msg.note === "string" ? msg.note.slice(0, 4e3) : ""
+        note: typeof msg.note === "string" ? msg.note.slice(0, 4e3) : "",
+        ...checklist.length ? { checklist } : {}
       };
       this.question = void 0;
       this.status = WORKING;
@@ -108297,6 +108633,20 @@ var DeveloperPanel = class {
       if (this.waiter) this.finish({ kind: "answer", answer, question: q2 });
       else this.stored = { answer, question: q2 };
     }
+  }
+  // A change the developer made in the panel, like a tick. Only keys the question has count.
+  // The panel draws the change itself, so no new state goes back.
+  onUi(tabId, msg) {
+    const q2 = this.question;
+    if (!q2 || q2.tabId !== tabId || msg.id !== q2.id || msg.nonce !== q2.nonce) return;
+    if (this.recorder || typeof msg.key !== "string" || typeof msg.value !== "boolean") return;
+    const view = questionView(q2);
+    const allowed = viewChecklist(view).some((item) => msg.key === `check:${item.id}`) || view.sections.some((s) => s.collapsible && msg.key === `open:${s.key}`);
+    if (!allowed) return;
+    const ui2 = q2.ui ?? {};
+    if (!(msg.key in ui2) && Object.keys(ui2).length >= MAX_UI_KEYS) return;
+    ui2[msg.key] = msg.value;
+    q2.ui = ui2;
   }
   finish(outcome) {
     const resolve12 = this.waiter;
@@ -109798,7 +110148,7 @@ var Context = class {
 import {
   existsSync as existsSync21,
   readdirSync as readdirSync11,
-  readFileSync as readFileSync19,
+  readFileSync as readFileSync20,
   realpathSync as realpathSync3,
   statSync as statSync7,
   writeFileSync as writeFileSync13
@@ -112678,44 +113028,62 @@ function checkMediaPath(file2, projectDir, extraRoots = []) {
   return checkOutputPath(file2, projectDir, extraRoots, VIDEO);
 }
 var MAX_SLIDE_BYTES = 15 * 1024 * 1024;
-function checkSlideImage(file2, projectDir) {
+var MAX_PANEL_IMAGE_BYTES = 1.5 * 1024 * 1024;
+var SLIDE = {
+  name: "slide image",
+  extensions: SLIDE_IMAGE_EXTENSIONS,
+  maxBytes: MAX_SLIDE_BYTES,
+  code: "slide_blocked"
+};
+var PANEL_IMAGE = {
+  name: "reference image",
+  extensions: [".png", ".jpg", ".jpeg", ".webp"],
+  maxBytes: MAX_PANEL_IMAGE_BYTES,
+  code: "image_blocked"
+};
+function checkProjectImage(file2, projectDir, kind) {
+  const Name = kind.name[0]?.toUpperCase() + kind.name.slice(1);
   const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
   const ext = extname3(full).toLowerCase();
-  if (!SLIDE_IMAGE_EXTENSIONS.includes(ext)) {
+  if (!kind.extensions.includes(ext)) {
     throw new ToolError(
-      `A slide image ends with ${SLIDE_IMAGE_EXTENSIONS.join(", ")}. ${file2} does not.`,
-      "slide_blocked"
+      `A ${kind.name} ends with ${kind.extensions.join(", ")}. ${file2} does not.`,
+      kind.code
     );
   }
   let real;
   try {
     real = realpathSync2(full);
   } catch {
-    throw new ToolError(`The slide image ${file2} does not exist.`, "slide_blocked");
+    throw new ToolError(`The ${kind.name} ${file2} does not exist.`, kind.code);
   }
-  if (!statSync5(real).isFile()) throw new ToolError(`${file2} is not a file.`, "slide_blocked");
+  if (!statSync5(real).isFile()) throw new ToolError(`${file2} is not a file.`, kind.code);
   const project = realpathSync2(projectDir);
   if (!inside(project, real)) {
-    throw new ToolError(
-      `A slide image must be in the project folder. ${file2} is outside.`,
-      "slide_blocked"
-    );
+    throw new ToolError(`${Name}s must be in the project folder. ${file2} is outside.`, kind.code);
   }
   const parts = relative4(project, real).split(sep4);
   const hidden = parts.slice(0, -1).some((p, i) => p.startsWith(".") && !(i === 0 && p === ".walkthrough"));
   if (hidden || parts[0] === ".walkthrough" && ["sessions", "runs"].includes(parts[1] ?? "")) {
     throw new ToolError(
       `Walkthrough does not show images from hidden or private folders. ${file2} is blocked.`,
-      "slide_blocked"
+      kind.code
     );
   }
-  if (statSync5(real).size > MAX_SLIDE_BYTES) {
+  if (statSync5(real).size > kind.maxBytes) {
+    const mb = kind.maxBytes / 1024 / 1024;
     throw new ToolError(
-      `The slide image ${file2} is larger than 15 MB. Use a smaller image.`,
-      "slide_blocked"
+      `The ${kind.name} ${file2} is larger than ${mb} MB. Use a smaller image.`,
+      kind.code
     );
   }
   return real;
+}
+function checkSlideImage(file2, projectDir) {
+  return checkProjectImage(file2, projectDir, SLIDE);
+}
+function checkPanelImage(file2, projectDir) {
+  return checkProjectImage(file2, projectDir, PANEL_IMAGE);
 }
 
 // packages/server/src/video/capture.ts
@@ -114803,6 +115171,16 @@ function stepCard(run, runDir, step, open4) {
       `<dt>Checked by</dt><dd>${step.checkedBy === "developer" ? "The developer" : "The agent"}</dd>`
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc2(step.notes)}</dd>`);
+  if (step.checklist?.length) {
+    const ticked = step.checklist.filter((item) => item.checked).length;
+    parts.push(
+      `<dt>Checklist</dt><dd>${ticked} of ${step.checklist.length} ticked<ul class="checklist">`,
+      ...step.checklist.map(
+        (item) => `<li>${item.checked ? "&#9745;" : "&#9744;"} ${esc2(item.text)}${item.checked ? "" : ' <span class="muted">(not ticked)</span>'}</li>`
+      ),
+      "</ul></dd>"
+    );
+  }
   if (step.mocked?.length) {
     parts.push(
       `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc2(step.mocked.join("; "))}</dd>`
@@ -114851,6 +115229,7 @@ body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); f
 main { max-width: 960px; margin: 0 auto; }
 h1 { margin: 0 0 4px; font-size: 24px; }
 .muted { color: var(--muted); }
+.checklist { list-style: none; margin: 4px 0 0; padding: 0; }
 .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; margin: 16px 0;
   padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
 .meta div span { display: block; font-size: 12px; color: var(--muted); }
@@ -115312,6 +115691,11 @@ function stepDetails(run, step, withRepro) {
   if (step.checkedBy)
     out.push(`- **Checked by:** ${step.checkedBy === "developer" ? "the developer" : "the agent"}`);
   if (step.notes) out.push(`- **Notes:** ${step.notes}`);
+  if (step.checklist?.length) {
+    const ticked = step.checklist.filter((item) => item.checked).length;
+    out.push(`- **Checklist:** ${ticked} of ${step.checklist.length} ticked`);
+    for (const item of step.checklist) out.push(`  - [${item.checked ? "x" : " "}] ${item.text}`);
+  }
   if (step.mocked?.length)
     out.push(`- **Mocked:** the step used answers from mock rules: ${step.mocked.join("; ")}`);
   const a11y = stepAccessibility(run, step);
@@ -115547,6 +115931,7 @@ function recordResult(ctx, ref, result) {
     const full = isAbsolute7(result.screenshot) ? result.screenshot : join31(store.projectDir, result.screenshot);
     step.screenshots.push(relative9(store.dir, full));
   }
+  if (result.checklist?.length) step.checklist = result.checklist;
   if (result.mocked?.length) step.mocked = [.../* @__PURE__ */ new Set([...step.mocked ?? [], ...result.mocked])];
   for (const file2 of result.files ?? []) {
     const full = isAbsolute7(file2) ? file2 : join31(store.projectDir, file2);
@@ -115581,7 +115966,8 @@ function nextStepHint(ctx) {
 }
 
 // packages/server/src/tools/developer-tools.ts
-import { relative as relative10 } from "node:path";
+import { readFileSync as readFileSync19 } from "node:fs";
+import { extname as extname8, relative as relative10 } from "node:path";
 
 // packages/server/src/evidence/har.ts
 import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
@@ -115746,14 +116132,41 @@ async function buildQuestion(ctx, input3) {
       "bad_input"
     );
   }
+  const snippets = {};
+  for (const [name, snippet] of Object.entries({
+    ...plan?.snippets,
+    ...step?.snippets,
+    ...input3.snippets
+  })) {
+    const code = typeof snippet === "string" ? snippet : snippet.code;
+    const help = typeof snippet === "string" ? void 0 : snippet.help;
+    snippets[name] = {
+      code: await panelText(ctx, code) ?? "",
+      ...help ? { help: await panelText(ctx, help) } : {}
+    };
+  }
+  const imagePath2 = input3.image ?? step?.expectImage;
+  let image2;
+  if (imagePath2) {
+    const { projectDir } = await ctx.config();
+    const real = checkPanelImage(imagePath2, projectDir);
+    const ext = extname8(real).toLowerCase();
+    image2 = {
+      mime: ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg",
+      data: readFileSync19(real).toString("base64")
+    };
+  }
   const view = buildStepView({
     title,
     didWhat,
     expected,
     next,
-    layers: [plan?.panel, step?.panel, input3.panel]
+    layers: [plan?.panel, step?.panel, input3.panel],
+    snippets,
+    image: Boolean(image2)
   });
   return {
+    image: image2,
     title,
     didWhat: didWhat ?? "",
     expected: expected ?? "",
@@ -115801,6 +116214,12 @@ function registerDeveloperTools(server, ctx) {
         next: external_exports.string().max(2e3).optional().describe(`What comes after this step. The panel shows it under "What's next".`),
         panel: stepPanelSchema.optional().describe(
           "Change the panel for this question: labels, like { did: Setup }, and buttons, like { pass: { label: Done } }."
+        ),
+        snippets: snippetsSchema.optional().describe(
+          "Text the developer can copy, like a terminal command. Put {{copy:name}} in didWhat, expected, or next to show it with a copy button."
+        ),
+        image: external_exports.string().optional().describe(
+          "An image of what the page should look like: a .png, .jpg, or .webp file in the project folder."
         ),
         step: external_exports.number().int().min(1).optional().describe("Step number."),
         total: external_exports.number().int().min(1).optional().describe("Number of steps in the test."),
@@ -115874,6 +116293,12 @@ function registerDeveloperTools(server, ctx) {
       const mocked = driver.stepMocks;
       driver.endStep(label3);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
+      if (answer.checklist?.length) {
+        const open4 = answer.checklist.filter((item) => !item.checked);
+        lines.push(
+          `Checklist: ${answer.checklist.length - open4.length} of ${answer.checklist.length} ticked.${open4.length ? ` Not ticked: ${open4.map((item) => `"${item.text}"`).join(", ")}.` : ""}`
+        );
+      }
       const extraContent = [];
       const record2 = {
         at: (/* @__PURE__ */ new Date()).toISOString(),
@@ -115938,7 +116363,8 @@ function registerDeveloperTools(server, ctx) {
           screenshot: record2.screenshot,
           files: record2.files,
           mocked,
-          logs: stepLogs
+          logs: stepLogs,
+          checklist: answer.checklist
         }
       );
       if (recorded)
@@ -116047,6 +116473,13 @@ function screenshotProblems(plan, projectDir, extraRoots) {
     }
   }
   plan.steps.forEach((step, i) => {
+    if (step.expectImage) {
+      try {
+        checkPanelImage(step.expectImage, projectDir);
+      } catch (error62) {
+        problems.push(`Step ${i + 1} [${step.id ?? `step-${i + 1}`}]: ${error62.message}`);
+      }
+    }
     const capture = stepCapture(plan, step);
     if (!capture) return;
     try {
@@ -116517,7 +116950,7 @@ function latestA11yRunId(projectDir) {
   if (!existsSync21(dir)) return void 0;
   for (const id of readdirSync11(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync19(join34(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync20(join34(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
     } catch {
     }
@@ -117744,7 +118177,7 @@ function registerEnvironmentTools(server, ctx) {
 import {
   existsSync as existsSync23,
   readdirSync as readdirSync13,
-  readFileSync as readFileSync21,
+  readFileSync as readFileSync22,
   realpathSync as realpathSync4,
   statSync as statSync8,
   writeFileSync as writeFileSync15
@@ -117753,7 +118186,7 @@ import { join as join37, relative as relative14, resolve as resolve11, sep as se
 
 // packages/server/src/lighthouse/findings.ts
 import { createHash as createHash6 } from "node:crypto";
-import { existsSync as existsSync22, readdirSync as readdirSync12, readFileSync as readFileSync20 } from "node:fs";
+import { existsSync as existsSync22, readdirSync as readdirSync12, readFileSync as readFileSync21 } from "node:fs";
 import { join as join35 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
 function checkLabel(check2) {
@@ -117837,7 +118270,7 @@ function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "devel
     const file2 = join35(runs, id, "lighthouse.json");
     if (!existsSync22(file2)) return void 0;
     try {
-      return JSON.parse(readFileSync20(file2, "utf8"));
+      return JSON.parse(readFileSync21(file2, "utf8"));
     } catch {
       return void 0;
     }
@@ -117963,7 +118396,7 @@ function latestLhRunId(projectDir) {
   if (!existsSync23(dir)) return void 0;
   for (const id of readdirSync13(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync21(join37(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync22(join37(dir, id, "run.json"), "utf8"));
       if (run.lighthouse?.length) return id;
     } catch {
     }
@@ -118998,8 +119431,8 @@ function writeHandout(dir, data) {
 
 // packages/server/src/presentation/live-stage.ts
 import { randomBytes as randomBytes12 } from "node:crypto";
-import { readFileSync as readFileSync22 } from "node:fs";
-import { extname as extname8 } from "node:path";
+import { readFileSync as readFileSync23 } from "node:fs";
+import { extname as extname9 } from "node:path";
 
 // packages/server/src/replay/engine.ts
 import { randomBytes as randomBytes11 } from "node:crypto";
@@ -119926,8 +120359,8 @@ var LiveStage = class {
     if (cached2) return cached2;
     try {
       const real = checkSlideImage(path14, this.options.projectDir);
-      const type = IMAGE_TYPES[extname8(real).toLowerCase()] ?? "application/octet-stream";
-      const src = `data:${type};base64,${readFileSync22(real).toString("base64")}`;
+      const type = IMAGE_TYPES[extname9(real).toLowerCase()] ?? "application/octet-stream";
+      const src = `data:${type};base64,${readFileSync23(real).toString("base64")}`;
       this.images.set(path14, src);
       return src;
     } catch (error62) {
@@ -120996,7 +121429,7 @@ var Rebaser = class _Rebaser {
 };
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync23, writeFileSync as writeFileSync17 } from "node:fs";
+import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync24, writeFileSync as writeFileSync17 } from "node:fs";
 import { dirname as dirname14, join as join41, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
@@ -121125,7 +121558,7 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync23(join41(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync24(join41(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
@@ -121711,7 +122144,7 @@ ${statusText(session)}`;
 }
 
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync24 } from "node:fs";
+import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync25 } from "node:fs";
 import { join as join43 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
@@ -121758,7 +122191,7 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
         const file2 = join43(dir, id, "run.json");
         if (!existsSync24(file2)) continue;
         try {
-          const run = JSON.parse(readFileSync24(file2, "utf8"));
+          const run = JSON.parse(readFileSync25(file2, "utf8"));
           const report = existsSync24(join43(dir, id, "report.html")) ? `report written${existsSync24(join43(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join43(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
@@ -121775,8 +122208,8 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes14 } from "node:crypto";
-import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync25, writeFileSync as writeFileSync18 } from "node:fs";
-import { basename as basename8, dirname as dirname15, extname as extname9, join as join44, relative as relative18 } from "node:path";
+import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync26, writeFileSync as writeFileSync18 } from "node:fs";
+import { basename as basename8, dirname as dirname15, extname as extname10, join as join44, relative as relative18 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -122140,7 +122573,7 @@ function registerQualityTools(server, ctx) {
         ref: input3.ref,
         selector: input3.selector
       });
-      const group = ctx.run?.run.planFile ? basename8(ctx.run.run.planFile, extname9(ctx.run.run.planFile)) : "adhoc";
+      const group = ctx.run?.run.planFile ? basename8(ctx.run.run.planFile, extname10(ctx.run.run.planFile)) : "adhoc";
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
@@ -122169,7 +122602,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           [{ type: "image", data: capture.png.toString("base64"), mimeType: "image/png" }]
         );
       }
-      const comparison = comparePng(readFileSync25(baselinePath), capture.png, capture.masks);
+      const comparison = comparePng(readFileSync26(baselinePath), capture.png, capture.masks);
       const limit = input3.maxDiffPercent ?? 0;
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
@@ -122324,7 +122757,7 @@ import { join as join45, relative as relative19 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
 import { isAbsolute as isAbsolute8 } from "node:path";
-var SECRET = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
+var SECRET2 = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
 var js = (value) => JSON.stringify(value);
 var UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
 var VAR_IN = /\{\{\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}|%7B%7B\s*var:([A-Za-z_][A-Za-z0-9_]*)\s*%7D%7D/gi;
@@ -122560,7 +122993,7 @@ function literal2(value, needs) {
   return code.replace(/^"" \+ /, "").replace(/ \+ ""$/, "");
 }
 function valueCode(value, gen) {
-  const secret = SECRET.exec(value);
+  const secret = SECRET2.exec(value);
   if (secret?.[1]) {
     gen.secrets.add(secret[1]);
     return `process.env.${secret[1]}`;
@@ -122750,7 +123183,7 @@ function actionCode(action2, secretFields, gen) {
   const sel = action2.selector ? js(action2.selector) : "";
   const value = (() => {
     const v2 = action2.value ?? "";
-    if (SECRET.test(v2) && action2.selector && !action2.frameUrl) secretFields.add(action2.selector);
+    if (SECRET2.test(v2) && action2.selector && !action2.frameUrl) secretFields.add(action2.selector);
     return valueCode(v2, gen);
   })();
   switch (action2.action) {

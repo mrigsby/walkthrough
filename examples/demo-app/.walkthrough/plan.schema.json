@@ -601,6 +601,44 @@
       },
       "additionalProperties": false
     },
+    "snippets": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The text to copy, like a terminal command."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "description": "The text to copy, like a terminal command."
+              },
+              "help": {
+                "description": "More about the snippet. A \"?\" next to the copy button shows it.",
+                "type": "string",
+                "maxLength": 4000
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "Snippets for {{copy:name}} in panel text, like { seed: \"npm run db:seed\" }."
+    },
     "panel": {
       "description": "Panel labels, buttons, and the \"What's next\" part for every step. A step \"panel\" replaces the same settings for that step.",
       "type": "object",
@@ -1569,6 +1607,50 @@
             "description": "What comes after this step. The panel shows it under \"What's next\".",
             "type": "string",
             "maxLength": 2000
+          },
+          "snippets": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000,
+                  "description": "The text to copy, like a terminal command."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4000,
+                      "description": "The text to copy, like a terminal command."
+                    },
+                    "help": {
+                      "description": "More about the snippet. A \"?\" next to the copy button shows it.",
+                      "type": "string",
+                      "maxLength": 4000
+                    }
+                  },
+                  "required": [
+                    "code"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "Snippets for {{copy:name}} in panel text, like { seed: \"npm run db:seed\" }."
+          },
+          "expectImage": {
+            "description": "An image of what the page should look like, from the project folder. The panel shows it under \"What you should see\".",
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\.(png|jpe?g|webp)$"
           },
           "panel": {
             "description": "Panel labels and buttons for this step. They replace the same settings in the plan \"panel\".",

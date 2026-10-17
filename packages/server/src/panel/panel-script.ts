@@ -12,9 +12,21 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const w = window as unknown as Record<string, unknown>;
   if (w.__uiwalkPanel) return;
 
+  // A panel that starts after the page's own scripts cannot fully guard what it copies.
+  const late = document.readyState !== 'loading';
+  let copying = false;
+  // This listener comes before page scripts, so they never see or change the panel's own copy.
+  window.addEventListener(
+    'copy',
+    (event) => {
+      if (copying) event.stopImmediatePropagation();
+    },
+    true,
+  );
+
   type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   // The same shapes as panel/view.ts and panel/rich-text.ts.
-  type Inline = { t: 'text' | 'b' | 'i' | 'code'; v: string };
+  type Inline = { t: 'text' | 'b' | 'i' | 'code'; v: string } | { t: 'copy'; id: string };
   type Block =
     | { t: 'p'; lines: Inline[][] }
     | { t: 'ul'; items: Inline[][] }
@@ -41,6 +53,8 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     buttons: ViewButton[];
     notes: boolean;
     color?: string;
+    snippets: Record<string, { code: string; help?: Block[] }>;
+    image?: boolean;
   }
   interface Question {
     id: string;
@@ -48,6 +62,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     step?: number;
     total?: number;
     view: View;
+    ui: Record<string, boolean>;
   }
   interface Badge {
     label: string;
@@ -132,7 +147,22 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   recordBox.append(recordText, expectInput, saveExpectButton, recordButtons);
   body.append(status, questionBox, recordBox);
   card.append(header, body);
-  root.append(pulse, pulseLabel, annotation, card);
+
+  // A window in the middle of the page, for snippet help and big images.
+  const backdrop = el('div', 'modal-backdrop');
+  const modal = el('div', 'modal');
+  modal.setAttribute('role', 'dialog');
+  modal.tabIndex = -1;
+  const modalHead = el('div', 'modal-head');
+  const modalTitle = el('h2', 'modal-title');
+  const modalClose = el('button', 'icon modal-close', '\u00D7');
+  modalClose.title = 'Close';
+  modalHead.append(modalTitle, modalClose);
+  const modalBody = el('div', 'modal-body');
+  modal.append(modalHead, modalBody);
+  backdrop.append(modal);
+  backdrop.hidden = true;
+  root.append(pulse, pulseLabel, annotation, card, backdrop);
 
   // ---------- State ----------
   let question: Question | null = null;
@@ -149,16 +179,121 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     card.dataset.corner = corner;
   };
 
+  // ---------- The window in the middle ----------
+  const openModal = (heading: string, nodes: Node[]): void => {
+    modalTitle.textContent = heading;
+    modalBody.replaceChildren(...nodes);
+    backdrop.hidden = false;
+    modal.focus();
+  };
+  const closeModal = (): void => {
+    backdrop.hidden = true;
+    modalBody.replaceChildren();
+  };
+  backdrop.addEventListener('click', (event) => {
+    if (event.isTrusted && event.target === backdrop) closeModal();
+  });
+  backdrop.addEventListener('keydown', (event) => {
+    if (event.isTrusted && event.key === 'Escape') closeModal();
+  });
+
+  // ---------- Copy ----------
+  // A short note next to a button, like "Copied".
+  const flash = (button: HTMLElement, text: string, ms = 1500): void => {
+    const note = el('span', 'copy-note', text);
+    button.after(note);
+    window.setTimeout(() => note.remove(), ms);
+  };
+
+  const copyText = async (text: string, button: HTMLElement): Promise<void> => {
+    let ok = false;
+    let fallback = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch {
+      // Not allowed on this page. Try the other way.
+    }
+    if (!ok) {
+      fallback = true;
+      const area = el('textarea', 'copy-area');
+      area.value = text;
+      root.append(area);
+      area.select();
+      copying = true;
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      } finally {
+        copying = false;
+        area.remove();
+      }
+    }
+    if (!ok) flash(button, 'Could not copy. Select the text and copy it.', 4000);
+    else if (fallback && late) flash(button, 'Copied. Check the text before you paste it.', 4000);
+    else flash(button, 'Copied');
+  };
+
   // ---------- Question parts ----------
+  let snippets: View['snippets'] = {};
+  let ui: Record<string, boolean> = {};
+  // The check boxes of the question, so Pass can see the open ones.
+  let boxes: HTMLInputElement[] = [];
+  let passWarned = false;
+
+  // Tells the server about a change, like a tick, so it survives a page load.
+  const sendUi = (key: string, value: boolean): void => {
+    if (!question) return;
+    question.ui[key] = value;
+    send({ type: 'ui', id: question.id, nonce: question.nonce, key, value });
+  };
+
+  const snippetHelp = (code: string, help: Block[]): void => {
+    const wrap = codeBlock(code, 'copy-modal');
+    openModal('About this snippet', [wrap, ...help.map((b) => drawBlock(b))]);
+  };
+
   const inlineNodes = (parts: Inline[]): Node[] =>
     parts.map((part) => {
+      if (part.t === 'copy') {
+        const snippet = snippets[part.id];
+        if (!snippet) return el('code', undefined, `{{copy:${part.id}}}`);
+        const chip = el('span', 'snip');
+        const copy = el('button', 'copy-snip', 'Copy');
+        copy.title = 'Copy to the clipboard';
+        onTrusted(copy, () => void copyText(snippet.code, copy));
+        chip.append(el('code', undefined, snippet.code), copy);
+        if (snippet.help) {
+          const help = el('button', 'help-snip', '?');
+          help.title = 'About this snippet';
+          const blocks = snippet.help;
+          onTrusted(help, () => snippetHelp(snippet.code, blocks));
+          chip.append(help);
+        }
+        return chip;
+      }
       if (part.t === 'b') return el('strong', undefined, part.v);
       if (part.t === 'i') return el('em', undefined, part.v);
       if (part.t === 'code') return el('code', undefined, part.v);
       return document.createTextNode(part.v);
     });
 
-  const drawBlock = (block: Block): HTMLElement => {
+  function codeBlock(code: string, buttonClass: string): HTMLElement {
+    const wrap = el('div', 'code-wrap');
+    const pre = el('pre', 'code');
+    pre.append(el('code', undefined, code));
+    const copy = el('button', `copy-button ${buttonClass}`, 'Copy');
+    copy.title = 'Copy to the clipboard';
+    onTrusted(copy, () => void copyText(code, copy));
+    wrap.append(pre, copy);
+    return wrap;
+  }
+
+  // "where" is the section and block number of a check list the developer can tick.
+  function drawBlock(block: Block, where?: string): HTMLElement {
     switch (block.t) {
       case 'p': {
         const p = el('p', 'text');
@@ -181,33 +316,76 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       }
       case 'check': {
         const list = el('ul', 'checks');
-        for (const item of block.items) {
-          const box = el('input', 'check');
+        block.items.forEach((item, i) => {
+          const key = `check:${where}:${i}`;
+          const box = el('input', `check ${key.replace(/:/g, '-')}`);
           box.type = 'checkbox';
-          box.checked = item.checked;
-          box.disabled = true;
+          box.checked = ui[key] ?? item.checked;
+          box.disabled = !where;
+          if (where) {
+            boxes.push(box);
+            box.addEventListener('click', (event) => {
+              if (!event.isTrusted) {
+                event.preventDefault();
+                return;
+              }
+              passWarned = false;
+              error.textContent = '';
+              sendUi(key, box.checked);
+            });
+          }
           const text = el('span', undefined);
           text.append(...inlineNodes(item.text));
           const li = el('li', undefined);
           li.append(box, text);
           list.append(li);
-        }
+        });
         return list;
       }
-      case 'code': {
-        const pre = el('pre', 'code');
-        pre.append(el('code', undefined, block.v));
-        return pre;
-      }
+      case 'code':
+        return codeBlock(block.v, 'copy-code');
+    }
+  }
+
+  // ---------- Reference image ----------
+  let imageBox: HTMLElement | null = null;
+  let bitmap: ImageBitmap | null = null;
+  const canvasOf = (image: ImageBitmap, className: string): HTMLCanvasElement => {
+    const canvas = el('canvas', className);
+    canvas.width = image.width;
+    canvas.height = image.height;
+    canvas.getContext('2d')?.drawImage(image, 0, 0);
+    return canvas;
+  };
+  // A canvas, not an <img>, because a page's image rules (CSP) can block data: images.
+  const showImage = async (id: string, mime: string, data: string): Promise<void> => {
+    try {
+      const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+      const image = await createImageBitmap(new Blob([bytes], { type: mime }));
+      if (question?.id !== id || !imageBox) return;
+      bitmap = image;
+      const thumb = canvasOf(image, 'ref-thumb');
+      thumb.title = 'Show it bigger';
+      onTrusted(thumb, () => {
+        if (bitmap) openModal('What the page should look like', [canvasOf(bitmap, 'ref-big')]);
+      });
+      imageBox.replaceChildren(
+        thumb,
+        el('span', 'caption', 'Reference image. Click to make it bigger.'),
+      );
+    } catch {
+      imageBox?.replaceChildren(
+        el('span', 'caption', 'Walkthrough could not show the reference image.'),
+      );
     }
   };
 
   const drawSection = (section: Section): HTMLElement => {
     const box = el('div', `section section-${section.key}`);
     const content = el('div', 'section-body');
-    content.append(...section.blocks.map(drawBlock));
+    content.append(...section.blocks.map((b, i) => drawBlock(b, `${section.key}:${i}`)));
     if (section.collapsible) {
-      let open = !section.collapsed;
+      let open = ui[`open:${section.key}`] ?? !section.collapsed;
       const toggle = el('button', `toggle toggle-${section.key}`);
       const arrow = el('span', 'arrow');
       const label = el('span', undefined, section.label || 'More');
@@ -220,6 +398,7 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       onTrusted(toggle, () => {
         open = !open;
         sync();
+        sendUi(`open:${section.key}`, open);
       });
       sync();
       box.append(toggle, content);
@@ -236,8 +415,24 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     if (drawnId === q.id) return;
     drawnId = q.id;
     const view = q.view;
+    snippets = view.snippets ?? {};
+    ui = q.ui ?? {};
+    q.ui = ui;
+    boxes = [];
+    passWarned = false;
+    bitmap = null;
+    closeModal();
     title.textContent = view.title;
-    sections.replaceChildren(...view.sections.map(drawSection));
+    const parts = view.sections.map(drawSection);
+    imageBox = null;
+    if (view.image) {
+      imageBox = el('div', 'ref-image');
+      imageBox.append(el('span', 'caption', 'Loading the reference image...'));
+      // Under "What you should see", or last.
+      const at = view.sections.findIndex((s) => s.key === 'expect');
+      parts.splice(at >= 0 ? at + 1 : parts.length, 0, imageBox);
+    }
+    sections.replaceChildren(...parts);
     buttons.replaceChildren(
       ...view.buttons.map((b) => {
         const button = el('button', b.result, b.label);
@@ -320,6 +515,14 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
       notes.focus();
       return;
     }
+    // Open boxes need a second click on Pass.
+    const open = boxes.filter((b) => !b.checked).length;
+    if (result === 'pass' && open && !passWarned) {
+      passWarned = true;
+      error.textContent = `${open} item${open === 1 ? ' is' : 's are'} not ticked. Click ${label} again to pass anyway.`;
+      return;
+    }
+    closeModal();
     send({ type: 'answer', id: question.id, nonce: question.nonce, result, note });
     const confirmed = question.view.kind === 'confirm';
     question = null;
@@ -359,9 +562,12 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     send({ type: 'moved', corner });
   });
 
+  onTrusted(modalClose, closeModal);
+
   // Keys typed in the panel must not reach the app's shortcuts.
   for (const type of ['keydown', 'keyup', 'keypress', 'input', 'beforeinput', 'paste']) {
     card.addEventListener(type, (event) => event.stopPropagation());
+    backdrop.addEventListener(type, (event) => event.stopPropagation());
   }
 
   // Drag the panel by its header.
@@ -445,7 +651,11 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         render();
         break;
       }
+      case 'image':
+        void showImage(msg.id as string, msg.mime as string, msg.data as string);
+        break;
       case 'hide':
+        backdrop.style.visibility = msg.hidden ? 'hidden' : '';
         card.style.visibility = msg.hidden ? 'hidden' : '';
         pulse.style.visibility = msg.hidden ? 'hidden' : '';
         pulseLabel.style.visibility = msg.hidden ? 'hidden' : '';

@@ -1,4 +1,5 @@
-import { relative } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { extname, relative } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -11,10 +12,11 @@ import { networkDir, writeHar } from '../evidence/har.js';
 import { formatLogs, LOG_KINDS, type LogLevel } from '../evidence/logs.js';
 import type { NetEntry } from '../evidence/network.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
+import { checkPanelImage } from '../guards/paths.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
-import { stepPanelSchema } from '../panel/panel-schema.js';
-import { buildStepView, type PanelLayer, viewText } from '../panel/view.js';
+import { type Snippets, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
+import { buildStepView, type PanelLayer, type SnippetText, viewText } from '../panel/view.js';
 import { stepTitle } from '../run/plan-schema.js';
 import { nextStepHint, recordResult } from '../run/record.js';
 import { bugClip, liveCaptures } from '../video/recording.js';
@@ -115,6 +117,8 @@ async function buildQuestion(
     total?: number;
     stepId?: string;
     panel?: PanelLayer;
+    snippets?: Snippets;
+    image?: string;
   },
 ) {
   const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
@@ -141,14 +145,42 @@ async function buildQuestion(
       'bad_input',
     );
   }
+  // Snippets of the plan, the step, and this call. Later ones win.
+  const snippets: Record<string, SnippetText> = {};
+  for (const [name, snippet] of Object.entries({
+    ...plan?.snippets,
+    ...step?.snippets,
+    ...input.snippets,
+  })) {
+    const code = typeof snippet === 'string' ? snippet : snippet.code;
+    const help = typeof snippet === 'string' ? undefined : snippet.help;
+    snippets[name] = {
+      code: (await panelText(ctx, code)) ?? '',
+      ...(help ? { help: await panelText(ctx, help) } : {}),
+    };
+  }
+  const imagePath = input.image ?? step?.expectImage;
+  let image: { mime: string; data: string } | undefined;
+  if (imagePath) {
+    const { projectDir } = await ctx.config();
+    const real = checkPanelImage(imagePath, projectDir);
+    const ext = extname(real).toLowerCase();
+    image = {
+      mime: ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg',
+      data: readFileSync(real).toString('base64'),
+    };
+  }
   const view = buildStepView({
     title,
     didWhat,
     expected,
     next,
     layers: [plan?.panel, step?.panel, input.panel],
+    snippets,
+    image: Boolean(image),
   });
   return {
+    image,
     title,
     didWhat: didWhat ?? '',
     expected: expected ?? '',
@@ -218,6 +250,17 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           .optional()
           .describe(
             'Change the panel for this question: labels, like { did: Setup }, and buttons, like { pass: { label: Done } }.',
+          ),
+        snippets: snippetsSchema
+          .optional()
+          .describe(
+            'Text the developer can copy, like a terminal command. Put {{copy:name}} in didWhat, expected, or next to show it with a copy button.',
+          ),
+        image: z
+          .string()
+          .optional()
+          .describe(
+            'An image of what the page should look like: a .png, .jpg, or .webp file in the project folder.',
           ),
         step: z.number().int().min(1).optional().describe('Step number.'),
         total: z.number().int().min(1).optional().describe('Number of steps in the test.'),
@@ -305,6 +348,12 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
         driver.endStep(label);
 
         const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || '(none)'}`];
+        if (answer.checklist?.length) {
+          const open = answer.checklist.filter((item) => !item.checked);
+          lines.push(
+            `Checklist: ${answer.checklist.length - open.length} of ${answer.checklist.length} ticked.${open.length ? ` Not ticked: ${open.map((item) => `"${item.text}"`).join(', ')}.` : ''}`,
+          );
+        }
         const extraContent: Content[] = [];
         const record: StepAnswer = {
           at: new Date().toISOString(),
@@ -372,6 +421,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             files: record.files,
             mocked,
             logs: stepLogs,
+            checklist: answer.checklist,
           },
         );
         if (recorded)

@@ -1,13 +1,15 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Browser, Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { connectChrome, endpointFile } from '../helpers/chrome.js';
-import { startDemoServer } from '../helpers/demo-server.js';
+import { repoRoot, startDemoServer } from '../helpers/demo-server.js';
 import { refFor, startClient } from '../helpers/mcp.js';
 import {
   clickPanel,
   fakeClickPanel,
+  modalText,
+  panelProp,
   panelText,
   typeNotes,
   waitForPanel,
@@ -219,8 +221,12 @@ describe('developer panel', () => {
     expect(shown).not.toMatch(/\bSkip\b/);
     await clickPanel(page, 'toggle-next');
     shown = await waitForPanel(page, 'The agent opens the admin page.');
+    // An open box would ask for a second click on Pass.
+    await clickPanel(page, 'check-expect-1-0');
     await clickPanel(page, 'pass');
-    expect((await reply).text).toMatch(/^status: pass/);
+    const result = await reply;
+    expect(result.text).toMatch(/^status: pass/);
+    expect(result.text).toContain('Checklist: 1 of 1 ticked.');
     await waitForPanel(page, 'Sent: Done');
   });
 
@@ -276,6 +282,104 @@ steps:
     expect(bad.isError).toBe(true);
     expect(bad.text).toMatch(/Give a title, didWhat, and expected/);
   }, 30_000);
+});
+
+describe('snippets, check lists, and images in the panel', () => {
+  async function waitForModal(text: string, ms = 5000): Promise<string> {
+    const end = Date.now() + ms;
+    let last = '';
+    while (Date.now() < end) {
+      last = await modalText(page).catch(() => '');
+      if (last.includes(text)) return last;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    throw new Error(`The modal did not show "${text}". It showed: ${last}`);
+  }
+
+  it('copies a snippet and shows its help', async () => {
+    await chrome
+      .defaultBrowserContext()
+      .overridePermissions(demo.base, ['clipboard-read', 'clipboard-sanitized-write']);
+    const reply = mcp.call('ask_developer', {
+      title: 'Seed',
+      didWhat: 'Nothing yet.',
+      expected: 'Run {{copy:seed}} in your terminal.\n```\necho second\n```',
+      snippets: { seed: { code: 'npm run seed', help: 'Fills the **test** data.' } },
+    });
+    await waitForPanel(page, 'Run npm run seed');
+    await clickPanel(page, 'copy-snip');
+    await waitForPanel(page, 'Copied');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npm run seed');
+
+    await clickPanel(page, 'help-snip');
+    const help = await waitForModal('About this snippet');
+    expect(help).toContain('npm run seed');
+    expect(help).toContain('Fills the test data.');
+    await page.keyboard.press('Escape');
+    expect(await modalText(page)).toBe('');
+
+    await clickPanel(page, 'copy-code');
+    await new Promise((r) => setTimeout(r, 300));
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('echo second');
+    await clickPanel(page, 'pass');
+    expect((await reply).text).toMatch(/^status: pass/);
+  });
+
+  it('keeps ticks after a page load, and asks again before Pass', async () => {
+    const reply = mcp.call('ask_developer', {
+      title: 'Tick',
+      didWhat: 'I opened the cart.',
+      expected: 'Check:\n- [ ] One\n- [ ] Two\n- [x] Three',
+    });
+    await waitForPanel(page, 'Three');
+    // The list is the second block of "expect": a paragraph comes first.
+    await clickPanel(page, 'check-expect-1-0');
+    expect(await panelProp(page, 'check-expect-1-0', 'checked')).toBe(true);
+    await new Promise((r) => setTimeout(r, 300));
+    await page.reload();
+    await waitForPanel(page, 'Three');
+    expect(await panelProp(page, 'check-expect-1-0', 'checked')).toBe(true);
+    expect(await panelProp(page, 'check-expect-1-1', 'checked')).toBe(false);
+
+    await clickPanel(page, 'pass');
+    await waitForPanel(page, '1 item is not ticked. Click Pass again to pass anyway.');
+    await clickPanel(page, 'pass');
+    const result = await reply;
+    expect(result.text).toMatch(/^status: pass/);
+    expect(result.text).toContain('Checklist: 2 of 3 ticked. Not ticked: "Two".');
+  }, 30_000);
+
+  it('shows a reference image, and a bigger one on a click', async () => {
+    mkdirSync(join(project, 'docs'), { recursive: true });
+    copyFileSync(
+      join(repoRoot, 'examples/demo-app/docs/images/help/cart.png'),
+      join(project, 'docs', 'cart.png'),
+    );
+    const outside = await mcp.call('ask_developer', {
+      title: 'Image',
+      didWhat: 'x',
+      expected: 'y',
+      image: '../elsewhere.png',
+    });
+    expect(outside.isError).toBe(true);
+    expect(outside.text).toMatch(/reference image/);
+
+    const reply = mcp.call('ask_developer', {
+      title: 'Compare',
+      didWhat: 'I opened the cart.',
+      expected: 'The cart looks like the picture.',
+      image: 'docs/cart.png',
+    });
+    await waitForPanel(page, 'Reference image. Click to make it bigger.');
+    expect(await panelProp(page, 'ref-thumb', 'width')).toBe(1280);
+    await clickPanel(page, 'ref-thumb');
+    await waitForModal('What the page should look like');
+    expect(await panelProp(page, 'ref-big', 'width')).toBe(1280);
+    await clickPanel(page, 'modal-close');
+    expect(await modalText(page)).toBe('');
+    await clickPanel(page, 'pass');
+    expect((await reply).text).toMatch(/^status: pass/);
+  });
 });
 
 describe('ask_developer without a panel', () => {

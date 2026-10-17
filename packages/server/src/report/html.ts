@@ -42,6 +42,17 @@ function stepCard(run: Run, runDir: string, step: RunStep, open: boolean): strin
       `<dt>Checked by</dt><dd>${step.checkedBy === 'developer' ? 'The developer' : 'The agent'}</dd>`,
     );
   if (step.notes) parts.push(`<dt>Notes</dt><dd>${esc(step.notes)}</dd>`);
+  if (step.checklist?.length) {
+    const ticked = step.checklist.filter((item) => item.checked).length;
+    parts.push(
+      `<dt>Checklist</dt><dd>${ticked} of ${step.checklist.length} ticked<ul class="checklist">`,
+      ...step.checklist.map(
+        (item) =>
+          `<li>${item.checked ? '&#9745;' : '&#9744;'} ${esc(item.text)}${item.checked ? '' : ' <span class="muted">(not ticked)</span>'}</li>`,
+      ),
+      '</ul></dd>',
+    );
+  }
   if (step.mocked?.length) {
     parts.push(
       `<dt>Mocked requests</dt><dd>The step used answers from mock rules, not from the server: ${esc(step.mocked.join('; '))}</dd>`,
@@ -94,6 +105,7 @@ body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); f
 main { max-width: 960px; margin: 0 auto; }
 h1 { margin: 0 0 4px; font-size: 24px; }
 .muted { color: var(--muted); }
+.checklist { list-style: none; margin: 4px 0 0; padding: 0; }
 .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; margin: 16px 0;
   padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
 .meta div span { display: block; font-size: 12px; color: var(--muted); }

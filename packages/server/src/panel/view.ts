@@ -1,5 +1,5 @@
 import type { StepPanel } from './panel-schema.js';
-import { type Block, blocksText, parseRichText } from './rich-text.js';
+import { type Block, blocksText, copyRefs, parseRichText } from './rich-text.js';
 
 // What the panel shows for one question. The server builds it, and the panel only draws it.
 
@@ -32,6 +32,21 @@ export interface PanelView {
   notes: boolean;
   // The border color of a confirm question.
   color?: string;
+  // Snippets that the text uses with {{copy:name}}.
+  snippets: Record<string, ViewSnippet>;
+  // A reference image goes under "What you should see". Its bytes come in a message of their own.
+  image?: boolean;
+}
+
+export interface ViewSnippet {
+  code: string;
+  help?: Block[];
+}
+
+// A snippet after {{var:NAME}} and secrets are handled.
+export interface SnippetText {
+  code: string;
+  help?: string;
 }
 
 export const DEFAULT_LABELS: Record<SectionKey, string> = {
@@ -91,6 +106,28 @@ export interface StepViewInput {
   expected?: string;
   next?: string;
   layers?: Array<PanelLayer | undefined>;
+  // All snippets that the plan, the step, and the agent give. Later ones win.
+  snippets?: Record<string, SnippetText>;
+  image?: boolean;
+}
+
+// The snippets that the sections use, and the ones that their help texts use.
+function usedSnippets(
+  texts: Array<string | undefined>,
+  all: Record<string, SnippetText>,
+): Record<string, ViewSnippet> {
+  const names = new Set(texts.flatMap((t) => copyRefs(t ?? '')));
+  for (const name of [...names]) for (const ref of copyRefs(all[name]?.help ?? '')) names.add(ref);
+  const out: Record<string, ViewSnippet> = {};
+  for (const name of names) {
+    const snippet = all[name];
+    if (!snippet) continue;
+    out[name] = {
+      code: snippet.code,
+      ...(snippet.help ? { help: parseRichText(snippet.help) } : {}),
+    };
+  }
+  return out;
 }
 
 export function buildStepView(input: StepViewInput): PanelView {
@@ -126,7 +163,41 @@ export function buildStepView(input: StepViewInput): PanelView {
     }
     buttons.push(button);
   }
-  return { kind: 'step', title: input.title, sections, buttons, notes: true };
+  return {
+    kind: 'step',
+    title: input.title,
+    sections,
+    buttons,
+    notes: true,
+    snippets: usedSnippets([input.didWhat, input.expected, input.next], input.snippets ?? {}),
+    ...(input.image ? { image: true } : {}),
+  };
+}
+
+export interface ChecklistItem {
+  // Section key, block number, and item number, like "expect:1:0".
+  id: string;
+  text: string;
+  checked: boolean;
+}
+
+// The check list items of a view, with the ticks that the developer changed.
+export function viewChecklist(view: PanelView, ui: Record<string, boolean> = {}): ChecklistItem[] {
+  const items: ChecklistItem[] = [];
+  for (const section of view.sections) {
+    section.blocks.forEach((block, b) => {
+      if (block.t !== 'check') return;
+      block.items.forEach((item, i) => {
+        const id = `${section.key}:${b}:${i}`;
+        items.push({
+          id,
+          text: blocksText([{ t: 'p', lines: [item.text] }], view.snippets),
+          checked: ui[`check:${id}`] ?? item.checked,
+        });
+      });
+    });
+  }
+  return items;
 }
 
 export function buildConfirmView(input: {
@@ -145,6 +216,7 @@ export function buildConfirmView(input: {
     ],
     notes: false,
     color: input.color,
+    snippets: {},
   };
 }
 
@@ -152,7 +224,7 @@ export function buildConfirmView(input: {
 export function viewText(view: PanelView): string {
   const lines = [`Step: ${view.title}`];
   for (const section of view.sections) {
-    const text = blocksText(section.blocks);
+    const text = blocksText(section.blocks, view.snippets);
     lines.push(section.label ? `${section.label}:\n${text}` : text);
   }
   lines.push(`Answers: ${view.buttons.map((b) => b.label).join(', ')}`);

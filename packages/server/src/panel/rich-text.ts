@@ -2,13 +2,15 @@
 // panel builds DOM nodes from them. No raw HTML, no links.
 //
 // Blocks: paragraphs, "- " or "* " lists, "1." lists, "- [ ]" and "- [x]" check lists,
-// and ``` code blocks. Inline: **bold**, *italic*, and `code`.
+// and ``` code blocks. Inline: **bold**, *italic*, `code`, and {{copy:name}} for a snippet
+// with a copy button.
 
 export type Inline =
   | { t: 'text'; v: string }
   | { t: 'b'; v: string }
   | { t: 'i'; v: string }
-  | { t: 'code'; v: string };
+  | { t: 'code'; v: string }
+  | { t: 'copy'; id: string };
 
 export type Block =
   // Lines of one paragraph. The panel puts a line break between them.
@@ -21,7 +23,13 @@ export type Block =
 // Long text is cut, so one question cannot fill the panel with a huge message.
 const MAX_TEXT = 8000;
 
-const INLINE = /(\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`)/g;
+const INLINE = /(\{\{\s*copy:[A-Za-z0-9_-]+\s*\}\}|\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`)/g;
+const COPY = /\{\{\s*copy:([A-Za-z0-9_-]+)\s*\}\}/g;
+
+// The snippet names that {{copy:name}} uses in the text, once each.
+export function copyRefs(text: string): string[] {
+  return [...new Set([...text.matchAll(COPY)].map((m) => m[1] as string))];
+}
 
 export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
@@ -30,7 +38,8 @@ export function parseInline(text: string): Inline[] {
     const at = match.index ?? 0;
     if (at > last) out.push({ t: 'text', v: text.slice(last, at) });
     const token = match[0];
-    if (token.startsWith('**')) out.push({ t: 'b', v: token.slice(2, -2) });
+    if (token.startsWith('{{')) out.push({ t: 'copy', id: copyRefs(token)[0] as string });
+    else if (token.startsWith('**')) out.push({ t: 'b', v: token.slice(2, -2) });
     else if (token.startsWith('`')) out.push({ t: 'code', v: token.slice(1, -1) });
     else out.push({ t: 'i', v: token.slice(1, -1) });
     last = at + token.length;
@@ -103,9 +112,21 @@ export function parseRichText(input: string): Block[] {
 }
 
 // The blocks as plain text, for chat when the panel is not available.
-export function blocksText(blocks: Block[]): string {
+// A snippet shows its code.
+export function blocksText(
+  blocks: Block[],
+  snippets: Record<string, { code: string }> = {},
+): string {
   const inline = (parts: Inline[]) =>
-    parts.map((p) => (p.t === 'code' ? `\`${p.v}\`` : p.v)).join('');
+    parts
+      .map((p) =>
+        p.t === 'copy'
+          ? `\`${snippets[p.id]?.code ?? `{{copy:${p.id}}}`}\``
+          : p.t === 'code'
+            ? `\`${p.v}\``
+            : p.v,
+      )
+      .join('');
   return blocks
     .map((block) => {
       switch (block.t) {

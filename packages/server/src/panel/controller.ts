@@ -3,7 +3,13 @@ import type { Page } from 'puppeteer-core';
 import { log } from '../log.js';
 import type { Recorder } from '../record/recorder.js';
 import { PanelBridge, type PanelMessage } from './bridge.js';
-import { type AnswerResult, buildConfirmView, buildStepView, type PanelView } from './view.js';
+import {
+  type AnswerResult,
+  buildConfirmView,
+  buildStepView,
+  type PanelView,
+  viewChecklist,
+} from './view.js';
 
 export type { AnswerResult } from './view.js';
 
@@ -23,6 +29,10 @@ export interface Question {
   color?: string;
   // What the panel shows. Without it, the panel shows the title and texts above.
   view?: PanelView;
+  // What the developer changed in the panel, like ticks and open parts. It survives page loads.
+  ui?: Record<string, boolean>;
+  // A reference image for the panel. It goes in a message of its own.
+  image?: { mime: string; data: string };
 }
 
 export interface EnvironmentBadge {
@@ -33,6 +43,8 @@ export interface EnvironmentBadge {
 export interface Answer {
   result: AnswerResult;
   note: string;
+  // The check list items and the developer's ticks.
+  checklist?: Array<{ text: string; checked: boolean }>;
 }
 
 export type WaitOutcome =
@@ -52,6 +64,8 @@ export interface Rect {
 export type RecordOutcome = 'stopped' | 'timeout' | 'canceled' | 'browser_closed';
 
 const WORKING = 'The agent is working.';
+// The most panel changes that one question keeps.
+const MAX_UI_KEYS = 500;
 
 // The view of a question that came without one.
 export function questionView(q: Omit<Question, 'id' | 'nonce' | 'tabId'>): PanelView {
@@ -84,6 +98,8 @@ export class DeveloperPanel {
   private suppressed = new Map<string, Set<string>>();
   private recordWaiter?: (outcome: RecordOutcome) => void;
   private env: EnvironmentBadge | null = null;
+  // The question whose image each tab has now. A page load clears it.
+  private imageSent = new Map<string, string>();
 
   async attach(page: Page, tabId: string): Promise<void> {
     const bridge = await PanelBridge.install(page, (msg) => void this.onMessage(tabId, msg));
@@ -92,6 +108,7 @@ export class DeveloperPanel {
 
   detach(tabId: string): void {
     this.bridges.delete(tabId);
+    this.imageSent.delete(tabId);
     this.hiddenIn.delete(tabId);
     this.suppressed.delete(tabId);
     if (this.question?.tabId === tabId) {
@@ -137,13 +154,21 @@ export class DeveloperPanel {
             step: q.step,
             total: q.total,
             view: questionView(q),
+            ui: q.ui ?? {},
           }
         : null,
     };
   }
 
   private async push(tabId: string): Promise<void> {
-    await this.bridges.get(tabId)?.send(this.stateFor(tabId));
+    const bridge = this.bridges.get(tabId);
+    await bridge?.send(this.stateFor(tabId));
+    // The image goes once to each page, after the question.
+    const q = this.question;
+    if (bridge && q?.tabId === tabId && q.image && this.imageSent.get(tabId) !== q.id) {
+      if (await bridge.send({ type: 'image', id: q.id, ...q.image }))
+        this.imageSent.set(tabId, q.id);
+    }
     if (this.suppressed.has(tabId)) await this.sendHidden(tabId);
   }
 
@@ -157,7 +182,12 @@ export class DeveloperPanel {
   private async onMessage(tabId: string, msg: PanelMessage): Promise<void> {
     if (msg.type === 'hello') {
       // A page loaded. Show it the current state, so a question survives navigation.
+      this.imageSent.delete(tabId);
       await this.push(tabId);
+      return;
+    }
+    if (msg.type === 'ui') {
+      this.onUi(tabId, msg);
       return;
     }
     if (msg.type === 'moved' && typeof msg.corner === 'string') {
@@ -179,9 +209,14 @@ export class DeveloperPanel {
       // Only a button that the panel shows for this question.
       const result = msg.result as AnswerResult;
       if (!questionView(q).buttons.some((b) => b.result === result)) return;
+      const checklist = viewChecklist(questionView(q), q.ui).map(({ text, checked }) => ({
+        text,
+        checked,
+      }));
       const answer: Answer = {
         result,
         note: typeof msg.note === 'string' ? msg.note.slice(0, 4000) : '',
+        ...(checklist.length ? { checklist } : {}),
       };
       this.question = undefined;
       this.status = WORKING;
@@ -189,6 +224,23 @@ export class DeveloperPanel {
       if (this.waiter) this.finish({ kind: 'answer', answer, question: q });
       else this.stored = { answer, question: q };
     }
+  }
+
+  // A change the developer made in the panel, like a tick. Only keys the question has count.
+  // The panel draws the change itself, so no new state goes back.
+  private onUi(tabId: string, msg: PanelMessage): void {
+    const q = this.question;
+    if (!q || q.tabId !== tabId || msg.id !== q.id || msg.nonce !== q.nonce) return;
+    if (this.recorder || typeof msg.key !== 'string' || typeof msg.value !== 'boolean') return;
+    const view = questionView(q);
+    const allowed =
+      viewChecklist(view).some((item) => msg.key === `check:${item.id}`) ||
+      view.sections.some((s) => s.collapsible && msg.key === `open:${s.key}`);
+    if (!allowed) return;
+    const ui = q.ui ?? {};
+    if (!(msg.key in ui) && Object.keys(ui).length >= MAX_UI_KEYS) return;
+    ui[msg.key] = msg.value;
+    q.ui = ui;
   }
 
   private finish(outcome: WaitOutcome): void {

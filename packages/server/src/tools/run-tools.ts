@@ -11,7 +11,7 @@ import { findLighthouse, LIGHTHOUSE_MISSING } from '../downloads/lighthouse.js';
 import { describeEnvironment, rebaseToEnvironment, startUrl } from '../environments.js';
 import { ToolError } from '../errors.js';
 import { scrubText } from '../evidence/scrub.js';
-import { checkMediaPath, checkScreenshotPath } from '../guards/paths.js';
+import { checkMediaPath, checkPanelImage, checkScreenshotPath } from '../guards/paths.js';
 import { redactDeep, type SecretStore } from '../guards/secrets.js';
 import { untrusted } from '../guards/untrusted.js';
 import { buildVars, varNames } from '../page/tokens.js';
@@ -154,6 +154,13 @@ function screenshotProblems(plan: Plan, projectDir: string, extraRoots: string[]
     }
   }
   plan.steps.forEach((step, i) => {
+    if (step.expectImage) {
+      try {
+        checkPanelImage(step.expectImage, projectDir);
+      } catch (error) {
+        problems.push(`Step ${i + 1} [${step.id ?? `step-${i + 1}`}]: ${(error as Error).message}`);
+      }
+    }
     const capture = stepCapture(plan, step);
     if (!capture) return;
     try {

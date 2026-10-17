@@ -41,9 +41,12 @@ The developer can choose the mode when they ask for the run. Pass it to `run_sta
    - `title`: a short name for the step. Not needed when the plan step gives it.
    - `expected`: what the developer should see now. Not needed when the plan step gives it. Make it specific and easy to check, such as "The cart total is $30.00", not "The cart works".
    - `next` and `panel`: only to change the panel for this question. `next` sets the text of the "What's next" part. `panel` changes labels and buttons, like `{ buttons: { pass: { label: Done } } }`.
-   - Panel text can use "- " lists, "1." lists, "- [ ]" check lists, `**bold**`, `` `code` ``, and ``` code blocks.
+   - `snippets`: text the developer can copy, like a terminal command. Put `{{copy:name}}` in the text to show it with a Copy button. A snippet can have `help`, which a "?" button shows.
+   - `image`: an image of what the page should look like, from the project folder. The plan key `expectImage` does the same.
+   - Panel text can use "- " lists, "1." lists, "- [ ]" check lists, `**bold**`, `` `code` ``, and ``` code blocks. The developer can tick the check boxes.
 5. Act on the answer:
    - `status: pass`: continue with the next step.
+   - A `Checklist:` line names the boxes that the developer did not tick. Tell the developer about them in your summary.
    - `status: bug`: Walkthrough saved a screenshot and the errors from this step. Tell the developer the screenshot path and the main error. Ask whether to continue.
    - `status: skip`: continue with the next step.
    - `status: stop`: stop. Give a short summary of the steps and results.

@@ -80,6 +80,32 @@ describe('reports', () => {
     expect(html).toContain('<details class="step bug" open>');
   });
 
+  it('shows the check list of a step in both reports', () => {
+    const withList: Run = {
+      ...run,
+      steps: run.steps.map((step) =>
+        step.id === 'check-total'
+          ? {
+              ...step,
+              checklist: [
+                { text: 'The total is right', checked: true },
+                { text: 'The <b>coupon</b> shows', checked: false },
+              ],
+            }
+          : step,
+      ),
+    };
+    const md = markdownReport(withList);
+    expect(md).toContain(
+      '- **Checklist:** 1 of 2 ticked\n  - [x] The total is right\n  - [ ] The <b>coupon</b> shows',
+    );
+    const html = htmlReport(withList, '/nowhere');
+    expect(html).toContain('<dt>Checklist</dt><dd>1 of 2 ticked');
+    expect(html).toContain(
+      '&#9744; The &#60;b&#62;coupon&#60;/b&#62; shows <span class="muted">(not ticked)</span>',
+    );
+  });
+
   it('shows accessibility problems safely in both reports', () => {
     const withA11y: Run = {
       ...run,

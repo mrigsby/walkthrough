@@ -79,5 +79,44 @@ export const planPanelSchema = z
   })
   .strict();
 
+// Snippets that panel text shows with {{copy:name}}. The developer copies them with a button.
+const SECRET = /\{\{\s*secret:/;
+const noSecret = (text: string) => !SECRET.test(text);
+const SECRET_MESSAGE = 'A snippet cannot hold a {{secret:NAME}}. Walkthrough never copies secrets.';
+
+const snippetCode = z
+  .string()
+  .min(1)
+  .max(4000)
+  .refine(noSecret, SECRET_MESSAGE)
+  .describe('The text to copy, like a terminal command.');
+
+export const snippetSchema = z.union(
+  [
+    snippetCode,
+    z
+      .object({
+        code: snippetCode,
+        help: z
+          .string()
+          .max(4000)
+          .refine(noSecret, SECRET_MESSAGE)
+          .optional()
+          .describe('More about the snippet. A "?" next to the copy button shows it.'),
+      })
+      .strict(),
+  ],
+  { error: 'A snippet is the text to copy, or { code, help }.' },
+);
+
+export const snippetsSchema = z
+  .record(
+    z.string().regex(/^[A-Za-z0-9_-]+$/, 'Use letters, numbers, "-", and "_" in a snippet name.'),
+    snippetSchema,
+  )
+  .describe('Snippets for {{copy:name}} in panel text, like { seed: "npm run db:seed" }.');
+
+export type Snippets = z.infer<typeof snippetsSchema>;
+
 export type StepPanel = z.infer<typeof stepPanelSchema>;
 export type PlanPanel = z.infer<typeof planPanelSchema>;

@@ -138,32 +138,53 @@ export function checkMediaPath(
 
 // The largest slide image. Slides go to the page as data, so a huge file slows it down.
 export const MAX_SLIDE_BYTES = 15 * 1024 * 1024;
+// The largest reference image in the panel. The panel gets it again after each page load.
+export const MAX_PANEL_IMAGE_BYTES = 1.5 * 1024 * 1024;
 
-// Checks an image for a presentation slide. Returns the full, real path.
+interface ImageKind {
+  // "slide image" or "reference image", for messages.
+  name: string;
+  extensions: readonly string[];
+  maxBytes: number;
+  code: string;
+}
+
+const SLIDE: ImageKind = {
+  name: 'slide image',
+  extensions: SLIDE_IMAGE_EXTENSIONS,
+  maxBytes: MAX_SLIDE_BYTES,
+  code: 'slide_blocked',
+};
+const PANEL_IMAGE: ImageKind = {
+  name: 'reference image',
+  extensions: ['.png', '.jpg', '.jpeg', '.webp'],
+  maxBytes: MAX_PANEL_IMAGE_BYTES,
+  code: 'image_blocked',
+};
+
+// Checks an image that Walkthrough shows from the project. Returns the full, real path.
 // It must be in the project. Hidden folders are blocked, except .walkthrough, but not its
 // saved logins and runs.
-export function checkSlideImage(file: string, projectDir: string): string {
+function checkProjectImage(file: string, projectDir: string, kind: ImageKind): string {
+  const Name = kind.name[0]?.toUpperCase() + kind.name.slice(1);
   const full = isAbsolute(file) ? file : resolve(projectDir, file);
   const ext = extname(full).toLowerCase();
-  if (!(SLIDE_IMAGE_EXTENSIONS as readonly string[]).includes(ext)) {
+  if (!kind.extensions.includes(ext)) {
     throw new ToolError(
-      `A slide image ends with ${SLIDE_IMAGE_EXTENSIONS.join(', ')}. ${file} does not.`,
-      'slide_blocked',
+      `A ${kind.name} ends with ${kind.extensions.join(', ')}. ${file} does not.`,
+      kind.code,
     );
   }
   let real: string;
   try {
     real = realpathSync(full);
   } catch {
-    throw new ToolError(`The slide image ${file} does not exist.`, 'slide_blocked');
+    throw new ToolError(`The ${kind.name} ${file} does not exist.`, kind.code);
   }
-  if (!statSync(real).isFile()) throw new ToolError(`${file} is not a file.`, 'slide_blocked');
+  if (!statSync(real).isFile()) throw new ToolError(`${file} is not a file.`, kind.code);
   const project = realpathSync(projectDir);
   if (!inside(project, real)) {
-    throw new ToolError(
-      `A slide image must be in the project folder. ${file} is outside.`,
-      'slide_blocked',
-    );
+    throw new ToolError(`${Name}s must be in the project folder. ${file} is outside.`, kind.code);
   }
   const parts = relative(project, real).split(sep);
   const hidden = parts
@@ -172,14 +193,25 @@ export function checkSlideImage(file: string, projectDir: string): string {
   if (hidden || (parts[0] === '.walkthrough' && ['sessions', 'runs'].includes(parts[1] ?? ''))) {
     throw new ToolError(
       `Walkthrough does not show images from hidden or private folders. ${file} is blocked.`,
-      'slide_blocked',
+      kind.code,
     );
   }
-  if (statSync(real).size > MAX_SLIDE_BYTES) {
+  if (statSync(real).size > kind.maxBytes) {
+    const mb = kind.maxBytes / 1024 / 1024;
     throw new ToolError(
-      `The slide image ${file} is larger than 15 MB. Use a smaller image.`,
-      'slide_blocked',
+      `The ${kind.name} ${file} is larger than ${mb} MB. Use a smaller image.`,
+      kind.code,
     );
   }
   return real;
+}
+
+// An image for a presentation slide.
+export function checkSlideImage(file: string, projectDir: string): string {
+  return checkProjectImage(file, projectDir, SLIDE);
+}
+
+// An image of what the page should look like, for the panel.
+export function checkPanelImage(file: string, projectDir: string): string {
+  return checkProjectImage(file, projectDir, PANEL_IMAGE);
 }

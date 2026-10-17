@@ -65,6 +65,8 @@ export interface RunStep {
   lighthouse?: { mode: LhMode; url?: string };
   // The text that viewers see in videos. Without it, videos show the title.
   caption?: string;
+  // The check list in the panel, with the developer's ticks.
+  checklist?: Array<{ text: string; checked: boolean }>;
 }
 
 // A video of the run, or of part of it.

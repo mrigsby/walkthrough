@@ -24,6 +24,8 @@ export interface StepResult {
   // What mock rules did during the step.
   mocked?: string[];
   logs?: LogEntry[];
+  // The check list of the panel, with the developer's ticks.
+  checklist?: Array<{ text: string; checked: boolean }>;
 }
 
 // Saves a step result in the active run, with the actions since the last result.
@@ -41,6 +43,7 @@ export function recordResult(ctx: Context, ref: StepRef, result: StepResult): Ru
       : join(store.projectDir, result.screenshot);
     step.screenshots.push(relative(store.dir, full));
   }
+  if (result.checklist?.length) step.checklist = result.checklist;
   if (result.mocked?.length) step.mocked = [...new Set([...(step.mocked ?? []), ...result.mocked])];
   for (const file of result.files ?? []) {
     const full = isAbsolute(file) ? file : join(store.projectDir, file);

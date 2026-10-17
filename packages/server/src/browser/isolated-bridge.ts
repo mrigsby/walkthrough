@@ -3,6 +3,8 @@ import { log } from '../log.js';
 
 export type BridgeMessage = Record<string, unknown> & { type: string };
 
+const MAX_PAYLOAD = 64 * 1024;
+
 // A script that Walkthrough puts into each page of a tab, in a world of its own.
 export interface IsolatedScript {
   // A random world name. Page scripts cannot see this world.
@@ -66,7 +68,8 @@ export class IsolatedBridge {
   }
 
   private onBinding(event: Protocol.Runtime.BindingCalledEvent): void {
-    if (event.name !== this.script.binding) return;
+    // Messages are small. A huge one is not from our script.
+    if (event.name !== this.script.binding || event.payload.length > MAX_PAYLOAD) return;
     let msg: BridgeMessage;
     try {
       msg = JSON.parse(event.payload) as BridgeMessage;

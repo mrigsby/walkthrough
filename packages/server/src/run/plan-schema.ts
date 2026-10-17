@@ -6,7 +6,8 @@ import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
 import { envNameSchema, varsSchema } from '../environments.js';
 import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
-import { planPanelSchema, stepPanelSchema } from '../panel/panel-schema.js';
+import { planPanelSchema, snippetsSchema, stepPanelSchema } from '../panel/panel-schema.js';
+import { copyRefs } from '../panel/rich-text.js';
 import { VIDEO_FORMATS } from '../video/formats.js';
 
 // How the agent checks each step.
@@ -387,6 +388,15 @@ export const stepSchema = z
       .max(2000)
       .optional()
       .describe('What comes after this step. The panel shows it under "What\'s next".'),
+    snippets: snippetsSchema.optional(),
+    expectImage: z
+      .string()
+      .min(1)
+      .regex(/\.(png|jpe?g|webp)$/i, 'Use a .png, .jpg, .jpeg, or .webp file.')
+      .optional()
+      .describe(
+        'An image of what the page should look like, from the project folder. The panel shows it under "What you should see".',
+      ),
     panel: stepPanelSchema
       .optional()
       .describe(
@@ -505,6 +515,7 @@ export const planSchema = z
     presentation: presentationSchema
       .optional()
       .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
+    snippets: snippetsSchema.optional(),
     panel: planPanelSchema
       .optional()
       .describe(
@@ -520,7 +531,41 @@ export const planSchema = z
       message: 'Put the plan environment in the "environments" list too.',
       path: ['environment'],
     },
-  );
+  )
+  .superRefine((plan, ctx) => {
+    // Each {{copy:name}} needs a snippet in the plan or in its step.
+    const known = (names: object | undefined) => Object.keys(names ?? {});
+    const helps = (names: Record<string, unknown> | undefined) =>
+      Object.entries(names ?? {}).map(
+        ([name, s]) =>
+          [name, typeof s === 'object' ? (s as { help?: string }).help : undefined] as const,
+      );
+    plan.steps.forEach((step, i) => {
+      const names = new Set([...known(plan.snippets), ...known(step.snippets)]);
+      for (const key of ['expect', 'next'] as const) {
+        for (const ref of copyRefs(step[key] ?? '')) {
+          if (!names.has(ref)) {
+            ctx.addIssue({
+              code: 'custom',
+              message: `There is no snippet "${ref}". Add it to "snippets" in the plan or in this step.`,
+              path: ['steps', i, key],
+            });
+          }
+        }
+      }
+      for (const [name, help] of helps(step.snippets)) {
+        for (const ref of copyRefs(help ?? '')) {
+          if (!names.has(ref)) {
+            ctx.addIssue({
+              code: 'custom',
+              message: `There is no snippet "${ref}". Add it to "snippets" in the plan or in this step.`,
+              path: ['steps', i, 'snippets', name],
+            });
+          }
+        }
+      }
+    });
+  });
 
 export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
