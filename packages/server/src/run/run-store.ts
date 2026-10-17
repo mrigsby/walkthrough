@@ -20,7 +20,7 @@ import type { LhMode } from '../lighthouse/categories.js';
 import type { ActionRecord } from '../page/actions.js';
 import { ensureWalkthroughDir } from '../project-files.js';
 import { slug } from '../text.js';
-import type { Capture, Mode, Plan, PlanStep } from './plan-schema.js';
+import { type Capture, type Mode, type Plan, type PlanStep, stepTitle } from './plan-schema.js';
 
 export type StepStatus = 'pending' | 'pass' | 'fail' | 'bug' | 'skip' | 'stop' | 'blocked';
 export type RunStatus = 'running' | 'finished' | 'stopped' | 'incomplete';
@@ -182,6 +182,8 @@ export class RunStore {
     readonly dir: string,
     readonly run: Run,
     readonly projectDir: string,
+    // The plan of a run that is going. A run opened from disk has none.
+    private readonly plan?: Plan,
   ) {}
 
   static create(
@@ -226,7 +228,7 @@ export class RunStore {
     const template = (step: PlanStep) => {
       const out: NonNullable<RunStep['template']> = {};
       for (const [key, text] of [
-        ['title', step.do],
+        ['title', stepTitle(step)],
         ['expect', step.expect],
         ['caption', step.caption],
       ] as const) {
@@ -237,7 +239,7 @@ export class RunStore {
     const steps: RunStep[] = (input.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
-      title: show(step.do),
+      title: show(stepTitle(step)),
       expect: step.expect === undefined ? undefined : show(step.expect),
       ...template(step),
       confirm: needsConfirm(input.mode, step.checkpoint),
@@ -304,7 +306,7 @@ export class RunStore {
           }
         : {}),
     };
-    const store = new RunStore(dir, run, projectDir);
+    const store = new RunStore(dir, run, projectDir, input.plan);
     store.save();
     return store;
   }
@@ -354,6 +356,16 @@ export class RunStore {
     };
     this.run.steps.push(added);
     return added;
+  }
+
+  // The plan step with this id, in a run that is going. Never adds a step.
+  planStep(id: string): { step: PlanStep; index: number; plan: Plan } | undefined {
+    const plan = this.plan;
+    if (!plan) return undefined;
+    // Plan steps are the first run steps, in the same order.
+    const runStep = this.run.steps.find((s) => s.id === id);
+    const step = runStep ? plan.steps[runStep.index - 1] : undefined;
+    return runStep && step ? { step, index: runStep.index - 1, plan } : undefined;
   }
 
   // The first step that has no result yet.

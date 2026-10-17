@@ -13,6 +13,9 @@ import type { NetEntry } from '../evidence/network.js';
 import { takeScreenshot } from '../evidence/screenshot.js';
 import { untrusted } from '../guards/untrusted.js';
 import type { Answer, Question } from '../panel/controller.js';
+import { stepPanelSchema } from '../panel/panel-schema.js';
+import { buildStepView, type PanelLayer, viewText } from '../panel/view.js';
+import { stepTitle } from '../run/plan-schema.js';
 import { nextStepHint, recordResult } from '../run/record.js';
 import { bugClip, liveCaptures } from '../video/recording.js';
 import { type Content, runTool, textResult } from './util.js';
@@ -88,8 +91,72 @@ export function startProgress(
   return () => clearInterval(timer);
 }
 
-function questionText(q: { title: string; didWhat: string; expected: string }): string {
-  return `Step: ${q.title}\nWhat I did: ${q.didWhat}\nWhat you should see: ${q.expected}`;
+// Text for the panel: {{var:NAME}} and {{unique}} filled in, and no secret values.
+async function panelText(ctx: Context, text: string | undefined): Promise<string | undefined> {
+  if (text === undefined) return undefined;
+  let shown = text;
+  try {
+    shown = ctx.display(text);
+  } catch {
+    // A {{var:NAME}} without a value stays as it is.
+  }
+  return (await ctx.secrets()).redact(shown);
+}
+
+// The question for the panel, from the agent's input and the plan step with that id.
+async function buildQuestion(
+  ctx: Context,
+  input: {
+    title?: string;
+    didWhat?: string;
+    expected?: string;
+    next?: string;
+    step?: number;
+    total?: number;
+    stepId?: string;
+    panel?: PanelLayer;
+  },
+) {
+  const store = ctx.run?.run.status === 'running' ? ctx.run : undefined;
+  const found = input.stepId ? store?.planStep(input.stepId) : undefined;
+  const plan = found?.plan;
+  const step = found?.step;
+  // A plan with "next: { auto: true }" shows the next step when a step has no "next".
+  const following = found ? plan?.steps[found.index + 1] : undefined;
+  const autoNext =
+    plan?.panel?.next?.auto && step && !step.next
+      ? following
+        ? stepTitle(following)
+        : 'This is the last step.'
+      : undefined;
+  const title = await panelText(ctx, input.title ?? (step ? stepTitle(step) : undefined));
+  const didWhat = await panelText(ctx, input.didWhat);
+  const expected = await panelText(ctx, input.expected ?? step?.expect);
+  const next = await panelText(ctx, input.next ?? step?.next ?? autoNext);
+  if (!title || (!found && (!didWhat || !expected))) {
+    throw new ToolError(
+      found
+        ? 'Give a title for the step.'
+        : 'Give a title, didWhat, and expected for the step. During a run, give the stepId of a plan step. Walkthrough then takes the title and expected from the plan.',
+      'bad_input',
+    );
+  }
+  const view = buildStepView({
+    title,
+    didWhat,
+    expected,
+    next,
+    layers: [plan?.panel, step?.panel, input.panel],
+  });
+  return {
+    title,
+    didWhat: didWhat ?? '',
+    expected: expected ?? '',
+    step: input.step ?? (found ? found.index + 1 : undefined),
+    total: input.total ?? plan?.steps.length,
+    stepId: input.stepId,
+    view,
+  };
 }
 
 // Saves a video of the last seconds before a bug, when the run records them.
@@ -123,6 +190,7 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
       description: [
         'Show a step in the Walkthrough panel in the browser. Then wait for the developer to answer Pass, Bug, Skip, or Stop, with notes.',
         'Call it after you do a step. Say what you did and what the developer should see.',
+        'During a run, give the stepId. Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan.',
         'On Bug, Walkthrough saves a screenshot and the errors from this step.',
         'If the reply says "status: waiting", call it again with resume: true.',
         'If the reply says "status: use_chat", ask the developer in chat instead.',
@@ -134,7 +202,23 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
           .optional()
           .describe('Short name of the step, like "Add the mug to the cart".'),
         didWhat: z.string().max(2000).optional().describe('What you did, in plain words.'),
-        expected: z.string().max(2000).optional().describe('What the developer should see now.'),
+        expected: z
+          .string()
+          .max(2000)
+          .optional()
+          .describe(
+            'What the developer should see now. During a run, the plan step gives it if you do not.',
+          ),
+        next: z
+          .string()
+          .max(2000)
+          .optional()
+          .describe('What comes after this step. The panel shows it under "What\'s next".'),
+        panel: stepPanelSchema
+          .optional()
+          .describe(
+            'Change the panel for this question: labels, like { did: Setup }, and buttons, like { pass: { label: Done } }.',
+          ),
         step: z.number().int().min(1).optional().describe('Step number.'),
         total: z.number().int().min(1).optional().describe('Number of steps in the test.'),
         stepId: z.string().optional().describe('Step id from a test plan.'),
@@ -157,21 +241,16 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
             'recording',
           );
         }
-        if (!input.resume && (!input.title || !input.didWhat || !input.expected)) {
-          throw new ToolError('Give a title, didWhat, and expected for the step.', 'bad_input');
-        }
+        const asked = input.resume ? undefined : await buildQuestion(ctx, input);
         if (!panel || !(await panel.waitReady(tab.id))) {
           const why = config.browser.headless
             ? 'the browser is hidden (headless)'
             : 'the panel could not start on this page';
+          const view = asked?.view ?? (panel?.pending?.view as NonNullable<Question['view']>);
           return [
             'status: use_chat',
             `The developer panel is not available, because ${why}. Ask the developer in chat instead:`,
-            questionText({
-              title: input.title ?? '',
-              didWhat: input.didWhat ?? '',
-              expected: input.expected ?? '',
-            }),
+            view ? viewText(view) : '(no question)',
           ].join('\n');
         }
 
@@ -181,16 +260,8 @@ export function registerDeveloperTools(server: McpServer, ctx: Context): void {
               'No question is waiting in the panel. Ask a new question.',
               'bad_input',
             );
-        } else {
-          await panel.ask({
-            tabId: tab.id,
-            title: input.title as string,
-            didWhat: input.didWhat as string,
-            expected: input.expected as string,
-            step: input.step,
-            total: input.total,
-            stepId: input.stepId,
-          });
+        } else if (asked) {
+          await panel.ask({ tabId: tab.id, ...asked });
         }
 
         const timeoutSec = config.askTimeoutSec ?? defaultAskTimeoutSec(ctx.clientName());

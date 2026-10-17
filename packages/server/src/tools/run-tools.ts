@@ -27,7 +27,14 @@ import { isProblem, resultLine } from '../report/common.js';
 import { htmlReport } from '../report/html.js';
 import { CATEGORY_LABELS } from '../report/lh-report.js';
 import { markdownReport } from '../report/markdown.js';
-import { MODES, type Mode, type Plan, type PlanStep, stepCapture } from '../run/plan-schema.js';
+import {
+  MODES,
+  type Mode,
+  type Plan,
+  type PlanStep,
+  stepCapture,
+  stepTitle,
+} from '../run/plan-schema.js';
 import {
   formatProblems,
   laterFeatures,
@@ -182,7 +189,7 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
     .map((step, i) => {
       const id = step.id ?? `step-${i + 1}`;
       if (isSlideOnly(step)) {
-        return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${step.do}`;
+        return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${stepTitle(step)}`;
       }
       const flags = [
         needsConfirm(mode, step.checkpoint) ? 'confirm' : 'agent checks',
@@ -195,8 +202,10 @@ function stepList(plan: Plan, mode: Mode, show: (text: string) => string = (t) =
       ]
         .filter(Boolean)
         .join(', ');
-      const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
-      if (step.expect) lines.push(`   Expect: ${show(step.expect)}`);
+      const lines = [`${i + 1}. [${id}] (${flags}) ${stepTitle(step)}`];
+      // Later lines of a long expect stay inside the step.
+      if (step.expect)
+        lines.push(`   Expect: ${show(step.expect).trimEnd().replace(/\n/g, '\n     ')}`);
       if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
       if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
       if (step.cookies)
@@ -428,6 +437,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           requestId: extra.requestId,
         });
         const driver = ctx.requireDriver();
+        if (plan?.panel?.corner) await driver.panel?.setCorner(plan.panel.corner);
         // Start clean: earlier actions and page errors are not part of this run.
         ctx.actionCursor = ctx.actionLog.length;
         driver.endStep('(before the run)');
@@ -500,7 +510,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           '',
           'For each step:',
           '1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.',
-          '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
+          '2. For a "confirm" step, call ask_developer with the stepId and didWhat (what you did). Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan. Give title or expected only to change them.',
           '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
           '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
           '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail. For a "mock" step, call intercept with action add for each rule before the step. For "Mock: off", call intercept with action clear.',

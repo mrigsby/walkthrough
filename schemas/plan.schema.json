@@ -601,6 +601,142 @@
       },
       "additionalProperties": false
     },
+    "panel": {
+      "description": "Panel labels, buttons, and the \"What's next\" part for every step. A step \"panel\" replaces the same settings for that step.",
+      "type": "object",
+      "properties": {
+        "labels": {
+          "description": "Labels of the parts of the panel.",
+          "type": "object",
+          "properties": {
+            "did": {
+              "description": "The label above what the agent did. The default is \"What I did\". \"\" shows no label.",
+              "type": "string",
+              "maxLength": 40
+            },
+            "expect": {
+              "description": "The label above what the developer should see. The default is \"What you should see\". \"\" shows no label.",
+              "type": "string",
+              "maxLength": 40
+            },
+            "next": {
+              "description": "The label above what comes next. The default is \"What's next\". \"\" shows no label.",
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "additionalProperties": false
+        },
+        "buttons": {
+          "description": "Text and colors of the answer buttons, like { pass: { label: Done } }.",
+          "type": "object",
+          "properties": {
+            "pass": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "description": "The text on the button.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "color": {
+                  "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "additionalProperties": false
+            },
+            "bug": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "description": "The text on the button.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "color": {
+                  "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                },
+                "show": {
+                  "description": "false hides the button.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            "skip": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "description": "The text on the button.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "color": {
+                  "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                },
+                "show": {
+                  "description": "false hides the button.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            "stop": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "description": "The text on the button.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "color": {
+                  "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                  "type": "string",
+                  "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "next": {
+          "type": "object",
+          "properties": {
+            "collapsed": {
+              "description": "Start with \"What's next\" closed. Default: true.",
+              "type": "boolean"
+            },
+            "auto": {
+              "description": "A step without \"next\" shows the \"do\" of the next step.",
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "corner": {
+          "description": "Where the panel starts. Default: bottom-right.",
+          "type": "string",
+          "enum": [
+            "bottom-right",
+            "bottom-left",
+            "top-left",
+            "top-right"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "steps": {
       "minItems": 1,
       "type": "array",
@@ -1428,6 +1564,133 @@
             "description": "The time for this step in a presentation, like \"45s\".",
             "type": "string",
             "pattern": "^(?=\\d)(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$"
+          },
+          "next": {
+            "description": "What comes after this step. The panel shows it under \"What's next\".",
+            "type": "string",
+            "maxLength": 2000
+          },
+          "panel": {
+            "description": "Panel labels and buttons for this step. They replace the same settings in the plan \"panel\".",
+            "type": "object",
+            "properties": {
+              "labels": {
+                "description": "Labels of the parts of the panel.",
+                "type": "object",
+                "properties": {
+                  "did": {
+                    "description": "The label above what the agent did. The default is \"What I did\". \"\" shows no label.",
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "expect": {
+                    "description": "The label above what the developer should see. The default is \"What you should see\". \"\" shows no label.",
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "next": {
+                    "description": "The label above what comes next. The default is \"What's next\". \"\" shows no label.",
+                    "type": "string",
+                    "maxLength": 40
+                  }
+                },
+                "additionalProperties": false
+              },
+              "buttons": {
+                "description": "Text and colors of the answer buttons, like { pass: { label: Done } }.",
+                "type": "object",
+                "properties": {
+                  "pass": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "description": "The text on the button.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      },
+                      "color": {
+                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "bug": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "description": "The text on the button.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      },
+                      "color": {
+                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      },
+                      "show": {
+                        "description": "false hides the button.",
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "description": "The text on the button.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      },
+                      "color": {
+                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      },
+                      "show": {
+                        "description": "false hides the button.",
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "stop": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "description": "The text on the button.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      },
+                      "color": {
+                        "description": "The button color. Walkthrough picks a text color that is easy to read on it.",
+                        "type": "string",
+                        "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "collapsed": {
+                    "description": "Start with \"What's next\" closed.",
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         },
         "required": [

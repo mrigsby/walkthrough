@@ -36,10 +36,12 @@ The developer can choose the mode when they ask for the run. Pass it to `run_sta
 2. Check the result yourself with `snapshot`, `read`, or `wait_for`.
 3. For a step that you check yourself, call `run_step` with the `stepId` and `pass`, `fail`, `skip`, or `blocked`. On `fail`, say what you saw in `actual`. Walkthrough saves a screenshot and the errors.
 4. For a step that the developer confirms, call `ask_developer` with:
-   - `title`: a short name for the step.
+   - `stepId` during a run. Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan.
    - `didWhat`: what you did, in plain words.
-   - `expected`: what the developer should see now. Make it specific and easy to check, such as "The cart total is $30.00", not "The cart works".
-   - `stepId`, `step`, and `total` during a run.
+   - `title`: a short name for the step. Not needed when the plan step gives it.
+   - `expected`: what the developer should see now. Not needed when the plan step gives it. Make it specific and easy to check, such as "The cart total is $30.00", not "The cart works".
+   - `next` and `panel`: only to change the panel for this question. `next` sets the text of the "What's next" part. `panel` changes labels and buttons, like `{ buttons: { pass: { label: Done } } }`.
+   - Panel text can use "- " lists, "1." lists, "- [ ]" check lists, `**bold**`, `` `code` ``, and ``` code blocks.
 5. Act on the answer:
    - `status: pass`: continue with the next step.
    - `status: bug`: Walkthrough saved a screenshot and the errors from this step. Tell the developer the screenshot path and the main error. Ask whether to continue.

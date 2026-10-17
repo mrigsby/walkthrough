@@ -32,7 +32,7 @@ import { buildOps, opsByStep } from '../replay/ops.js';
 import { Rebaser } from '../replay/rebase.js';
 import { PACES, replayVars } from '../replay/replayer.js';
 import { NullStage } from '../replay/stage.js';
-import { durationSeconds } from '../run/plan-schema.js';
+import { durationSeconds, stepTitle } from '../run/plan-schema.js';
 import { loadPlan } from '../run/plans.js';
 import { type Run, RunStore } from '../run/run-store.js';
 import { liveCaptures, size } from '../video/recording.js';
@@ -307,7 +307,7 @@ async function startPresentation(
     return {
       index: i + 1,
       id,
-      title: show(step.do),
+      title: show(stepTitle(step)),
       ...(step.caption ? { caption: show(step.caption) } : {}),
       ...(step.notes ? { notes: show(step.notes) } : {}),
       ...(step.slide ? { slide: step.slide } : {}),

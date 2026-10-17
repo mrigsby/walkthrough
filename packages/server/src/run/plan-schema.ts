@@ -6,6 +6,7 @@ import { cookieCheckSchema } from '../devtools/cookie-schema.js';
 import { mockRuleSchema } from '../devtools/mock-schema.js';
 import { envNameSchema, varsSchema } from '../environments.js';
 import { LH_CATEGORIES, LH_DEVICES, LH_MODES } from '../lighthouse/categories.js';
+import { planPanelSchema, stepPanelSchema } from '../panel/panel-schema.js';
 import { VIDEO_FORMATS } from '../video/formats.js';
 
 // How the agent checks each step.
@@ -381,6 +382,16 @@ export const stepSchema = z
     timeBudget: duration
       .optional()
       .describe('The time for this step in a presentation, like "45s".'),
+    next: z
+      .string()
+      .max(2000)
+      .optional()
+      .describe('What comes after this step. The panel shows it under "What\'s next".'),
+    panel: stepPanelSchema
+      .optional()
+      .describe(
+        'Panel labels and buttons for this step. They replace the same settings in the plan "panel".',
+      ),
   })
   .strict()
   .refine((step) => step.lighthouse !== 'navigation' || Boolean(step.action?.navigate), {
@@ -494,6 +505,11 @@ export const planSchema = z
     presentation: presentationSchema
       .optional()
       .describe('Settings to play this plan as a live presentation. See docs/presentations.md.'),
+    panel: planPanelSchema
+      .optional()
+      .describe(
+        'Panel labels, buttons, and the "What\'s next" part for every step. A step "panel" replaces the same settings for that step.',
+      ),
     steps: z.array(stepSchema).min(1, 'A plan needs at least one step.'),
   })
   .strict()
@@ -508,6 +524,11 @@ export const planSchema = z
 
 export type Plan = z.infer<typeof planSchema>;
 export type PlanStep = z.infer<typeof stepSchema>;
+
+// The name of a step in lists, reports, and the panel.
+export function stepTitle(step: PlanStep): string {
+  return step.do;
+}
 
 // A screenshot saved to an exact file.
 export interface Capture {

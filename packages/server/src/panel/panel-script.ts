@@ -13,17 +13,41 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   if (w.__uiwalkPanel) return;
 
   type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  // The same shapes as panel/view.ts and panel/rich-text.ts.
+  type Inline = { t: 'text' | 'b' | 'i' | 'code'; v: string };
+  type Block =
+    | { t: 'p'; lines: Inline[][] }
+    | { t: 'ul'; items: Inline[][] }
+    | { t: 'ol'; start: number; items: Inline[][] }
+    | { t: 'check'; items: Array<{ text: Inline[]; checked: boolean }> }
+    | { t: 'code'; v: string };
+  interface Section {
+    key: string;
+    label: string;
+    blocks: Block[];
+    collapsible?: boolean;
+    collapsed?: boolean;
+  }
+  interface ViewButton {
+    result: string;
+    label: string;
+    color?: string;
+    textColor?: string;
+  }
+  interface View {
+    kind: 'step' | 'confirm';
+    title: string;
+    sections: Section[];
+    buttons: ViewButton[];
+    notes: boolean;
+    color?: string;
+  }
   interface Question {
     id: string;
     nonce: string;
-    title: string;
-    didWhat: string;
-    expected: string;
     step?: number;
     total?: number;
-    kind?: 'step' | 'confirm';
-    confirmLabel?: string;
-    color?: string;
+    view: View;
   }
   interface Badge {
     label: string;
@@ -85,22 +109,13 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   const body = el('div', 'body');
   const status = el('p', 'status');
   const title = el('h2', 'title');
-  const didLabel = el('p', 'label', 'What I did');
-  const didText = el('p', 'text');
-  const expectLabel = el('p', 'label', 'What you should see');
-  const expectText = el('p', 'text');
+  const sections = el('div', 'sections');
   const notes = el('textarea', 'notes');
-  notes.placeholder = 'Notes (required for Bug)';
   notes.rows = 3;
   const error = el('p', 'error');
   const buttons = el('div', 'buttons');
-  const passButton = el('button', 'pass', 'Pass');
-  const bugButton = el('button', 'bug', 'Bug');
-  const skipButton = el('button', 'skip', 'Skip');
-  const stopButton = el('button', 'stop', 'Stop');
-  buttons.append(passButton, bugButton, skipButton, stopButton);
   const questionBox = el('div', 'question');
-  questionBox.append(title, didLabel, didText, expectLabel, expectText, notes, error, buttons);
+  questionBox.append(title, sections, notes, error, buttons);
 
   // The recording view.
   const recordBox = el('div', 'recording');
@@ -134,18 +149,121 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     card.dataset.corner = corner;
   };
 
+  // ---------- Question parts ----------
+  const inlineNodes = (parts: Inline[]): Node[] =>
+    parts.map((part) => {
+      if (part.t === 'b') return el('strong', undefined, part.v);
+      if (part.t === 'i') return el('em', undefined, part.v);
+      if (part.t === 'code') return el('code', undefined, part.v);
+      return document.createTextNode(part.v);
+    });
+
+  const drawBlock = (block: Block): HTMLElement => {
+    switch (block.t) {
+      case 'p': {
+        const p = el('p', 'text');
+        block.lines.forEach((line, i) => {
+          if (i > 0) p.append(el('br'));
+          p.append(...inlineNodes(line));
+        });
+        return p;
+      }
+      case 'ul':
+      case 'ol': {
+        const list = el(block.t, 'list');
+        if (block.t === 'ol' && block.start !== 1) (list as HTMLOListElement).start = block.start;
+        for (const item of block.items) {
+          const li = el('li', undefined);
+          li.append(...inlineNodes(item));
+          list.append(li);
+        }
+        return list;
+      }
+      case 'check': {
+        const list = el('ul', 'checks');
+        for (const item of block.items) {
+          const box = el('input', 'check');
+          box.type = 'checkbox';
+          box.checked = item.checked;
+          box.disabled = true;
+          const text = el('span', undefined);
+          text.append(...inlineNodes(item.text));
+          const li = el('li', undefined);
+          li.append(box, text);
+          list.append(li);
+        }
+        return list;
+      }
+      case 'code': {
+        const pre = el('pre', 'code');
+        pre.append(el('code', undefined, block.v));
+        return pre;
+      }
+    }
+  };
+
+  const drawSection = (section: Section): HTMLElement => {
+    const box = el('div', `section section-${section.key}`);
+    const content = el('div', 'section-body');
+    content.append(...section.blocks.map(drawBlock));
+    if (section.collapsible) {
+      let open = !section.collapsed;
+      const toggle = el('button', `toggle toggle-${section.key}`);
+      const arrow = el('span', 'arrow');
+      const label = el('span', undefined, section.label || 'More');
+      toggle.append(arrow, label);
+      const sync = () => {
+        arrow.textContent = open ? '\u25BE' : '\u25B8';
+        toggle.setAttribute('aria-expanded', String(open));
+        content.hidden = !open;
+      };
+      onTrusted(toggle, () => {
+        open = !open;
+        sync();
+      });
+      sync();
+      box.append(toggle, content);
+    } else {
+      if (section.label) box.append(el('p', 'label', section.label));
+      box.append(content);
+    }
+    return box;
+  };
+
+  // Draws the parts of a question once. A part drawn again would lose a click.
+  let drawnId = '';
+  const drawQuestion = (q: Question): void => {
+    if (drawnId === q.id) return;
+    drawnId = q.id;
+    const view = q.view;
+    title.textContent = view.title;
+    sections.replaceChildren(...view.sections.map(drawSection));
+    buttons.replaceChildren(
+      ...view.buttons.map((b) => {
+        const button = el('button', b.result, b.label);
+        if (b.color) {
+          button.style.background = b.color;
+          button.style.borderColor = b.color;
+          button.style.color = b.textColor ?? '';
+        }
+        onTrusted(button, () => answer(b.result));
+        return button;
+      }),
+    );
+    buttons.classList.toggle('two', view.buttons.length === 2);
+    notes.hidden = !view.notes;
+    error.hidden = !view.notes;
+    const bug = view.buttons.find((b) => b.result === 'bug');
+    notes.placeholder = bug ? `Notes (required for ${bug.label})` : 'Notes';
+  };
+
   const render = (): void => {
     envBadge.hidden = !env;
     envBadge.textContent = env?.label ?? '';
     envBadge.style.background = env?.color ?? '';
-    const confirm = question?.kind === 'confirm';
+    const confirm = question?.view.kind === 'confirm';
     card.classList.toggle('confirming', confirm);
-    card.style.borderColor = confirm && question?.color ? question.color : '';
-    for (const node of [didLabel, expectLabel, expectText, notes, error, bugButton, skipButton])
-      node.hidden = confirm;
-    buttons.classList.toggle('two', confirm);
-    passButton.textContent = confirm ? (question?.confirmLabel ?? 'Continue') : 'Pass';
-    stopButton.textContent = confirm ? 'Cancel' : 'Stop';
+    card.style.borderColor = confirm && question?.view.color ? question.view.color : '';
     card.classList.toggle('collapsed', collapsed);
     card.classList.toggle('asking', Boolean(question));
     card.classList.toggle('recording-on', Boolean(recording));
@@ -169,12 +287,11 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
         : question.step
           ? `Step ${question.step}${question.total ? ` of ${question.total}` : ''}`
           : 'Check';
-      title.textContent = question.title;
-      didText.textContent = question.didWhat;
-      expectText.textContent = question.expected;
+      drawQuestion(question);
       questionBox.hidden = false;
       status.hidden = true;
     } else {
+      drawnId = '';
       stepBadge.textContent = '';
       questionBox.hidden = true;
       status.hidden = false;
@@ -194,28 +311,27 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
     });
   };
 
-  const answer = (result: 'pass' | 'bug' | 'skip' | 'stop'): void => {
+  function answer(result: string): void {
     if (!question) return;
     const note = notes.value.trim();
+    const label = question.view.buttons.find((b) => b.result === result)?.label ?? result;
     if (result === 'bug' && !note) {
-      error.textContent = 'Describe the bug in the notes. Then click Bug.';
+      error.textContent = `Describe the bug in the notes. Then click ${label}.`;
       notes.focus();
       return;
     }
     send({ type: 'answer', id: question.id, nonce: question.nonce, result, note });
-    const confirmed = question.kind === 'confirm';
+    const confirmed = question.view.kind === 'confirm';
     question = null;
     notes.value = '';
     error.textContent = '';
     if (confirmed) {
       setStatus(result === 'pass' ? 'Confirmed. The agent is working.' : 'Canceled.');
     } else {
-      setStatus(
-        `Sent: ${result === 'pass' ? 'Pass' : result === 'bug' ? 'Bug' : result === 'skip' ? 'Skip' : 'Stop'}. The agent is working.`,
-      );
+      setStatus(`Sent: ${label}. The agent is working.`);
     }
     render();
-  };
+  }
 
   onTrusted(expectButton, () => {
     addingExpect = true;
@@ -232,10 +348,6 @@ export function panelMain(opts: PanelOptions, candidates: (el: Element) => strin
   onTrusted(secretButton, () => send({ type: 'rec-secret' }));
   onTrusted(stopRecordButton, () => send({ type: 'rec-stop' }));
 
-  onTrusted(passButton, () => answer('pass'));
-  onTrusted(bugButton, () => answer('bug'));
-  onTrusted(skipButton, () => answer('skip'));
-  onTrusted(stopButton, () => answer('stop'));
   onTrusted(collapseButton, () => {
     collapsed = !collapsed;
     render();

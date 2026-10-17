@@ -199,6 +199,83 @@ describe('developer panel', () => {
     expect(reply.text).toMatch(/the visible page, with link "Help" \[e\d+\] marked/);
     expect(reply.images).toBe(1);
   });
+
+  it('shows custom labels, lists, buttons, and a closed "What\'s next"', async () => {
+    const reply = mcp.call('ask_developer', {
+      title: 'Seed the data',
+      didWhat: 'Nothing yet.',
+      expected: 'Run `npm run seed`. Then check:\n- [ ] It prints **Done**\n1. one\n2. two',
+      next: 'The agent opens the admin page.',
+      panel: {
+        labels: { did: 'Setup' },
+        buttons: { pass: { label: 'Done', color: '#0369a1' }, skip: { show: false } },
+      },
+    });
+    let shown = await waitForPanel(page, 'Seed the data');
+    expect(shown).toMatch(/setup/i);
+    expect(shown).toContain('It prints Done');
+    expect(shown).toMatch(/what's next/i);
+    expect(shown).not.toContain('The agent opens the admin page.');
+    expect(shown).not.toMatch(/\bSkip\b/);
+    await clickPanel(page, 'toggle-next');
+    shown = await waitForPanel(page, 'The agent opens the admin page.');
+    await clickPanel(page, 'pass');
+    expect((await reply).text).toMatch(/^status: pass/);
+    await waitForPanel(page, 'Sent: Done');
+  });
+
+  it('fills the question from the plan step', async () => {
+    mkdirSync(join(project, '.walkthrough', 'plans'), { recursive: true });
+    writeFileSync(
+      join(project, '.walkthrough', 'plans', 'panel-plan.yaml'),
+      `name: Panel plan
+mode: interactive
+panel:
+  labels: { expect: Check this }
+  next: { auto: true }
+  buttons: { bug: { label: Report } }
+steps:
+  - id: look
+    do: Look at the shop
+    expect: The shop shows **three** products.
+  - id: done
+    do: Say goodbye
+    expect: Nothing more.
+    panel: { buttons: { pass: { label: Finish } } }
+`,
+    );
+    const start = await mcp.call('run_start', { plan: 'panel-plan' });
+    expect(start.isError, start.text).toBe(false);
+    expect(start.text).toContain('call ask_developer with the stepId and didWhat');
+
+    const first = mcp.call('ask_developer', { stepId: 'look', didWhat: 'I opened the shop.' });
+    let shown = await waitForPanel(page, 'The shop shows three products.');
+    expect(shown).toContain('Look at the shop');
+    expect(shown).toContain('Step 1 of 2');
+    expect(shown).toMatch(/check this/i);
+    expect(shown).toContain('Report');
+    await clickPanel(page, 'toggle-next');
+    await waitForPanel(page, 'Say goodbye');
+    await clickPanel(page, 'pass');
+    expect((await first).text).toContain('Saved as step 1 in the run.');
+
+    const second = mcp.call('ask_developer', { stepId: 'done' });
+    shown = await waitForPanel(page, 'Nothing more.');
+    expect(shown).toContain('Step 2 of 2');
+    expect(shown).toContain('Finish');
+    expect(shown).not.toMatch(/what i did/i);
+    await clickPanel(page, 'toggle-next');
+    await waitForPanel(page, 'This is the last step.');
+    await clickPanel(page, 'pass');
+    expect((await second).text).toMatch(/^status: pass/);
+    const finish = await mcp.call('run_finish');
+    expect(finish.text).toContain('Result: 2 passed');
+
+    // Without a plan step, the agent must give the text.
+    const bad = await mcp.call('ask_developer', { stepId: 'look', didWhat: 'x' });
+    expect(bad.isError).toBe(true);
+    expect(bad.text).toMatch(/Give a title, didWhat, and expected/);
+  }, 30_000);
 });
 
 describe('ask_developer without a panel', () => {

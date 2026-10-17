@@ -11985,8 +11985,8 @@ var init_CallbackRegistry = __esm({
       has(id) {
         return this.#callbacks.has(id);
       }
-      create(label2, timeout2, request3) {
-        const callback = new Callback(this.#idGenerator(), label2, timeout2);
+      create(label3, timeout2, request3) {
+        const callback = new Callback(this.#idGenerator(), label3, timeout2);
         this.#callbacks.set(callback.id, callback);
         try {
           request3(callback.id);
@@ -12060,12 +12060,12 @@ var init_CallbackRegistry = __esm({
       #deferred = Deferred.create();
       #timer;
       #label;
-      constructor(id, label2, timeout2) {
+      constructor(id, label3, timeout2) {
         this.#id = id;
-        this.#label = label2;
+        this.#label = label3;
         if (timeout2) {
           this.#timer = setTimeout(() => {
-            this.#deferred.reject(rewriteError(this.#error, `${label2} timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.`));
+            this.#deferred.reject(rewriteError(this.#error, `${label3} timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.`));
           }, timeout2);
         }
       }
@@ -17536,8 +17536,8 @@ var init_Input2 = __esm({
         await this.up(key2);
       }
     };
-    getFlag = (button) => {
-      switch (button) {
+    getFlag = (button2) => {
+      switch (button2) {
         case MouseButton.Left:
           return 1;
         case MouseButton.Right:
@@ -17617,7 +17617,7 @@ var init_Input2 = __esm({
       }
       async reset() {
         const actions = [];
-        for (const [flag, button] of [
+        for (const [flag, button2] of [
           [1, MouseButton.Left],
           [4, MouseButton.Middle],
           [2, MouseButton.Right],
@@ -17625,7 +17625,7 @@ var init_Input2 = __esm({
           [8, MouseButton.Back]
         ]) {
           if (this.#state.buttons & flag) {
-            actions.push(this.up({ button }));
+            actions.push(this.up({ button: button2 }));
           }
         }
         if (this.#state.position.x !== 0 || this.#state.position.y !== 0) {
@@ -17657,13 +17657,13 @@ var init_Input2 = __esm({
         }
       }
       async down(options = {}) {
-        const { button = MouseButton.Left, clickCount = 1 } = options;
-        const flag = getFlag(button);
+        const { button: button2 = MouseButton.Left, clickCount = 1 } = options;
+        const flag = getFlag(button2);
         if (!flag) {
-          throw new Error(`Unsupported mouse button: ${button}`);
+          throw new Error(`Unsupported mouse button: ${button2}`);
         }
         if (this.#state.buttons & flag) {
-          throw new Error(`'${button}' is already pressed.`);
+          throw new Error(`'${button2}' is already pressed.`);
         }
         await this.#withTransaction((updateState) => {
           updateState({
@@ -17675,19 +17675,19 @@ var init_Input2 = __esm({
             modifiers: this.#keyboard._modifiers,
             clickCount,
             buttons,
-            button,
+            button: button2,
             ...position
           });
         });
       }
       async up(options = {}) {
-        const { button = MouseButton.Left, clickCount = 1 } = options;
-        const flag = getFlag(button);
+        const { button: button2 = MouseButton.Left, clickCount = 1 } = options;
+        const flag = getFlag(button2);
         if (!flag) {
-          throw new Error(`Unsupported mouse button: ${button}`);
+          throw new Error(`Unsupported mouse button: ${button2}`);
         }
         if (!(this.#state.buttons & flag)) {
-          throw new Error(`'${button}' is not pressed.`);
+          throw new Error(`'${button2}' is not pressed.`);
         }
         await this.#withTransaction((updateState) => {
           updateState({
@@ -17699,7 +17699,7 @@ var init_Input2 = __esm({
             modifiers: this.#keyboard._modifiers,
             clickCount,
             buttons,
-            button,
+            button: button2,
             ...position
           });
         });
@@ -25211,8 +25211,8 @@ var init_InputSource = __esm({
       // https://chromedevtools.github.io/devtools-protocol/tot/Input/#method-dispatchMouseEvent
       get buttons() {
         let buttons = 0;
-        for (const button of this.pressed) {
-          switch (button) {
+        for (const button2 of this.pressed) {
+          switch (button2) {
             case 0:
               buttons |= 1;
               break;
@@ -25237,17 +25237,17 @@ var init_InputSource = __esm({
       // need to create the logic, similar to how it's done for OSes:
       // https://source.chromium.org/chromium/chromium/src/+/refs/heads/main:ui/events/event.cc;l=479
       #clickContexts = /* @__PURE__ */ new Map();
-      setClickCount(button, context2) {
-        let storedContext = this.#clickContexts.get(button);
+      setClickCount(button2, context2) {
+        let storedContext = this.#clickContexts.get(button2);
         if (!storedContext || storedContext.compare(context2)) {
           storedContext = context2;
         }
         ++storedContext.count;
-        this.#clickContexts.set(button, storedContext);
+        this.#clickContexts.set(button2, storedContext);
         return storedContext.count;
       }
-      getClickCount(button) {
-        return this.#clickContexts.get(button)?.count ?? 0;
+      getClickCount(button2) {
+        return this.#clickContexts.get(button2)?.count ?? 0;
       }
       /**
        * Resets click count. Resets consequent click counter. Prevents grouping clicks in
@@ -26005,8 +26005,8 @@ async function getElementCenter(context2, element) {
   const { result: { value: [{ value: x2 }, { value: y }] } } = result;
   return { x: x2, y };
 }
-function getCdpButton(button) {
-  switch (button) {
+function getCdpButton(button2) {
+  switch (button2) {
     case 0:
       return "left";
     case 1:
@@ -26186,11 +26186,11 @@ var init_ActionDispatcher = __esm({
         }
       }
       async #dispatchPointerDownAction(source2, keyState, action2) {
-        const { button } = action2;
-        if (source2.pressed.has(button)) {
+        const { button: button2 } = action2;
+        if (source2.pressed.has(button2)) {
           return;
         }
-        source2.pressed.add(button);
+        source2.pressed.add(button2);
         const { x: x2, y, subtype: pointerType } = source2;
         const { width, height, pressure, twist, tangentialPressure } = action2;
         const { tiltX, tiltY } = getTilt(action2);
@@ -26204,9 +26204,9 @@ var init_ActionDispatcher = __esm({
               x: x2,
               y,
               modifiers,
-              button: getCdpButton(button),
+              button: getCdpButton(button2),
               buttons: source2.buttons,
-              clickCount: source2.setClickCount(button, new ClickContext(x2, y, performance.now())),
+              clickCount: source2.setClickCount(button2, new ClickContext(x2, y, performance.now())),
               pointerType,
               tangentialPressure,
               tiltX,
@@ -26241,11 +26241,11 @@ var init_ActionDispatcher = __esm({
         source2.force = pressure;
       }
       #dispatchPointerUpAction(source2, keyState, action2) {
-        const { button } = action2;
-        if (!source2.pressed.has(button)) {
+        const { button: button2 } = action2;
+        if (!source2.pressed.has(button2)) {
           return;
         }
-        source2.pressed.delete(button);
+        source2.pressed.delete(button2);
         const { x: x2, y, force: force2, radiusX, radiusY, subtype: pointerType } = source2;
         const { modifiers } = keyState;
         switch (pointerType) {
@@ -26256,9 +26256,9 @@ var init_ActionDispatcher = __esm({
               x: x2,
               y,
               modifiers,
-              button: getCdpButton(button),
+              button: getCdpButton(button2),
               buttons: source2.buttons,
-              clickCount: source2.getClickCount(button),
+              clickCount: source2.getClickCount(button2),
               pointerType
             });
           case "touch":
@@ -27745,8 +27745,8 @@ var init_ChannelProxy = __esm({
       #properties;
       #id = uuidv42();
       #logger;
-      constructor(channel, logger) {
-        this.#properties = channel;
+      constructor(channel2, logger) {
+        this.#properties = channel2;
         this.#logger = logger;
       }
       /**
@@ -30803,7 +30803,7 @@ var init_BrowsingContextImpl = __esm({
           const realm = new WindowRealm(this.id, this.#browsingContextStorage, this.#cdpTarget.cdpClient, this.#eventManager, id, this.#logger, origin, uniqueId, this.#realmStorage, sandbox);
           if (auxData.isDefault) {
             this.#defaultRealmDeferred.resolve(realm);
-            void Promise.all(this.#cdpTarget.getChannels().map((channel) => channel.startListenerFromWindow(realm, this.#eventManager)));
+            void Promise.all(this.#cdpTarget.getChannels().map((channel2) => channel2.startListenerFromWindow(realm, this.#eventManager)));
           }
         });
         this.#cdpTarget.cdpClient.on("Runtime.executionContextDestroyed", (params) => {
@@ -37867,7 +37867,7 @@ var init_ExposedFunction = __esm({
       }
       async #initialize() {
         const connection = this.#connection;
-        const channel = {
+        const channel2 = {
           type: "channel",
           value: {
             channel: this.#channel,
@@ -37894,11 +37894,11 @@ var init_ExposedFunction = __esm({
           try {
             const [script] = await Promise.all([
               frame.browsingContext.addPreloadScript(functionDeclaration, {
-                arguments: [channel],
+                arguments: [channel2],
                 sandbox: realm.sandbox
               }),
               realm.realm.callFunction(functionDeclaration, false, {
-                arguments: [channel]
+                arguments: [channel2]
               })
             ]);
             this.#scripts.push([frame, script]);
@@ -39840,8 +39840,8 @@ var init_Input3 = __esm({
         }, char);
       }
     };
-    getBidiButton = (button) => {
-      switch (button) {
+    getBidiButton = (button2) => {
+      switch (button2) {
         case MouseButton.Left:
           return 0;
         case MouseButton.Middle:
@@ -46685,13 +46685,13 @@ function relativeExecutablePath(platform, buildId) {
       return path2.join("chrome-" + folder(platform, buildId), "chrome.exe");
   }
 }
-async function getLastKnownGoodReleaseForChannel(channel) {
+async function getLastKnownGoodReleaseForChannel(channel2) {
   const data = await getJSON(new URL(`${baseVersionUrl}/last-known-good-versions.json`));
-  for (const channel2 of Object.keys(data.channels)) {
-    data.channels[channel2.toLowerCase()] = data.channels[channel2];
-    delete data.channels[channel2];
+  for (const channel3 of Object.keys(data.channels)) {
+    data.channels[channel3.toLowerCase()] = data.channels[channel3];
+    delete data.channels[channel3];
   }
-  return data.channels[channel];
+  return data.channels[channel2];
 }
 async function getLastKnownGoodReleaseForMilestone(milestone) {
   const data = await getJSON(new URL(`${baseVersionUrl}/latest-versions-per-milestone.json`));
@@ -46701,24 +46701,24 @@ async function getLastKnownGoodReleaseForBuild(buildPrefix) {
   const data = await getJSON(new URL(`${baseVersionUrl}/latest-patch-versions-per-build.json`));
   return data.builds[buildPrefix];
 }
-async function resolveBuildId(channel) {
-  if (Object.values(ChromeReleaseChannel).includes(channel)) {
-    return (await getLastKnownGoodReleaseForChannel(channel)).version;
+async function resolveBuildId(channel2) {
+  if (Object.values(ChromeReleaseChannel).includes(channel2)) {
+    return (await getLastKnownGoodReleaseForChannel(channel2)).version;
   }
-  if (channel.match(/^\d+$/)) {
-    return (await getLastKnownGoodReleaseForMilestone(channel))?.version;
+  if (channel2.match(/^\d+$/)) {
+    return (await getLastKnownGoodReleaseForMilestone(channel2))?.version;
   }
-  if (channel.match(/^\d+\.\d+\.\d+$/)) {
-    return (await getLastKnownGoodReleaseForBuild(channel))?.version;
+  if (channel2.match(/^\d+\.\d+\.\d+$/)) {
+    return (await getLastKnownGoodReleaseForBuild(channel2))?.version;
   }
   return;
 }
-function getChromeWindowsLocation(channel, locationsPrefixes) {
+function getChromeWindowsLocation(channel2, locationsPrefixes) {
   if (locationsPrefixes.size === 0) {
     throw new Error("Non of the common Windows Env variables were set");
   }
   let suffix;
-  switch (channel) {
+  switch (channel2) {
     case ChromeReleaseChannel.STABLE:
       suffix = "Google\\Chrome\\Application\\chrome.exe";
       break;
@@ -46751,7 +46751,7 @@ function getWslVariable(variable) {
   }
   return;
 }
-function getWslLocation(channel) {
+function getWslLocation(channel2) {
   const wslVersion = execSync("wslinfo --version", {
     stdio: ["ignore", "pipe", "ignore"],
     encoding: "utf-8"
@@ -46766,14 +46766,14 @@ function getWslLocation(channel) {
       wslPrefixes.add(wslPrefix);
     }
   }
-  const windowsPath = getChromeWindowsLocation(channel, wslPrefixes);
+  const windowsPath = getChromeWindowsLocation(channel2, wslPrefixes);
   return windowsPath.map((path14) => {
     return execSync(`wslpath "${path14}"`).toString().trim();
   });
 }
-function getChromeLinuxOrWslLocation(channel) {
+function getChromeLinuxOrWslLocation(channel2) {
   const locations = [];
-  switch (channel) {
+  switch (channel2) {
     case ChromeReleaseChannel.STABLE:
       locations.push("/opt/google/chrome/chrome");
       break;
@@ -46788,7 +46788,7 @@ function getChromeLinuxOrWslLocation(channel) {
       break;
   }
   try {
-    const wslPath = getWslLocation(channel);
+    const wslPath = getWslLocation(channel2);
     if (wslPath) {
       locations.push(...wslPath);
     }
@@ -46796,7 +46796,7 @@ function getChromeLinuxOrWslLocation(channel) {
   }
   return locations;
 }
-function resolveSystemExecutablePaths(platform, channel) {
+function resolveSystemExecutablePaths(platform, channel2) {
   switch (platform) {
     case BrowserPlatform.WIN64:
     case BrowserPlatform.WIN32:
@@ -46809,10 +46809,10 @@ function resolveSystemExecutablePaths(platform, channel) {
       prefixLocation.add("C:\\Program Files (x86)");
       prefixLocation.add("D:\\Program Files");
       prefixLocation.add("D:\\Program Files (x86)");
-      return getChromeWindowsLocation(channel, prefixLocation);
+      return getChromeWindowsLocation(channel2, prefixLocation);
     case BrowserPlatform.MAC_ARM:
     case BrowserPlatform.MAC:
-      switch (channel) {
+      switch (channel2) {
         case ChromeReleaseChannel.STABLE:
           return [
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -46832,14 +46832,14 @@ function resolveSystemExecutablePaths(platform, channel) {
       }
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      return getChromeLinuxOrWslLocation(channel);
+      return getChromeLinuxOrWslLocation(channel2);
   }
 }
-function resolveDefaultUserDataDir(platform, channel) {
+function resolveDefaultUserDataDir(platform, channel2) {
   switch (platform) {
     case BrowserPlatform.WIN64:
     case BrowserPlatform.WIN32:
-      switch (channel) {
+      switch (channel2) {
         case ChromeReleaseChannel.STABLE:
           return path2.join(getLocalAppDataWin(), "Google", "Chrome", "User Data");
         case ChromeReleaseChannel.BETA:
@@ -46851,7 +46851,7 @@ function resolveDefaultUserDataDir(platform, channel) {
       }
     case BrowserPlatform.MAC_ARM:
     case BrowserPlatform.MAC:
-      switch (channel) {
+      switch (channel2) {
         case ChromeReleaseChannel.STABLE:
           return path2.join(getBaseUserDataDirPathMac(), "Chrome");
         case ChromeReleaseChannel.BETA:
@@ -46863,7 +46863,7 @@ function resolveDefaultUserDataDir(platform, channel) {
       }
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      switch (channel) {
+      switch (channel2) {
         case ChromeReleaseChannel.STABLE:
           return path2.join(getConfigHomeLinux(), "google-chrome");
         case ChromeReleaseChannel.BETA:
@@ -47148,8 +47148,8 @@ function parseBuildId(buildId) {
   return [FirefoxChannel.NIGHTLY, buildId];
 }
 function resolveDownloadUrl5(platform, buildId, baseUrl) {
-  const [channel] = parseBuildId(buildId);
-  switch (channel) {
+  const [channel2] = parseBuildId(buildId);
+  switch (channel2) {
     case FirefoxChannel.NIGHTLY:
       baseUrl ??= "https://archive.mozilla.org/pub/firefox/nightly/latest-mozilla-central";
       break;
@@ -47165,8 +47165,8 @@ function resolveDownloadUrl5(platform, buildId, baseUrl) {
   return `${baseUrl}/${resolveDownloadPath5(platform, buildId).join("/")}`;
 }
 function resolveDownloadPath5(platform, buildId) {
-  const [channel, resolvedBuildId] = parseBuildId(buildId);
-  switch (channel) {
+  const [channel2, resolvedBuildId] = parseBuildId(buildId);
+  switch (channel2) {
     case FirefoxChannel.NIGHTLY:
       return [archiveNightly(platform, resolvedBuildId)];
     case FirefoxChannel.DEVEDITION:
@@ -47182,8 +47182,8 @@ function resolveDownloadPath5(platform, buildId) {
   }
 }
 function relativeExecutablePath5(platform, buildId) {
-  const [channel] = parseBuildId(buildId);
-  switch (channel) {
+  const [channel2] = parseBuildId(buildId);
+  switch (channel2) {
     case FirefoxChannel.NIGHTLY:
       switch (platform) {
         case BrowserPlatform.MAC_ARM:
@@ -47213,7 +47213,7 @@ function relativeExecutablePath5(platform, buildId) {
       }
   }
 }
-async function resolveBuildId3(channel = FirefoxChannel.NIGHTLY) {
+async function resolveBuildId3(channel2 = FirefoxChannel.NIGHTLY) {
   const channelToVersionKey = {
     [FirefoxChannel.ESR]: "FIREFOX_ESR",
     [FirefoxChannel.STABLE]: "LATEST_FIREFOX_VERSION",
@@ -47222,11 +47222,11 @@ async function resolveBuildId3(channel = FirefoxChannel.NIGHTLY) {
     [FirefoxChannel.NIGHTLY]: "FIREFOX_NIGHTLY"
   };
   const versions = await getJSON(new URL(`${baseVersionUrl2}/firefox_versions.json`));
-  const version2 = versions[channelToVersionKey[channel]];
+  const version2 = versions[channelToVersionKey[channel2]];
   if (!version2) {
-    throw new Error(`Channel ${channel} is not found.`);
+    throw new Error(`Channel ${channel2} is not found.`);
   }
-  return channel + "_" + version2;
+  return channel2 + "_" + version2;
 }
 async function createProfile(options) {
   if (!fs2.existsSync(options.path)) {
@@ -47571,7 +47571,7 @@ async function createProfile2(browser, opts) {
       throw new Error(`Profile creation is not support for ${browser} yet`);
   }
 }
-function resolveDefaultUserDataDir2(browser, platform, channel) {
+function resolveDefaultUserDataDir2(browser, platform, channel2) {
   switch (browser) {
     case Browser3.CHROMEDRIVER:
     case Browser3.CHROMEHEADLESSSHELL:
@@ -47579,10 +47579,10 @@ function resolveDefaultUserDataDir2(browser, platform, channel) {
     case Browser3.CHROMIUM:
       throw new Error(`Default user dir detection is not supported for ${browser} yet.`);
     case Browser3.CHROME:
-      return resolveDefaultUserDataDir(platform, channel);
+      return resolveDefaultUserDataDir(platform, channel2);
   }
 }
-function resolveSystemExecutablePaths2(browser, platform, channel) {
+function resolveSystemExecutablePaths2(browser, platform, channel2) {
   switch (browser) {
     case Browser3.CHROMEDRIVER:
     case Browser3.CHROMEHEADLESSSHELL:
@@ -47590,7 +47590,7 @@ function resolveSystemExecutablePaths2(browser, platform, channel) {
     case Browser3.CHROMIUM:
       throw new Error(`System browser detection is not supported for ${browser} yet.`);
     case Browser3.CHROME:
-      return resolveSystemExecutablePaths(platform, channel);
+      return resolveSystemExecutablePaths(platform, channel2);
   }
 }
 function getVersionComparator(browser) {
@@ -50347,17 +50347,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir as mkdir3, unlink } from "node:fs/promises";
 import os5 from "node:os";
 import path10 from "node:path";
-function debugTime(label2) {
-  times.set(label2, process.hrtime());
+function debugTime(label3) {
+  times.set(label3, process.hrtime());
 }
-function debugTimeEnd(label2, logger) {
+function debugTimeEnd(label3, logger) {
   const end = process.hrtime();
-  const start = times.get(label2);
+  const start = times.get(label3);
   if (!start) {
     return;
   }
   const duration5 = end[0] * 1e3 + end[1] / 1e6 - (start[0] * 1e3 + start[1] / 1e6);
-  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label2}: ${duration5}ms`);
+  logger?.(DEBUG_PREFIXES2.install)?.(`Duration for ${label3}: ${duration5}ms`);
 }
 async function installWithProviders(options) {
   if (!options.platform) {
@@ -56868,8 +56868,8 @@ var LaunchOptions_exports = {};
 __export(LaunchOptions_exports, {
   convertPuppeteerChannelToBrowsersChannel: () => convertPuppeteerChannelToBrowsersChannel
 });
-function convertPuppeteerChannelToBrowsersChannel(channel) {
-  switch (channel) {
+function convertPuppeteerChannelToBrowsersChannel(channel2) {
+  switch (channel2) {
     case "chrome":
       return ChromeReleaseChannel.STABLE;
     case "chrome-dev":
@@ -56917,10 +56917,10 @@ async function _connectToBrowser(options) {
   }
 }
 async function getConnectionTransport(options) {
-  const { browserWSEndpoint, browserURL, channel, transport } = options;
+  const { browserWSEndpoint, browserURL, channel: channel2, transport } = options;
   const headers2 = options.wsOptions?.headers ?? options.headers ?? {};
   const wsOptions = options.wsOptions ?? {};
-  assert2(Number(!!browserWSEndpoint) + Number(!!browserURL) + Number(!!transport) + Number(!!channel) === 1, "Exactly one of browserWSEndpoint, browserURL, transport or channel must be passed to puppeteer.connect");
+  assert2(Number(!!browserWSEndpoint) + Number(!!browserURL) + Number(!!transport) + Number(!!channel2) === 1, "Exactly one of browserWSEndpoint, browserURL, transport or channel must be passed to puppeteer.connect");
   if (transport) {
     return { connectionTransport: transport, endpointUrl: "" };
   } else if (browserWSEndpoint) {
@@ -65321,9 +65321,9 @@ var require_codegen = __commonJS({
       }
     };
     var Label = class extends Node2 {
-      constructor(label2) {
+      constructor(label3) {
         super();
-        this.label = label2;
+        this.label = label3;
         this.names = {};
       }
       render({ _n }) {
@@ -65331,14 +65331,14 @@ var require_codegen = __commonJS({
       }
     };
     var Break = class extends Node2 {
-      constructor(label2) {
+      constructor(label3) {
         super();
-        this.label = label2;
+        this.label = label3;
         this.names = {};
       }
       render({ _n }) {
-        const label2 = this.label ? ` ${this.label}` : "";
-        return `break${label2};` + _n;
+        const label3 = this.label ? ` ${this.label}` : "";
+        return `break${label3};` + _n;
       }
     };
     var Throw = class extends Node2 {
@@ -65750,12 +65750,12 @@ var require_codegen = __commonJS({
         return this._endBlockNode(For);
       }
       // `label` statement
-      label(label2) {
-        return this._leafNode(new Label(label2));
+      label(label3) {
+        return this._leafNode(new Label(label3));
       }
       // `break` statement
-      break(label2) {
-        return this._leafNode(new Break(label2));
+      break(label3) {
+        return this._leafNode(new Break(label3));
       }
       // `return` statement
       return(value) {
@@ -66698,8 +66698,8 @@ var require_code2 = __commonJS({
           compositeRule: true
         }, schValid);
         gen.assign(valid, (0, codegen_1._)`${valid} || ${schValid}`);
-        const merged = cxt.mergeValidEvaluated(schCxt, schValid);
-        if (!merged)
+        const merged2 = cxt.mergeValidEvaluated(schCxt, schValid);
+        if (!merged2)
           gen.if((0, codegen_1.not)(valid));
       }));
       cxt.result(valid, () => cxt.reset(), () => cxt.error(true));
@@ -78181,13 +78181,13 @@ function handleIntersectionResults(result, left2, right2) {
         result.issues.push(keyIssues.get(k));
     }
   }
-  const merged = mergeValues(left2.value, right2.value);
-  if (!merged.valid) {
+  const merged2 = mergeValues(left2.value, right2.value);
+  if (!merged2.valid) {
     if (aborted(result))
       return result;
-    throw new Error(`Unmergable intersection. Error path: ${JSON.stringify(merged.mergeErrorPath)}`);
+    throw new Error(`Unmergable intersection. Error path: ${JSON.stringify(merged2.mergeErrorPath)}`);
   }
-  result.value = merged.data;
+  result.value = merged2.data;
   return result;
 }
 var $ZodTuple = /* @__PURE__ */ $constructor("$ZodTuple", (inst, def) => {
@@ -87342,9 +87342,9 @@ function codePointLengthVar(doc, ctx, accessor, inDoubt) {
   doc.write(`const ${v2} = typeof ${accessor} === "string" && ${inDoubt} ? ${cpLen}(${accessor}) : ${accessor}.length;`);
   return v2;
 }
-function numericOperand(value, label2) {
+function numericOperand(value, label3) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new ZodCompileUnsupportedError(`${label2} bound of type ${typeof value}`);
+    throw new ZodCompileUnsupportedError(`${label3} bound of type ${typeof value}`);
   }
   return `${value}`;
 }
@@ -89977,8 +89977,8 @@ function foldObjects(members2) {
         if (!parts.some((seen) => JSON.stringify(seen) === JSON.stringify(part)))
           parts.push(part);
       }
-      const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
-      assignProp(properties, key2, merged);
+      const merged2 = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
+      assignProp(properties, key2, merged2);
     }
     for (const key2 of object3.required ?? [])
       required2.add(key2);
@@ -96061,7 +96061,7 @@ var ChromeLauncher = class extends BrowserLauncher {
    * @internal
    */
   async computeLaunchArguments(options = {}) {
-    const { ignoreDefaultArgs = false, args = [], pipe: pipe3 = false, debuggingPort, channel, executablePath: executablePath2 } = options;
+    const { ignoreDefaultArgs = false, args = [], pipe: pipe3 = false, debuggingPort, channel: channel2, executablePath: executablePath2 } = options;
     const chromeArguments = [];
     if (!ignoreDefaultArgs) {
       chromeArguments.push(...this.defaultArgs(options));
@@ -96099,8 +96099,8 @@ var ChromeLauncher = class extends BrowserLauncher {
     }
     let chromeExecutable = executablePath2;
     if (!chromeExecutable) {
-      assert2(channel || !this.puppeteer._isPuppeteerCore, `An \`executablePath\` or \`channel\` must be specified for \`puppeteer-core\``);
-      chromeExecutable = channel ? await this.executablePath(channel) : await this.resolveExecutablePath(options.headless ?? true);
+      assert2(channel2 || !this.puppeteer._isPuppeteerCore, `An \`executablePath\` or \`channel\` must be specified for \`puppeteer-core\``);
+      chromeExecutable = channel2 ? await this.executablePath(channel2) : await this.resolveExecutablePath(options.headless ?? true);
     }
     return {
       executablePath: chromeExecutable,
@@ -96216,11 +96216,11 @@ var ChromeLauncher = class extends BrowserLauncher {
     chromeArguments.push(...args);
     return chromeArguments;
   }
-  async executablePath(channel, validatePath = true) {
-    if (channel) {
+  async executablePath(channel2, validatePath = true) {
+    if (channel2) {
       return computeSystemExecutablePath({
         browser: Browser3.CHROME,
-        channel: convertPuppeteerChannelToBrowsersChannel(channel)
+        channel: convertPuppeteerChannelToBrowsersChannel(channel2)
       }, validatePath);
     } else {
       return await this.resolveExecutablePath(void 0, validatePath);
@@ -97474,7 +97474,7 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
   }
   const shared = validate3(sharedSchema, sharedRaw, sharedFile);
   const local = validate3(localSchema, readYaml(localFile), localFile);
-  const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
+  const merged2 = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
   const a11y = {
     ...shared.accessibility,
     ...local.accessibility,
@@ -97503,15 +97503,15 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
     );
   }
   const allowedOrigins = [
-    .../* @__PURE__ */ new Set([...merged.allowedOrigins ?? DEFAULT_ORIGINS, ...environment2.allowedOrigins])
+    .../* @__PURE__ */ new Set([...merged2.allowedOrigins ?? DEFAULT_ORIGINS, ...environment2.allowedOrigins])
   ];
   const envOrigin = originOf(environment2.baseUrl);
   if (envOrigin && !new OriginGuard(allowedOrigins).isAllowed(envOrigin)) {
     allowedOrigins.push(envOrigin);
   }
   const envHeadless = process.env.UIWALK_HEADLESS;
-  const headless = envHeadless ? envHeadless !== "0" : merged.browser.headless ?? false;
-  const panel = (merged.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === "1");
+  const headless = envHeadless ? envHeadless !== "0" : merged2.browser.headless ?? false;
+  const panel = (merged2.panel ?? true) && (!headless || process.env.UIWALK_FORCE_PANEL === "1");
   return {
     projectDir,
     projectDirSource,
@@ -97519,14 +97519,14 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
     allowedOrigins,
     browser: {
       headless,
-      slowMo: merged.browser.slowMo ?? 0,
-      executablePath: merged.browser.executablePath
+      slowMo: merged2.browser.slowMo ?? 0,
+      executablePath: merged2.browser.executablePath
     },
-    dialogs: merged.dialogs ?? "ask",
-    actionTimeoutMs: environment2.actionTimeoutMs ?? merged.actionTimeoutMs ?? 1e4,
-    askTimeoutSec: merged.askTimeoutSec,
+    dialogs: merged2.dialogs ?? "ask",
+    actionTimeoutMs: environment2.actionTimeoutMs ?? merged2.actionTimeoutMs ?? 1e4,
+    askTimeoutSec: merged2.askTimeoutSec,
     panel,
-    highlightMs: merged.highlightMs ?? (headless ? 0 : 600),
+    highlightMs: merged2.highlightMs ?? (headless ? 0 : 600),
     allowEvaluate: local.allowEvaluate ?? false,
     uploadsRoot,
     screenshotRoots,
@@ -98300,6 +98300,43 @@ function describeRule(rule) {
   return parts.filter(Boolean).join(" ").replace(/ ,/g, ",");
 }
 
+// packages/server/src/panel/panel-schema.ts
+var hexColor = external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#15803d".');
+var label = (what) => external_exports.string().max(40).optional().describe(`The label above ${what}. "" shows no label.`);
+var button = external_exports.object({
+  label: external_exports.string().min(1).max(24).optional().describe("The text on the button."),
+  color: hexColor.optional().describe("The button color. Walkthrough picks a text color that is easy to read on it.")
+}).strict();
+var optionalButton = button.extend({ show: external_exports.boolean().optional().describe("false hides the button.") }).strict();
+var panelLayer = {
+  labels: external_exports.object({
+    did: label('what the agent did. The default is "What I did"'),
+    expect: label('what the developer should see. The default is "What you should see"'),
+    next: label(`what comes next. The default is "What's next"`)
+  }).strict().optional().describe("Labels of the parts of the panel."),
+  buttons: external_exports.object({
+    pass: button.optional(),
+    bug: optionalButton.optional(),
+    skip: optionalButton.optional(),
+    stop: button.optional()
+  }).strict().optional().describe("Text and colors of the answer buttons, like { pass: { label: Done } }.")
+};
+var stepPanelSchema = external_exports.object({
+  ...panelLayer,
+  next: external_exports.object({
+    collapsed: external_exports.boolean().optional().describe(`Start with "What's next" closed.`)
+  }).strict().optional()
+}).strict();
+var CORNERS = ["bottom-right", "bottom-left", "top-left", "top-right"];
+var planPanelSchema = external_exports.object({
+  ...panelLayer,
+  next: external_exports.object({
+    collapsed: external_exports.boolean().optional().describe(`Start with "What's next" closed. Default: true.`),
+    auto: external_exports.boolean().optional().describe('A step without "next" shows the "do" of the next step.')
+  }).strict().optional(),
+  corner: external_exports.enum(CORNERS).optional().describe("Where the panel starts. Default: bottom-right.")
+}).strict();
+
 // packages/server/src/run/plan-schema.ts
 var MODES = ["interactive", "checkpoints", "autonomous"];
 var target = external_exports.object({
@@ -98368,20 +98405,20 @@ function durationSeconds(text) {
   if (!m) return 0;
   return Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
 }
-var hexColor = external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#000000".');
+var hexColor2 = external_exports.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, 'Use a hex color, like "#000000".');
 var SLIDE_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"];
 var imageSlide = external_exports.object({
   image: external_exports.string().min(1).describe('An image file from the project folder, like ".walkthrough/slides/title.png".'),
   fit: external_exports.enum(["contain", "cover"]).optional().describe(
     "contain shows all of the image (default). cover fills the window and can cut the edges."
   ),
-  background: hexColor.optional().describe("The color around the image. The default is black.")
+  background: hexColor2.optional().describe("The color around the image. The default is black.")
 }).strict();
 var textSlide = external_exports.object({
   title: external_exports.string().min(1).max(120).describe("Big text in the middle of the screen."),
   text: external_exports.string().max(1e3).optional().describe("Smaller text under the title."),
-  background: hexColor.optional().describe("The color of the slide. The default is dark gray."),
-  color: hexColor.optional().describe("The color of the text. The default is white.")
+  background: hexColor2.optional().describe("The color of the slide. The default is dark gray."),
+  color: hexColor2.optional().describe("The color of the text. The default is white.")
 }).strict();
 var slideSchema = external_exports.union([imageSlide, textSlide], {
   error: 'A slide has an "image", or a "title" with an optional "text".'
@@ -98480,7 +98517,11 @@ var stepSchema = external_exports.object({
   zoom: external_exports.number().min(1.25).max(4).optional().describe(
     "In a presentation, show the area of the next action this many times bigger during the pause."
   ),
-  timeBudget: duration3.optional().describe('The time for this step in a presentation, like "45s".')
+  timeBudget: duration3.optional().describe('The time for this step in a presentation, like "45s".'),
+  next: external_exports.string().max(2e3).optional().describe(`What comes after this step. The panel shows it under "What's next".`),
+  panel: stepPanelSchema.optional().describe(
+    'Panel labels and buttons for this step. They replace the same settings in the plan "panel".'
+  )
 }).strict().refine((step) => step.lighthouse !== "navigation" || Boolean(step.action?.navigate), {
   message: "A navigation step needs a page to load, like action: { navigate: / }. For a page that opens after a click, use timespan.",
   path: ["lighthouse"]
@@ -98533,6 +98574,9 @@ var planSchema = external_exports.object({
     }).strict()
   ]).optional().describe("Record the whole run as a video. The report shows it."),
   presentation: presentationSchema.optional().describe("Settings to play this plan as a live presentation. See docs/presentations.md."),
+  panel: planPanelSchema.optional().describe(
+    `Panel labels, buttons, and the "What's next" part for every step. A step "panel" replaces the same settings for that step.`
+  ),
   steps: external_exports.array(stepSchema).min(1, "A plan needs at least one step.")
 }).strict().refine(
   (plan) => !plan.environment || !plan.environments || plan.environments.includes(plan.environment),
@@ -98541,6 +98585,9 @@ var planSchema = external_exports.object({
     path: ["environment"]
   }
 );
+function stepTitle(step) {
+  return step.do;
+}
 function stepCapture(plan, step) {
   const shot = step.screenshot;
   if (shot === void 0 || typeof shot === "boolean") return void 0;
@@ -101191,7 +101238,7 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
    * upgrade if you are experiencing issues.
    */
   merge(merging) {
-    const merged = new _ZodObject({
+    const merged2 = new _ZodObject({
       unknownKeys: merging._def.unknownKeys,
       catchall: merging._def.catchall,
       shape: () => ({
@@ -101200,7 +101247,7 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
       }),
       typeName: ZodFirstPartyTypeKind2.ZodObject
     });
-    return merged;
+    return merged2;
   }
   // merge<
   //   Incoming extends AnyZodObject,
@@ -101609,8 +101656,8 @@ var ZodIntersection2 = class extends ZodType2 {
       if (isAborted(parsedLeft) || isAborted(parsedRight)) {
         return INVALID2;
       }
-      const merged = mergeValues2(parsedLeft.value, parsedRight.value);
-      if (!merged.valid) {
+      const merged2 = mergeValues2(parsedLeft.value, parsedRight.value);
+      if (!merged2.valid) {
         addIssueToContext(ctx, {
           code: ZodIssueCode2.invalid_intersection_types
         });
@@ -101619,7 +101666,7 @@ var ZodIntersection2 = class extends ZodType2 {
       if (isDirty(parsedLeft) || isDirty(parsedRight)) {
         status.dirty();
       }
-      return { status: status.value, value: merged.data };
+      return { status: status.value, value: merged2.data };
     };
     if (ctx.common.async) {
       return Promise.all([
@@ -106944,9 +106991,9 @@ var LogBook = class {
     return this.since(this.stepStart, levels, kinds);
   }
   // Ends the current step: tags its entries and starts the next step.
-  endStep(label2) {
+  endStep(label3) {
     for (const entry of this.entries) {
-      if (entry.seq > this.stepStart && !entry.step) entry.step = label2;
+      if (entry.seq > this.stepStart && !entry.step) entry.step = label3;
     }
     this.stepStart = this.seq;
     this.issueKeys.clear();
@@ -107097,9 +107144,9 @@ var NetworkBook = class {
     return this.since(this.stepStart);
   }
   // Ends the current step: tags its requests and starts the next step.
-  endStep(label2) {
+  endStep(label3) {
     for (const entry of this.entries) {
-      if (entry.seq > this.stepStart && !entry.step) entry.step = label2;
+      if (entry.seq > this.stepStart && !entry.step) entry.step = label3;
     }
     this.stepStart = this.seq;
   }
@@ -107334,6 +107381,7 @@ var PANEL_CSS = `
   --bg: #ffffff; --fg: #0f172a; --muted: #475569; --line: #cbd5e1;
   --pass: #15803d; --bug: #b91c1c; --btn: #e2e8f0; --focus: #2563eb;
   position: fixed; z-index: 2147483647; width: 340px; max-width: calc(100vw - 24px);
+  display: flex; flex-direction: column; max-height: calc(100vh - 24px);
   background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25); font-size: 14px; line-height: 1.4;
 }
@@ -107359,19 +107407,32 @@ var PANEL_CSS = `
   border-radius: 6px; cursor: pointer; }
 .icon:hover { background: var(--btn); }
 
-.body { padding: 10px 12px 12px; }
+.body { padding: 10px 12px 12px; overflow-y: auto; min-height: 0; }
 .card.collapsed .body { display: none; }
 .status { margin: 0; color: var(--muted); }
 .title { margin: 0 0 8px; font-size: 15px; }
 .label { margin: 8px 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
 .text { margin: 0; white-space: pre-wrap; }
+.section-body > * + * { margin-top: 6px; }
+.list { margin: 0; padding-left: 20px; }
+.checks { margin: 0; padding-left: 0; list-style: none; }
+.checks li { display: flex; gap: 6px; align-items: baseline; }
+.checks .check { margin: 0; flex: none; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+  background: var(--btn); padding: 1px 4px; border-radius: 4px; }
+pre.code { margin: 0; padding: 8px; background: var(--btn); border-radius: 6px; overflow-x: auto; }
+pre.code code { padding: 0; background: none; white-space: pre; }
+.toggle { display: block; margin: 8px 0 2px; padding: 0; background: none; border: none; cursor: pointer;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); text-align: left; }
+.toggle:focus-visible { outline: 2px solid var(--focus); }
+.toggle .arrow { display: inline-block; width: 14px; font-size: 14px; line-height: 1; }
 .notes { width: 100%; margin-top: 10px; padding: 6px 8px; font-size: 13px; color: var(--fg);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
 .notes:focus { outline: 2px solid var(--focus); outline-offset: 0; }
 .error { margin: 4px 0 0; min-height: 1em; color: var(--bug); font-size: 12px; }
-.buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-.buttons button { padding: 7px 0; border-radius: 6px; border: 1px solid var(--line); background: var(--btn);
-  color: var(--fg); font-size: 13px; font-weight: 600; cursor: pointer; }
+.buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 6px; margin-top: 8px; }
+.buttons button { padding: 7px 4px; border-radius: 6px; border: 1px solid var(--line); background: var(--btn);
+  color: var(--fg); font-size: 13px; font-weight: 600; line-height: 1.2; cursor: pointer; overflow-wrap: anywhere; }
 .buttons button:focus-visible { outline: 2px solid var(--focus); }
 .buttons .pass { background: var(--pass); border-color: var(--pass); color: #ffffff; }
 .buttons .bug { background: var(--bug); border-color: var(--bug); color: #ffffff; }
@@ -107439,22 +107500,13 @@ function panelMain(opts, candidates) {
   const body = el("div", "body");
   const status = el("p", "status");
   const title = el("h2", "title");
-  const didLabel = el("p", "label", "What I did");
-  const didText = el("p", "text");
-  const expectLabel = el("p", "label", "What you should see");
-  const expectText = el("p", "text");
+  const sections = el("div", "sections");
   const notes = el("textarea", "notes");
-  notes.placeholder = "Notes (required for Bug)";
   notes.rows = 3;
   const error62 = el("p", "error");
   const buttons = el("div", "buttons");
-  const passButton = el("button", "pass", "Pass");
-  const bugButton = el("button", "bug", "Bug");
-  const skipButton = el("button", "skip", "Skip");
-  const stopButton = el("button", "stop", "Stop");
-  buttons.append(passButton, bugButton, skipButton, stopButton);
   const questionBox = el("div", "question");
-  questionBox.append(title, didLabel, didText, expectLabel, expectText, notes, error62, buttons);
+  questionBox.append(title, sections, notes, error62, buttons);
   const recordBox = el("div", "recording");
   const recordText = el("p", "text");
   const expectInput = el("textarea", "notes rec-notes");
@@ -107482,18 +107534,114 @@ function panelMain(opts, candidates) {
     card.style.top = "";
     card.dataset.corner = corner;
   };
+  const inlineNodes = (parts) => parts.map((part) => {
+    if (part.t === "b") return el("strong", void 0, part.v);
+    if (part.t === "i") return el("em", void 0, part.v);
+    if (part.t === "code") return el("code", void 0, part.v);
+    return document.createTextNode(part.v);
+  });
+  const drawBlock = (block) => {
+    switch (block.t) {
+      case "p": {
+        const p = el("p", "text");
+        block.lines.forEach((line2, i) => {
+          if (i > 0) p.append(el("br"));
+          p.append(...inlineNodes(line2));
+        });
+        return p;
+      }
+      case "ul":
+      case "ol": {
+        const list2 = el(block.t, "list");
+        if (block.t === "ol" && block.start !== 1) list2.start = block.start;
+        for (const item of block.items) {
+          const li = el("li", void 0);
+          li.append(...inlineNodes(item));
+          list2.append(li);
+        }
+        return list2;
+      }
+      case "check": {
+        const list2 = el("ul", "checks");
+        for (const item of block.items) {
+          const box = el("input", "check");
+          box.type = "checkbox";
+          box.checked = item.checked;
+          box.disabled = true;
+          const text = el("span", void 0);
+          text.append(...inlineNodes(item.text));
+          const li = el("li", void 0);
+          li.append(box, text);
+          list2.append(li);
+        }
+        return list2;
+      }
+      case "code": {
+        const pre = el("pre", "code");
+        pre.append(el("code", void 0, block.v));
+        return pre;
+      }
+    }
+  };
+  const drawSection = (section2) => {
+    const box = el("div", `section section-${section2.key}`);
+    const content = el("div", "section-body");
+    content.append(...section2.blocks.map(drawBlock));
+    if (section2.collapsible) {
+      let open4 = !section2.collapsed;
+      const toggle = el("button", `toggle toggle-${section2.key}`);
+      const arrow = el("span", "arrow");
+      const label4 = el("span", void 0, section2.label || "More");
+      toggle.append(arrow, label4);
+      const sync = () => {
+        arrow.textContent = open4 ? "\u25BE" : "\u25B8";
+        toggle.setAttribute("aria-expanded", String(open4));
+        content.hidden = !open4;
+      };
+      onTrusted(toggle, () => {
+        open4 = !open4;
+        sync();
+      });
+      sync();
+      box.append(toggle, content);
+    } else {
+      if (section2.label) box.append(el("p", "label", section2.label));
+      box.append(content);
+    }
+    return box;
+  };
+  let drawnId = "";
+  const drawQuestion = (q2) => {
+    if (drawnId === q2.id) return;
+    drawnId = q2.id;
+    const view = q2.view;
+    title.textContent = view.title;
+    sections.replaceChildren(...view.sections.map(drawSection));
+    buttons.replaceChildren(
+      ...view.buttons.map((b2) => {
+        const button2 = el("button", b2.result, b2.label);
+        if (b2.color) {
+          button2.style.background = b2.color;
+          button2.style.borderColor = b2.color;
+          button2.style.color = b2.textColor ?? "";
+        }
+        onTrusted(button2, () => answer(b2.result));
+        return button2;
+      })
+    );
+    buttons.classList.toggle("two", view.buttons.length === 2);
+    notes.hidden = !view.notes;
+    error62.hidden = !view.notes;
+    const bug = view.buttons.find((b2) => b2.result === "bug");
+    notes.placeholder = bug ? `Notes (required for ${bug.label})` : "Notes";
+  };
   const render = () => {
     envBadge.hidden = !env2;
     envBadge.textContent = env2?.label ?? "";
     envBadge.style.background = env2?.color ?? "";
-    const confirm = question?.kind === "confirm";
+    const confirm = question?.view.kind === "confirm";
     card.classList.toggle("confirming", confirm);
-    card.style.borderColor = confirm && question?.color ? question.color : "";
-    for (const node3 of [didLabel, expectLabel, expectText, notes, error62, bugButton, skipButton])
-      node3.hidden = confirm;
-    buttons.classList.toggle("two", confirm);
-    passButton.textContent = confirm ? question?.confirmLabel ?? "Continue" : "Pass";
-    stopButton.textContent = confirm ? "Cancel" : "Stop";
+    card.style.borderColor = confirm && question?.view.color ? question.view.color : "";
     card.classList.toggle("collapsed", collapsed);
     card.classList.toggle("asking", Boolean(question));
     card.classList.toggle("recording-on", Boolean(recording));
@@ -107511,12 +107659,11 @@ function panelMain(opts, candidates) {
     collapseButton.title = collapsed ? "Expand" : "Collapse";
     if (question) {
       stepBadge.textContent = confirm ? "Confirm" : question.step ? `Step ${question.step}${question.total ? ` of ${question.total}` : ""}` : "Check";
-      title.textContent = question.title;
-      didText.textContent = question.didWhat;
-      expectText.textContent = question.expected;
+      drawQuestion(question);
       questionBox.hidden = false;
       status.hidden = true;
     } else {
+      drawnId = "";
       stepBadge.textContent = "";
       questionBox.hidden = true;
       status.hidden = false;
@@ -107525,35 +107672,34 @@ function panelMain(opts, candidates) {
   const setStatus = (text) => {
     status.textContent = text;
   };
-  const onTrusted = (button, fn) => {
-    button.addEventListener("click", (event) => {
+  const onTrusted = (button2, fn) => {
+    button2.addEventListener("click", (event) => {
       if (!event.isTrusted) return;
       event.preventDefault();
       fn();
     });
   };
-  const answer = (result) => {
+  function answer(result) {
     if (!question) return;
     const note = notes.value.trim();
+    const label4 = question.view.buttons.find((b2) => b2.result === result)?.label ?? result;
     if (result === "bug" && !note) {
-      error62.textContent = "Describe the bug in the notes. Then click Bug.";
+      error62.textContent = `Describe the bug in the notes. Then click ${label4}.`;
       notes.focus();
       return;
     }
     send({ type: "answer", id: question.id, nonce: question.nonce, result, note });
-    const confirmed = question.kind === "confirm";
+    const confirmed = question.view.kind === "confirm";
     question = null;
     notes.value = "";
     error62.textContent = "";
     if (confirmed) {
       setStatus(result === "pass" ? "Confirmed. The agent is working." : "Canceled.");
     } else {
-      setStatus(
-        `Sent: ${result === "pass" ? "Pass" : result === "bug" ? "Bug" : result === "skip" ? "Skip" : "Stop"}. The agent is working.`
-      );
+      setStatus(`Sent: ${label4}. The agent is working.`);
     }
     render();
-  };
+  }
   onTrusted(expectButton, () => {
     addingExpect = true;
     render();
@@ -107568,10 +107714,6 @@ function panelMain(opts, candidates) {
   });
   onTrusted(secretButton, () => send({ type: "rec-secret" }));
   onTrusted(stopRecordButton, () => send({ type: "rec-stop" }));
-  onTrusted(passButton, () => answer("pass"));
-  onTrusted(bugButton, () => answer("bug"));
-  onTrusted(skipButton, () => answer("skip"));
-  onTrusted(stopButton, () => answer("stop"));
   onTrusted(collapseButton, () => {
     collapsed = !collapsed;
     render();
@@ -107616,7 +107758,7 @@ function panelMain(opts, candidates) {
     corner = flip[card.dataset.corner ?? corner] ?? "bottom-left";
     placeCard();
   };
-  const showPulse = (rect, label3, ms) => {
+  const showPulse = (rect, label4, ms) => {
     Object.assign(pulse.style, {
       left: `${rect.x - 4}px`,
       top: `${rect.y - 4}px`,
@@ -107624,11 +107766,11 @@ function panelMain(opts, candidates) {
       height: `${rect.height + 8}px`,
       display: "block"
     });
-    pulseLabel.textContent = label3;
+    pulseLabel.textContent = label4;
     Object.assign(pulseLabel.style, {
       left: `${rect.x - 4}px`,
       top: `${Math.max(0, rect.y - 30)}px`,
-      display: label3 ? "block" : "none"
+      display: label4 ? "block" : "none"
     });
     avoid(rect);
     window.clearTimeout(pulseTimer);
@@ -107709,8 +107851,8 @@ function panelMain(opts, candidates) {
       if (text2) return text2;
     }
     if (html2.labels && html2.labels.length > 0) {
-      const label3 = html2.labels[0];
-      const copy = label3.cloneNode(true);
+      const label4 = html2.labels[0];
+      const copy = label4.cloneNode(true);
       for (const inner of Array.from(copy.querySelectorAll("input, select, textarea")))
         inner.remove();
       const text2 = copy.textContent?.replace(/\s+/g, " ").trim();
@@ -107741,14 +107883,14 @@ function panelMain(opts, candidates) {
     }
     return { selector: all[all.length - 1] ?? node3.tagName.toLowerCase() };
   };
-  const label2 = (node3) => {
+  const label3 = (node3) => {
     const name = nameOf(node3);
     return name ? `"${name.slice(0, 60)}"` : node3.tagName.toLowerCase();
   };
   const record2 = (kind, node3, extra = {}) => {
     if (!recording) return;
     const target2 = targetOf(node3);
-    send({ type: "rec", kind, target: target2, label: label2(node3), key: JSON.stringify(target2), ...extra });
+    send({ type: "rec", kind, target: target2, label: label3(node3), key: JSON.stringify(target2), ...extra });
   };
   const isTextField = (node3) => {
     const tag = node3.tagName.toLowerCase();
@@ -107867,9 +108009,190 @@ var PanelBridge = class _PanelBridge {
   }
 };
 
+// packages/server/src/panel/rich-text.ts
+var MAX_TEXT = 8e3;
+var INLINE = /(\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`)/g;
+function parseInline(text) {
+  const out = [];
+  let last2 = 0;
+  for (const match of text.matchAll(INLINE)) {
+    const at = match.index ?? 0;
+    if (at > last2) out.push({ t: "text", v: text.slice(last2, at) });
+    const token = match[0];
+    if (token.startsWith("**")) out.push({ t: "b", v: token.slice(2, -2) });
+    else if (token.startsWith("`")) out.push({ t: "code", v: token.slice(1, -1) });
+    else out.push({ t: "i", v: token.slice(1, -1) });
+    last2 = at + token.length;
+  }
+  if (last2 < text.length) out.push({ t: "text", v: text.slice(last2) });
+  return out;
+}
+var FENCE = /^\s*```\s*([\w+-]*)\s*$/;
+var CHECK = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/;
+var BULLET = /^\s*[-*]\s+(.*)$/;
+var NUMBER = /^\s*(\d{1,6})[.)]\s+(.*)$/;
+function parseRichText(input3) {
+  const text = input3.replace(/\r\n?/g, "\n").slice(0, MAX_TEXT);
+  const blocks = [];
+  const lines = text.split("\n");
+  let open4;
+  const block = (kind, make) => {
+    if (open4?.t !== kind) {
+      open4 = make();
+      blocks.push(open4);
+    }
+    return open4;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line2 = lines[i];
+    if (FENCE.test(line2)) {
+      const code = [];
+      for (i += 1; i < lines.length && !FENCE.test(lines[i]); i++) {
+        code.push(lines[i]);
+      }
+      blocks.push({ t: "code", v: code.join("\n") });
+      open4 = void 0;
+      continue;
+    }
+    if (!line2.trim()) {
+      open4 = void 0;
+      continue;
+    }
+    const check2 = CHECK.exec(line2);
+    if (check2) {
+      block("check", () => ({ t: "check", items: [] })).items.push({
+        text: parseInline(check2[2]),
+        checked: check2[1] !== " "
+      });
+      continue;
+    }
+    const bullet = BULLET.exec(line2);
+    if (bullet) {
+      block("ul", () => ({ t: "ul", items: [] })).items.push(parseInline(bullet[1]));
+      continue;
+    }
+    const number4 = NUMBER.exec(line2);
+    if (number4) {
+      block("ol", () => ({ t: "ol", start: Number(number4[1]), items: [] })).items.push(
+        parseInline(number4[2])
+      );
+      continue;
+    }
+    block("p", () => ({ t: "p", lines: [] })).lines.push(parseInline(line2.trim()));
+  }
+  return blocks;
+}
+function blocksText(blocks) {
+  const inline = (parts) => parts.map((p) => p.t === "code" ? `\`${p.v}\`` : p.v).join("");
+  return blocks.map((block) => {
+    switch (block.t) {
+      case "p":
+        return block.lines.map(inline).join("\n");
+      case "ul":
+        return block.items.map((item) => `- ${inline(item)}`).join("\n");
+      case "ol":
+        return block.items.map((item, i) => `${block.start + i}. ${inline(item)}`).join("\n");
+      case "check":
+        return block.items.map((item) => `- [${item.checked ? "x" : " "}] ${inline(item.text)}`).join("\n");
+      default:
+        return `\`\`\`
+${block.v}
+\`\`\``;
+    }
+  }).join("\n\n");
+}
+
+// packages/server/src/panel/view.ts
+var DEFAULT_LABELS = {
+  did: "What I did",
+  expect: "What you should see",
+  next: "What's next"
+};
+var BUTTON_ORDER = ["pass", "bug", "skip", "stop"];
+var DEFAULT_BUTTON_LABELS = {
+  pass: "Pass",
+  bug: "Bug",
+  skip: "Skip",
+  stop: "Stop"
+};
+function channel(hex3, i) {
+  const full = hex3.length === 4 ? hex3.slice(1).split("").map((c) => c + c).join("") : hex3.slice(1);
+  const v2 = Number.parseInt(full.slice(i * 2, i * 2 + 2), 16) / 255;
+  return v2 <= 0.03928 ? v2 / 12.92 : ((v2 + 0.055) / 1.055) ** 2.4;
+}
+function textColorFor(hex3) {
+  const lum = 0.2126 * channel(hex3, 0) + 0.7152 * channel(hex3, 1) + 0.0722 * channel(hex3, 2);
+  const onWhite = 1.05 / (lum + 0.05);
+  const onDark = (lum + 0.05) / (9e-3 + 0.05);
+  return onWhite >= onDark ? "#ffffff" : "#0f172a";
+}
+function merged(layers, key2) {
+  return layers.map((l) => l?.[key2]).filter((v2) => v2 !== void 0);
+}
+function buildStepView(input3) {
+  const layers = input3.layers ?? [];
+  const labels = Object.assign({}, DEFAULT_LABELS, ...merged(layers, "labels"));
+  const nextSettings = Object.assign({ collapsed: true }, ...merged(layers, "next"));
+  const sections = [];
+  const add2 = (key2, text, extra = {}) => {
+    if (!text?.trim()) return;
+    sections.push({ key: key2, label: labels[key2] ?? "", blocks: parseRichText(text), ...extra });
+  };
+  add2("did", input3.didWhat);
+  add2("expect", input3.expected);
+  add2("next", input3.next, { collapsible: true, collapsed: nextSettings.collapsed });
+  const buttonLayers = merged(layers, "buttons");
+  const buttons = [];
+  for (const result of BUTTON_ORDER) {
+    const set2 = Object.assign({}, ...buttonLayers.map((b2) => b2[result] ?? {}));
+    if (set2.show === false) continue;
+    const button2 = { result, label: set2.label ?? DEFAULT_BUTTON_LABELS[result] };
+    if (set2.color) {
+      button2.color = set2.color;
+      button2.textColor = textColorFor(set2.color);
+    }
+    buttons.push(button2);
+  }
+  return { kind: "step", title: input3.title, sections, buttons, notes: true };
+}
+function buildConfirmView(input3) {
+  return {
+    kind: "confirm",
+    title: input3.title,
+    sections: [{ key: "did", label: "", blocks: parseRichText(input3.message) }],
+    buttons: [
+      { result: "pass", label: input3.confirmLabel ?? "Continue" },
+      { result: "stop", label: "Cancel" }
+    ],
+    notes: false,
+    color: input3.color
+  };
+}
+function viewText(view) {
+  const lines = [`Step: ${view.title}`];
+  for (const section2 of view.sections) {
+    const text = blocksText(section2.blocks);
+    lines.push(section2.label ? `${section2.label}:
+${text}` : text);
+  }
+  lines.push(`Answers: ${view.buttons.map((b2) => b2.label).join(", ")}`);
+  return lines.join("\n");
+}
+
 // packages/server/src/panel/controller.ts
 var WORKING = "The agent is working.";
-var RESULTS = ["pass", "bug", "skip", "stop"];
+function questionView(q2) {
+  if (q2.view) return q2.view;
+  if (q2.kind === "confirm") {
+    return buildConfirmView({
+      title: q2.title,
+      message: q2.didWhat,
+      confirmLabel: q2.confirmLabel,
+      color: q2.color
+    });
+  }
+  return buildStepView({ title: q2.title, didWhat: q2.didWhat, expected: q2.expected });
+}
 var DeveloperPanel = class {
   bridges = /* @__PURE__ */ new Map();
   question;
@@ -107927,14 +108250,9 @@ var DeveloperPanel = class {
       question: q2 ? {
         id: q2.id,
         nonce: q2.nonce,
-        title: q2.title,
-        didWhat: q2.didWhat,
-        expected: q2.expected,
         step: q2.step,
         total: q2.total,
-        kind: q2.kind ?? "step",
-        confirmLabel: q2.confirmLabel,
-        color: q2.color
+        view: questionView(q2)
       } : null
     };
   }
@@ -107968,7 +108286,7 @@ var DeveloperPanel = class {
         return;
       }
       const result = msg.result;
-      if (!RESULTS.includes(result)) return;
+      if (!questionView(q2).buttons.some((b2) => b2.result === result)) return;
       const answer = {
         result,
         note: typeof msg.note === "string" ? msg.note.slice(0, 4e3) : ""
@@ -107988,7 +108306,12 @@ var DeveloperPanel = class {
   // Shows a new question. Any older question is replaced.
   async ask(input3) {
     this.stored = void 0;
-    this.question = { ...input3, id: randomUUID(), nonce: randomBytes2(16).toString("hex") };
+    this.question = {
+      ...input3,
+      view: questionView(input3),
+      id: randomUUID(),
+      nonce: randomBytes2(16).toString("hex")
+    };
     await this.push(input3.tabId);
     return this.question;
   }
@@ -108041,8 +108364,8 @@ var DeveloperPanel = class {
     await this.bridges.get(tabId)?.hideOnLoad(reasons.size > 0);
     await this.sendHidden(tabId);
   }
-  async highlight(tabId, rect, label2, ms) {
-    await this.bridges.get(tabId)?.send({ type: "highlight", rect, label: label2, ms });
+  async highlight(tabId, rect, label3, ms) {
+    await this.bridges.get(tabId)?.send({ type: "highlight", rect, label: label3, ms });
   }
   async annotate(tabId, rect) {
     await this.bridges.get(tabId)?.send({ type: "annotate", rect });
@@ -108097,6 +108420,11 @@ var DeveloperPanel = class {
     this.finishRecording("stopped");
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+  // Moves the panel to a corner in every tab, like a plan asks.
+  async setCorner(corner) {
+    this.corner = corner;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
   // The environment badge in every tab. Null hides it.
   async setEnvironment(badge) {
@@ -108948,9 +109276,9 @@ var Driver = class _Driver {
     return tab;
   }
   // Ends a step in the logs and in the network list.
-  endStep(label2) {
-    this.logs.endStep(label2);
-    this.network.endStep(label2);
+  endStep(label3) {
+    this.logs.endStep(label3);
+    this.network.endStep(label3);
     this.mockHits.clear();
   }
   // What the mocks did since the step started.
@@ -109160,8 +109488,8 @@ function adhocVideoDir(projectDir) {
   mkdirSync5(dir, { recursive: true });
   return dir;
 }
-function fileStamp(label2) {
-  const safe = (label2 ?? "screenshot").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+function fileStamp(label3) {
+  const safe = (label3 ?? "screenshot").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
   return `${stamp().time}-${safe || "screenshot"}`;
 }
 
@@ -110643,14 +110971,16 @@ function needsConfirm(mode, checkpoint) {
   return false;
 }
 var RunStore = class _RunStore {
-  constructor(dir, run, projectDir) {
+  constructor(dir, run, projectDir, plan) {
     this.dir = dir;
     this.run = run;
     this.projectDir = projectDir;
+    this.plan = plan;
   }
   dir;
   run;
   projectDir;
+  plan;
   static create(projectDir, input3) {
     const env2 = input3.environment?.name;
     const envPart = env2 && env2 !== "development" ? `-${env2}` : "";
@@ -110664,7 +110994,7 @@ var RunStore = class _RunStore {
     const template = (step) => {
       const out = {};
       for (const [key2, text] of [
-        ["title", step.do],
+        ["title", stepTitle(step)],
         ["expect", step.expect],
         ["caption", step.caption]
       ]) {
@@ -110675,7 +111005,7 @@ var RunStore = class _RunStore {
     const steps = (input3.plan?.steps ?? []).map((step, i) => ({
       id: step.id ?? `step-${i + 1}`,
       index: i + 1,
-      title: show(step.do),
+      title: show(stepTitle(step)),
       expect: step.expect === void 0 ? void 0 : show(step.expect),
       ...template(step),
       confirm: needsConfirm(input3.mode, step.checkpoint),
@@ -110727,7 +111057,7 @@ var RunStore = class _RunStore {
         }
       } : {}
     };
-    const store = new _RunStore(dir, run, projectDir);
+    const store = new _RunStore(dir, run, projectDir, input3.plan);
     store.save();
     return store;
   }
@@ -110770,6 +111100,14 @@ var RunStore = class _RunStore {
     };
     this.run.steps.push(added);
     return added;
+  }
+  // The plan step with this id, in a run that is going. Never adds a step.
+  planStep(id) {
+    const plan = this.plan;
+    if (!plan) return void 0;
+    const runStep = this.run.steps.find((s) => s.id === id);
+    const step = runStep ? plan.steps[runStep.index - 1] : void 0;
+    return runStep && step ? { step, index: runStep.index - 1, plan } : void 0;
   }
   // The first step that has no result yet.
   nextPending() {
@@ -111442,19 +111780,19 @@ function ring(score, band3) {
 <div class="ring-text"><span class="ring-score">${score ?? "n/a"}</span><span class="ring-band">${esc2(band3 ?? "No score")}</span></div>
 </div>`;
 }
-function bar(label2, score, note = "") {
+function bar(label3, score, note = "") {
   const width = score ?? 0;
   return `<div class="bar-row">
-<span class="bar-label">${esc2(label2)}</span>
+<span class="bar-label">${esc2(label3)}</span>
 <span class="bar-track" aria-hidden="true"><span class="bar-fill ${bandClass(score)}" style="width:${width}%"></span></span>
 <span class="bar-value">${score === null ? "n/a" : score}${note ? ` <span class="muted">${esc2(note)}</span>` : ""}</span>
 </div>`;
 }
-function tile(value, label2, cls = "") {
-  return `<div class="tile ${cls}"><span class="tile-value">${esc2(String(value))}</span><span class="tile-label">${esc2(label2)}</span></div>`;
+function tile(value, label3, cls = "") {
+  return `<div class="tile ${cls}"><span class="tile-value">${esc2(String(value))}</span><span class="tile-label">${esc2(label3)}</span></div>`;
 }
-function copyButton(text, label2) {
-  return `<button type="button" class="copy" data-copy="${esc2(text)}" aria-label="${esc2(label2)}">Copy</button>`;
+function copyButton(text, label3) {
+  return `<button type="button" class="copy" data-copy="${esc2(text)}" aria-label="${esc2(label3)}">Copy</button>`;
 }
 function level(f) {
   if (f.criteria.some((c) => c.level === "A")) return "A";
@@ -111591,7 +111929,7 @@ ${change}
 }
 function filters(data) {
   const areas = [...new Set(data.findings.map((f) => f.area))];
-  const option = (value, label2) => `<option value="${esc2(value)}">${esc2(label2)}</option>`;
+  const option = (value, label3) => `<option value="${esc2(value)}">${esc2(label3)}</option>`;
   return `<div class="filters" role="search" aria-label="Filter the issues">
 <fieldset class="impacts"><legend>Impact</legend>
 ${IMPACT_ORDER.map((i) => `<label><input type="checkbox" name="impact" value="${i}" checked> ${IMPACT_LABEL[i]}</label>`).join("")}
@@ -111886,7 +112224,7 @@ function a11yHtmlReport(data) {
 </header>
 <div class="layout">
 <nav class="side" aria-label="Report sections">
-<ul>${nav.map(([id, label2]) => `<li><a href="#${id}">${esc2(label2)}</a></li>`).join("")}</ul>
+<ul>${nav.map(([id, label3]) => `<li><a href="#${id}">${esc2(label3)}</a></li>`).join("")}</ul>
 <p class="progress muted" data-progress></p>
 </nav>
 <main id="main">
@@ -113620,9 +113958,9 @@ Take a snapshot to see the page.`;
             driver.pendingDialog(tab.id) ? "dialog open" : "",
             tab.crashed ? "crashed" : ""
           ].filter(Boolean);
-          const label2 = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
+          const label3 = tab.name === tab.id ? tab.id : `${tab.id} "${tab.name}"`;
           rows.push(
-            `${label2}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
+            `${label3}${flags.length ? ` (${flags.join(", ")})` : ""}: "${title}" ${tab.page.url()}`
           );
         }
         return untrusted(rows.join("\n"));
@@ -114485,9 +114823,9 @@ function stepCard(run, runDir, step, open4) {
   for (const shot of step.screenshots)
     parts.push(image(runDir, shot, `Screenshot of step ${step.index}: ${step.title}`));
   for (const clip2 of (step.files ?? []).filter((f) => /\.(gif|mp4|webm)$/i.test(f))) {
-    const label2 = `Video of the seconds before the bug in step ${step.index}`;
+    const label3 = `Video of the seconds before the bug in step ${step.index}`;
     parts.push(
-      /\.gif$/i.test(clip2) ? `<img src="${esc2(clip2)}" alt="${esc2(label2)}">` : `<video controls preload="metadata" src="${esc2(clip2)}" aria-label="${esc2(label2)}"></video>`
+      /\.gif$/i.test(clip2) ? `<img src="${esc2(clip2)}" alt="${esc2(label3)}">` : `<video controls preload="metadata" src="${esc2(clip2)}" aria-label="${esc2(label3)}"></video>`
     );
   }
   if (step.files?.length) {
@@ -114620,7 +114958,7 @@ ${run.steps.filter((s) => !isProblem(s) && s.status !== "pending").map((s) => st
 // packages/server/src/report/lh-report.ts
 import { randomBytes as randomBytes9 } from "node:crypto";
 import { basename as basename5, extname as extname6 } from "node:path";
-var label = (c) => CATEGORY_LABELS[c] ?? c;
+var label2 = (c) => CATEGORY_LABELS[c] ?? c;
 function lhPrompt(relativeDir, app, again, firstId) {
   return [
     `Read ${relativeDir}/lighthouse.md. It is a Lighthouse report for ${app}.`,
@@ -114763,7 +115101,7 @@ function lhMarkdown(data) {
     "",
     "## Scores",
     "",
-    `| ${data.kinds.flow ? "Page or step" : "Page"} | ${data.categories.map(label).join(" | ")} |`,
+    `| ${data.kinds.flow ? "Page or step" : "Page"} | ${data.categories.map(label2).join(" | ")} |`,
     `| --- |${data.categories.map(() => " --- |").join("")}`,
     ...data.pages.map(
       (p) => `| ${p.page} | ${data.categories.map((c) => cellValue(p, c).text).join(" | ")} |`
@@ -114776,7 +115114,7 @@ function lhMarkdown(data) {
       "## Changes since the last report",
       "",
       ...data.changes.map(
-        (c) => `- ${c.page}, ${label(c.category)}: ${scoreText(c.before)} to ${scoreText(c.after)}`
+        (c) => `- ${c.page}, ${label2(c.category)}: ${scoreText(c.before)} to ${scoreText(c.after)}`
       ),
       ""
     );
@@ -114788,7 +115126,7 @@ function lhMarkdown(data) {
     out.push(
       `### ${f.id}: ${f.title}`,
       "",
-      `- **Category:** ${f.categories.map(label).join(", ")}`,
+      `- **Category:** ${f.categories.map(label2).join(", ")}`,
       `- **Lowest score:** ${Math.round(f.worst * 100)} of 100, on ${f.pages.length} page(s)`,
       `- **Status:** ${data.status[f.id] === "still" ? "Still there" : "New"}`
     );
@@ -114842,7 +115180,7 @@ function issueCard2(data, f) {
   const parts = [
     `<article class="issue" id="${esc2(f.id)}" aria-labelledby="${esc2(f.id)}-title">`,
     `<h3 id="${esc2(f.id)}-title">${esc2(f.id)}: ${esc2(f.title)}</h3>`,
-    `<p class="tags">${f.categories.map((c) => `<span class="tag">${esc2(label(c))}</span>`).join(" ")} <span class="tag">${data.status[f.id] === "still" ? "Still there" : "New"}</span> <span class="tag">Lowest score ${Math.round(f.worst * 100)}</span> <span class="tag">${f.pages.length} page(s)</span></p>`
+    `<p class="tags">${f.categories.map((c) => `<span class="tag">${esc2(label2(c))}</span>`).join(" ")} <span class="tag">${data.status[f.id] === "still" ? "Still there" : "New"}</span> <span class="tag">Lowest score ${Math.round(f.worst * 100)}</span> <span class="tag">${f.pages.length} page(s)</span></p>`
   ];
   if (item) {
     parts.push(
@@ -114911,7 +115249,7 @@ document.querySelectorAll('button.copy').forEach((button) => {
 `;
 function lhHtml(data) {
   const nonce = randomBytes9(12).toString("base64");
-  const head = data.categories.map((c) => `<th scope="col">${esc2(label(c))}</th>`).join("");
+  const head = data.categories.map((c) => `<th scope="col">${esc2(label2(c))}</th>`).join("");
   const scoreRows = data.pages.map(
     (p) => `<tr><th scope="row">${esc2(p.page)}${p.files?.html ? ` (<a href="${esc2(p.files.html)}">${p.flow ? "flow report" : "full report"}</a>)` : ""}</th>${data.categories.map((c) => scoreCell(p, c)).join("")}</tr>`
   ).join("\n");
@@ -114920,7 +115258,7 @@ function lhHtml(data) {
   const metricRows = data.pages.map(
     (p) => `<tr><th scope="row">${esc2(p.page)}</th>${metricIds.map((id) => `<td>${esc2(p.metrics.find((m) => m.id === id)?.display ?? "n/a")}</td>`).join("")}</tr>`
   ).join("\n");
-  const changes = data.changes.length ? `<h2 id="changes">Changes since the last report${data.previous?.environment ? ` (the ${esc2(data.previous.environment)} environment)` : ""}</h2><ul>${data.changes.map((c) => `<li>${esc2(c.page)}, ${esc2(label(c.category))}: ${scoreText(c.before)} to ${scoreText(c.after)}</li>`).join("")}</ul>` : "";
+  const changes = data.changes.length ? `<h2 id="changes">Changes since the last report${data.previous?.environment ? ` (the ${esc2(data.previous.environment)} environment)` : ""}</h2><ul>${data.changes.map((c) => `<li>${esc2(c.page)}, ${esc2(label2(c.category))}: ${scoreText(c.before)} to ${scoreText(c.after)}</li>`).join("")}</ul>` : "";
   const fixed = data.previous ? `<h2 id="fixed">Fixed since the last report</h2>${data.fixed.length ? `<ul>${data.fixed.map((f) => `<li>${esc2(f.id)}: ${esc2(f.title)}</li>`).join("")}</ul>` : "<p>No issues from the last report are gone.</p>"}` : "";
   return `<!doctype html>
 <html lang="en">
@@ -114953,7 +115291,7 @@ ${fixed}
 <li>Lighthouse ${esc2(data.version)} ran on this computer, on the ${esc2(environmentText(data.environment))} environment.</li>
 ${howLines(data).map((l) => `<li>${esc2(l)}</li>`).join("\n")}
 ${data.kinds.flow ? `<li><a href="${esc2(FLOW_REPORT)}">Lighthouse flow report</a> with every step.</li>` : ""}
-<li>Categories: ${esc2(data.categories.map(label).join(", "))}. Device: ${esc2(data.devices.join(", "))}.</li>
+<li>Categories: ${esc2(data.categories.map(label2).join(", "))}. Device: ${esc2(data.devices.join(", "))}.</li>
 </ul>
 <h2 id="next">Next step</h2>
 <p>To plan the fixes, paste this prompt into a new Claude Code session.</p>
@@ -115218,10 +115556,10 @@ function recordResult(ctx, ref, result) {
     step.logs = formatLogs(result.logs);
     step.errorCount = result.logs.filter((e) => e.level === "error").length;
   }
-  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ tab, action: action2, label: label2, selector, value, files, frameUrl: frameUrl2, url: url2 }) => ({
+  const actions = ctx.actionLog.slice(ctx.actionCursor).map(({ tab, action: action2, label: label3, selector, value, files, frameUrl: frameUrl2, url: url2 }) => ({
     tab,
     action: action2,
-    label: label2,
+    label: label3,
     selector,
     value,
     files,
@@ -115329,9 +115667,9 @@ function toHar(entries, secrets) {
 function networkDir(ctx, projectDir) {
   return join32(dirname11(ctx.evidenceDir(projectDir)), "network");
 }
-function writeHar(dir, label2, entries, secrets) {
+function writeHar(dir, label3, entries, secrets) {
   mkdirSync13(dir, { recursive: true });
-  const file2 = join32(dir, `${fileStamp(label2)}.har`);
+  const file2 = join32(dir, `${fileStamp(label3)}.har`);
   writeFileSync11(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
 `);
   return file2;
@@ -115382,10 +115720,48 @@ function startProgress(extra, message = "Walkthrough waits for the developer to 
   }, 1e4);
   return () => clearInterval(timer2);
 }
-function questionText(q2) {
-  return `Step: ${q2.title}
-What I did: ${q2.didWhat}
-What you should see: ${q2.expected}`;
+async function panelText(ctx, text) {
+  if (text === void 0) return void 0;
+  let shown = text;
+  try {
+    shown = ctx.display(text);
+  } catch {
+  }
+  return (await ctx.secrets()).redact(shown);
+}
+async function buildQuestion(ctx, input3) {
+  const store = ctx.run?.run.status === "running" ? ctx.run : void 0;
+  const found = input3.stepId ? store?.planStep(input3.stepId) : void 0;
+  const plan = found?.plan;
+  const step = found?.step;
+  const following = found ? plan?.steps[found.index + 1] : void 0;
+  const autoNext = plan?.panel?.next?.auto && step && !step.next ? following ? stepTitle(following) : "This is the last step." : void 0;
+  const title = await panelText(ctx, input3.title ?? (step ? stepTitle(step) : void 0));
+  const didWhat = await panelText(ctx, input3.didWhat);
+  const expected = await panelText(ctx, input3.expected ?? step?.expect);
+  const next = await panelText(ctx, input3.next ?? step?.next ?? autoNext);
+  if (!title || !found && (!didWhat || !expected)) {
+    throw new ToolError(
+      found ? "Give a title for the step." : "Give a title, didWhat, and expected for the step. During a run, give the stepId of a plan step. Walkthrough then takes the title and expected from the plan.",
+      "bad_input"
+    );
+  }
+  const view = buildStepView({
+    title,
+    didWhat,
+    expected,
+    next,
+    layers: [plan?.panel, step?.panel, input3.panel]
+  });
+  return {
+    title,
+    didWhat: didWhat ?? "",
+    expected: expected ?? "",
+    step: input3.step ?? (found ? found.index + 1 : void 0),
+    total: input3.total ?? plan?.steps.length,
+    stepId: input3.stepId,
+    view
+  };
 }
 async function clipLine(ctx, stepId) {
   const store = ctx.run?.run.status === "running" ? ctx.run : void 0;
@@ -115411,6 +115787,7 @@ function registerDeveloperTools(server, ctx) {
       description: [
         "Show a step in the Walkthrough panel in the browser. Then wait for the developer to answer Pass, Bug, Skip, or Stop, with notes.",
         "Call it after you do a step. Say what you did and what the developer should see.",
+        "During a run, give the stepId. Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan.",
         "On Bug, Walkthrough saves a screenshot and the errors from this step.",
         'If the reply says "status: waiting", call it again with resume: true.',
         'If the reply says "status: use_chat", ask the developer in chat instead.'
@@ -115418,7 +115795,13 @@ function registerDeveloperTools(server, ctx) {
       inputSchema: {
         title: external_exports.string().max(200).optional().describe('Short name of the step, like "Add the mug to the cart".'),
         didWhat: external_exports.string().max(2e3).optional().describe("What you did, in plain words."),
-        expected: external_exports.string().max(2e3).optional().describe("What the developer should see now."),
+        expected: external_exports.string().max(2e3).optional().describe(
+          "What the developer should see now. During a run, the plan step gives it if you do not."
+        ),
+        next: external_exports.string().max(2e3).optional().describe(`What comes after this step. The panel shows it under "What's next".`),
+        panel: stepPanelSchema.optional().describe(
+          "Change the panel for this question: labels, like { did: Setup }, and buttons, like { pass: { label: Done } }."
+        ),
         step: external_exports.number().int().min(1).optional().describe("Step number."),
         total: external_exports.number().int().min(1).optional().describe("Number of steps in the test."),
         stepId: external_exports.string().optional().describe("Step id from a test plan."),
@@ -115436,19 +115819,14 @@ function registerDeveloperTools(server, ctx) {
           "recording"
         );
       }
-      if (!input3.resume && (!input3.title || !input3.didWhat || !input3.expected)) {
-        throw new ToolError("Give a title, didWhat, and expected for the step.", "bad_input");
-      }
+      const asked = input3.resume ? void 0 : await buildQuestion(ctx, input3);
       if (!panel || !await panel.waitReady(tab.id)) {
         const why = config3.browser.headless ? "the browser is hidden (headless)" : "the panel could not start on this page";
+        const view = asked?.view ?? panel?.pending?.view;
         return [
           "status: use_chat",
           `The developer panel is not available, because ${why}. Ask the developer in chat instead:`,
-          questionText({
-            title: input3.title ?? "",
-            didWhat: input3.didWhat ?? "",
-            expected: input3.expected ?? ""
-          })
+          view ? viewText(view) : "(no question)"
         ].join("\n");
       }
       if (input3.resume) {
@@ -115457,16 +115835,8 @@ function registerDeveloperTools(server, ctx) {
             "No question is waiting in the panel. Ask a new question.",
             "bad_input"
           );
-      } else {
-        await panel.ask({
-          tabId: tab.id,
-          title: input3.title,
-          didWhat: input3.didWhat,
-          expected: input3.expected,
-          step: input3.step,
-          total: input3.total,
-          stepId: input3.stepId
-        });
+      } else if (asked) {
+        await panel.ask({ tabId: tab.id, ...asked });
       }
       const timeoutSec = config3.askTimeoutSec ?? defaultAskTimeoutSec(ctx.clientName());
       const stopProgress = startProgress(extra);
@@ -115498,11 +115868,11 @@ function registerDeveloperTools(server, ctx) {
           );
       }
       const { answer, question } = outcome;
-      const label2 = question.stepId ?? question.title;
+      const label3 = question.stepId ?? question.title;
       const stepLogs = driver.logs.currentStep();
       const stepRequests = driver.network.currentStep();
       const mocked = driver.stepMocks;
-      driver.endStep(label2);
+      driver.endStep(label3);
       const lines = [`status: ${answer.result}`, `Developer notes: ${answer.note || "(none)"}`];
       const extraContent = [];
       const record2 = {
@@ -115708,7 +116078,7 @@ function stepList(plan, mode, show = (t) => t) {
   return plan.steps.map((step, i) => {
     const id = step.id ?? `step-${i + 1}`;
     if (isSlideOnly(step)) {
-      return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${step.do}`;
+      return `${i + 1}. [${step.id ?? `step-${i + 1}`}] (slide only: skipped, do nothing) ${stepTitle(step)}`;
     }
     const flags = [
       needsConfirm(mode, step.checkpoint) ? "confirm" : "agent checks",
@@ -115719,8 +116089,9 @@ function stepList(plan, mode, show = (t) => t) {
       step.mock ? "mock" : "",
       step.lighthouse ? `Lighthouse ${step.lighthouse}` : ""
     ].filter(Boolean).join(", ");
-    const lines = [`${i + 1}. [${id}] (${flags}) ${step.do}`];
-    if (step.expect) lines.push(`   Expect: ${show(step.expect)}`);
+    const lines = [`${i + 1}. [${id}] (${flags}) ${stepTitle(step)}`];
+    if (step.expect)
+      lines.push(`   Expect: ${show(step.expect).trimEnd().replace(/\n/g, "\n     ")}`);
     if (step.caption) lines.push(`   Caption: ${show(step.caption)}`);
     if (step.emulate) lines.push(`   Emulate: ${describeEmulation(step.emulate, true)}`);
     if (step.cookies)
@@ -115903,6 +116274,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         requestId: extra.requestId
       });
       const driver = ctx.requireDriver();
+      if (plan?.panel?.corner) await driver.panel?.setCorner(plan.panel.corner);
       ctx.actionCursor = ctx.actionLog.length;
       driver.endStep("(before the run)");
       ctx.run = RunStore.create(config3.projectDir, {
@@ -115960,7 +116332,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         "",
         "For each step:",
         "1. Do what the step says. If it has an Action, use it. For newTab, switchTab, or closeTab, use the tabs tool (action new, switch, or close). Give switch the tab as id, and the name when the step has one. If the step has Emulate, call emulate with those settings first. They apply to the active tab.",
-        '2. For a "confirm" step, call ask_developer with stepId, step, total, title, didWhat, and expected.',
+        '2. For a "confirm" step, call ask_developer with the stepId and didWhat (what you did). Walkthrough then takes the title, the expected text, the step number, and the panel settings from the plan. Give title or expected only to change them.',
         '3. For an "agent checks" step, check Expect yourself with snapshot, read, or wait_for. Then call run_step with stepId and the result. On fail, give "actual".',
         '4. For a "screenshot" step, call screenshot after the step. For a "screenshot to <path>" step, call screenshot with path, stepId, and the selector or fullPage from the step. For a "visual check" step, call visual_check with name and stepId set to the step id.',
         '5. For an "accessibility check" step, call a11y_audit with stepId set to the step id. Walkthrough uses the checks from the plan. Tell the developer about critical and serious problems. For a "cookie check" step, call storage with action check and the stepId after the step. The step fails if the result is fail. For a "mock" step, call intercept with action add for each rule before the step. For "Mock: off", call intercept with action clear.',
@@ -116804,9 +117176,9 @@ function checkCookies(cookies, checks, resolve12) {
       if (check2[flag] === void 0) continue;
       const same = cookie[flag] === check2[flag];
       pass &&= same;
-      const label2 = flag === "httpOnly" ? "HttpOnly" : "Secure";
+      const label3 = flag === "httpOnly" ? "HttpOnly" : "Secure";
       facts.push(
-        same ? `${label2} is ${cookie[flag]}` : `${label2} is ${cookie[flag]}, not ${check2[flag]}`
+        same ? `${label3} is ${cookie[flag]}` : `${label3} is ${cookie[flag]}, not ${check2[flag]}`
       );
     }
     if (check2.sameSite !== void 0) {
@@ -116908,12 +117280,12 @@ function registerDevtoolsTools(server, ctx) {
       const secrets = await ctx.secrets();
       const show = config3.allowSecretValues;
       const resolve12 = (text) => secrets.resolve(withUnique(text, ctx.unique));
-      const keep = (label2, detail) => ctx.actionLog.push({
+      const keep = (label3, detail) => ctx.actionLog.push({
         at: (/* @__PURE__ */ new Date()).toISOString(),
         tabId: tab.id,
         tab: tab.name,
         action: "storage",
-        label: label2,
+        label: label3,
         value: JSON.stringify({ kind: input3.kind, op: input3.action, ...detail }),
         url: tokenizeUnique(tab.page.url(), ctx.unique)
       });
@@ -117169,12 +117541,12 @@ function registerDevtoolsTools(server, ctx) {
     ({ action: action2, id, ...input3 }) => runTool(ctx, "intercept", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab({ allowDialog: true });
-      const keep = (label2, detail) => ctx.actionLog.push({
+      const keep = (label3, detail) => ctx.actionLog.push({
         at: (/* @__PURE__ */ new Date()).toISOString(),
         tabId: tab.id,
         tab: tab.name,
         action: action2 === "add" ? "mock" : "mock-clear",
-        label: label2,
+        label: label3,
         value: JSON.stringify(detail),
         url: tokenizeUnique(tab.page.url(), ctx.unique)
       });
@@ -118119,11 +118491,11 @@ function formatState(state) {
 
 // packages/server/src/page/snapshot.ts
 var MAX_LINES = 1200;
-var MAX_TEXT = 200;
+var MAX_TEXT2 = 200;
 var SKIP_ROLES = /* @__PURE__ */ new Set(["none", "generic", "presentation", "InlineTextBox", "LineBreak"]);
 function clip(text) {
   const flat = text.replace(/\s+/g, " ").trim();
-  return flat.length > MAX_TEXT ? `${flat.slice(0, MAX_TEXT)}...` : flat;
+  return flat.length > MAX_TEXT2 ? `${flat.slice(0, MAX_TEXT2)}...` : flat;
 }
 function details(node3) {
   const parts = [];
@@ -118396,7 +118768,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
         )
       }
     },
-    ({ ref, selector, fullPage, label: label2, annotate, path: path14, stepId }) => runTool(ctx, "screenshot", async () => {
+    ({ ref, selector, fullPage, label: label3, annotate, path: path14, stepId }) => runTool(ctx, "screenshot", async () => {
       const driver = ctx.requireDriver();
       const tab = driver.activeTab();
       const config3 = await ctx.config();
@@ -118414,7 +118786,7 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
         () => takeScreenshot(tab, dir, config3.projectDir, {
           handle: rect ? void 0 : target2?.handle,
           fullPage,
-          label: label2,
+          label: label3,
           path: exact?.path
         })
       );
@@ -120691,9 +121063,9 @@ async function replayRun(ctx, input3) {
     stage: new VideoStage(() => capture, input3.captions ?? config3.video.captions),
     rebase: Rebaser.forRun(run, config3)
   });
-  const failure2 = async (stepTitle, message) => {
+  const failure2 = async (stepTitle2, message) => {
     const lines = [
-      `The replay stopped at step ${stepTitle}: ${message}`,
+      `The replay stopped at step ${stepTitle2}: ${message}`,
       "Walkthrough saved no video. Fix the step or the app, and replay again."
     ];
     let preview;
@@ -121020,7 +121392,7 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
     return {
       index: i + 1,
       id,
-      title: show(step.do),
+      title: show(stepTitle(step)),
       ...step.caption ? { caption: show(step.caption) } : {},
       ...step.notes ? { notes: show(step.notes) } : {},
       ...step.slide ? { slide: step.slide } : {},
@@ -121886,7 +122258,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       }
       const planned = stepId ? store?.run.steps.find((s) => s.id === stepId)?.a11y : void 0;
       if (!ref && !selector && planned?.selector) selector = planned.selector;
-      let label2 = selector;
+      let label3 = selector;
       let scope = selector;
       let marked;
       if (ref || selector && !isPlainCss(selector)) {
@@ -121898,8 +122270,8 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
             "bad_target"
           );
         }
-        label2 = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
-        if (label2 && isPlainCss(label2)) scope = label2;
+        label3 = ref ? await stableSelector(target2.handle, target2) ?? target2.label : selector;
+        if (label3 && isPlainCss(label3)) scope = label3;
         else {
           const mark = randomBytes14(4).toString("hex");
           await target2.handle.evaluate((el, m) => el.setAttribute("data-uiwalk-a11y", m), mark);
@@ -121912,7 +122284,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       try {
         audit = await auditPage(ctx, driver, tab, {
           selector: scope,
-          label: label2,
+          label: label3,
           standard: std,
           tags: tags ?? standardTags(std, config3.accessibility.bestPractices),
           checks: checks ?? planned?.checks ?? [],

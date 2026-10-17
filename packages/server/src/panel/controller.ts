@@ -3,8 +3,9 @@ import type { Page } from 'puppeteer-core';
 import { log } from '../log.js';
 import type { Recorder } from '../record/recorder.js';
 import { PanelBridge, type PanelMessage } from './bridge.js';
+import { type AnswerResult, buildConfirmView, buildStepView, type PanelView } from './view.js';
 
-export type AnswerResult = 'pass' | 'bug' | 'skip' | 'stop';
+export type { AnswerResult } from './view.js';
 
 export interface Question {
   id: string;
@@ -20,6 +21,8 @@ export interface Question {
   kind?: 'step' | 'confirm';
   confirmLabel?: string;
   color?: string;
+  // What the panel shows. Without it, the panel shows the title and texts above.
+  view?: PanelView;
 }
 
 export interface EnvironmentBadge {
@@ -49,7 +52,20 @@ export interface Rect {
 export type RecordOutcome = 'stopped' | 'timeout' | 'canceled' | 'browser_closed';
 
 const WORKING = 'The agent is working.';
-const RESULTS: AnswerResult[] = ['pass', 'bug', 'skip', 'stop'];
+
+// The view of a question that came without one.
+export function questionView(q: Omit<Question, 'id' | 'nonce' | 'tabId'>): PanelView {
+  if (q.view) return q.view;
+  if (q.kind === 'confirm') {
+    return buildConfirmView({
+      title: q.title,
+      message: q.didWhat,
+      confirmLabel: q.confirmLabel,
+      color: q.color,
+    });
+  }
+  return buildStepView({ title: q.title, didWhat: q.didWhat, expected: q.expected });
+}
 
 // The developer panel in the browser: one question at a time.
 export class DeveloperPanel {
@@ -118,14 +134,9 @@ export class DeveloperPanel {
         ? {
             id: q.id,
             nonce: q.nonce,
-            title: q.title,
-            didWhat: q.didWhat,
-            expected: q.expected,
             step: q.step,
             total: q.total,
-            kind: q.kind ?? 'step',
-            confirmLabel: q.confirmLabel,
-            color: q.color,
+            view: questionView(q),
           }
         : null,
     };
@@ -165,8 +176,9 @@ export class DeveloperPanel {
         log.warn('ignored a panel answer that did not match the current question');
         return;
       }
+      // Only a button that the panel shows for this question.
       const result = msg.result as AnswerResult;
-      if (!RESULTS.includes(result)) return;
+      if (!questionView(q).buttons.some((b) => b.result === result)) return;
       const answer: Answer = {
         result,
         note: typeof msg.note === 'string' ? msg.note.slice(0, 4000) : '',
@@ -188,7 +200,12 @@ export class DeveloperPanel {
   // Shows a new question. Any older question is replaced.
   async ask(input: Omit<Question, 'id' | 'nonce'>): Promise<Question> {
     this.stored = undefined;
-    this.question = { ...input, id: randomUUID(), nonce: randomBytes(16).toString('hex') };
+    this.question = {
+      ...input,
+      view: questionView(input),
+      id: randomUUID(),
+      nonce: randomBytes(16).toString('hex'),
+    };
     await this.push(input.tabId);
     return this.question;
   }
@@ -310,6 +327,12 @@ export class DeveloperPanel {
     this.finishRecording('stopped');
     await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
     return recorder;
+  }
+
+  // Moves the panel to a corner in every tab, like a plan asks.
+  async setCorner(corner: string): Promise<void> {
+    this.corner = corner;
+    await Promise.all([...this.bridges.keys()].map((id) => this.push(id)));
   }
 
   // The environment badge in every tab. Null hides it.
