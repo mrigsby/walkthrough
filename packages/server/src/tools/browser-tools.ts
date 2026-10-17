@@ -1,9 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { WindowSize } from '../browser/browser-settings.js';
+import {
+  type BrowserOptions,
+  resolveBrowserSettings,
+  type WindowSize,
+} from '../browser/browser-settings.js';
 import { describeEmulation, type Emulation, withoutDefaults } from '../browser/devices.js';
 import type { Tab } from '../browser/driver.js';
 import { loadSession, restoreSession } from '../browser/sessions.js';
+import { appHosts } from '../config.js';
 import type { Context } from '../context.js';
 import { doctorReport } from '../doctor.js';
 import { ToolError } from '../errors.js';
@@ -89,6 +94,8 @@ export async function openBrowser(
     resume?: boolean;
     // The page area of the windows, like a plan asks.
     window?: WindowSize;
+    // Browser settings of the plan. They win over config.yaml.
+    browser?: BrowserOptions;
   },
 ): Promise<{ text: string; tab: Tab; confirmed: boolean }> {
   const config = await ctx.config();
@@ -110,13 +117,28 @@ export async function openBrowser(
   if (driver) {
     lines.push('The browser is already open.');
   } else {
-    driver = await ctx.startDriver(options.attach);
+    const settings = resolveBrowserSettings(
+      [config.browser.options, options.browser],
+      config.projectDir,
+    );
+    driver = await ctx.startDriver(options.attach, {
+      launch: { settings, zoomHosts: appHosts(config) },
+    });
     lines.push(
       driver.mode === 'attached'
         ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.`
         : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`,
     );
     if (driver.launchNote) lines.push(driver.launchNote);
+    // Your own Chrome started with its own settings. Walkthrough cannot change them.
+    const asked = Object.keys({ ...config.browser.options, ...options.browser }).filter(
+      (k) => k !== 'window',
+    );
+    if (driver.mode === 'attached' && asked.length) {
+      lines.push(
+        `Walkthrough uses your own Chrome, so these browser settings do not apply: ${asked.join(', ')}.`,
+      );
+    }
   }
   for (const warning of config.warnings) lines.push(`Warning: ${warning}`);
 

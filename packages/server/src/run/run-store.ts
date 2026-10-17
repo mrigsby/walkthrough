@@ -12,6 +12,7 @@ import { join, relative, sep } from 'node:path';
 import type { A11yNode, A11yPass, A11yViolation } from '../audit/axe.js';
 import type { KeyboardResult } from '../audit/keyboard.js';
 import { CHECKS, type CheckName } from '../audit/standards.js';
+import type { BrowserSettings } from '../browser/browser-settings.js';
 import type { Emulation } from '../browser/emulation-schema.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
 import { ToolError } from '../errors.js';
@@ -130,6 +131,10 @@ export interface Run {
   emulation?: Emulation;
   // The page size without a device. Exported scripts use it too.
   window?: { width: number; height: number };
+  // Browser settings that change what pages do, like the language. Presentations use them.
+  browser?: Partial<BrowserSettings>;
+  // Files that the app downloaded during the run, from the run folder.
+  downloads?: Array<{ file: string; url: string; at: string; step?: string }>;
   // The value that {{unique}} had in this run.
   unique?: string;
   // The saved login that the run started with. A replay loads it too.
@@ -225,6 +230,7 @@ export class RunStore {
       setup?: string;
       emulation?: Run['emulation'];
       window?: Run['window'];
+      browser?: Run['browser'];
       unique?: string;
       session?: string;
       // The checks a plain "a11y: true" step runs when the plan names none.
@@ -314,6 +320,7 @@ export class RunStore {
       setup: input.setup,
       emulation: input.emulation,
       ...(input.window ? { window: input.window } : {}),
+      ...(input.browser && Object.keys(input.browser).length ? { browser: input.browser } : {}),
       unique: input.unique,
       ...(input.session ? { session: input.session } : {}),
       ...(input.freshBrowser !== undefined ? { freshBrowser: input.freshBrowser } : {}),

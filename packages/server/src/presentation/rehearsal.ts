@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { PAGE_KEYS } from '../browser/browser-settings.js';
 import { checkSlideImage } from '../guards/paths.js';
 import { buildOps } from '../replay/ops.js';
 import type { Plan, PlanStep } from '../run/plan-schema.js';
@@ -36,6 +37,7 @@ export function executionHash(plan: Plan): string {
     network: plan.network,
     emulate: plan.emulate,
     vars: plan.vars,
+    browser: Object.fromEntries(PAGE_KEYS.map((k) => [k, plan.browser?.[k]])),
     steps,
   };
   return createHash('sha256').update(JSON.stringify(what)).digest('hex').slice(0, 16);

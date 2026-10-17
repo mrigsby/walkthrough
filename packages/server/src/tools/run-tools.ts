@@ -1,8 +1,14 @@
 import { existsSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CHECKS } from '../audit/standards.js';
+import {
+  describeBrowserSettings,
+  launchKey,
+  pageSettings,
+  resolveBrowserSettings,
+} from '../browser/browser-settings.js';
 import { describeEmulation, type Emulation } from '../browser/devices.js';
 import type { Context } from '../context.js';
 import type { CookieCheck } from '../devtools/cookie-schema.js';
@@ -426,6 +432,25 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
             'lighthouse_missing',
           );
         }
+        // Browser settings: config.yaml, then the plan. Plan extensions must be in the project.
+        for (const folder of plan?.browser?.extensions ?? []) {
+          const full = resolve(config.projectDir, folder);
+          if (isAbsolute(folder) || relative(config.projectDir, full).startsWith('..')) {
+            throw new ToolError(
+              `The extension folder "${folder}" is outside the project. Put full paths in "browser.extensions" in .walkthrough/config.local.yaml.`,
+              'bad_input',
+            );
+          }
+        }
+        const browserSettings = resolveBrowserSettings(
+          [config.browser.options, plan?.browser],
+          config.projectDir,
+        );
+        // A Chrome that started with other settings cannot change them. Start a new one.
+        const otherSettings =
+          ctx.driver?.alive === true &&
+          ctx.driver.mode === 'launched' &&
+          ctx.driver.launchKey !== launchKey(browserSettings, config.browser.headless);
         const mode = modeArg ?? plan?.mode ?? 'checkpoints';
         // A plan written for one environment starts at the same page on this one.
         const planStart = plan?.baseUrl
@@ -446,9 +471,10 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           session: plan?.session,
           emulation,
           // Each run starts at its page size, so screenshots match from run to run.
-          window: plan?.browser?.window ?? config.browser.window,
+          window: browserSettings.window,
+          browser: plan?.browser,
           // Lighthouse results must not depend on earlier runs, like a warm cache.
-          fresh: lhSteps,
+          fresh: lhSteps || otherSettings,
           signal: extra.signal,
           requestId: extra.requestId,
         });
@@ -468,6 +494,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ''}`,
           emulation: { ...opened.tab.emulation },
           window: driver.pageSize,
+          browser: pageSettings(browserSettings),
           unique: ctx.unique,
           session: plan?.session,
           a11yChecks: CHECKS.filter((c) => config.accessibility.checks[c]),
@@ -493,6 +520,24 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         });
         const lh = ctx.run.run.lhPlan;
         await pushProgress(ctx);
+        // Downloads go to the run folder, and the run lists them.
+        const store = ctx.run;
+        const downloadsOn = browserSettings.downloads && driver.mode === 'launched';
+        await driver.setDownloads(
+          downloadsOn ? join(store.dir, 'downloads') : undefined,
+          (entry) => {
+            store.run.downloads = [
+              ...(store.run.downloads ?? []),
+              {
+                file: relative(store.dir, entry.file),
+                url: entry.url,
+                at: new Date().toISOString(),
+                ...(store.nextPending() ? { step: store.nextPending()?.id } : {}),
+              },
+            ];
+            store.save();
+          },
+        );
 
         // A whole-run video gives the bug clips. Otherwise a buffer keeps the last minutes.
         await stopRing(ctx);
@@ -502,6 +547,14 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
         const slides = plan ? slideProblems(plan, config.projectDir) : [];
         const lines = [
           `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+          ...(otherSettings
+            ? [
+                'The plan has other browser settings than the open browser, so the run started in a new browser.',
+              ]
+            : []),
+          ...(plan?.browser
+            ? [`Browser settings: ${describeBrowserSettings(browserSettings)}.`]
+            : []),
           ...(plan?.presentation
             ? [
                 'This plan is a presentation. This run is its rehearsal: check every step. Steps that are only a slide are skipped.',
@@ -695,6 +748,7 @@ export function registerRunTools(server: McpServer, ctx: Context): void {
           store.finish(summary);
           ctx.run = undefined;
           await ctx.driver?.panel?.setProgress(null);
+          await ctx.driver?.setDownloads(undefined);
         } else if (summary) {
           store.run.summary = summary;
           store.save();

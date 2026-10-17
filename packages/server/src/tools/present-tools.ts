@@ -3,7 +3,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import type { Config } from '../config.js';
+import { type BrowserOptions, resolveBrowserSettings } from '../browser/browser-settings.js';
+import { appHosts } from '../config.js';
 import type { Context } from '../context.js';
 import { describeEnvironment } from '../environments.js';
 import { ToolError } from '../errors.js';
@@ -40,18 +41,6 @@ import { startProgress } from './developer-tools.js';
 import { runTool } from './util.js';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
-
-// The hosts of the app, for Chrome's zoom. A wildcard origin cannot have a zoom.
-function appHosts(config: Config): string[] {
-  const hosts = new Set<string>();
-  for (const origin of [config.baseUrl, ...config.allowedOrigins]) {
-    if (!origin || origin.includes('*')) continue;
-    try {
-      hosts.add(new URL(origin).hostname);
-    } catch {}
-  }
-  return [...hosts];
-}
 
 // The presentation of this server, and the work that ends it.
 let current:
@@ -273,12 +262,25 @@ async function startPresentation(
     settings.pageZoom && settings.pageZoom !== 1 && !settings.device
       ? { factor: settings.pageZoom, hosts: appHosts(config) }
       : undefined;
+  // The settings that change what pages do, like the language, as in the rehearsal.
+  const browser = resolveBrowserSettings(
+    [config.browser.options, run.browser as BrowserOptions | undefined],
+    config.projectDir,
+  );
   const driver = await ctx.startDriver(undefined, {
     launch: {
       presentation: {
         ...(settings.window ?? { width: 1280, height: 800 }),
         ...(zoom ? { zoom } : {}),
       },
+      settings: {
+        ...browser,
+        devtools: undefined,
+        extensions: [],
+        automationBar: false,
+        keepFocus: true,
+      },
+      zoomHosts: appHosts(config),
     },
     panel: false,
   });

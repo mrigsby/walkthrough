@@ -1,5 +1,10 @@
 import { isAbsolute } from 'node:path';
 import {
+  type BrowserOptions,
+  launchPlan,
+  resolveBrowserSettings,
+} from '../browser/browser-settings.js';
+import {
   mediaFeatures,
   NETWORK_PRESETS,
   orientedDevice,
@@ -794,9 +799,19 @@ export function exportScript(
 
   const pkg = options.installedChrome ? 'puppeteer-core' : 'puppeteer';
   const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : 'puppeteer';
+  // The Chrome flags of the run's browser settings, like the language. Profile prefs, like
+  // the zoom, need a profile of their own, so the script only names them.
+  const runBrowser = run.browser
+    ? launchPlan(resolveBrowserSettings([run.browser as BrowserOptions], ''), { headless: true })
+    : undefined;
+  const flags = runBrowser?.args ?? [];
+  const prefOnly = (['zoom', 'fontSize', 'thirdPartyCookies'] as const).filter(
+    (k) => run.browser?.[k] !== undefined,
+  );
+  const launchArgs = flags.length ? `, args: ${JSON.stringify(flags)}` : '';
   const launch = options.installedChrome
-    ? "{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS }"
-    : '{ headless: !process.env.HEADFUL, slowMo: PACE_MS }';
+    ? `{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS${launchArgs} }`
+    : `{ headless: !process.env.HEADFUL, slowMo: PACE_MS${launchArgs} }`;
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
   // The environment of the run, and the one the script tests by default.
@@ -854,7 +869,7 @@ const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {
   if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
 }
-${needs.unique ? UNIQUE_CODE : ''}${VIDEO_HELPERS}
+${needs.unique ? UNIQUE_CODE : ''}${VIDEO_HELPERS}${prefOnly.length ? `\n// The run also used these browser settings, which this script does not set: ${prefOnly.join(', ')}.\n// Chrome keeps them in its profile. Set them in Chrome by hand to see the same pages.` : ''}
 const browser = await puppeteer.launch(${launch});
 ${needs.tabs ? 'let' : 'const'} page = await browser.newPage();
 page.setDefaultTimeout(10_000);

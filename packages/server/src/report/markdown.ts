@@ -100,6 +100,14 @@ export function markdownReport(
     if (run.videoNote) lines.push(run.videoNote, '');
   }
 
+  if (run.downloads?.length) {
+    lines.push('## Downloads', '');
+    for (const d of run.downloads) {
+      lines.push(`- [${d.file}](${d.file}), from ${d.url}${d.step ? ` (step ${d.step})` : ''}`);
+    }
+    lines.push('');
+  }
+
   if (problems.length > 0) {
     lines.push('## Bugs and failures', '');
     for (const step of problems) lines.push(...stepDetails(run, step, true));

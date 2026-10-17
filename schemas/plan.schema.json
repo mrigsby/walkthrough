@@ -673,6 +673,139 @@
           ],
           "additionalProperties": false,
           "description": "The size of the page area, like { width: 1280, height: 800 }. The window fits it."
+        },
+        "autofill": {
+          "description": "Chrome offers to save and fill addresses and cards. Default: false.",
+          "type": "boolean"
+        },
+        "passwords": {
+          "description": "Chrome offers to save passwords and checks them for leaks. Default: false.",
+          "type": "boolean"
+        },
+        "permissionPrompts": {
+          "description": "deny (default): Chrome says no to camera, location, and notification questions. emulate permissions still grant them. ask: Chrome asks.",
+          "type": "string",
+          "enum": [
+            "deny",
+            "ask"
+          ]
+        },
+        "spellcheck": {
+          "description": "Red lines under words that Chrome thinks are wrong. Default: false.",
+          "type": "boolean"
+        },
+        "keepFocus": {
+          "description": "The page acts as if it has focus when you click in another window, so menus stay open. Default: true.",
+          "type": "boolean"
+        },
+        "language": {
+          "description": "The language of Chrome and of the Accept-Language header, like \"de-DE\".",
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+        },
+        "downloads": {
+          "description": "Save downloads in the run folder with no Save dialog, and list them in the report. Default: false.",
+          "type": "boolean"
+        },
+        "fakeMedia": {
+          "description": "A fake camera and microphone, with no question. Default: false.",
+          "type": "boolean"
+        },
+        "autoplay": {
+          "description": "Video and sound can play without a click. Default: false.",
+          "type": "boolean"
+        },
+        "thirdPartyCookies": {
+          "description": "Cookies of other sites in frames. Default: allow.",
+          "type": "string",
+          "enum": [
+            "allow",
+            "block"
+          ]
+        },
+        "fontSize": {
+          "description": "Chrome font sizes, to test larger text.",
+          "type": "object",
+          "properties": {
+            "default": {
+              "description": "Like 16 (the Chrome default).",
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 72
+            },
+            "minimum": {
+              "description": "Text is never smaller.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 72
+            }
+          },
+          "additionalProperties": false
+        },
+        "zoom": {
+          "description": "Page zoom for the sites of the app, like 1.25.",
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 5
+        },
+        "devtools": {
+          "description": "Open DevTools in each tab. A visible browser only.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "dock": {
+                  "description": "Where DevTools shows. window: in a window of its own. Default: right.",
+                  "type": "string",
+                  "enum": [
+                    "right",
+                    "bottom",
+                    "window"
+                  ]
+                },
+                "deviceToolbar": {
+                  "description": "Show DevTools' device toolbar. Then DevTools controls the page size, and emulate cannot set a device.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "extensions": {
+          "description": "Folders of unpacked extensions, like React DevTools. From the project folder.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "hosts": {
+          "description": "Send a host name to another address, like { \"api.example.com\": \"127.0.0.1\" }.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9*]([A-Za-z0-9-.*]*[A-Za-z0-9])?$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9*]([A-Za-z0-9-.*]*[A-Za-z0-9])?$"
+          }
+        },
+        "secureOrigins": {
+          "description": "http sites that Chrome treats as secure, like \"http://dev.test:8080\", so the clipboard and service workers work there.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "automationBar": {
+          "description": "The \"controlled by automated test software\" bar. Default: true.",
+          "type": "boolean"
         }
       },
       "additionalProperties": false

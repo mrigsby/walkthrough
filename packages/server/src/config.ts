@@ -10,7 +10,12 @@ import {
   STANDARDS,
   type Standard,
 } from './audit/standards.js';
-import { DEFAULT_WINDOW, type WindowSize, windowSchema } from './browser/browser-settings.js';
+import {
+  type BrowserOptions,
+  browserFields,
+  DEFAULT_WINDOW,
+  type WindowSize,
+} from './browser/browser-settings.js';
 import {
   DEVELOPMENT,
   defaultColor,
@@ -46,6 +51,8 @@ export interface Config {
     executablePath?: string;
     // The page area of a visible window, and the page size in headless Chrome.
     window: WindowSize;
+    // The browser settings of config.yaml and config.local.yaml. A plan can change them.
+    options: BrowserOptions;
   };
   dialogs: DialogPolicy;
   actionTimeoutMs: number;
@@ -114,7 +121,7 @@ const sharedSchema = z
         headless: z.boolean().optional(),
         slowMo: z.number().int().min(0).max(5000).optional(),
         executablePath: z.string().optional(),
-        window: windowSchema.optional(),
+        ...browserFields,
       })
       .optional(),
     dialogs: z.enum(['ask', 'accept', 'dismiss']).optional(),
@@ -159,6 +166,13 @@ const sharedSchema = z
     environments: z.record(envNameSchema, environmentFileSchema).optional(),
   })
   .loose();
+
+// The browser settings in a config browser block, without the keys that only config has.
+function browserOptionsOf(block: Record<string, unknown>): BrowserOptions {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(browserFields)) if (block[key] !== undefined) out[key] = block[key];
+  return out as BrowserOptions;
+}
 
 // Risky settings. Only the local, uncommitted file may turn these on.
 const LOCAL_ONLY = [
@@ -324,6 +338,15 @@ export function loadConfig(
     }
   }
   const shared = validate(sharedSchema, sharedRaw, sharedFile);
+  // An extension from outside the project only works on one computer, so only the local file
+  // may name one.
+  const sharedExtensions = shared.browser?.extensions;
+  if (sharedExtensions?.some((p) => isAbsolute(p))) {
+    warnings.push(
+      'Walkthrough ignores full paths in "browser.extensions" in .walkthrough/config.yaml. Put them in .walkthrough/config.local.yaml.',
+    );
+    if (shared.browser) shared.browser.extensions = sharedExtensions.filter((p) => !isAbsolute(p));
+  }
   const local: LocalFile = validate(localSchema, readYaml(localFile), localFile);
   const merged = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
   // Merge key by key, so the local file can change one check only.
@@ -381,6 +404,7 @@ export function loadConfig(
       slowMo: merged.browser.slowMo ?? 0,
       executablePath: merged.browser.executablePath,
       window: merged.browser.window ?? DEFAULT_WINDOW,
+      options: browserOptionsOf(merged.browser),
     },
     dialogs: merged.dialogs ?? 'ask',
     actionTimeoutMs: environment.actionTimeoutMs ?? merged.actionTimeoutMs ?? 10_000,
@@ -423,4 +447,16 @@ export function loadConfig(
     vars: { ...stringValues(shared.vars), ...stringValues(local.vars) },
     warnings,
   };
+}
+
+// The hosts of the app, for Chrome's zoom. A wildcard origin cannot have a zoom.
+export function appHosts(config: Config): string[] {
+  const hosts = new Set<string>();
+  for (const origin of [config.baseUrl, ...config.allowedOrigins]) {
+    if (!origin || origin.includes('*')) continue;
+    try {
+      hosts.add(new URL(origin).hostname);
+    } catch {}
+  }
+  return [...hosts];
 }

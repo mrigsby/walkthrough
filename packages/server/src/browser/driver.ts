@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { existsSync, mkdirSync, renameSync } from 'node:fs';
+import { basename, extname, join } from 'node:path';
 import type {
   Browser,
   BrowserContext,
@@ -23,7 +25,13 @@ import { log } from '../log.js';
 import { RefTable } from '../page/refs.js';
 import { DeveloperPanel } from '../panel/controller.js';
 import { attachChrome } from './attach.js';
-import { fitSize, type ScreenSize, type WindowSize } from './browser-settings.js';
+import {
+  type BrowserSettings,
+  fitSize,
+  launchKey,
+  type ScreenSize,
+  type WindowSize,
+} from './browser-settings.js';
 import { applyEmulation, checkEmulation, deviceSize, type Emulation } from './devices.js';
 import { mergeEmulation, permissionEntries } from './emulation-schema.js';
 import { FetchRouter } from './fetch-router.js';
@@ -118,11 +126,22 @@ export class Driver {
   // The page area of visible windows. A plan can change it for a run.
   private windowSize: WindowSize;
   // The screen, measured at launch, before a device changes what screen.* says.
-  private screen?: ScreenSize;
+  private screen?: ScreenSize & { dpr?: number };
   // The size each window got last, so a tab switch does not undo the developer's own size.
   private readonly fittedSize = new Map<number, string>();
   // A note from the first window, like "The screen is too small".
   launchNote?: string;
+  // The settings that Chrome started with. Undefined for a Chrome that is not ours.
+  readonly settings?: BrowserSettings;
+  // The launch settings as text, so run_start can tell when a plan needs a new Chrome.
+  readonly launchKey: string;
+  // Where downloads go now, and what to do with each one.
+  private downloads?: {
+    dir: string;
+    onDone: (entry: { file: string; url: string }) => void;
+    names: Map<string, { name: string; url: string }>;
+  };
+  private browserCdp?: CDPSession;
 
   private constructor(
     readonly browser: Browser,
@@ -133,7 +152,9 @@ export class Driver {
   ) {
     this.dialogPolicy = options.config.dialogs;
     if (options.config.panel) this.panel = new DeveloperPanel();
-    this.windowSize = options.config.browser.window;
+    this.windowSize = options.launch?.settings?.window ?? options.config.browser.window;
+    this.settings = mode === 'launched' ? options.launch?.settings : undefined;
+    this.launchKey = this.settings ? launchKey(this.settings, options.config.browser.headless) : '';
   }
 
   static async start(options: DriverOptions): Promise<Driver> {
@@ -148,7 +169,10 @@ export class Driver {
       const { browser, profileDir } = await launchChrome(options.config, options.launch);
       driver = new Driver(browser, 'launched', await browser.version(), options, profileDir);
       driver.logins.set('main', browser.defaultBrowserContext());
-      const first = (await browser.pages())[0] ?? (await browser.newPage());
+      // DevTools has pages of its own. They are not tabs.
+      const first =
+        (await browser.pages()).find((p) => !p.url().startsWith('devtools://')) ??
+        (await browser.newPage());
       const tab = await driver.addTab(first);
       await driver.measureScreen(tab);
       driver.launchNote = await driver.fitWindow(tab, true);
@@ -217,7 +241,7 @@ export class Driver {
 
   // A new tab or popup opened.
   private async onTarget(target: Target): Promise<void> {
-    if (target.type() !== 'page') return;
+    if (target.type() !== 'page' || target.url().startsWith('devtools://')) return;
     const context = target.browserContext();
     if (context && this.foreign.has(context)) return;
     const page = await target.page().catch(() => null);
@@ -338,6 +362,13 @@ export class Driver {
     });
     tab.cdp = tab.router?.cdp;
     if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
+
+    // The page acts as if it has focus, also while the developer types in the terminal.
+    if (this.settings?.keepFocus) {
+      await tab.cdp
+        ?.send('Emulation.setFocusEmulationEnabled', { enabled: true })
+        .catch(() => undefined);
+    }
 
     // Chrome's Issues panel: blocked cookies, CSP, CORS, and more.
     if (tab.cdp) {
@@ -462,6 +493,7 @@ export class Driver {
           height: screen.availHeight,
           frameWidth: outerWidth - innerWidth,
           frameHeight: outerHeight - innerHeight,
+          dpr: devicePixelRatio,
         }))
         .catch(() => undefined);
     const end = Date.now() + 1500;
@@ -492,7 +524,7 @@ export class Driver {
     const screen = this.screen;
     const fit = fitSize(wanted, screen);
     const { width, height } = fit.size;
-    const note = !fit.clipped
+    let note = !fit.clipped
       ? undefined
       : device
         ? `The screen is too small for the ${wanted.width} x ${wanted.height} page of "${tab.emulation.device}". The window shows ${width} x ${height} of it, so part of the page is hidden. Use a smaller device, or a bigger screen.`
@@ -508,6 +540,29 @@ export class Driver {
       }
       try {
         await tab.page.resize({ contentWidth: width, contentHeight: height });
+        // Docked DevTools takes part of the window. Make the window bigger by that much.
+        const dock = this.settings?.devtools?.dock;
+        if (!device && (dock === 'right' || dock === 'bottom')) {
+          await new Promise((r) => setTimeout(r, 300));
+          const page = await tab.page
+            .evaluate(() => ({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio }))
+            .catch(() => undefined);
+          const scale = page && screen?.dpr ? page.dpr / screen.dpr : 1;
+          if (page) {
+            const extraW = dock === 'right' ? width - Math.round(page.w * scale) : 0;
+            const extraH = dock === 'bottom' ? height - Math.round(page.h * scale) : 0;
+            if (extraW > 0 || extraH > 0) {
+              const grown = fitSize({ width: width + extraW, height: height + extraH }, screen);
+              await tab.page.resize({
+                contentWidth: grown.size.width,
+                contentHeight: grown.size.height,
+              });
+              if (grown.clipped) {
+                note = `The screen has no room for a ${width} x ${height} page next to DevTools, so the page is smaller. Dock DevTools at the bottom or in its own window, with devtools: { dock: window }.`;
+              }
+            }
+          }
+        }
       } catch {
         // An older Chrome: set the outer size, with the frame.
         await cdp.send('Browser.setWindowBounds', {
@@ -525,6 +580,64 @@ export class Driver {
       await cdp.detach().catch(() => undefined);
     }
     return note;
+  }
+
+  // Saves downloads in a folder, with no Save dialog, or goes back to Chrome's own way.
+  // Only a Chrome that Walkthrough started. Each login needs the setting.
+  async setDownloads(
+    dir: string | undefined,
+    onDone?: (entry: { file: string; url: string }) => void,
+  ): Promise<void> {
+    if (this.mode !== 'launched') return;
+    if (dir) mkdirSync(dir, { recursive: true });
+    this.downloads = dir && onDone ? { dir, onDone, names: new Map() } : undefined;
+    if (!this.browserCdp) {
+      this.browserCdp = await this.browser.target().createCDPSession();
+      this.browserCdp.on(
+        'Browser.downloadWillBegin',
+        (e: Protocol.Browser.DownloadWillBeginEvent) =>
+          this.downloads?.names.set(e.guid, { name: e.suggestedFilename, url: e.url }),
+      );
+      this.browserCdp.on('Browser.downloadProgress', (e: Protocol.Browser.DownloadProgressEvent) =>
+        this.onDownloadProgress(e),
+      );
+    }
+    for (const context of new Set(this.logins.values())) await this.applyDownloads(context);
+  }
+
+  private async applyDownloads(context: BrowserContext): Promise<void> {
+    const dir = this.downloads?.dir;
+    const id = context === this.browser.defaultBrowserContext() ? undefined : context.id;
+    await this.browserCdp
+      ?.send('Browser.setDownloadBehavior', {
+        behavior: dir ? 'allowAndName' : 'default',
+        ...(dir ? { downloadPath: dir, eventsEnabled: true } : {}),
+        ...(id ? { browserContextId: id } : {}),
+      })
+      .catch(() => undefined);
+  }
+
+  // Chrome names a download by its id. Give it its own name back.
+  private onDownloadProgress(event: Protocol.Browser.DownloadProgressEvent): void {
+    const downloads = this.downloads;
+    if (!downloads || event.state !== 'completed') return;
+    const info = downloads.names.get(event.guid);
+    downloads.names.delete(event.guid);
+    if (!info) return;
+    const from = join(downloads.dir, event.guid);
+    const safe = basename(info.name || 'download').replace(/[^\w.-]+/g, '_') || 'download';
+    let to = join(downloads.dir, safe);
+    for (let n = 2; existsSync(to); n++) {
+      const ext = extname(safe);
+      to = join(downloads.dir, `${basename(safe, ext)}-${n}${ext}`);
+    }
+    try {
+      renameSync(from, to);
+    } catch {
+      return;
+    }
+    this.note(`A file downloaded: ${basename(to)}.`);
+    downloads.onDone({ file: to, url: info.url });
   }
 
   // A new page area for the windows, like a plan asks. Headless Chrome gets a new page size.
@@ -563,6 +676,18 @@ export class Driver {
     options: { tab?: Tab; reload: boolean; fitWindow?: boolean },
   ): Promise<{ reloaded: string[]; note?: string }> {
     checkEmulation(change);
+    // With DevTools' device toolbar on, DevTools sets the page size. It undoes ours.
+    let toolbarNote: string | undefined;
+    if (
+      this.settings?.devtools?.deviceToolbar &&
+      !this.options.config.browser.headless &&
+      (change.device !== undefined || change.orientation !== undefined)
+    ) {
+      const { device: _d, orientation: _o, ...rest } = change;
+      change = rest;
+      toolbarNote =
+        "DevTools' device toolbar is on, so it controls the page size. Walkthrough did not set the device or the orientation. Choose them in the toolbar.";
+    }
     const targets = options.tab ? [options.tab] : [...this.tabs.values()];
     if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
     const reloaded: string[] = [];
@@ -592,6 +717,7 @@ export class Driver {
         .filter(Boolean)
         .join(' ');
     }
+    note = [toolbarNote, note].filter(Boolean).join(' ') || undefined;
     return { reloaded, ...(note ? { note } : {}) };
   }
 
@@ -628,6 +754,7 @@ export class Driver {
       if (!context) {
         context = await this.browser.createBrowserContext();
         this.logins.set(login, context);
+        if (this.downloads) await this.applyDownloads(context);
       }
       const page = await context.newPage();
       const tab = await this.addTab(page, undefined, {

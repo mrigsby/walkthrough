@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveBrowserSettings } from '../browser/browser-settings.js';
 import { FetchRouter } from '../browser/fetch-router.js';
 import { killChrome, launchChrome, removeProfile } from '../browser/launch.js';
 import { restoreSession, type SavedSession } from '../browser/sessions.js';
@@ -39,7 +40,15 @@ export async function auditPage(
   },
 ): Promise<LighthouseCheck> {
   const lighthouse = await loadLighthouse();
-  const { browser, profileDir } = await launchChrome(options.config, { background: true });
+  // Lighthouse gets the host settings, so it reaches the same sites as the test tabs.
+  const own = options.config.browser.options;
+  const { browser, profileDir } = await launchChrome(options.config, {
+    background: true,
+    settings: resolveBrowserSettings(
+      [{ hosts: own.hosts, secureOrigins: own.secureOrigins }],
+      options.config.projectDir,
+    ),
+  });
   let result: LighthouseResult;
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());

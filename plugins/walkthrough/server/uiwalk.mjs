@@ -94,11 +94,11 @@ function __extends(d, b2) {
 }
 function __awaiter(thisArg, _arguments, P2, generator) {
   function adopt(value) {
-    return value instanceof P2 ? value : new P2(function(resolve12) {
-      resolve12(value);
+    return value instanceof P2 ? value : new P2(function(resolve14) {
+      resolve14(value);
     });
   }
-  return new (P2 || (P2 = Promise))(function(resolve12, reject) {
+  return new (P2 || (P2 = Promise))(function(resolve14, reject) {
     function fulfilled(value) {
       try {
         step(generator.next(value));
@@ -114,7 +114,7 @@ function __awaiter(thisArg, _arguments, P2, generator) {
       }
     }
     function step(result) {
-      result.done ? resolve12(result.value) : adopt(result.value).then(fulfilled, rejected);
+      result.done ? resolve14(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
@@ -277,14 +277,14 @@ function __asyncValues(o) {
   }, i);
   function verb(n) {
     i[n] = o[n] && function(v2) {
-      return new Promise(function(resolve12, reject) {
-        v2 = o[n](v2), settle5(resolve12, reject, v2.done, v2.value);
+      return new Promise(function(resolve14, reject) {
+        v2 = o[n](v2), settle5(resolve14, reject, v2.done, v2.value);
       });
     };
   }
-  function settle5(resolve12, reject, d, v2) {
+  function settle5(resolve14, reject, d, v2) {
     Promise.resolve(v2).then(function(v22) {
-      resolve12({ value: v22, done: d });
+      resolve14({ value: v22, done: d });
     }, reject);
   }
 }
@@ -809,7 +809,7 @@ function of() {
 }
 function lastValueFrom(source2, config22) {
   var hasConfig = typeof config22 === "object";
-  return new Promise(function(resolve12, reject) {
+  return new Promise(function(resolve14, reject) {
     var _hasValue = false;
     var _value;
     source2.subscribe({
@@ -820,9 +820,9 @@ function lastValueFrom(source2, config22) {
       error: reject,
       complete: function() {
         if (_hasValue) {
-          resolve12(_value);
+          resolve14(_value);
         } else if (hasConfig) {
-          resolve12(config22.defaultValue);
+          resolve14(config22.defaultValue);
         } else {
           reject(new EmptyError());
         }
@@ -832,16 +832,16 @@ function lastValueFrom(source2, config22) {
 }
 function firstValueFrom(source2, config22) {
   var hasConfig = typeof config22 === "object";
-  return new Promise(function(resolve12, reject) {
+  return new Promise(function(resolve14, reject) {
     var subscriber = new SafeSubscriber({
       next: function(value) {
-        resolve12(value);
+        resolve14(value);
         subscriber.unsubscribe();
       },
       error: reject,
       complete: function() {
         if (hasConfig) {
-          resolve12(config22.defaultValue);
+          resolve14(config22.defaultValue);
         } else {
           reject(new EmptyError());
         }
@@ -1880,7 +1880,7 @@ var init_rxjs = __esm({
       Observable2.prototype.forEach = function(next, promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve12, reject) {
+        return new promiseCtor(function(resolve14, reject) {
           var subscriber = new SafeSubscriber({
             next: function(value) {
               try {
@@ -1891,7 +1891,7 @@ var init_rxjs = __esm({
               }
             },
             error: reject,
-            complete: resolve12
+            complete: resolve14
           });
           _this.subscribe(subscriber);
         });
@@ -1913,14 +1913,14 @@ var init_rxjs = __esm({
       Observable2.prototype.toPromise = function(promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve12, reject) {
+        return new promiseCtor(function(resolve14, reject) {
           var value;
           _this.subscribe(function(x2) {
             return value = x2;
           }, function(err) {
             return reject(err);
           }, function() {
-            return resolve12(value);
+            return resolve14(value);
           });
         });
       };
@@ -3554,8 +3554,8 @@ var init_Deferred = __esm({
       // SAFETY: This is ensured by #taskPromise.
       #resolve;
       // TODO: Switch to Promise.withResolvers with Node 22
-      #taskPromise = new Promise((resolve12) => {
-        this.#resolve = resolve12;
+      #taskPromise = new Promise((resolve14) => {
+        this.#resolve = resolve14;
       });
       #timeoutId;
       #timeoutError;
@@ -3646,12 +3646,12 @@ var init_Mutex = __esm({
         return new _Mutex.Guard(this, onRelease);
       }
       release() {
-        const resolve12 = this.#acquirers.shift();
-        if (!resolve12) {
+        const resolve14 = this.#acquirers.shift();
+        if (!resolve14) {
           this.#locked = false;
           return;
         }
-        resolve12();
+        resolve14();
       }
     };
   }
@@ -5695,12 +5695,12 @@ var init_locators = __esm({
         }
         return defer(() => {
           return from(handle.evaluate((element) => {
-            return new Promise((resolve12) => {
+            return new Promise((resolve14) => {
               window.requestAnimationFrame(() => {
                 const rect1 = element.getBoundingClientRect();
                 window.requestAnimationFrame(() => {
                   const rect2 = element.getBoundingClientRect();
-                  resolve12([
+                  resolve14([
                     {
                       x: rect1.x,
                       y: rect1.y,
@@ -7486,9 +7486,9 @@ var init_ElementHandle = __esm({
             const handle = await this.#asSVGElementHandle();
             const target2 = __addDisposableResource6(env_5, handle && await handle.#getOwnerSVGElement(), false);
             return await (target2 ?? this).evaluate(async (element, threshold) => {
-              const visibleRatio = await new Promise((resolve12) => {
+              const visibleRatio = await new Promise((resolve14) => {
                 const observer = new IntersectionObserver((entries) => {
-                  resolve12(entries[0].intersectionRatio);
+                  resolve14(entries[0].intersectionRatio);
                   observer.disconnect();
                 });
                 observer.observe(element);
@@ -8206,7 +8206,7 @@ var init_Frame = __esm({
           }
           type = type ?? "text/javascript";
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url: url2, id, type: type2, content: content2 }) => {
-            return await new Promise((resolve12, reject) => {
+            return await new Promise((resolve14, reject) => {
               const script = document.createElement("script");
               script.type = type2;
               script.text = content2;
@@ -8219,12 +8219,12 @@ var init_Frame = __esm({
               if (url2) {
                 script.src = url2;
                 script.addEventListener("load", () => {
-                  resolve12(script);
+                  resolve14(script);
                 }, { once: true });
                 document.head.appendChild(script);
               } else {
                 document.head.appendChild(script);
-                resolve12(script);
+                resolve14(script);
               }
             });
           }, { ...options, type, content }));
@@ -8244,7 +8244,7 @@ var init_Frame = __esm({
             options.content = content;
           }
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url: url2, content: content2 }) => {
-            return await new Promise((resolve12, reject) => {
+            return await new Promise((resolve14, reject) => {
               let element;
               if (!url2) {
                 element = document.createElement("style");
@@ -8256,7 +8256,7 @@ var init_Frame = __esm({
                 element = link2;
               }
               element.addEventListener("load", () => {
-                resolve12(element);
+                resolve14(element);
               }, { once: true });
               element.addEventListener("error", (event) => {
                 reject(new Error(event.message ?? "Could not load style"));
@@ -9947,7 +9947,7 @@ var init_Page = __esm({
          */
         async screencast(options = {}) {
           const ScreenRecorder2 = environment.value.ScreenRecorder;
-          const [width, height, devicePixelRatio] = await this.#getNativePixelDimensions();
+          const [width, height, devicePixelRatio2] = await this.#getNativePixelDimensions();
           let crop2;
           if (options.crop) {
             const { x: x2, y, width: cropWidth, height: cropHeight } = roundRectangle(normalizeRectangle(options.crop));
@@ -9957,8 +9957,8 @@ var init_Page = __esm({
             if (cropWidth <= 0 || cropHeight <= 0) {
               throw new Error(`\`crop.height\` and \`crop.width\` must be greater than or equal to 0.`);
             }
-            const viewportWidth = width / devicePixelRatio;
-            const viewportHeight = height / devicePixelRatio;
+            const viewportWidth = width / devicePixelRatio2;
+            const viewportHeight = height / devicePixelRatio2;
             if (x2 + cropWidth > viewportWidth) {
               throw new Error(`\`crop.width\` cannot be larger than the viewport width (${viewportWidth}).`);
             }
@@ -9966,10 +9966,10 @@ var init_Page = __esm({
               throw new Error(`\`crop.height\` cannot be larger than the viewport height (${viewportHeight}).`);
             }
             crop2 = {
-              x: x2 * devicePixelRatio,
-              y: y * devicePixelRatio,
-              width: cropWidth * devicePixelRatio,
-              height: cropHeight * devicePixelRatio
+              x: x2 * devicePixelRatio2,
+              y: y * devicePixelRatio2,
+              width: cropWidth * devicePixelRatio2,
+              height: cropHeight * devicePixelRatio2
             };
           }
           if (options.speed !== void 0 && options.speed <= 0) {
@@ -10078,9 +10078,9 @@ var init_Page = __esm({
           ++this.#screencastSessionCount;
           if (!this.#startScreencastPromise) {
             const client = this.mainFrame().client;
-            const firstFrame = new Promise((resolve12) => {
+            const firstFrame = new Promise((resolve14) => {
               return client.once("Page.screencastFrame", () => {
-                return resolve12();
+                return resolve14();
               });
             });
             this.#startScreencastPromise = client.send("Page.startScreencast", { format: "png" }).then(() => {
@@ -10916,13 +10916,13 @@ var init_ScreenRecording = __esm({
           dest.end();
         }
         const destinationPromises = Array.from(this.destinations).map((dest) => {
-          return new Promise((resolve12) => {
+          return new Promise((resolve14) => {
             if (dest.writableFinished || dest.closed || dest.destroyed) {
-              resolve12(void 0);
+              resolve14(void 0);
             } else {
-              dest.once?.("finish", resolve12);
-              dest.once?.("close", resolve12);
-              dest.once?.("error", resolve12);
+              dest.once?.("finish", resolve14);
+              dest.once?.("close", resolve14);
+              dest.once?.("error", resolve14);
             }
           });
         });
@@ -13669,11 +13669,11 @@ function addPageBinding(type, name, prefix) {
           return value instanceof Node;
         })
       }));
-      return new Promise((resolve12, reject) => {
+      return new Promise((resolve14, reject) => {
         callPuppeteer.callbacks.set(seq, {
           resolve(value) {
             callPuppeteer.args.delete(seq);
-            resolve12(value);
+            resolve14(value);
           },
           reject(value) {
             callPuppeteer.args.delete(seq);
@@ -17717,8 +17717,8 @@ var init_Input2 = __esm({
         if (typeof delay === "number") {
           await Promise.all(actions);
           actions.length = 0;
-          await new Promise((resolve12) => {
-            setTimeout(resolve12, delay);
+          await new Promise((resolve14) => {
+            setTimeout(resolve14, delay);
           });
         }
         actions.push(this.up({ ...options, clickCount: count }));
@@ -17738,9 +17738,9 @@ var init_Input2 = __esm({
         });
       }
       async drag(start, target2) {
-        const promise2 = new Promise((resolve12) => {
+        const promise2 = new Promise((resolve14) => {
           this.#client.once("Input.dragIntercepted", (event) => {
-            return resolve12(event.data);
+            return resolve14(event.data);
           });
         });
         await this.move(start.x, start.y);
@@ -17781,8 +17781,8 @@ var init_Input2 = __esm({
         await this.dragEnter(target2, data);
         await this.dragOver(target2, data);
         if (delay) {
-          await new Promise((resolve12) => {
-            return setTimeout(resolve12, delay);
+          await new Promise((resolve14) => {
+            return setTimeout(resolve14, delay);
           });
         }
         await this.drop(target2, data);
@@ -18174,7 +18174,7 @@ var init_WebMCP = __esm({
        */
       async execute(input3 = {}, options = {}) {
         const { invocationId } = await this.#webmcp.invokeTool(this, input3);
-        return await new Promise((resolve12) => {
+        return await new Promise((resolve14) => {
           const onAbort = () => {
             void this.#webmcp.cancelInvocation(invocationId);
           };
@@ -18182,7 +18182,7 @@ var init_WebMCP = __esm({
             if (event.id === invocationId) {
               options.signal?.removeEventListener("abort", onAbort);
               this.#webmcp.off("toolresponded", handler);
-              resolve12(event);
+              resolve14(event);
             }
           };
           this.#webmcp.on("toolresponded", handler);
@@ -19032,9 +19032,9 @@ var init_Page2 = __esm({
         const env_2 = { stack: [], error: void 0, hasError: false };
         try {
           const stream = environment.value.createWriteStream(options.path);
-          const streamPromise = new Promise((resolve12, reject) => {
+          const streamPromise = new Promise((resolve14, reject) => {
             stream.on("error", reject);
-            stream.on("finish", resolve12);
+            stream.on("finish", resolve14);
           });
           const client = this.#primaryTargetClient;
           await client.send("HeapProfiler.enable");
@@ -21317,12 +21317,12 @@ var init_Browser2 = __esm({
         for (const [targetId, targetInfo] of this._targetManager().getDiscoveredTargetInfos().entries()) {
           if (targetInfo.url.includes(id) && targetInfo.type === "service_worker") {
             this._targetManager().addToIgnoreTarget(targetId);
-            targetDestroyedPromises.push(new Promise((resolve12) => {
+            targetDestroyedPromises.push(new Promise((resolve14) => {
               return setTimeout(() => {
                 this.#connection.emit("Target.targetDestroyed", {
                   targetId
                 });
-                resolve12(null);
+                resolve14(null);
               }, 0);
             }));
           }
@@ -21636,10 +21636,10 @@ var init_BrowserWebSocketTransport = __esm({
     init_Debug();
     BrowserWebSocketTransport = class _BrowserWebSocketTransport {
       static create(url2, _headers, logger, _options) {
-        return new Promise((resolve12, reject) => {
+        return new Promise((resolve14, reject) => {
           const ws = new WebSocket(url2);
           ws.addEventListener("open", () => {
-            return resolve12(new _BrowserWebSocketTransport(ws, logger));
+            return resolve14(new _BrowserWebSocketTransport(ws, logger));
           });
           ws.addEventListener("error", reject);
         });
@@ -24709,11 +24709,11 @@ var init_BrowsingContextProcessor = __esm({
         }
         const parentCdpClient = context2.cdpTarget.parentCdpClient;
         try {
-          const detachedFromTargetPromise = new Promise((resolve12) => {
+          const detachedFromTargetPromise = new Promise((resolve14) => {
             const onContextDestroyed = (event) => {
               if (event.targetId === params.context) {
                 parentCdpClient.off("Target.detachedFromTarget", onContextDestroyed);
-                resolve12();
+                resolve14();
               }
             };
             parentCdpClient.on("Target.detachedFromTarget", onContextDestroyed);
@@ -26131,7 +26131,7 @@ var init_ActionDispatcher = __esm({
           }
         }
         const promises = [
-          new Promise((resolve12) => setTimeout(resolve12, this.#tickDuration))
+          new Promise((resolve14) => setTimeout(resolve14, this.#tickDuration))
         ];
         for (const option of options) {
           promises.push(this.#dispatchAction(option));
@@ -26661,8 +26661,8 @@ var init_Mutex2 = __esm({
       acquire() {
         const state = { resolved: false };
         if (this.#locked) {
-          return new Promise((resolve12) => {
-            this.#acquirers.push(() => resolve12(this.#release.bind(this, state)));
+          return new Promise((resolve14) => {
+            this.#acquirers.push(() => resolve14(this.#release.bind(this, state)));
           });
         }
         this.#locked = true;
@@ -26673,12 +26673,12 @@ var init_Mutex2 = __esm({
           throw new Error("Cannot release more than once.");
         }
         state.resolved = true;
-        const resolve12 = this.#acquirers.shift();
-        if (!resolve12) {
+        const resolve14 = this.#acquirers.shift();
+        if (!resolve14) {
           this.#locked = false;
           return;
         }
-        resolve12();
+        resolve14();
       }
       async run(action2) {
         const release = await this.acquire();
@@ -27781,8 +27781,8 @@ var init_ChannelProxy = __esm({
              * in the queue.
              */
             async getMessage() {
-              const onMessage = queue.length > 0 ? Promise.resolve() : new Promise((resolve12) => {
-                queueNonEmptyResolver = resolve12;
+              const onMessage = queue.length > 0 ? Promise.resolve() : new Promise((resolve14) => {
+                queueNonEmptyResolver = resolve14;
               });
               await onMessage;
               return queue.shift();
@@ -27887,7 +27887,7 @@ var init_ChannelProxy = __esm({
           functionDeclaration: String((id) => {
             const w2 = window;
             if (w2[id] === void 0) {
-              return new Promise((resolve12) => w2[id] = resolve12);
+              return new Promise((resolve14) => w2[id] = resolve14);
             }
             const channelProxy = w2[id];
             delete w2[id];
@@ -29372,8 +29372,8 @@ var init_Deferred2 = __esm({
         return this.#result;
       }
       constructor() {
-        this.#promise = new Promise((resolve12, reject) => {
-          this.#resolve = resolve12;
+        this.#promise = new Promise((resolve14, reject) => {
+          this.#resolve = resolve14;
           this.#reject = reject;
         });
         this.#promise.catch((_error) => {
@@ -31096,9 +31096,9 @@ var init_BrowsingContextImpl = __esm({
           url: navigationState.url
         };
       }
-      async setViewport(viewport, devicePixelRatio, screenOrientation) {
+      async setViewport(viewport, devicePixelRatio2, screenOrientation) {
         const config3 = this.#configStorage.getActiveConfig(this.id, this.userContext);
-        await this.cdpTarget.setDeviceMetricsOverride(viewport, devicePixelRatio, screenOrientation, config3.screenArea ?? null, config3.scrollbarType ?? null);
+        await this.cdpTarget.setDeviceMetricsOverride(viewport, devicePixelRatio2, screenOrientation, config3.screenArea ?? null, config3.scrollbarType ?? null);
       }
       async handleUserPrompt(accept, userText) {
         await this.top.#cdpTarget.cdpClient.sendCommand("Page.handleJavaScriptDialog", {
@@ -33631,15 +33631,15 @@ var init_CdpTarget = __esm({
           return script.initInTarget(this, true);
         }));
       }
-      async setDeviceMetricsOverride(viewport, devicePixelRatio, screenOrientation, screenArea, scrollbarType = null) {
-        if (viewport === null && devicePixelRatio === null && screenOrientation === null && screenArea === null && scrollbarType === null) {
+      async setDeviceMetricsOverride(viewport, devicePixelRatio2, screenOrientation, screenArea, scrollbarType = null) {
+        if (viewport === null && devicePixelRatio2 === null && screenOrientation === null && screenArea === null && scrollbarType === null) {
           await this.cdpClient.sendCommand("Emulation.clearDeviceMetricsOverride");
           return;
         }
         const metricsOverride = {
           width: viewport?.width ?? 0,
           height: viewport?.height ?? 0,
-          deviceScaleFactor: devicePixelRatio ?? 0,
+          deviceScaleFactor: devicePixelRatio2 ?? 0,
           screenOrientation: this.#toCdpScreenOrientationAngle(screenOrientation) ?? void 0,
           mobile: false,
           screenWidth: screenArea?.width,
@@ -34189,11 +34189,11 @@ var init_BrowsingContextStorage = __esm({
         if (this.#contexts.has(browsingContextId)) {
           return Promise.resolve(this.getContext(browsingContextId));
         }
-        return new Promise((resolve12) => {
+        return new Promise((resolve14) => {
           const listener = (event) => {
             if (event.browsingContext.id === browsingContextId) {
               this.#eventEmitter.off("added", listener);
-              resolve12(event.browsingContext);
+              resolve14(event.browsingContext);
             }
           };
           this.#eventEmitter.on("added", listener);
@@ -37879,8 +37879,8 @@ var init_ExposedFunction = __esm({
         const functionDeclaration = stringifyFunction(interpolateFunction((callback) => {
           Object.assign(globalThis, {
             [PLACEHOLDER("name")]: function(...args) {
-              return new Promise((resolve12, reject) => {
-                callback([resolve12, reject, args]);
+              return new Promise((resolve14, reject) => {
+                callback([resolve14, reject, args]);
               });
             }
           });
@@ -37968,8 +37968,8 @@ var init_ExposedFunction = __esm({
             return;
           }
           try {
-            await dataHandle.evaluate(([resolve12], result2) => {
-              resolve12(result2);
+            await dataHandle.evaluate(([resolve14], result2) => {
+              resolve14(result2);
             }, result);
           } catch (error62) {
             this.#logger?.(DEBUG_PREFIXES.error)?.(error62);
@@ -40741,7 +40741,7 @@ var init_Page3 = __esm({
               width: viewport.width,
               height: viewport.height
             } : null;
-            const devicePixelRatio = viewport?.deviceScaleFactor ? viewport.deviceScaleFactor : null;
+            const devicePixelRatio2 = viewport?.deviceScaleFactor ? viewport.deviceScaleFactor : null;
             const screenOrientation = viewport ? viewport.isLandscape ? {
               natural: "landscape",
               type: "landscape-primary"
@@ -40752,7 +40752,7 @@ var init_Page3 = __esm({
             const commands = [
               this.#frame.browsingContext.setViewport({
                 viewport: viewportSize,
-                devicePixelRatio
+                devicePixelRatio: devicePixelRatio2
               }),
               this.#frame.browsingContext.setScreenOrientationOverride(screenOrientation)
             ];
@@ -46356,7 +46356,7 @@ var init_NodeWebSocketTransport = __esm({
     DEFAULT_KEEP_ALIVE_INTERVAL_MS = 3e4;
     NodeWebSocketTransport = class _NodeWebSocketTransport {
       static create(url2, headers2, logger, options = {}) {
-        return new Promise((resolve12, reject) => {
+        return new Promise((resolve14, reject) => {
           const ws = new wrapper_default(url2, [], {
             followRedirects: true,
             perMessageDeflate: false,
@@ -46369,7 +46369,7 @@ var init_NodeWebSocketTransport = __esm({
             }
           });
           ws.addEventListener("open", () => {
-            return resolve12(new _NodeWebSocketTransport(ws, logger, options));
+            return resolve14(new _NodeWebSocketTransport(ws, logger, options));
           });
           ws.addEventListener("error", reject);
         });
@@ -46447,16 +46447,16 @@ import * as http from "node:http";
 import * as https from "node:https";
 import { URL as URL2, urlToHttpOptions } from "node:url";
 async function headHttpRequest(url2) {
-  return await new Promise((resolve12) => {
+  return await new Promise((resolve14) => {
     httpRequest(url2, "HEAD", (response) => {
       response.resume();
-      resolve12(response.statusCode === 200);
+      resolve14(response.statusCode === 200);
     }, false).then((request3) => {
       request3.on("error", () => {
-        resolve12(false);
+        resolve14(false);
       });
     }).catch(() => {
-      resolve12(false);
+      resolve14(false);
     });
   });
 }
@@ -46490,7 +46490,7 @@ async function httpRequest(url2, method, response, keepAlive = true) {
   return request3;
 }
 function downloadFile(url2, destinationPath, progressCallback, expectedHash) {
-  return new Promise(async (resolve12, reject) => {
+  return new Promise(async (resolve14, reject) => {
     let downloadedBytes = 0;
     let totalBytes = 0;
     const verifier = expectedHash ? new HashVerifier() : null;
@@ -46512,7 +46512,7 @@ function downloadFile(url2, destinationPath, progressCallback, expectedHash) {
               return;
             }
           }
-          return resolve12();
+          return resolve14();
         });
         file2.on("error", (error62) => {
           return reject(error62);
@@ -46544,7 +46544,7 @@ async function getJSON(url2) {
   }
 }
 function getText(url2) {
-  return new Promise(async (resolve12, reject) => {
+  return new Promise(async (resolve14, reject) => {
     try {
       const request3 = await httpRequest(url2, "GET", (response) => {
         let data = "";
@@ -46556,7 +46556,7 @@ function getText(url2) {
         });
         response.on("end", () => {
           try {
-            return resolve12(String(data));
+            return resolve14(String(data));
           } catch {
             return reject(new Error(`Failed to read text response from ${url2}`));
           }
@@ -48059,7 +48059,7 @@ var init_launch = __esm({
         if (opts.onExit) {
           this.#onExitHook = opts.onExit;
         }
-        this.#browserProcessExiting = new Promise((resolve12, reject) => {
+        this.#browserProcessExiting = new Promise((resolve14, reject) => {
           this.#browserProcess.once("exit", async () => {
             this.#logger?.(`Browser process ${this.#browserProcess.pid} onExit`);
             this.#clearListeners();
@@ -48070,7 +48070,7 @@ var init_launch = __esm({
               reject(err);
               return;
             }
-            resolve12();
+            resolve14();
           });
         });
       }
@@ -48186,7 +48186,7 @@ Error cause: ${isErrorLike2(error62) ? error62.stack : error62}`);
         return [...this.#logs];
       }
       waitForLineOutput(regex2, timeout2 = 0) {
-        return new Promise((resolve12, reject) => {
+        return new Promise((resolve14, reject) => {
           const onClose = (errorOrCode) => {
             cleanup();
             reject(new Error([
@@ -48222,7 +48222,7 @@ Error cause: ${isErrorLike2(error62) ? error62.stack : error62}`);
               return;
             }
             cleanup();
-            resolve12(match[1]);
+            resolve14(match[1]);
           }
         });
       }
@@ -48339,10 +48339,10 @@ function transformHeader(header, options) {
     if (!newName) return null;
     h.name = h.type === "directory" && !newName.endsWith("/") ? `${newName}/` : newName;
     if (h.linkname) {
-      const isAbsolute9 = h.linkname.startsWith("/");
-      if (isAbsolute9 || h.type === "link") {
+      const isAbsolute11 = h.linkname.startsWith("/");
+      if (isAbsolute11 || h.type === "link") {
         const stripped = stripPath(h.linkname, strip);
-        h.linkname = isAbsolute9 ? `/${stripped}` || "/" : stripped;
+        h.linkname = isAbsolute11 ? `/${stripped}` || "/" : stripped;
       }
     }
   }
@@ -48952,10 +48952,10 @@ function packTar(sources, options = {}) {
   let resumeWriter = null;
   let cancelError;
   const unblock = () => {
-    const resolve12 = resume;
+    const resolve14 = resume;
     resume = null;
     drain = null;
-    resolve12?.();
+    resolve14?.();
   };
   const wakeWriter = () => {
     resumeWriter?.();
@@ -48991,8 +48991,8 @@ function packTar(sources, options = {}) {
   const onError = (error62) => stream.destroy(error62);
   const packer = createTarPacker((chunk) => {
     if (stream.destroyed) throw cancelError;
-    if (!stream.push(Buffer.from(chunk)) && !drain) drain = new Promise((resolve12) => {
-      resume = resolve12;
+    if (!stream.push(Buffer.from(chunk)) && !drain) drain = new Promise((resolve14) => {
+      resume = resolve14;
     });
   });
   (async () => {
@@ -49039,8 +49039,8 @@ function packTar(sources, options = {}) {
         if (stream.destroyed) return;
         if (allJobsQueued && writeIndex >= jobs.length) break;
         if (!results2.has(writeIndex)) {
-          await new Promise((resolve12) => {
-            resumeWriter = resolve12;
+          await new Promise((resolve14) => {
+            resumeWriter = resolve14;
           });
           continue;
         }
@@ -49321,13 +49321,13 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
   let drainReject = null;
   const settleDrain = (error62) => {
     if (!drainPromise) return;
-    const resolve12 = drainResolve;
+    const resolve14 = drainResolve;
     const reject = drainReject;
     drainPromise = null;
     drainResolve = null;
     drainReject = null;
     if (error62) reject?.(error62);
-    else resolve12?.();
+    else resolve14?.();
   };
   const resetBuffers = () => {
     bytes = 0;
@@ -49457,8 +49457,8 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
   };
   const waitDrain = () => {
     if (storedError) return Promise.reject(storedError);
-    if (state === STATE_OPENING || state === STATE_OPEN && (bytes >= BUFFER_LIMIT || queue.length >= MAX_WRITE_VECTORS)) return drainPromise ??= new Promise((resolve12, reject) => {
-      drainResolve = resolve12;
+    if (state === STATE_OPENING || state === STATE_OPEN && (bytes >= BUFFER_LIMIT || queue.length >= MAX_WRITE_VECTORS)) return drainPromise ??= new Promise((resolve14, reject) => {
+      drainResolve = resolve14;
       drainReject = reject;
     });
     return DRAINED_PROMISE;
@@ -49467,8 +49467,8 @@ function createFileSink(path14, { mode = 438, mtime } = {}, onError) {
     if (storedError) return Promise.reject(storedError);
     if (state >= STATE_CLOSED) return DRAINED_PROMISE;
     if (endPromise) return endPromise;
-    endPromise = new Promise((resolve12, reject) => {
-      endResolve = resolve12;
+    endPromise = new Promise((resolve14, reject) => {
+      endResolve = resolve14;
       endReject = reject;
       if (state === STATE_OPEN && !flushing) if (queue.length > 0) flush();
       else close2();
@@ -49641,7 +49641,7 @@ var init_fs = __esm({
       let head = 0;
       let idle = null;
       let resolveIdle = null;
-      const ensureIdle = () => idle ??= new Promise((resolve12) => resolveIdle = resolve12);
+      const ensureIdle = () => idle ??= new Promise((resolve14) => resolveIdle = resolve14);
       const flush = () => {
         while (active < concurrency && head < tasks.length) {
           const task = tasks[head++];
@@ -49664,8 +49664,8 @@ var init_fs = __esm({
       return {
         add(op) {
           const wasIdle = active === 0 && head === tasks.length;
-          return new Promise((resolve12, reject) => {
-            tasks.push(() => Promise.resolve().then(op).then(resolve12, reject));
+          return new Promise((resolve14, reject) => {
+            tasks.push(() => Promise.resolve().then(op).then(resolve14, reject));
             if (wasIdle) ensureIdle();
             flush();
           });
@@ -50108,8 +50108,8 @@ async function extractZipWithYauzl(archivePath, folderPath, _logger) {
   const open4 = promisify(yauzl.open);
   try {
     const zipFile = await open4(archivePath, { lazyEntries: true });
-    await new Promise((resolve12, reject) => {
-      zipFile.on("error", reject).on("end", resolve12).on("entry", (entry) => {
+    await new Promise((resolve14, reject) => {
+      zipFile.on("error", reject).on("end", resolve14).on("entry", (entry) => {
         extractZipEntry(zipFile, entry, folderPath).then(() => {
           zipFile.readEntry();
         }, reject);
@@ -55382,12 +55382,12 @@ var init_yargs_factory = __esm({
       async getCompletion(args, done) {
         argsert("<array> [function]", [args, done], arguments.length);
         if (!done) {
-          return new Promise((resolve12, reject) => {
+          return new Promise((resolve14, reject) => {
             __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, (err, completions) => {
               if (err)
                 reject(err);
               else
-                resolve12(completions);
+                resolve14(completions);
             });
           });
         } else {
@@ -56735,7 +56735,7 @@ var init_CLI = __esm({
             "-c",
             testCommand
           ];
-          await new Promise((resolve12, reject) => {
+          await new Promise((resolve14, reject) => {
             const createProcess = spawn2(pythonExecutable, bisectArgs, {
               stdio: "inherit"
             });
@@ -56746,7 +56746,7 @@ var init_CLI = __esm({
               if (code !== 0) {
                 reject(new Error(`Process exited with code ${code}`));
               } else {
-                resolve12();
+                resolve14();
               }
             });
           });
@@ -56945,9 +56945,9 @@ async function getConnectionTransport(options) {
       throw new Error("Could not detect required browser platform");
     }
     const { convertPuppeteerChannelToBrowsersChannel: convertPuppeteerChannelToBrowsersChannel2 } = await Promise.resolve().then(() => (init_LaunchOptions(), LaunchOptions_exports));
-    const { join: join48 } = await import("node:path");
+    const { join: join49 } = await import("node:path");
     const userDataDir = resolveDefaultUserDataDir3(Browser4.CHROME, platform, convertPuppeteerChannelToBrowsersChannel2(options.channel));
-    const portPath = join48(userDataDir, "DevToolsActivePort");
+    const portPath = join49(userDataDir, "DevToolsActivePort");
     try {
       const fileContent = await environment.value.readFile(portPath, "ascii");
       const [rawPort, rawPath] = fileContent.split("\n").map((line2) => {
@@ -67853,7 +67853,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve12.call(this, root, ref);
+      let _sch = resolve14.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a11 = root.localRefs) === null || _a11 === void 0 ? void 0 : _a11[ref];
         const { schemaId } = this.opts;
@@ -67880,7 +67880,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve12(root, ref) {
+    function resolve14(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -68710,7 +68710,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve12(baseURI, relativeURI, options) {
+    function resolve14(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -69079,7 +69079,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve12,
+      resolve: resolve14,
       resolveComponent,
       equal: equal2,
       serialize,
@@ -74157,7 +74157,7 @@ var require_png = __commonJS({
 });
 
 // packages/server/src/index.ts
-import { dirname as dirname16, join as join47 } from "node:path";
+import { dirname as dirname16, join as join48 } from "node:path";
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process2 from "node:process";
@@ -79188,7 +79188,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve12) {
+function isRecursive(inst, stack, resolve14) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -79198,7 +79198,7 @@ function isRecursive(inst, stack, resolve12) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve12);
+      const answer = isRecursive(child, stack, resolve14);
       if (answer > result)
         result = answer;
     }
@@ -79209,7 +79209,7 @@ function isRecursive(inst, stack, resolve12) {
       const desc = Object.getOwnPropertyDescriptor(sh, key2);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve12) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve14) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -79273,7 +79273,7 @@ function isRecursive(inst, stack, resolve12) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve12 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve14 ? inst._zod.innerType : void 0);
       merge3(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -95454,12 +95454,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve12) => {
+    return new Promise((resolve14) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve12();
+        resolve14();
       } else {
-        this._stdout.once("drain", resolve12);
+        this._stdout.once("drain", resolve14);
       }
     });
   }
@@ -96704,8 +96704,8 @@ var ScreenRecorder = (() => {
     static {
       const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
       __esDecorate24(this, _private_writeFrame_descriptor = { value: __setFunctionName5(async function(buffer) {
-        const error62 = await new Promise((resolve12) => {
-          this.#process.stdin.write(buffer, resolve12);
+        const error62 = await new Promise((resolve14) => {
+          this.#process.stdin.write(buffer, resolve14);
         });
         if (error62) {
           console.log(`ffmpeg failed to write: ${error62.message}.`);
@@ -96899,8 +96899,8 @@ var ScreenRecorder = (() => {
       const [buffer, timestamp] = await this.#lastFrame;
       await Promise.all(Array(Math.max(1, Math.round(this.#fps * (performance.now() - timestamp) / 1e3))).fill(buffer).map(this.#writeFrame.bind(this)));
       this.#process.stdin.end();
-      await new Promise((resolve12) => {
-        this.#process.once("close", resolve12);
+      await new Promise((resolve14) => {
+        this.#process.once("close", resolve14);
       });
     }
     async [(_private_writeFrame_decorators = [guarded()], _stop_decorators = [guarded()], asyncDisposeSymbol)]() {
@@ -97021,7 +97021,7 @@ async function installChrome(onProgress) {
 // packages/server/src/config.ts
 var import_yaml = __toESM(require_dist(), 1);
 import { existsSync as existsSync4, readFileSync as readFileSync5 } from "node:fs";
-import { isAbsolute as isAbsolute3, join as join6, resolve as resolve7 } from "node:path";
+import { isAbsolute as isAbsolute4, join as join6, resolve as resolve8 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // packages/server/src/audit/standards.ts
@@ -97045,6 +97045,7 @@ var CHECKS = ["keyboard", "darkMode", "reflow", "frames", "screenshots"];
 var checksSchema = external_exports.object(Object.fromEntries(CHECKS.map((c) => [c, external_exports.boolean().optional()]))).strict().describe("Turn extra checks on or off: keyboard, darkMode, reflow, frames, screenshots.");
 
 // packages/server/src/browser/browser-settings.ts
+import { isAbsolute as isAbsolute3, resolve as resolve7 } from "node:path";
 var windowSchema = external_exports.object({
   width: external_exports.number().int().min(500).max(3840).describe("Width in screen points, like 1280."),
   height: external_exports.number().int().min(400).max(2160).describe("Height in screen points, like 800.")
@@ -97059,9 +97060,203 @@ function fitSize(wanted, screen2) {
     clipped: width < wanted.width || height < wanted.height
   };
 }
-var planBrowserSchema = external_exports.object({
-  window: windowSchema.optional()
-}).strict();
+var HOST = /^[A-Za-z0-9*]([A-Za-z0-9-.*]*[A-Za-z0-9])?$/;
+var browserFields = {
+  window: windowSchema.optional(),
+  autofill: external_exports.boolean().optional().describe("Chrome offers to save and fill addresses and cards. Default: false."),
+  passwords: external_exports.boolean().optional().describe("Chrome offers to save passwords and checks them for leaks. Default: false."),
+  permissionPrompts: external_exports.enum(["deny", "ask"]).optional().describe(
+    "deny (default): Chrome says no to camera, location, and notification questions. emulate permissions still grant them. ask: Chrome asks."
+  ),
+  spellcheck: external_exports.boolean().optional().describe("Red lines under words that Chrome thinks are wrong. Default: false."),
+  keepFocus: external_exports.boolean().optional().describe(
+    "The page acts as if it has focus when you click in another window, so menus stay open. Default: true."
+  ),
+  language: external_exports.string().regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/, 'Use a language tag, like "de-DE".').optional().describe('The language of Chrome and of the Accept-Language header, like "de-DE".'),
+  downloads: external_exports.boolean().optional().describe(
+    "Save downloads in the run folder with no Save dialog, and list them in the report. Default: false."
+  ),
+  fakeMedia: external_exports.boolean().optional().describe("A fake camera and microphone, with no question. Default: false."),
+  autoplay: external_exports.boolean().optional().describe("Video and sound can play without a click. Default: false."),
+  thirdPartyCookies: external_exports.enum(["allow", "block"]).optional().describe("Cookies of other sites in frames. Default: allow."),
+  fontSize: external_exports.object({
+    default: external_exports.number().int().min(6).max(72).optional().describe("Like 16 (the Chrome default)."),
+    minimum: external_exports.number().int().min(0).max(72).optional().describe("Text is never smaller.")
+  }).strict().optional().describe("Chrome font sizes, to test larger text."),
+  zoom: external_exports.number().min(0.25).max(5).optional().describe("Page zoom for the sites of the app, like 1.25."),
+  devtools: external_exports.union([
+    external_exports.boolean(),
+    external_exports.object({
+      dock: external_exports.enum(["right", "bottom", "window"]).optional().describe("Where DevTools shows. window: in a window of its own. Default: right."),
+      deviceToolbar: external_exports.boolean().optional().describe(
+        "Show DevTools' device toolbar. Then DevTools controls the page size, and emulate cannot set a device."
+      )
+    }).strict()
+  ]).optional().describe("Open DevTools in each tab. A visible browser only."),
+  extensions: external_exports.array(external_exports.string().min(1)).optional().describe("Folders of unpacked extensions, like React DevTools. From the project folder."),
+  hosts: external_exports.record(
+    external_exports.string().regex(HOST, 'Use a host name, like "api.example.com".'),
+    external_exports.string().regex(HOST, 'Use an address or a host name, like "127.0.0.1".')
+  ).optional().describe('Send a host name to another address, like { "api.example.com": "127.0.0.1" }.'),
+  secureOrigins: external_exports.array(external_exports.url()).optional().describe(
+    'http sites that Chrome treats as secure, like "http://dev.test:8080", so the clipboard and service workers work there.'
+  ),
+  automationBar: external_exports.boolean().optional().describe('The "controlled by automated test software" bar. Default: true.')
+};
+var browserSchema = external_exports.object(browserFields).strict();
+var planBrowserSchema = browserSchema;
+function resolveBrowserSettings(layers, projectDir) {
+  const o = Object.assign({}, ...layers.filter(Boolean));
+  const devtools = o.devtools === true ? { dock: "right", deviceToolbar: false } : o.devtools ? { dock: o.devtools.dock ?? "right", deviceToolbar: o.devtools.deviceToolbar ?? false } : void 0;
+  return {
+    window: o.window ?? DEFAULT_WINDOW,
+    autofill: o.autofill ?? false,
+    passwords: o.passwords ?? false,
+    permissionPrompts: o.permissionPrompts ?? "deny",
+    spellcheck: o.spellcheck ?? false,
+    keepFocus: o.keepFocus ?? true,
+    ...o.language ? { language: o.language } : {},
+    downloads: o.downloads ?? false,
+    fakeMedia: o.fakeMedia ?? false,
+    autoplay: o.autoplay ?? false,
+    thirdPartyCookies: o.thirdPartyCookies ?? "allow",
+    ...o.fontSize ? { fontSize: o.fontSize } : {},
+    ...o.zoom && o.zoom !== 1 ? { zoom: o.zoom } : {},
+    ...devtools ? { devtools } : {},
+    extensions: (o.extensions ?? []).map((p) => isAbsolute3(p) ? p : resolve7(projectDir, p)),
+    hosts: o.hosts ?? {},
+    secureOrigins: o.secureOrigins ?? [],
+    automationBar: o.automationBar ?? true
+  };
+}
+function launchPlan(settings, options) {
+  const args = [];
+  const prefs = {};
+  const put = (path14, value) => {
+    const keys = path14.split(".");
+    let at = prefs;
+    for (const key2 of keys.slice(0, -1)) {
+      at[key2] ??= {};
+      at = at[key2];
+    }
+    at[keys.at(-1)] = value;
+  };
+  put("credentials_enable_service", settings.passwords);
+  put("profile.password_manager_enabled", settings.passwords);
+  put("profile.password_manager_leak_detection", false);
+  if (!settings.autofill) {
+    put("autofill.profile_enabled", false);
+    put("autofill.credit_card_enabled", false);
+  }
+  if (!settings.spellcheck) put("browser.enable_spellchecking", false);
+  if (settings.permissionPrompts === "deny") args.push("--deny-permission-prompts");
+  if (settings.language) {
+    args.push(`--lang=${settings.language}`);
+    const base = settings.language.split("-")[0];
+    put(
+      "intl.accept_languages",
+      base && base !== settings.language ? `${settings.language},${base}` : settings.language
+    );
+  }
+  if (settings.fakeMedia) {
+    args.push("--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream");
+  }
+  if (settings.autoplay) args.push("--autoplay-policy=no-user-gesture-required");
+  if (settings.thirdPartyCookies === "block") put("profile.cookie_controls_mode", 1);
+  if (settings.fontSize?.default)
+    put("webkit.webprefs.default_font_size", settings.fontSize.default);
+  if (settings.fontSize?.minimum !== void 0)
+    put("webkit.webprefs.minimum_font_size", settings.fontSize.minimum);
+  if (settings.zoom && options.zoomHosts?.length) {
+    const level2 = Math.log(settings.zoom) / Math.log(1.2);
+    const modified = String((BigInt(Date.now()) + 11644473600000n) * 1000n);
+    put(
+      "partition.per_host_zoom_levels.x",
+      Object.fromEntries(
+        options.zoomHosts.map((host) => [host, { zoom_level: level2, last_modified: modified }])
+      )
+    );
+  }
+  const hosts = Object.entries(settings.hosts);
+  if (hosts.length) {
+    args.push(`--host-resolver-rules=${hosts.map(([from2, to]) => `MAP ${from2} ${to}`).join(", ")}`);
+  }
+  if (settings.secureOrigins.length) {
+    args.push(`--unsafely-treat-insecure-origin-as-secure=${settings.secureOrigins.join(",")}`);
+  }
+  const devtools = Boolean(settings.devtools) && !options.headless;
+  if (devtools && settings.devtools) {
+    const dock = settings.devtools.dock === "window" ? "undocked" : settings.devtools.dock;
+    put("devtools.preferences", {
+      currentDockState: JSON.stringify(dock),
+      ...settings.devtools.deviceToolbar ? { "emulation.show-device-mode": "true" } : {}
+    });
+  }
+  return {
+    args,
+    prefs,
+    ignoreDefaultArgs: settings.automationBar ? [] : ["--enable-automation"],
+    devtools,
+    extensions: settings.extensions
+  };
+}
+function launchKey(settings, headless) {
+  const { window: _w, keepFocus: _k, downloads: _d, ...rest } = settings;
+  return JSON.stringify({ ...rest, devtools: headless ? void 0 : rest.devtools });
+}
+var PAGE_KEYS = [
+  "language",
+  "zoom",
+  "fontSize",
+  "hosts",
+  "secureOrigins",
+  "thirdPartyCookies",
+  "fakeMedia",
+  "autoplay",
+  "permissionPrompts"
+];
+function pageSettings(settings) {
+  const out = {};
+  if (settings.language) out.language = settings.language;
+  if (settings.zoom) out.zoom = settings.zoom;
+  if (settings.fontSize) out.fontSize = settings.fontSize;
+  if (Object.keys(settings.hosts).length) out.hosts = settings.hosts;
+  if (settings.secureOrigins.length) out.secureOrigins = settings.secureOrigins;
+  if (settings.thirdPartyCookies === "block") out.thirdPartyCookies = "block";
+  if (settings.fakeMedia) out.fakeMedia = true;
+  if (settings.autoplay) out.autoplay = true;
+  if (settings.permissionPrompts === "ask") out.permissionPrompts = "ask";
+  return out;
+}
+function describeBrowserSettings(settings) {
+  const parts = [
+    `page ${settings.window.width} x ${settings.window.height}`,
+    `autofill ${settings.autofill ? "on" : "off"}`,
+    `save passwords ${settings.passwords ? "on" : "off"}`,
+    `permission prompts ${settings.permissionPrompts === "deny" ? "denied" : "shown"}`,
+    `spellcheck ${settings.spellcheck ? "on" : "off"}`,
+    `keep focus ${settings.keepFocus ? "on" : "off"}`
+  ];
+  if (settings.language) parts.push(`language ${settings.language}`);
+  if (settings.downloads) parts.push("downloads to the run folder");
+  if (settings.fakeMedia) parts.push("fake camera and microphone");
+  if (settings.autoplay) parts.push("autoplay");
+  if (settings.thirdPartyCookies === "block") parts.push("third-party cookies blocked");
+  if (settings.fontSize?.default) parts.push(`font size ${settings.fontSize.default}`);
+  if (settings.fontSize?.minimum) parts.push(`minimum font size ${settings.fontSize.minimum}`);
+  if (settings.zoom) parts.push(`zoom ${settings.zoom}`);
+  if (settings.devtools)
+    parts.push(
+      `DevTools (${settings.devtools.dock}${settings.devtools.deviceToolbar ? ", device toolbar" : ""})`
+    );
+  if (settings.extensions.length) parts.push(`${settings.extensions.length} extension(s)`);
+  const hosts = Object.entries(settings.hosts);
+  if (hosts.length) parts.push(`hosts ${hosts.map(([a2, b2]) => `${a2} -> ${b2}`).join(", ")}`);
+  if (settings.secureOrigins.length)
+    parts.push(`secure origins ${settings.secureOrigins.join(", ")}`);
+  if (!settings.automationBar) parts.push("no automation bar");
+  return parts.join(", ");
+}
 
 // packages/server/src/guards/origins.ts
 var DEFAULT_ORIGINS = ["http://localhost:*", "http://127.0.0.1:*", "https://localhost:*"];
@@ -97222,13 +97417,13 @@ function rebaseToEnvironment(url2, config3) {
   }
   return url2;
 }
-function environmentNetwork(env2, resolve12, warnings) {
+function environmentNetwork(env2, resolve14, warnings) {
   const origin = originOf(env2.baseUrl);
   if (!origin) return void 0;
   const headers2 = {};
   for (const [name, value] of Object.entries(env2.headers)) {
     try {
-      headers2[name] = resolve12(value);
+      headers2[name] = resolve14(value);
     } catch (error62) {
       warnings.push(`Walkthrough does not send the header "${name}": ${error62.message}`);
     }
@@ -97237,8 +97432,8 @@ function environmentNetwork(env2, resolve12, warnings) {
   if (env2.httpCredentials) {
     try {
       credentials = {
-        username: resolve12(env2.httpCredentials.username),
-        password: resolve12(env2.httpCredentials.password)
+        username: resolve14(env2.httpCredentials.username),
+        password: resolve14(env2.httpCredentials.password)
       };
     } catch (error62) {
       warnings.push(`Walkthrough does not use the basic auth login: ${error62.message}`);
@@ -97330,7 +97525,7 @@ var sharedSchema = external_exports.object({
     headless: external_exports.boolean().optional(),
     slowMo: external_exports.number().int().min(0).max(5e3).optional(),
     executablePath: external_exports.string().optional(),
-    window: windowSchema.optional()
+    ...browserFields
   }).optional(),
   dialogs: external_exports.enum(["ask", "accept", "dismiss"]).optional(),
   actionTimeoutMs: external_exports.number().int().min(1e3).max(12e4).optional(),
@@ -97364,6 +97559,11 @@ var sharedSchema = external_exports.object({
   vars: varsSchema.optional(),
   environments: external_exports.record(envNameSchema, environmentFileSchema).optional()
 }).loose();
+function browserOptionsOf(block) {
+  const out = {};
+  for (const key2 of Object.keys(browserFields)) if (block[key2] !== void 0) out[key2] = block[key2];
+  return out;
+}
 var LOCAL_ONLY = [
   "allowEvaluate",
   "uploadsRoot",
@@ -97473,7 +97673,7 @@ function resolveProjectDir(options = {}) {
   ];
   for (const [value, source2] of candidates) {
     if (!value || value.includes("${")) continue;
-    const dir = value.startsWith("file:") ? fileURLToPath2(value) : resolve7(cwd, value);
+    const dir = value.startsWith("file:") ? fileURLToPath2(value) : resolve8(cwd, value);
     return { dir, source: source2 };
   }
   return { dir: cwd, source: "current folder" };
@@ -97493,6 +97693,13 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
     }
   }
   const shared = validate3(sharedSchema, sharedRaw, sharedFile);
+  const sharedExtensions = shared.browser?.extensions;
+  if (sharedExtensions?.some((p) => isAbsolute4(p))) {
+    warnings.push(
+      'Walkthrough ignores full paths in "browser.extensions" in .walkthrough/config.yaml. Put them in .walkthrough/config.local.yaml.'
+    );
+    if (shared.browser) shared.browser.extensions = sharedExtensions.filter((p) => !isAbsolute4(p));
+  }
   const local = validate3(localSchema, readYaml(localFile), localFile);
   const merged2 = { ...shared, ...local, browser: { ...shared.browser, ...local.browser } };
   const a11y = {
@@ -97502,7 +97709,7 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
   };
   const video = { ...shared.video, ...local.video };
   const lighthouse = { ...shared.lighthouse, ...local.lighthouse };
-  const fromProject = (dir) => isAbsolute3(dir) ? dir : resolve7(projectDir, dir);
+  const fromProject = (dir) => isAbsolute4(dir) ? dir : resolve8(projectDir, dir);
   const uploadsRoot = local.uploadsRoot ? fromProject(local.uploadsRoot) : projectDir;
   const screenshotRoots = (local.screenshotRoots ?? []).map(fromProject);
   const environments = mergeEnvironments(shared, local, warnings);
@@ -97541,7 +97748,8 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
       headless,
       slowMo: merged2.browser.slowMo ?? 0,
       executablePath: merged2.browser.executablePath,
-      window: merged2.browser.window ?? DEFAULT_WINDOW
+      window: merged2.browser.window ?? DEFAULT_WINDOW,
+      options: browserOptionsOf(merged2.browser)
     },
     dialogs: merged2.dialogs ?? "ask",
     actionTimeoutMs: environment2.actionTimeoutMs ?? merged2.actionTimeoutMs ?? 1e4,
@@ -97584,6 +97792,17 @@ function loadConfig(projectDir, projectDirSource = "current folder", environment
     vars: { ...stringValues(shared.vars), ...stringValues(local.vars) },
     warnings
   };
+}
+function appHosts(config3) {
+  const hosts = /* @__PURE__ */ new Set();
+  for (const origin of [config3.baseUrl, ...config3.allowedOrigins]) {
+    if (!origin || origin.includes("*")) continue;
+    try {
+      hosts.add(new URL(origin).hostname);
+    } catch {
+    }
+  }
+  return [...hosts];
 }
 
 // packages/server/src/doctor.ts
@@ -97822,7 +98041,7 @@ async function installLighthouse(options = {}) {
     "--loglevel=error"
   ];
   const shellArgs = windows ? args.map((a2) => /\s/.test(a2) ? `"${a2}"` : a2) : args;
-  await new Promise((resolve12, reject) => {
+  await new Promise((resolve14, reject) => {
     const child = spawn4(options.npm ?? (windows ? "npm.cmd" : "npm"), shellArgs, {
       cwd: dir,
       shell: windows,
@@ -97844,7 +98063,7 @@ async function installLighthouse(options = {}) {
       );
     });
     child.on("close", (code) => {
-      if (code === 0) resolve12();
+      if (code === 0) resolve14();
       else
         reject(
           new ToolError(
@@ -97887,12 +98106,12 @@ var toThisComputer = ((_host, options, callback) => {
   else callback(null, "127.0.0.1", 4);
 });
 function checkReachable(url2) {
-  return new Promise((resolve12) => {
+  return new Promise((resolve14) => {
     let target2;
     try {
       target2 = new URL(url2);
     } catch {
-      resolve12("not a valid URL");
+      resolve14("not a valid URL");
       return;
     }
     const local = target2.hostname.endsWith(".localhost");
@@ -97907,11 +98126,11 @@ function checkReachable(url2) {
       },
       (res) => {
         res.resume();
-        resolve12(`HTTP ${res.statusCode}`);
+        resolve14(`HTTP ${res.statusCode}`);
       }
     );
     req.on("timeout", () => req.destroy(new Error("no answer in 3 seconds")));
-    req.on("error", (error62) => resolve12(error62.code ?? error62.message));
+    req.on("error", (error62) => resolve14(error62.code ?? error62.message));
     req.end();
   });
 }
@@ -98013,6 +98232,11 @@ async function doctorReport(config3, secrets, driver, client) {
   lines.push(
     info(
       `Browser: ${config3.browser.headless ? "headless (hidden)" : "visible"}, slow motion ${config3.browser.slowMo} ms`
+    )
+  );
+  lines.push(
+    info(
+      `Browser settings: ${describeBrowserSettings(resolveBrowserSettings([config3.browser.options], config3.projectDir))}`
     )
   );
   lines.push(info(`Dialogs: ${config3.dialogs}`));
@@ -98177,7 +98401,7 @@ import { existsSync as existsSync8, mkdirSync as mkdirSync3, readFileSync as rea
 import { dirname as dirname6, join as join12 } from "node:path";
 
 // packages/server/src/run/plan-schema.ts
-import { isAbsolute as isAbsolute4, join as join11 } from "node:path";
+import { isAbsolute as isAbsolute5, join as join11 } from "node:path";
 
 // packages/server/src/browser/emulation-schema.ts
 var NETWORKS = ["normal", "slow-3g", "fast-3g", "slow-4g", "fast-4g", "offline"];
@@ -98853,7 +99077,7 @@ function stepCapture(plan, step) {
   const shot = step.screenshot;
   if (shot === void 0 || typeof shot === "boolean") return void 0;
   const capture = typeof shot === "string" ? { path: shot } : { ...shot };
-  if (plan.screenshotDir && !isAbsolute4(capture.path)) {
+  if (plan.screenshotDir && !isAbsolute5(capture.path)) {
     capture.path = join11(plan.screenshotDir, capture.path);
   }
   return capture;
@@ -99053,7 +99277,7 @@ function shutdown(code = 0, reason = "stop") {
     log.debug(`shutting down (${reason}), ${cleanups.size} cleanup step(s)`);
     for (const fn of cleanups) {
       try {
-        await Promise.race([fn(), new Promise((resolve12) => setTimeout(resolve12, 3e3))]);
+        await Promise.race([fn(), new Promise((resolve14) => setTimeout(resolve14, 3e3))]);
       } catch (error62) {
         log.warn("cleanup step failed", error62);
       }
@@ -105025,7 +105249,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
+        await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error62) {
@@ -105042,7 +105266,7 @@ var Protocol = class {
    */
   request(request3, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve12, reject) => {
+    return new Promise((resolve14, reject) => {
       const earlyReject = (error62) => {
         reject(error62);
       };
@@ -105120,7 +105344,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve12(parseResult.data);
+            resolve14(parseResult.data);
           }
         } catch (error62) {
           reject(error62);
@@ -105381,12 +105605,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve12, reject) => {
+    return new Promise((resolve14, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve12, interval);
+      const timeoutId = setTimeout(resolve14, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -106477,7 +106701,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
+      await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -107048,6 +107272,8 @@ var EMPTY_COMPLETION_RESULT = {
 // packages/server/src/browser/driver.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { EventEmitter as EventEmitter4 } from "node:events";
+import { existsSync as existsSync10, mkdirSync as mkdirSync5, renameSync } from "node:fs";
+import { basename as basename3, extname as extname3, join as join15 } from "node:path";
 
 // packages/server/src/devtools/issues.ts
 function where(location2) {
@@ -108952,7 +109178,7 @@ var DeveloperPanel = class {
     const end = Date.now() + ms;
     while (Date.now() < end) {
       if (this.bridges.get(tabId)?.ready) return true;
-      await new Promise((resolve12) => setTimeout(resolve12, 100));
+      await new Promise((resolve14) => setTimeout(resolve14, 100));
     }
     return Boolean(this.bridges.get(tabId)?.ready);
   }
@@ -109091,9 +109317,9 @@ var DeveloperPanel = class {
     q2.point = point;
   }
   finish(outcome) {
-    const resolve12 = this.waiter;
+    const resolve14 = this.waiter;
     this.waiter = void 0;
-    resolve12?.(outcome);
+    resolve14?.(outcome);
   }
   // Shows a new question. Any older question is replaced.
   async ask(input3) {
@@ -109115,14 +109341,14 @@ var DeveloperPanel = class {
       return Promise.resolve({ kind: "answer", answer, question });
     }
     if (!this.question) return Promise.resolve({ kind: "canceled" });
-    return new Promise((resolve12) => {
+    return new Promise((resolve14) => {
       const timer2 = setTimeout(() => this.finish({ kind: "timeout" }), timeoutMs);
       const onAbort = () => this.finish({ kind: "canceled" });
       signal?.addEventListener("abort", onAbort, { once: true });
       this.waiter = (outcome) => {
         clearTimeout(timer2);
         signal?.removeEventListener("abort", onAbort);
-        resolve12(outcome);
+        resolve14(outcome);
       };
     });
   }
@@ -109177,9 +109403,9 @@ var DeveloperPanel = class {
     }
   }
   finishRecording(outcome) {
-    const resolve12 = this.recordWaiter;
+    const resolve14 = this.recordWaiter;
     this.recordWaiter = void 0;
-    resolve12?.(outcome);
+    resolve14?.(outcome);
   }
   get recording() {
     return this.recorder;
@@ -109193,14 +109419,14 @@ var DeveloperPanel = class {
   // Waits until the developer clicks Stop recording, or a timeout, or a cancel.
   waitForRecordStop(timeoutMs, signal) {
     if (this.recordStopped) return Promise.resolve("stopped");
-    return new Promise((resolve12) => {
+    return new Promise((resolve14) => {
       const timer2 = setTimeout(() => this.finishRecording("timeout"), timeoutMs);
       const onAbort = () => this.finishRecording("canceled");
       signal?.addEventListener("abort", onAbort, { once: true });
       this.recordWaiter = (outcome) => {
         clearTimeout(timer2);
         signal?.removeEventListener("abort", onAbort);
-        resolve12(outcome);
+        resolve14(outcome);
       };
     });
   }
@@ -109462,7 +109688,7 @@ function describeEmulation(emulation, onlySet = false) {
 }
 
 // packages/server/src/browser/fetch-router.ts
-var wait = (ms) => new Promise((resolve12) => setTimeout(resolve12, ms));
+var wait = (ms) => new Promise((resolve14) => setTimeout(resolve14, ms));
 var FetchRouter = class _FetchRouter {
   constructor(cdp, mainFrameId, options) {
     this.cdp = cdp;
@@ -109593,9 +109819,18 @@ var PROFILE_PREFS = {
   credentials_enable_service: false,
   profile: { password_manager_enabled: false, password_manager_leak_detection: false }
 };
-function writeProfilePrefs(profileDir, zoom) {
+function mergePrefs(a2, b2) {
+  const out = { ...a2 };
+  for (const [key2, value] of Object.entries(b2)) {
+    const old = out[key2];
+    out[key2] = value && typeof value === "object" && !Array.isArray(value) && old && typeof old === "object" ? mergePrefs(old, value) : value;
+  }
+  return out;
+}
+function writeProfilePrefs(profileDir, zoom, extra = {}) {
   mkdirSync4(join14(profileDir, "Default"), { recursive: true });
-  const prefs = zoom ? { ...PROFILE_PREFS, ...zoomPrefs(zoom) } : PROFILE_PREFS;
+  let prefs = mergePrefs(PROFILE_PREFS, extra);
+  if (zoom) prefs = mergePrefs(prefs, zoomPrefs(zoom));
   writeFileSync3(join14(profileDir, "Default", "Preferences"), JSON.stringify(prefs));
 }
 function zoomPrefs(zoom) {
@@ -109611,8 +109846,14 @@ async function launchChrome(config3, options = {}) {
   const chrome2 = await findChrome(config3.browser.executablePath);
   if (!chrome2) throw new ToolError(NO_CHROME_MESSAGE, "chrome_missing");
   const profileDir = mkdtempSync(join14(tmpdir2(), "uiwalk-profile-"));
-  writeProfilePrefs(profileDir, options.presentation?.zoom);
   const headless = options.background || config3.browser.headless;
+  const plan = options.settings ? launchPlan(options.settings, { headless, zoomHosts: options.zoomHosts }) : void 0;
+  writeProfilePrefs(profileDir, options.presentation?.zoom, plan?.prefs);
+  const ignored = [
+    ...options.presentation ? ["--enable-automation"] : [],
+    ...plan?.ignoreDefaultArgs ?? []
+  ];
+  const extensions = plan?.extensions ?? [];
   try {
     const browser = await puppeteer_core_default.launch({
       executablePath: chrome2.path,
@@ -109628,16 +109869,21 @@ async function launchChrome(config3, options = {}) {
         "--no-first-run",
         "--no-default-browser-check",
         options.presentation ? `--window-size=${options.presentation.width},${options.presentation.height}` : "--window-size=1280,900",
-        ...options.presentation && !headless ? [`--app=${AUDIENCE_START}`] : []
+        ...options.presentation && !headless ? [`--app=${AUDIENCE_START}`] : [],
+        ...plan?.args ?? []
       ],
-      ...options.presentation ? { ignoreDefaultArgs: ["--enable-automation"] } : {},
+      ...ignored.length ? { ignoreDefaultArgs: [...new Set(ignored)] } : {},
+      ...plan?.devtools ? { devtools: true } : {},
+      // Extensions load through a pipe. Then Chrome has no WebSocket address.
+      ...extensions.length ? { pipe: true, enableExtensions: extensions } : {},
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,
       handleSIGHUP: false
     });
     const endpointFile = process.env.UIWALK_DEBUG_ENDPOINT_FILE;
-    if (endpointFile && !options.background) writeFileSync3(endpointFile, browser.wsEndpoint());
+    if (endpointFile && !options.background && !extensions.length)
+      writeFileSync3(endpointFile, browser.wsEndpoint());
     return { browser, profileDir, chromePath: chrome2.path };
   } catch (error62) {
     removeProfile(profileDir);
@@ -109650,11 +109896,11 @@ function removeProfile(dir) {
   } catch {
   }
 }
-var wait2 = (ms) => new Promise((resolve12) => setTimeout(resolve12, ms));
+var wait2 = (ms) => new Promise((resolve14) => setTimeout(resolve14, ms));
 async function killChrome(browser) {
   const proc = browser.process();
   if (!proc || proc.exitCode !== null) return;
-  const exited = new Promise((resolve12) => proc.once("exit", resolve12));
+  const exited = new Promise((resolve14) => proc.once("exit", resolve14));
   await Promise.race([browser.close().catch(() => void 0), wait2(1500)]);
   if (proc.exitCode === null) proc.kill("SIGKILL");
   await Promise.race([exited, wait2(2e3)]);
@@ -109671,7 +109917,9 @@ var Driver = class _Driver {
     this.profileDir = profileDir;
     this.dialogPolicy = options.config.dialogs;
     if (options.config.panel) this.panel = new DeveloperPanel();
-    this.windowSize = options.config.browser.window;
+    this.windowSize = options.launch?.settings?.window ?? options.config.browser.window;
+    this.settings = mode === "launched" ? options.launch?.settings : void 0;
+    this.launchKey = this.settings ? launchKey(this.settings, options.config.browser.headless) : "";
   }
   browser;
   mode;
@@ -109725,6 +109973,13 @@ var Driver = class _Driver {
   fittedSize = /* @__PURE__ */ new Map();
   // A note from the first window, like "The screen is too small".
   launchNote;
+  // The settings that Chrome started with. Undefined for a Chrome that is not ours.
+  settings;
+  // The launch settings as text, so run_start can tell when a plan needs a new Chrome.
+  launchKey;
+  // Where downloads go now, and what to do with each one.
+  downloads;
+  browserCdp;
   static async start(options) {
     let driver;
     if (options.attach) {
@@ -109736,7 +109991,7 @@ var Driver = class _Driver {
       const { browser, profileDir } = await launchChrome(options.config, options.launch);
       driver = new _Driver(browser, "launched", await browser.version(), options, profileDir);
       driver.logins.set("main", browser.defaultBrowserContext());
-      const first2 = (await browser.pages())[0] ?? await browser.newPage();
+      const first2 = (await browser.pages()).find((p) => !p.url().startsWith("devtools://")) ?? await browser.newPage();
       const tab = await driver.addTab(first2);
       await driver.measureScreen(tab);
       driver.launchNote = await driver.fitWindow(tab, true);
@@ -109779,7 +110034,7 @@ var Driver = class _Driver {
     this.removeShutdown = onShutdown(async () => {
       if (this.mode === "launched") {
         await killChrome(this.browser);
-        await new Promise((resolve12) => setTimeout(resolve12, 300));
+        await new Promise((resolve14) => setTimeout(resolve14, 300));
         if (this.profileDir) removeProfile(this.profileDir);
       } else {
         await this.closeLogins();
@@ -109793,7 +110048,7 @@ var Driver = class _Driver {
   }
   // A new tab or popup opened.
   async onTarget(target2) {
-    if (target2.type() !== "page") return;
+    if (target2.type() !== "page" || target2.url().startsWith("devtools://")) return;
     const context2 = target2.browserContext();
     if (context2 && this.foreign.has(context2)) return;
     const page = await target2.page().catch(() => null);
@@ -109817,9 +110072,9 @@ var Driver = class _Driver {
   // After a click, Chrome reports new tabs and blocked pages a moment later.
   // Wait for those reports, so the agent hears about them in the same reply.
   async settleEvents(graceMs = 400) {
-    await new Promise((resolve12) => setTimeout(resolve12, graceMs));
+    await new Promise((resolve14) => setTimeout(resolve14, graceMs));
     const pending = Promise.allSettled([...this.inflight]);
-    await Promise.race([pending, new Promise((resolve12) => setTimeout(resolve12, 3e3))]);
+    await Promise.race([pending, new Promise((resolve14) => setTimeout(resolve14, 3e3))]);
   }
   findTab(page) {
     for (const tab of this.tabs.values()) if (tab.page === page) return tab;
@@ -109892,6 +110147,9 @@ var Driver = class _Driver {
     });
     tab.cdp = tab.router?.cdp;
     if (this.rulesFor(tab).length > 0) await this.refreshRouter(tab);
+    if (this.settings?.keepFocus) {
+      await tab.cdp?.send("Emulation.setFocusEmulationEnabled", { enabled: true }).catch(() => void 0);
+    }
     if (tab.cdp) {
       tab.cdp.on("Audits.issueAdded", ({ issue: issue3 }) => {
         const found = describeIssue(issue3);
@@ -109988,7 +110246,8 @@ var Driver = class _Driver {
       width: screen.availWidth,
       height: screen.availHeight,
       frameWidth: outerWidth - innerWidth,
-      frameHeight: outerHeight - innerHeight
+      frameHeight: outerHeight - innerHeight,
+      dpr: devicePixelRatio
     })).catch(() => void 0);
     const end = Date.now() + 1500;
     let since = Date.now();
@@ -110001,7 +110260,7 @@ var Driver = class _Driver {
       } else if (Date.now() - since >= 400) {
         return;
       }
-      await new Promise((resolve12) => setTimeout(resolve12, 100));
+      await new Promise((resolve14) => setTimeout(resolve14, 100));
     }
   }
   // Sizes the window of a tab so that its page fits: the device size, or the window size.
@@ -110018,7 +110277,7 @@ var Driver = class _Driver {
     const screen2 = this.screen;
     const fit = fitSize(wanted, screen2);
     const { width, height } = fit.size;
-    const note = !fit.clipped ? void 0 : device ? `The screen is too small for the ${wanted.width} x ${wanted.height} page of "${tab.emulation.device}". The window shows ${width} x ${height} of it, so part of the page is hidden. Use a smaller device, or a bigger screen.` : `The screen is too small for a ${wanted.width} x ${wanted.height} page. The page area is ${width} x ${height}.`;
+    let note = !fit.clipped ? void 0 : device ? `The screen is too small for the ${wanted.width} x ${wanted.height} page of "${tab.emulation.device}". The window shows ${width} x ${height} of it, so part of the page is hidden. Use a smaller device, or a bigger screen.` : `The screen is too small for a ${wanted.width} x ${wanted.height} page. The page area is ${width} x ${height}.`;
     const cdp = await tab.page.createCDPSession().catch(() => void 0);
     if (!cdp) return note;
     try {
@@ -110030,6 +110289,26 @@ var Driver = class _Driver {
       }
       try {
         await tab.page.resize({ contentWidth: width, contentHeight: height });
+        const dock = this.settings?.devtools?.dock;
+        if (!device && (dock === "right" || dock === "bottom")) {
+          await new Promise((r) => setTimeout(r, 300));
+          const page = await tab.page.evaluate(() => ({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio })).catch(() => void 0);
+          const scale = page && screen2?.dpr ? page.dpr / screen2.dpr : 1;
+          if (page) {
+            const extraW = dock === "right" ? width - Math.round(page.w * scale) : 0;
+            const extraH = dock === "bottom" ? height - Math.round(page.h * scale) : 0;
+            if (extraW > 0 || extraH > 0) {
+              const grown = fitSize({ width: width + extraW, height: height + extraH }, screen2);
+              await tab.page.resize({
+                contentWidth: grown.size.width,
+                contentHeight: grown.size.height
+              });
+              if (grown.clipped) {
+                note = `The screen has no room for a ${width} x ${height} page next to DevTools, so the page is smaller. Dock DevTools at the bottom or in its own window, with devtools: { dock: window }.`;
+              }
+            }
+          }
+        }
       } catch {
         await cdp.send("Browser.setWindowBounds", {
           windowId,
@@ -110045,6 +110324,56 @@ var Driver = class _Driver {
       await cdp.detach().catch(() => void 0);
     }
     return note;
+  }
+  // Saves downloads in a folder, with no Save dialog, or goes back to Chrome's own way.
+  // Only a Chrome that Walkthrough started. Each login needs the setting.
+  async setDownloads(dir, onDone) {
+    if (this.mode !== "launched") return;
+    if (dir) mkdirSync5(dir, { recursive: true });
+    this.downloads = dir && onDone ? { dir, onDone, names: /* @__PURE__ */ new Map() } : void 0;
+    if (!this.browserCdp) {
+      this.browserCdp = await this.browser.target().createCDPSession();
+      this.browserCdp.on(
+        "Browser.downloadWillBegin",
+        (e) => this.downloads?.names.set(e.guid, { name: e.suggestedFilename, url: e.url })
+      );
+      this.browserCdp.on(
+        "Browser.downloadProgress",
+        (e) => this.onDownloadProgress(e)
+      );
+    }
+    for (const context2 of new Set(this.logins.values())) await this.applyDownloads(context2);
+  }
+  async applyDownloads(context2) {
+    const dir = this.downloads?.dir;
+    const id = context2 === this.browser.defaultBrowserContext() ? void 0 : context2.id;
+    await this.browserCdp?.send("Browser.setDownloadBehavior", {
+      behavior: dir ? "allowAndName" : "default",
+      ...dir ? { downloadPath: dir, eventsEnabled: true } : {},
+      ...id ? { browserContextId: id } : {}
+    }).catch(() => void 0);
+  }
+  // Chrome names a download by its id. Give it its own name back.
+  onDownloadProgress(event) {
+    const downloads = this.downloads;
+    if (!downloads || event.state !== "completed") return;
+    const info = downloads.names.get(event.guid);
+    downloads.names.delete(event.guid);
+    if (!info) return;
+    const from2 = join15(downloads.dir, event.guid);
+    const safe = basename3(info.name || "download").replace(/[^\w.-]+/g, "_") || "download";
+    let to = join15(downloads.dir, safe);
+    for (let n = 2; existsSync10(to); n++) {
+      const ext = extname3(safe);
+      to = join15(downloads.dir, `${basename3(safe, ext)}-${n}${ext}`);
+    }
+    try {
+      renameSync(from2, to);
+    } catch {
+      return;
+    }
+    this.note(`A file downloaded: ${basename3(to)}.`);
+    downloads.onDone({ file: to, url: info.url });
   }
   // A new page area for the windows, like a plan asks. Headless Chrome gets a new page size.
   async setWindowSize(size2) {
@@ -110077,6 +110406,12 @@ var Driver = class _Driver {
   // With fitWindow, a new device also resizes the window of the active tab.
   async setEmulation(change, options) {
     checkEmulation(change);
+    let toolbarNote;
+    if (this.settings?.devtools?.deviceToolbar && !this.options.config.browser.headless && (change.device !== void 0 || change.orientation !== void 0)) {
+      const { device: _d, orientation: _o, ...rest } = change;
+      change = rest;
+      toolbarNote = "DevTools' device toolbar is on, so it controls the page size. Walkthrough did not set the device or the orientation. Choose them in the toolbar.";
+    }
     const targets = options.tab ? [options.tab] : [...this.tabs.values()];
     if (!options.tab) this.defaultEmulation = mergeEmulation(this.defaultEmulation, change);
     const reloaded = [];
@@ -110103,6 +110438,7 @@ var Driver = class _Driver {
         "An orientation works only with a device, like mobile or tablet. Set a device too."
       ].filter(Boolean).join(" ");
     }
+    note = [toolbarNote, note].filter(Boolean).join(" ") || void 0;
     return { reloaded, ...note ? { note } : {} };
   }
   // Permissions belong to a login, not a tab.
@@ -110131,6 +110467,7 @@ var Driver = class _Driver {
       if (!context2) {
         context2 = await this.browser.createBrowserContext();
         this.logins.set(login, context2);
+        if (this.downloads) await this.applyDownloads(context2);
       }
       const page = await context2.newPage();
       const tab = await this.addTab(page, void 0, {
@@ -110162,9 +110499,9 @@ var Driver = class _Driver {
   // Resolves when a dialog opens and waits for an answer.
   nextDialog(tabId) {
     let listener = () => void 0;
-    const promise2 = new Promise((resolve12) => {
+    const promise2 = new Promise((resolve14) => {
       listener = (d) => {
-        if (d.tabId === tabId) resolve12(d);
+        if (d.tabId === tabId) resolve14(d);
       };
       this.emitter.on("dialog", listener);
     });
@@ -110413,8 +110750,8 @@ var TokenResolver = class {
 };
 
 // packages/server/src/project-files.ts
-import { existsSync as existsSync10, mkdirSync as mkdirSync5, writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join15 } from "node:path";
+import { existsSync as existsSync11, mkdirSync as mkdirSync6, writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join16 } from "node:path";
 var GITIGNORE2 = `# Created by Walkthrough. These files stay on this computer.
 .env
 .env.*
@@ -110424,10 +110761,10 @@ runs/
 config.local.yaml
 `;
 function ensureWalkthroughDir(projectDir) {
-  const dir = join15(projectDir, ".walkthrough");
-  mkdirSync5(dir, { recursive: true });
-  const ignore = join15(dir, ".gitignore");
-  if (!existsSync10(ignore)) writeFileSync4(ignore, GITIGNORE2);
+  const dir = join16(projectDir, ".walkthrough");
+  mkdirSync6(dir, { recursive: true });
+  const ignore = join16(dir, ".gitignore");
+  if (!existsSync11(ignore)) writeFileSync4(ignore, GITIGNORE2);
   return dir;
 }
 function stamp(date5 = /* @__PURE__ */ new Date()) {
@@ -110438,13 +110775,13 @@ function stamp(date5 = /* @__PURE__ */ new Date()) {
   };
 }
 function adhocEvidenceDir(projectDir) {
-  const dir = join15(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
-  mkdirSync5(dir, { recursive: true });
+  const dir = join16(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "screenshots");
+  mkdirSync6(dir, { recursive: true });
   return dir;
 }
 function adhocVideoDir(projectDir) {
-  const dir = join15(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "video");
-  mkdirSync5(dir, { recursive: true });
+  const dir = join16(ensureWalkthroughDir(projectDir), "runs", `adhoc-${stamp().day}`, "video");
+  mkdirSync6(dir, { recursive: true });
   return dir;
 }
 function fileStamp(label3) {
@@ -110755,14 +111092,14 @@ var Context = class {
 
 // packages/server/src/tools/a11y-tools.ts
 import {
-  existsSync as existsSync21,
+  existsSync as existsSync22,
   readdirSync as readdirSync11,
   readFileSync as readFileSync20,
   realpathSync as realpathSync3,
   statSync as statSync7,
   writeFileSync as writeFileSync14
 } from "node:fs";
-import { join as join35, relative as relative12, resolve as resolve10, sep as sep5 } from "node:path";
+import { join as join36, relative as relative12, resolve as resolve12, sep as sep5 } from "node:path";
 
 // packages/server/src/audit/axe.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -111213,8 +111550,8 @@ function customPasses(check2) {
 }
 
 // packages/server/src/audit/element-shots.ts
-import { mkdirSync as mkdirSync6, readdirSync as readdirSync5, writeFileSync as writeFileSync5 } from "node:fs";
-import { join as join16 } from "node:path";
+import { mkdirSync as mkdirSync7, readdirSync as readdirSync5, writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join17 } from "node:path";
 
 // packages/server/src/evidence/annotate.ts
 async function maskSecretFields(fields) {
@@ -111244,7 +111581,7 @@ async function withCleanPage(driver, tab, options, capture) {
   await panel?.hide(tab.id, true);
   if (options.annotate) await panel?.annotate(tab.id, options.annotate);
   const restore = await maskSecretFields(driver.secretFields);
-  await tab.page.evaluate(() => new Promise((resolve12) => requestAnimationFrame(() => resolve12(null)))).catch(() => void 0);
+  await tab.page.evaluate(() => new Promise((resolve14) => requestAnimationFrame(() => resolve14(null)))).catch(() => void 0);
   try {
     return await capture();
   } finally {
@@ -111284,8 +111621,8 @@ async function findElement(tab, node3) {
   return await frame.$(node3.target).catch(() => null);
 }
 async function shootElements(driver, tab, items, folder5, max) {
-  const dir = join16(folder5.root, folder5.sub);
-  mkdirSync6(dir, { recursive: true });
+  const dir = join17(folder5.root, folder5.sub);
+  mkdirSync7(dir, { recursive: true });
   let number4 = nextNumber(dir);
   const shots = [];
   const page = tab.page;
@@ -111340,7 +111677,7 @@ async function shootElements(driver, tab, items, folder5, max) {
             captureBeyondViewport: false
           });
           const name = `${String(number4).padStart(3, "0")}-${slug(rule, 40, "rule")}.jpg`;
-          writeFileSync5(join16(dir, name), jpg);
+          writeFileSync5(join17(dir, name), jpg);
           shots.push({ rule, target: node3.target, file: `${folder5.sub}/${name}` });
           number4 += 1;
         } finally {
@@ -111678,10 +112015,10 @@ async function checkKeyboard(driver, tab, options = {}) {
 async function settle2(page, ms) {
   await page.evaluate(
     () => new Promise(
-      (resolve12) => requestAnimationFrame(() => requestAnimationFrame(() => resolve12(null)))
+      (resolve14) => requestAnimationFrame(() => requestAnimationFrame(() => resolve14(null)))
     )
   ).catch(() => void 0);
-  if (ms) await new Promise((resolve12) => setTimeout(resolve12, ms));
+  if (ms) await new Promise((resolve14) => setTimeout(resolve14, ms));
 }
 function key(node3) {
   return `${node3.frame?.selector ?? ""}|${node3.target}`;
@@ -111905,21 +112242,21 @@ function standardLabel(standard) {
 }
 
 // packages/server/src/audit/compare.ts
-import { existsSync as existsSync12, readdirSync as readdirSync7, readFileSync as readFileSync12 } from "node:fs";
-import { join as join18 } from "node:path";
+import { existsSync as existsSync13, readdirSync as readdirSync7, readFileSync as readFileSync12 } from "node:fs";
+import { join as join19 } from "node:path";
 
 // packages/server/src/run/run-store.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
 import {
-  existsSync as existsSync11,
-  mkdirSync as mkdirSync7,
+  existsSync as existsSync12,
+  mkdirSync as mkdirSync8,
   readdirSync as readdirSync6,
   readFileSync as readFileSync11,
   realpathSync,
-  renameSync,
+  renameSync as renameSync2,
   writeFileSync as writeFileSync6
 } from "node:fs";
-import { join as join17, relative as relative3, sep as sep3 } from "node:path";
+import { join as join18, relative as relative3, sep as sep3 } from "node:path";
 function stamp2(date5 = /* @__PURE__ */ new Date()) {
   const pad = (n, size2 = 2) => String(n).padStart(size2, "0");
   return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}-${pad(date5.getDate())}_${pad(date5.getHours())}${pad(date5.getMinutes())}${pad(date5.getSeconds())}-${pad(date5.getMilliseconds(), 3)}`;
@@ -111945,8 +112282,8 @@ var RunStore = class _RunStore {
     const envPart = env2 && env2 !== "development" ? `-${env2}` : "";
     const id = `${stamp2()}-${slug(input3.name, 40, "run")}${envPart}-${randomBytes6(2).toString("hex")}`;
     const show = input3.show ?? ((text) => text);
-    const dir = join17(ensureWalkthroughDir(projectDir), "runs", id);
-    mkdirSync7(join17(dir, "screenshots"), { recursive: true });
+    const dir = join18(ensureWalkthroughDir(projectDir), "runs", id);
+    mkdirSync8(join18(dir, "screenshots"), { recursive: true });
     const settings = input3.plan?.accessibility;
     const lhSettings = input3.plan?.lighthouse;
     const planChecks = settings?.checks ? CHECKS.filter((c) => settings.checks?.[c] ?? input3.a11yChecks?.includes(c)) : void 0;
@@ -112001,6 +112338,7 @@ var RunStore = class _RunStore {
       setup: input3.setup,
       emulation: input3.emulation,
       ...input3.window ? { window: input3.window } : {},
+      ...input3.browser && Object.keys(input3.browser).length ? { browser: input3.browser } : {},
       unique: input3.unique,
       ...input3.session ? { session: input3.session } : {},
       ...input3.freshBrowser !== void 0 ? { freshBrowser: input3.freshBrowser } : {},
@@ -112027,24 +112365,24 @@ var RunStore = class _RunStore {
   static open(projectDir, id) {
     const dir = checkRunId(projectDir, id);
     try {
-      const run = JSON.parse(readFileSync11(join17(dir, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync11(join18(dir, "run.json"), "utf8"));
       return new _RunStore(dir, run, projectDir);
     } catch {
       throw new ToolError(`There is no run "${id}" in .walkthrough/runs.`, "run_not_found");
     }
   }
   get screenshotsDir() {
-    return join17(this.dir, "screenshots");
+    return join18(this.dir, "screenshots");
   }
   get relativeDir() {
     return relative3(this.projectDir, this.dir);
   }
   // Writes run.json safely: a crash never leaves a half-written file.
   save() {
-    const file2 = join17(this.dir, "run.json");
+    const file2 = join18(this.dir, "run.json");
     writeFileSync6(`${file2}.tmp`, `${JSON.stringify(this.run, null, 2)}
 `);
-    renameSync(`${file2}.tmp`, file2);
+    renameSync2(`${file2}.tmp`, file2);
   }
   // Finds a step by id, by number, or by title. Adds a new step if none matches.
   step(ref) {
@@ -112101,8 +112439,8 @@ function checkRunId(projectDir, id) {
       "bad_run_id"
     );
   }
-  const root = join17(projectDir, ".walkthrough", "runs");
-  const dir = join17(root, id);
+  const root = join18(projectDir, ".walkthrough", "runs");
+  const dir = join18(root, id);
   let realRoot;
   let realDir;
   try {
@@ -112117,11 +112455,11 @@ function checkRunId(projectDir, id) {
   return dir;
 }
 function latestRunId(projectDir, options = {}) {
-  const dir = join17(projectDir, ".walkthrough", "runs");
-  if (!existsSync11(dir)) return void 0;
+  const dir = join18(projectDir, ".walkthrough", "runs");
+  if (!existsSync12(dir)) return void 0;
   for (const id of readdirSync6(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync11(join17(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync11(join18(dir, id, "run.json"), "utf8"));
       if (!options.finishedOnly || run.status !== "running") return id;
     } catch {
     }
@@ -112132,7 +112470,7 @@ function latestRunId(projectDir, options = {}) {
 // packages/server/src/audit/compare.ts
 function readReport(dir) {
   try {
-    const data = JSON.parse(readFileSync12(join18(dir, "accessibility.json"), "utf8"));
+    const data = JSON.parse(readFileSync12(join19(dir, "accessibility.json"), "utf8"));
     return data.version === 1 && Array.isArray(data.findings) ? data : void 0;
   } catch {
     return void 0;
@@ -112143,11 +112481,11 @@ function findPrevious(projectDir, currentRunId, pages, compareTo, env2 = "develo
     const report = readReport(checkRunId(projectDir, compareTo));
     return report?.runId === currentRunId ? void 0 : report;
   }
-  const root = join18(projectDir, ".walkthrough", "runs");
-  if (!existsSync12(root)) return void 0;
+  const root = join19(projectDir, ".walkthrough", "runs");
+  if (!existsSync13(root)) return void 0;
   for (const id of readdirSync7(root).sort().reverse()) {
     if (id >= currentRunId) continue;
-    const report = readReport(join18(root, id));
+    const report = readReport(join19(root, id));
     if (!report || (report.environment?.name ?? "development") !== env2) continue;
     if (report.pages.some((p) => pages.includes(p.page))) return report;
   }
@@ -112424,7 +112762,7 @@ ${escapeMarkers(text)}
 }
 
 // packages/server/src/report/a11y-data.ts
-import { basename as basename3 } from "node:path";
+import { basename as basename4 } from "node:path";
 
 // packages/server/src/report/common.ts
 function runEnvironment(run) {
@@ -112585,7 +112923,7 @@ var RUN_STATUS_LABELS = {
 
 // packages/server/src/report/a11y-data.ts
 function suggestedPrompt(run, runDir, pages, firstId) {
-  const target2 = run.planFile ? basename3(run.planFile).replace(/\.ya?ml$/, "") : pages.join(" ");
+  const target2 = run.planFile ? basename4(run.planFile).replace(/\.ya?ml$/, "") : pages.join(" ");
   const env2 = runEnvironment(run);
   const app = run.baseUrl ? `${run.baseUrl} (the ${env2.name} environment)` : run.name;
   return [
@@ -112726,7 +113064,7 @@ function jsonReport(data) {
 // packages/server/src/report/a11y-html.ts
 import { randomBytes as randomBytes7 } from "node:crypto";
 import { readFileSync as readFileSync13 } from "node:fs";
-import { join as join19 } from "node:path";
+import { join as join20 } from "node:path";
 var IMPACT_LABEL = {
   critical: "Critical",
   serious: "Serious",
@@ -112785,7 +113123,7 @@ function level(f) {
 function shotImage(data, file2, alt) {
   if (!file2) return "";
   try {
-    const jpg = readFileSync13(join19(data.runDir, file2)).toString("base64");
+    const jpg = readFileSync13(join20(data.runDir, file2)).toString("base64");
     return `<figure class="shot"><img src="data:image/jpeg;base64,${jpg}" alt="${esc2(alt)}"><figcaption>The first element with this problem, in a red box.</figcaption></figure>`;
   } catch {
     return "";
@@ -113401,17 +113739,17 @@ function a11yMarkdownReport(data) {
 // packages/server/src/browser/sessions.ts
 import {
   chmodSync as chmodSync2,
-  existsSync as existsSync13,
-  mkdirSync as mkdirSync8,
+  existsSync as existsSync14,
+  mkdirSync as mkdirSync9,
   readdirSync as readdirSync8,
   readFileSync as readFileSync14,
   rmSync as rmSync5,
   writeFileSync as writeFileSync7
 } from "node:fs";
-import { join as join20 } from "node:path";
+import { join as join21 } from "node:path";
 function sessionsDir(projectDir, env2 = "development") {
-  const base = join20(projectDir, ".walkthrough", "sessions");
-  return env2 === "development" ? base : join20(base, env2);
+  const base = join21(projectDir, ".walkthrough", "sessions");
+  return env2 === "development" ? base : join21(base, env2);
 }
 function sessionPath(name, env2 = "development") {
   return env2 === "development" ? `.walkthrough/sessions/${name}.json` : `.walkthrough/sessions/${env2}/${name}.json`;
@@ -113423,7 +113761,7 @@ function sessionFile(projectDir, name, env2 = "development") {
       "bad_input"
     );
   }
-  return join20(sessionsDir(projectDir, env2), `${name}.json`);
+  return join21(sessionsDir(projectDir, env2), `${name}.json`);
 }
 function cookieMatches(cookie, hosts) {
   const domain2 = cookie.domain.replace(/^\./, "");
@@ -113466,7 +113804,7 @@ async function saveSession(driver, guard, projectDir, name, env2 = "development"
       "no_tab"
     );
   }
-  mkdirSync8(sessionsDir(projectDir, env2), { recursive: true, mode: 448 });
+  mkdirSync9(sessionsDir(projectDir, env2), { recursive: true, mode: 448 });
   writeFileSync7(file2, `${JSON.stringify(session, null, 2)}
 `, { mode: 384 });
   chmodSync2(file2, 384);
@@ -113474,10 +113812,10 @@ async function saveSession(driver, guard, projectDir, name, env2 = "development"
 }
 function envsWith(projectDir, name) {
   const base = sessionsDir(projectDir);
-  const found = existsSync13(join20(base, `${name}.json`)) ? ["development"] : [];
+  const found = existsSync14(join21(base, `${name}.json`)) ? ["development"] : [];
   try {
     for (const entry of readdirSync8(base, { withFileTypes: true })) {
-      if (entry.isDirectory() && existsSync13(join20(base, entry.name, `${name}.json`)))
+      if (entry.isDirectory() && existsSync14(join21(base, entry.name, `${name}.json`)))
         found.push(entry.name);
     }
   } catch {
@@ -113486,7 +113824,7 @@ function envsWith(projectDir, name) {
 }
 function loadSession(projectDir, name, env2 = "development") {
   const file2 = sessionFile(projectDir, name, env2);
-  if (!existsSync13(file2)) {
+  if (!existsSync14(file2)) {
     const elsewhere = envsWith(projectDir, name);
     throw new ToolError(
       elsewhere.length ? `There is no saved login "${name}" for the "${env2}" environment. It is saved for: ${elsewhere.join(", ")}. Log in on ${env2}, and save it with the session tool.` : `There is no saved session "${name}". Use the session tool with action "list".`,
@@ -113497,10 +113835,10 @@ function loadSession(projectDir, name, env2 = "development") {
 }
 function listSessions(projectDir, env2 = "development") {
   const dir = sessionsDir(projectDir, env2);
-  if (!existsSync13(dir)) return [];
+  if (!existsSync14(dir)) return [];
   return readdirSync8(dir).filter((f) => f.endsWith(".json")).sort().flatMap((f) => {
     try {
-      return [JSON.parse(readFileSync14(join20(dir, f), "utf8"))];
+      return [JSON.parse(readFileSync14(join21(dir, f), "utf8"))];
     } catch {
       return [];
     }
@@ -113508,7 +113846,7 @@ function listSessions(projectDir, env2 = "development") {
 }
 function deleteSession(projectDir, name, env2 = "development") {
   const file2 = sessionFile(projectDir, name, env2);
-  if (!existsSync13(file2))
+  if (!existsSync14(file2))
     throw new ToolError(`There is no saved session "${name}".`, "session_not_found");
   rmSync5(file2);
 }
@@ -113565,16 +113903,16 @@ function checkPresentationPolicy(presentation, tool, action2) {
 }
 
 // packages/server/src/video/recording.ts
-import { copyFileSync, existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync as mkdtempSync3, readFileSync as readFileSync15, rmSync as rmSync8 } from "node:fs";
+import { copyFileSync, existsSync as existsSync17, mkdirSync as mkdirSync10, mkdtempSync as mkdtempSync3, readFileSync as readFileSync15, rmSync as rmSync8 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
-import { dirname as dirname9, extname as extname4, join as join25, relative as relative5 } from "node:path";
+import { dirname as dirname9, extname as extname5, join as join26, relative as relative5 } from "node:path";
 
 // packages/server/src/guards/paths.ts
-import { existsSync as existsSync14, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
-import { basename as basename4, dirname as dirname7, extname as extname3, isAbsolute as isAbsolute5, join as join21, relative as relative4, resolve as resolve8, sep as sep4 } from "node:path";
+import { existsSync as existsSync15, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
+import { basename as basename5, dirname as dirname7, extname as extname4, isAbsolute as isAbsolute6, join as join22, relative as relative4, resolve as resolve9, sep as sep4 } from "node:path";
 var BLOCKED_NAMES = /* @__PURE__ */ new Set(["config.local.yaml", "config.local.yml"]);
 function checkUploadPath(file2, uploadsRoot, projectDir) {
-  const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
+  const full = isAbsolute6(file2) ? file2 : resolve9(projectDir, file2);
   let real;
   try {
     real = realpathSync2(full);
@@ -113586,14 +113924,14 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
   }
   const root = realpathSync2(uploadsRoot);
   const rel = relative4(root, real);
-  if (rel.startsWith("..") || isAbsolute5(rel)) {
+  if (rel.startsWith("..") || isAbsolute6(rel)) {
     throw new ToolError(
       `Walkthrough can only upload files inside ${root}. ${file2} is outside that folder.`,
       "upload_blocked"
     );
   }
   const parts = rel.split(sep4);
-  if (parts.some((part) => part.startsWith(".")) || BLOCKED_NAMES.has(basename4(real))) {
+  if (parts.some((part) => part.startsWith(".")) || BLOCKED_NAMES.has(basename5(real))) {
     throw new ToolError(
       `Walkthrough does not upload hidden or private files, such as .env or saved logins. ${file2} is blocked.`,
       "upload_blocked"
@@ -113602,20 +113940,20 @@ function checkUploadPath(file2, uploadsRoot, projectDir) {
   return real;
 }
 function realTarget(full) {
-  if (existsSync14(full)) return realpathSync2(full);
+  if (existsSync15(full)) return realpathSync2(full);
   const missing = [];
   let dir = full;
-  while (!existsSync14(dir)) {
-    missing.unshift(basename4(dir));
+  while (!existsSync15(dir)) {
+    missing.unshift(basename5(dir));
     const up = dirname7(dir);
     if (up === dir) break;
     dir = up;
   }
-  return join21(realpathSync2(dir), ...missing);
+  return join22(realpathSync2(dir), ...missing);
 }
 var inside = (root, path14) => {
   const rel = relative4(root, path14);
-  return rel !== "" && !rel.startsWith("..") && !isAbsolute5(rel);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute6(rel);
 };
 var SCREENSHOT = {
   noun: "screenshot",
@@ -113624,8 +113962,8 @@ var SCREENSHOT = {
 };
 var VIDEO = { noun: "video", extensions: VIDEO_EXTENSIONS, code: "video_blocked" };
 function checkOutputPath(file2, projectDir, extraRoots, kind) {
-  const full = isAbsolute5(file2) ? resolve8(file2) : resolve8(projectDir, file2);
-  const ext = extname3(full).toLowerCase();
+  const full = isAbsolute6(file2) ? resolve9(file2) : resolve9(projectDir, file2);
+  const ext = extname4(full).toLowerCase();
   if (!kind.extensions.includes(ext)) {
     throw new ToolError(
       `End the ${kind.noun} path with ${kind.extensions.join(", ")}. ${file2} does not.`,
@@ -113633,7 +113971,7 @@ function checkOutputPath(file2, projectDir, extraRoots, kind) {
     );
   }
   const real = realTarget(full);
-  if (existsSync14(real) && !statSync5(real).isFile()) {
+  if (existsSync15(real) && !statSync5(real).isFile()) {
     throw new ToolError(`${file2} is a folder, not a file.`, kind.code);
   }
   const project = realTarget(projectDir);
@@ -113676,8 +114014,8 @@ var PANEL_IMAGE = {
 };
 function checkProjectImage(file2, projectDir, kind) {
   const Name = kind.name[0]?.toUpperCase() + kind.name.slice(1);
-  const full = isAbsolute5(file2) ? file2 : resolve8(projectDir, file2);
-  const ext = extname3(full).toLowerCase();
+  const full = isAbsolute6(file2) ? file2 : resolve9(projectDir, file2);
+  const ext = extname4(full).toLowerCase();
   if (!kind.extensions.includes(ext)) {
     throw new ToolError(
       `A ${kind.name} ends with ${kind.extensions.join(", ")}. ${file2} does not.`,
@@ -113722,7 +114060,7 @@ function checkPanelImage(file2, projectDir) {
 // packages/server/src/video/capture.ts
 import { mkdtempSync as mkdtempSync2, rmSync as rmSync6, unlinkSync as unlinkSync2, writeFileSync as writeFileSync8 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
-import { join as join22 } from "node:path";
+import { join as join23 } from "node:path";
 var MIN_GAP_MS = 33;
 var VideoCapture = class {
   constructor(driver, options) {
@@ -113733,7 +114071,7 @@ var VideoCapture = class {
   options;
   frames = [];
   events = [];
-  dir = mkdtempSync2(join22(tmpdir3(), "uiwalk-video-"));
+  dir = mkdtempSync2(join23(tmpdir3(), "uiwalk-video-"));
   startedAt = Date.now();
   stoppedAt;
   caption = "";
@@ -113794,12 +114132,12 @@ var VideoCapture = class {
     const last2 = this.frames.at(-1);
     const data = Buffer.from(event.data, "base64");
     if (last2 && last2.tabId === tabId && now - last2.t < MIN_GAP_MS) {
-      writeFileSync8(join22(this.dir, last2.file), data);
+      writeFileSync8(join23(this.dir, last2.file), data);
       return;
     }
     this.count += 1;
     const file2 = `${String(this.count).padStart(6, "0")}.jpg`;
-    writeFileSync8(join22(this.dir, file2), data);
+    writeFileSync8(join23(this.dir, file2), data);
     this.frames.push({
       file: file2,
       t: now,
@@ -113817,7 +114155,7 @@ var VideoCapture = class {
     while (this.frames.length > 1 && this.frames[1].t < now - keep) {
       const old = this.frames.shift();
       try {
-        unlinkSync2(join22(this.dir, old.file));
+        unlinkSync2(join23(this.dir, old.file));
       } catch {
       }
     }
@@ -113882,7 +114220,7 @@ var VideoCapture = class {
       const size2 = await page.evaluate(() => [innerWidth, innerHeight]);
       this.count += 1;
       const file2 = `${String(this.count).padStart(6, "0")}.jpg`;
-      writeFileSync8(join22(this.dir, file2), data);
+      writeFileSync8(join23(this.dir, file2), data);
       this.frames.push({
         file: file2,
         t: this.stoppedAt ?? Date.now(),
@@ -113904,16 +114242,16 @@ import { randomBytes as randomBytes8 } from "node:crypto";
 import {
   createReadStream as createReadStream2,
   createWriteStream as createWriteStream3,
-  existsSync as existsSync15,
-  renameSync as renameSync2,
+  existsSync as existsSync16,
+  renameSync as renameSync3,
   rmSync as rmSync7,
   statSync as statSync6
 } from "node:fs";
 import { createServer } from "node:http";
-import { join as join24 } from "node:path";
+import { join as join25 } from "node:path";
 
 // packages/server/src/video/encoder-source.ts
-import { dirname as dirname8, join as join23 } from "node:path";
+import { dirname as dirname8, join as join24 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 var built;
 async function encoderSource() {
@@ -113921,7 +114259,7 @@ async function encoderSource() {
   if (built) return built;
   const esbuild = await import("esbuild");
   const result = await esbuild.build({
-    entryPoints: [join23(dirname8(fileURLToPath3(import.meta.url)), "encoder-page", "main.ts")],
+    entryPoints: [join24(dirname8(fileURLToPath3(import.meta.url)), "encoder-page", "main.ts")],
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -113936,7 +114274,7 @@ async function encoderSource() {
 
 // packages/server/src/video/encoder.ts
 function toMp4(ffmpeg, input3, output3) {
-  return new Promise((resolve12, reject) => {
+  return new Promise((resolve14, reject) => {
     const child = spawn5(
       ffmpeg,
       [
@@ -113962,7 +114300,7 @@ function toMp4(ffmpeg, input3, output3) {
     child.on("error", reject);
     child.on(
       "close",
-      (code) => code === 0 ? resolve12() : reject(new Error(errors.trim() || `ffmpeg ended with code ${code}`))
+      (code) => code === 0 ? resolve14() : reject(new Error(errors.trim() || `ffmpeg ended with code ${code}`))
     );
   });
 }
@@ -113979,9 +114317,9 @@ async function encodeVideo(options) {
       return;
     }
     const frame = new RegExp(`^/${token}/frames/(\\d+\\.(jpg|jpeg|png|webp))$`).exec(url2);
-    if (req.method === "GET" && frame?.[1] && existsSync15(join24(options.framesDir, frame[1]))) {
+    if (req.method === "GET" && frame?.[1] && existsSync16(join25(options.framesDir, frame[1]))) {
       res.setHeader("content-type", `image/${frame[2] === "jpg" ? "jpeg" : frame[2]}`);
-      createReadStream2(join24(options.framesDir, frame[1])).pipe(res);
+      createReadStream2(join25(options.framesDir, frame[1])).pipe(res);
       return;
     }
     if (req.method === "POST" && url2 === `/${token}/out`) {
@@ -113997,7 +114335,7 @@ async function encodeVideo(options) {
     res.statusCode = 404;
     res.end();
   });
-  await new Promise((resolve12) => server.listen(0, "127.0.0.1", resolve12));
+  await new Promise((resolve14) => server.listen(0, "127.0.0.1", resolve14));
   const base = `http://127.0.0.1:${server.address().port}/${token}`;
   const job = {
     format: format3,
@@ -114039,11 +114377,11 @@ async function encodeVideo(options) {
     note
   });
   if (result.format === format3) {
-    renameSync2(part, outFile);
+    renameSync3(part, outFile);
     return done(outFile, format3);
   }
   const webm = outFile.replace(/\.mp4$/i, ".webm");
-  renameSync2(part, webm);
+  renameSync3(part, webm);
   const ffmpeg = findFfmpeg({ configPath: config3.ffmpegPath });
   if (!ffmpeg) {
     return done(
@@ -114369,17 +114707,17 @@ async function stopVideo(ctx, options = {}) {
     );
   }
   const store = recording.runId === void 0 ? void 0 : ctx.run?.run.id === recording.runId ? ctx.run : RunStore.open(config3.projectDir, recording.runId);
-  const dir = store ? join25(store.dir, "video") : adhocVideoDir(config3.projectDir);
-  mkdirSync9(dir, { recursive: true });
+  const dir = store ? join26(store.dir, "video") : adhocVideoDir(config3.projectDir);
+  mkdirSync10(dir, { recursive: true });
   const base = recording.whole ? "run" : fileStamp(options.name ?? recording.name);
   const middle = samples[Math.floor(samples.length / 2)];
-  const preview = middle ? readFileSync15(join25(capture.dir, middle.file)).toString("base64") : void 0;
+  const preview = middle ? readFileSync15(join26(capture.dir, middle.file)).toString("base64") : void 0;
   const out = await encodeVideo({
     config: config3,
     framesDir: capture.dir,
     samples,
     format: format3,
-    outFile: join25(dir, `${base}.${format3}`)
+    outFile: join26(dir, `${base}.${format3}`)
   });
   capture.discard();
   recording.forget();
@@ -114410,7 +114748,7 @@ function describeSaved(projectDir, out, format3, target2) {
   ];
   let copied;
   if (target2 && out.format === format3) {
-    mkdirSync9(dirname9(target2.path), { recursive: true });
+    mkdirSync10(dirname9(target2.path), { recursive: true });
     copyFileSync(out.file, target2.path);
     copied = target2.display;
     lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -114465,17 +114803,17 @@ async function bugClip(ctx, store, stepId) {
       config3.video.replaySeconds
     );
     if (samples.length === 0) return void 0;
-    const dir = join25(store.dir, "video");
-    mkdirSync9(dir, { recursive: true });
+    const dir = join26(store.dir, "video");
+    mkdirSync10(dir, { recursive: true });
     let name = `bug-${slug(stepId, 40, "step")}`;
-    for (let n = 2; existsSync16(join25(dir, `${name}.${format3}`)); n++)
+    for (let n = 2; existsSync17(join26(dir, `${name}.${format3}`)); n++)
       name = `bug-${slug(stepId, 40, "step")}-${n}`;
     const out = await encodeVideo({
       config: config3,
       framesDir: capture.dir,
       samples,
       format: format3,
-      outFile: join25(dir, `${name}.${format3}`)
+      outFile: join26(dir, `${name}.${format3}`)
     });
     return { file: relative5(config3.projectDir, out.file), seconds: out.seconds };
   });
@@ -114487,15 +114825,15 @@ async function slideshow(ctx, options) {
   const store = ctx.run?.run.id === id ? ctx.run : RunStore.open(config3.projectDir, id);
   const format3 = chooseFormat(options.format, options.path, "gif");
   const target2 = options.path ? checkMediaPath(options.path, config3.projectDir, config3.screenshotRoots) : void 0;
-  const dir = mkdtempSync3(join25(tmpdir4(), "uiwalk-slides-"));
+  const dir = mkdtempSync3(join26(tmpdir4(), "uiwalk-slides-"));
   try {
     const samples = [];
     for (const step of store.run.steps) {
       for (const shot of step.screenshots) {
-        const file2 = join25(store.dir, shot);
-        if (!existsSync16(file2)) continue;
-        const name = `${String(samples.length + 1).padStart(6, "0")}${extname4(file2).toLowerCase()}`;
-        copyFileSync(file2, join25(dir, name));
+        const file2 = join26(store.dir, shot);
+        if (!existsSync17(file2)) continue;
+        const name = `${String(samples.length + 1).padStart(6, "0")}${extname5(file2).toLowerCase()}`;
+        copyFileSync(file2, join26(dir, name));
         samples.push({
           file: name,
           duration: SLIDE_SECONDS,
@@ -114518,19 +114856,19 @@ async function slideshow(ctx, options) {
       );
     }
     const width = format3 === "gif" ? config3.video.gifWidth : config3.video.width;
-    const videoDir = join25(store.dir, "video");
-    mkdirSync9(videoDir, { recursive: true });
+    const videoDir = join26(store.dir, "video");
+    mkdirSync10(videoDir, { recursive: true });
     const out = await encodeVideo({
       config: config3,
       framesDir: dir,
       samples,
       format: format3,
-      outFile: join25(videoDir, `slideshow.${format3}`),
+      outFile: join26(videoDir, `slideshow.${format3}`),
       title: store.run.name,
       width,
       height: Math.round(width * 10 / 16)
     });
-    const preview = readFileSync15(join25(dir, samples[0].file)).toString("base64");
+    const preview = readFileSync15(join26(dir, samples[0].file)).toString("base64");
     const { lines, copied } = describeSaved(config3.projectDir, out, format3, target2);
     lines.push(`It shows ${samples.length} screenshot(s) from the run "${store.run.name}".`);
     store.run.videos = [
@@ -114545,7 +114883,7 @@ async function slideshow(ctx, options) {
       }
     ];
     store.save();
-    const ext = extname4(samples[0].file);
+    const ext = extname5(samples[0].file);
     const previewType = ext === ".png" ? "image/png" : ext === ".webp" ? void 0 : "image/jpeg";
     return { lines, preview: previewType ? preview : void 0, previewType, store };
   } finally {
@@ -114663,11 +115001,25 @@ async function openBrowser(ctx, options) {
   if (driver) {
     lines.push("The browser is already open.");
   } else {
-    driver = await ctx.startDriver(options.attach);
+    const settings = resolveBrowserSettings(
+      [config3.browser.options, options.browser],
+      config3.projectDir
+    );
+    driver = await ctx.startDriver(options.attach, {
+      launch: { settings, zoomHosts: appHosts(config3) }
+    });
     lines.push(
       driver.mode === "attached" ? `Connected to your Chrome (${driver.chromeVersion}) and opened a new tab for testing.` : `Opened Chrome (${driver.chromeVersion}) with a fresh profile.`
     );
     if (driver.launchNote) lines.push(driver.launchNote);
+    const asked = Object.keys({ ...config3.browser.options, ...options.browser }).filter(
+      (k) => k !== "window"
+    );
+    if (driver.mode === "attached" && asked.length) {
+      lines.push(
+        `Walkthrough uses your own Chrome, so these browser settings do not apply: ${asked.join(", ")}.`
+      );
+    }
   }
   for (const warning of config3.warnings) lines.push(`Warning: ${warning}`);
   const reopened = alreadyOpen && !driver.hasActiveTab;
@@ -115028,13 +115380,13 @@ function reloadableTab(driver) {
 }
 
 // packages/server/src/tools/run-tools.ts
-import { existsSync as existsSync20, writeFileSync as writeFileSync13 } from "node:fs";
-import { join as join34, relative as relative11 } from "node:path";
+import { existsSync as existsSync21, writeFileSync as writeFileSync13 } from "node:fs";
+import { isAbsolute as isAbsolute9, join as join35, relative as relative11, resolve as resolve11 } from "node:path";
 
 // packages/server/src/presentation/rehearsal.ts
 import { createHash as createHash4 } from "node:crypto";
-import { existsSync as existsSync17, readdirSync as readdirSync9, readFileSync as readFileSync16 } from "node:fs";
-import { join as join26, relative as relative6 } from "node:path";
+import { existsSync as existsSync18, readdirSync as readdirSync9, readFileSync as readFileSync16 } from "node:fs";
+import { join as join27, relative as relative6 } from "node:path";
 
 // packages/server/src/page/actions.ts
 var ACTIONS = [
@@ -115245,7 +115597,7 @@ async function highlightTarget(ctx, tab, target2, action2) {
   const rect = await elementRect(target2.handle);
   if (!rect) return;
   await panel.highlight(tab.id, rect, `Next: ${ACTION_LABELS[action2]}`, ms);
-  await new Promise((resolve12) => setTimeout(resolve12, ms));
+  await new Promise((resolve14) => setTimeout(resolve14, ms));
 }
 async function settle4(tab) {
   await tab.page.waitForNetworkIdle({ idleTime: 250, timeout: 2e3 }).catch(() => void 0);
@@ -115420,6 +115772,7 @@ function executionHash(plan) {
     network: plan.network,
     emulate: plan.emulate,
     vars: plan.vars,
+    browser: Object.fromEntries(PAGE_KEYS.map((k) => [k, plan.browser?.[k]])),
     steps
   };
   return createHash4("sha256").update(JSON.stringify(what)).digest("hex").slice(0, 16);
@@ -115461,14 +115814,14 @@ function slideProblems(plan, projectDir) {
   return problems;
 }
 function findRehearsal(projectDir, planFile, plan, env2, now = Date.now()) {
-  const root = join26(projectDir, ".walkthrough", "runs");
-  if (!existsSync17(root)) return void 0;
+  const root = join27(projectDir, ".walkthrough", "runs");
+  if (!existsSync18(root)) return void 0;
   const file2 = relative6(projectDir, planFile);
   const hash2 = executionHash(plan);
   for (const id of readdirSync9(root).sort().reverse()) {
     let run;
     try {
-      run = JSON.parse(readFileSync16(join26(root, id, "run.json"), "utf8"));
+      run = JSON.parse(readFileSync16(join27(root, id, "run.json"), "utf8"));
     } catch {
       continue;
     }
@@ -115482,22 +115835,22 @@ function findRehearsal(projectDir, planFile, plan, env2, now = Date.now()) {
 }
 
 // packages/server/src/report/html.ts
-import { existsSync as existsSync18, readFileSync as readFileSync17 } from "node:fs";
-import { join as join29 } from "node:path";
+import { existsSync as existsSync19, readFileSync as readFileSync17 } from "node:fs";
+import { join as join30 } from "node:path";
 
 // packages/server/src/evidence/screenshot.ts
-import { mkdirSync as mkdirSync10 } from "node:fs";
-import { dirname as dirname10, extname as extname5, join as join27, relative as relative7 } from "node:path";
+import { mkdirSync as mkdirSync11 } from "node:fs";
+import { dirname as dirname10, extname as extname6, join as join28, relative as relative7 } from "node:path";
 function imageType(path14) {
-  const ext = extname5(path14).toLowerCase();
+  const ext = extname6(path14).toLowerCase();
   return ext === ".jpg" || ext === ".jpeg" ? "jpeg" : ext === ".webp" ? "webp" : "png";
 }
 async function takeScreenshot(tab, dir, projectDir, options) {
-  const path14 = options.path ?? join27(dir, `${fileStamp(options.label)}.png`);
+  const path14 = options.path ?? join28(dir, `${fileStamp(options.label)}.png`);
   const { handle, fullPage = false } = options;
   const type = imageType(path14);
   if (options.path) {
-    mkdirSync10(dirname10(path14), { recursive: true });
+    mkdirSync11(dirname10(path14), { recursive: true });
     await tab.page.evaluate(() => document.fonts?.ready.then(() => null)).catch(() => void 0);
   }
   if (handle) {
@@ -115511,8 +115864,8 @@ async function takeScreenshot(tab, dir, projectDir, options) {
 }
 
 // packages/server/src/lighthouse/flow.ts
-import { mkdirSync as mkdirSync11, writeFileSync as writeFileSync9 } from "node:fs";
-import { join as join28 } from "node:path";
+import { mkdirSync as mkdirSync12, writeFileSync as writeFileSync9 } from "node:fs";
+import { join as join29 } from "node:path";
 
 // packages/server/src/lighthouse/audit.ts
 var NO_SCORE = /* @__PURE__ */ new Set(["notApplicable", "manual", "informative", "error"]);
@@ -115784,19 +116137,19 @@ var LhFlow = class {
     if (!this.results.length) return;
     const lighthouse = await loadLighthouse();
     const result = { steps: this.results, name: this.name };
-    mkdirSync11(join28(runDir, "lighthouse"), { recursive: true });
+    mkdirSync12(join29(runDir, "lighthouse"), { recursive: true });
     writeFileSync9(
-      join28(runDir, FLOW_REPORT),
+      join29(runDir, FLOW_REPORT),
       secrets.redact(lighthouse.generateReport(result, "html"))
     );
-    writeFileSync9(join28(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
+    writeFileSync9(join29(runDir, FLOW_JSON), secrets.redact(JSON.stringify(result)));
   }
 };
 
 // packages/server/src/report/html.ts
 function image(runDir, path14, alt) {
   try {
-    const data = readFileSync17(join29(runDir, path14)).toString("base64");
+    const data = readFileSync17(join30(runDir, path14)).toString("base64");
     return `<a href="${esc2(path14)}"><img src="data:image/${imageType(path14)};base64,${data}" alt="${esc2(alt)}"></a>`;
   } catch {
     return `<p class="muted">Screenshot missing: ${esc2(path14)}</p>`;
@@ -115965,11 +116318,14 @@ function htmlReport(run, runDir) {
 <body>
 <main>
 <h1>${esc2(run.name)}</h1>
-<p class="muted"><span class="badge" style="background:${esc2(env2.color)}">${esc2(env2.label)}</span> Walkthrough report. Result: ${esc2(resultLine(run) || "no steps")}.${existsSync18(join29(runDir, "accessibility.html")) ? ' <a href="accessibility.html">Accessibility report</a>' : ""}${existsSync18(join29(runDir, "lighthouse.html")) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ""}${existsSync18(join29(runDir, FLOW_REPORT)) ? ` <a href="${FLOW_REPORT}">Lighthouse flow report</a>` : ""}</p>
+<p class="muted"><span class="badge" style="background:${esc2(env2.color)}">${esc2(env2.label)}</span> Walkthrough report. Result: ${esc2(resultLine(run) || "no steps")}.${existsSync19(join30(runDir, "accessibility.html")) ? ' <a href="accessibility.html">Accessibility report</a>' : ""}${existsSync19(join30(runDir, "lighthouse.html")) ? ' <a href="lighthouse.html">Lighthouse report</a>' : ""}${existsSync19(join30(runDir, FLOW_REPORT)) ? ` <a href="${FLOW_REPORT}">Lighthouse flow report</a>` : ""}</p>
 <div class="meta">${meta3.map(([k, v2]) => `<div><span>${esc2(k)}</span>${esc2(v2)}</div>`).join("")}</div>
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc2(STATUS_LABELS[status])}</span>`).join("")}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc2(run.summary)}</p>` : ""}
 ${videoSection(run)}
+${run.downloads?.length ? `<h2>Downloads</h2><ul>${run.downloads.map(
+    (d) => `<li><a href="${esc2(d.file)}">${esc2(d.file)}</a>, from ${esc2(d.url)}${d.step ? ` (step ${esc2(d.step)})` : ""}</li>`
+  ).join("")}</ul>` : ""}
 ${problems.length ? `<h2>Bugs and failures</h2>
 ${problems.map((s) => stepCard(run, runDir, s, true)).join("\n")}` : ""}
 <h2>All steps</h2>
@@ -115993,7 +116349,7 @@ ${run.steps.filter((s) => !isProblem(s) && s.status !== "pending").map((s) => st
 
 // packages/server/src/report/lh-report.ts
 import { randomBytes as randomBytes9 } from "node:crypto";
-import { basename as basename5, extname as extname6 } from "node:path";
+import { basename as basename6, extname as extname7 } from "node:path";
 var label2 = (c) => CATEGORY_LABELS[c] ?? c;
 function lhPrompt(relativeDir, app, again, firstId) {
   return [
@@ -116013,7 +116369,7 @@ function buildLhReportData(input3) {
     pages: findings.pages.some((p) => !p.flow),
     flow: findings.pages.some((p) => p.flow)
   };
-  const again = kinds.flow && run.planFile ? basename5(run.planFile, extname6(run.planFile)) : findings.pages.map((p) => p.page).join(" ");
+  const again = kinds.flow && run.planFile ? basename6(run.planFile, extname7(run.planFile)) : findings.pages.map((p) => p.page).join(" ");
   return {
     runId: run.id,
     runName: run.name,
@@ -116417,6 +116773,13 @@ function markdownReport(run, options = {}) {
     }
     if (run.videoNote) lines.push(run.videoNote, "");
   }
+  if (run.downloads?.length) {
+    lines.push("## Downloads", "");
+    for (const d of run.downloads) {
+      lines.push(`- [${d.file}](${d.file}), from ${d.url}${d.step ? ` (step ${d.step})` : ""}`);
+    }
+    lines.push("");
+  }
   if (problems.length > 0) {
     lines.push("## Bugs and failures", "");
     for (const step of problems) lines.push(...stepDetails(run, step, true));
@@ -116459,10 +116822,10 @@ function markdownReport(run, options = {}) {
 
 // packages/server/src/run/plans.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync19, mkdirSync as mkdirSync12, readdirSync as readdirSync10, readFileSync as readFileSync18, writeFileSync as writeFileSync10 } from "node:fs";
-import { basename as basename6, extname as extname7, isAbsolute as isAbsolute6, join as join30, relative as relative8, resolve as resolve9 } from "node:path";
+import { existsSync as existsSync20, mkdirSync as mkdirSync13, readdirSync as readdirSync10, readFileSync as readFileSync18, writeFileSync as writeFileSync10 } from "node:fs";
+import { basename as basename7, extname as extname8, isAbsolute as isAbsolute7, join as join31, relative as relative8, resolve as resolve10 } from "node:path";
 function plansDir(projectDir) {
-  return join30(projectDir, ".walkthrough", "plans");
+  return join31(projectDir, ".walkthrough", "plans");
 }
 function parseFile(text) {
   const lineCounter = new import_yaml2.LineCounter();
@@ -116525,15 +116888,15 @@ function parseFile(text) {
 var MAX_INCLUDE_DEPTH = 3;
 function partFile(projectDir, name) {
   const dir = plansDir(projectDir);
-  return [join30(dir, `${name}.yaml`), join30(dir, `${name}.yml`)].find((f) => existsSync19(f));
+  return [join31(dir, `${name}.yaml`), join31(dir, `${name}.yml`)].find((f) => existsSync20(f));
 }
 function partStep(step, part, projectDir) {
   const out = { ...step };
   if (part.snippets) out.snippets = { ...part.snippets, ...step.snippets };
   const shot = step.screenshot;
   const shotPath = typeof shot === "string" ? shot : typeof shot === "object" ? shot.path : void 0;
-  if (shotPath && !isAbsolute6(shotPath)) {
-    const full = join30(projectDir, part.screenshotDir ?? "", shotPath);
+  if (shotPath && !isAbsolute7(shotPath)) {
+    const full = join31(projectDir, part.screenshotDir ?? "", shotPath);
     out.screenshot = typeof shot === "object" ? { ...shot, path: full } : full;
   }
   return out;
@@ -116560,7 +116923,7 @@ function expand(parsed, label3, projectDir, chain) {
       return;
     }
     if (chain.includes(file2)) {
-      const names = [...chain, file2].map((f) => basename6(f, extname7(f)));
+      const names = [...chain, file2].map((f) => basename7(f, extname8(f)));
       problems.push({ ...at, message: `The plans include each other: ${names.join(" > ")}.` });
       return;
     }
@@ -116571,7 +116934,7 @@ function expand(parsed, label3, projectDir, chain) {
       });
       return;
     }
-    const partLabel = basename6(file2);
+    const partLabel = basename7(file2);
     const part = parseFile(readFileSync18(file2, "utf8"));
     if (!part.ok) {
       problems.push(...part.problems.map((p) => ({ ...p, path: `${partLabel} ${p.path}` })));
@@ -116621,7 +116984,7 @@ function validatePlanText(text, options = {}) {
       }))
     };
   }
-  const label3 = options.file ? basename6(options.file) : "(this plan)";
+  const label3 = options.file ? basename7(options.file) : "(this plan)";
   const result = expand(
     parsed.parsed,
     label3,
@@ -116639,15 +117002,15 @@ function formatProblems(file2, problems) {
 function findPlanFile(projectDir, name) {
   const dir = plansDir(projectDir);
   const candidates = [
-    join30(dir, name),
-    join30(dir, `${name}.yaml`),
-    join30(dir, `${name}.yml`),
-    isAbsolute6(name) ? name : resolve9(projectDir, name)
+    join31(dir, name),
+    join31(dir, `${name}.yaml`),
+    join31(dir, `${name}.yml`),
+    isAbsolute7(name) ? name : resolve10(projectDir, name)
   ];
   for (const file2 of candidates) {
-    if (existsSync19(file2) && [".yaml", ".yml"].includes(extname7(file2))) {
+    if (existsSync20(file2) && [".yaml", ".yml"].includes(extname8(file2))) {
       const rel = relative8(projectDir, file2);
-      if (rel.startsWith("..") || isAbsolute6(rel)) {
+      if (rel.startsWith("..") || isAbsolute7(rel)) {
         throw new ToolError(`The plan ${name} is outside the project folder.`, "plan_not_found");
       }
       return file2;
@@ -116683,14 +117046,14 @@ function laterFeatures(plan) {
 }
 function listPlans(projectDir) {
   const dir = plansDir(projectDir);
-  if (!existsSync19(dir)) return [];
-  return readdirSync10(dir).filter((f) => [".yaml", ".yml"].includes(extname7(f))).sort().map((f) => {
-    const result = validatePlanText(readFileSync18(join30(dir, f), "utf8"), {
+  if (!existsSync20(dir)) return [];
+  return readdirSync10(dir).filter((f) => [".yaml", ".yml"].includes(extname8(f))).sort().map((f) => {
+    const result = validatePlanText(readFileSync18(join31(dir, f), "utf8"), {
       projectDir,
-      file: join30(dir, f)
+      file: join31(dir, f)
     });
-    const name = basename6(f, extname7(f));
-    const file2 = relative8(projectDir, join30(dir, f));
+    const name = basename7(f, extname8(f));
+    const file2 = relative8(projectDir, join31(dir, f));
     return result.ok ? { name, file: file2, title: result.plan.name, steps: result.plan.steps.length } : { name, file: file2, problems: result.problems.length };
   });
 }
@@ -116702,12 +117065,12 @@ function savePlan(projectDir, name, text, overwrite = false) {
     );
   }
   const dir = plansDir(projectDir);
-  const result = validatePlanText(text, { projectDir, file: join30(dir, `${name}.yaml`) });
+  const result = validatePlanText(text, { projectDir, file: join31(dir, `${name}.yaml`) });
   if (!result.ok)
     throw new ToolError(formatProblems(`${name}.yaml`, result.problems), "plan_invalid");
-  mkdirSync12(dir, { recursive: true });
-  const file2 = join30(dir, `${name}.yaml`);
-  if (existsSync19(file2) && !overwrite) {
+  mkdirSync13(dir, { recursive: true });
+  const file2 = join31(dir, `${name}.yaml`);
+  if (existsSync20(file2) && !overwrite) {
     throw new ToolError(
       `The plan ${name}.yaml already exists. Ask the developer before you replace it. Then use overwrite: true.`,
       "plan_exists"
@@ -116718,16 +117081,16 @@ function savePlan(projectDir, name, text, overwrite = false) {
   return file2;
 }
 function loadRunPlan(projectDir, planFile) {
-  if (!planFile || !existsSync19(join30(projectDir, planFile))) return void 0;
+  if (!planFile || !existsSync20(join31(projectDir, planFile))) return void 0;
   try {
-    return loadPlan(projectDir, join30(projectDir, planFile)).plan;
+    return loadPlan(projectDir, join31(projectDir, planFile)).plan;
   } catch {
     return void 0;
   }
 }
 
 // packages/server/src/run/record.ts
-import { isAbsolute as isAbsolute7, join as join31, relative as relative9 } from "node:path";
+import { isAbsolute as isAbsolute8, join as join32, relative as relative9 } from "node:path";
 function progressItems(ctx) {
   const store = ctx.run;
   if (store?.run.status !== "running" || !store.showProgress) return void 0;
@@ -116784,14 +117147,14 @@ function recordResult(ctx, ref, result) {
   if (result.notes !== void 0) step.notes = result.notes || void 0;
   if (result.actual !== void 0) step.actual = result.actual || void 0;
   if (result.screenshot) {
-    const full = isAbsolute7(result.screenshot) ? result.screenshot : join31(store.projectDir, result.screenshot);
+    const full = isAbsolute8(result.screenshot) ? result.screenshot : join32(store.projectDir, result.screenshot);
     step.screenshots.push(relative9(store.dir, full));
   }
   if (result.checklist?.length) step.checklist = result.checklist;
   if (result.pointed) step.pointed = result.pointed;
   if (result.mocked?.length) step.mocked = [.../* @__PURE__ */ new Set([...step.mocked ?? [], ...result.mocked])];
   for (const file2 of result.files ?? []) {
-    const full = isAbsolute7(file2) ? file2 : join31(store.projectDir, file2);
+    const full = isAbsolute8(file2) ? file2 : join32(store.projectDir, file2);
     step.files = [...step.files ?? [], relative9(store.dir, full)];
   }
   if (result.logs) {
@@ -116832,7 +117195,7 @@ function nextStepHint(ctx) {
 
 // packages/server/src/tools/developer-tools.ts
 import { readFileSync as readFileSync19, writeFileSync as writeFileSync12 } from "node:fs";
-import { extname as extname8, join as join33, relative as relative10 } from "node:path";
+import { extname as extname9, join as join34, relative as relative10 } from "node:path";
 
 // packages/server/src/devtools/inspect.ts
 import { randomBytes as randomBytes10 } from "node:crypto";
@@ -117020,8 +117383,8 @@ async function listenerLines(cdp, nodeId, scripts, ancestors) {
 }
 
 // packages/server/src/evidence/har.ts
-import { mkdirSync as mkdirSync13, writeFileSync as writeFileSync11 } from "node:fs";
-import { dirname as dirname11, join as join32 } from "node:path";
+import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync11 } from "node:fs";
+import { dirname as dirname11, join as join33 } from "node:path";
 function headers(values, clean) {
   return Object.entries(values ?? {}).map(([name, value]) => ({
     name,
@@ -117101,11 +117464,11 @@ function toHar(entries, secrets) {
   };
 }
 function networkDir(ctx, projectDir) {
-  return join32(dirname11(ctx.evidenceDir(projectDir)), "network");
+  return join33(dirname11(ctx.evidenceDir(projectDir)), "network");
 }
 function writeHar(dir, label3, entries, secrets) {
-  mkdirSync13(dir, { recursive: true });
-  const file2 = join32(dir, `${fileStamp(label3)}.har`);
+  mkdirSync14(dir, { recursive: true });
+  const file2 = join33(dir, `${fileStamp(label3)}.har`);
   writeFileSync11(file2, `${JSON.stringify(toHar(entries, secrets), null, 2)}
 `);
   return file2;
@@ -117169,7 +117532,7 @@ async function pointedDetails(ctx, tab, point, stepLabel) {
       { rules: true, listeners: false, ancestors: false }
     );
     const config3 = await ctx.config();
-    const file2 = join33(
+    const file2 = join34(
       ctx.evidenceDir(config3.projectDir),
       `pointed-${slug(stepLabel, 40, "step")}.txt`
     );
@@ -117253,7 +117616,7 @@ async function buildQuestion(ctx, input3) {
   if (imagePath2) {
     const { projectDir } = await ctx.config();
     const real = checkPanelImage(imagePath2, projectDir);
-    const ext = extname8(real).toLowerCase();
+    const ext = extname9(real).toLowerCase();
     image2 = {
       mime: ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg",
       data: readFileSync19(real).toString("base64")
@@ -117561,11 +117924,11 @@ function registerDeveloperTools(server, ctx) {
 
 // packages/server/src/tools/run-tools.ts
 function writeReports(store, secrets) {
-  const markdown2 = join34(store.dir, "report.md");
-  const html2 = join34(store.dir, "report.html");
+  const markdown2 = join35(store.dir, "report.md");
+  const html2 = join35(store.dir, "report.html");
   const run = redactDeep(store.run, secrets);
-  const a11yReport = existsSync20(join34(store.dir, "accessibility.html"));
-  const lhReport = existsSync20(join34(store.dir, "lighthouse.html"));
+  const a11yReport = existsSync21(join35(store.dir, "accessibility.html"));
+  const lhReport = existsSync21(join35(store.dir, "lighthouse.html"));
   const md = markdownReport(run, { a11yReport, lhReport });
   writeFileSync13(markdown2, secrets ? secrets.redact(md) : md);
   writeFileSync13(html2, htmlReport(run, store.dir));
@@ -117856,6 +118219,20 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
           "lighthouse_missing"
         );
       }
+      for (const folder5 of plan?.browser?.extensions ?? []) {
+        const full = resolve11(config3.projectDir, folder5);
+        if (isAbsolute9(folder5) || relative11(config3.projectDir, full).startsWith("..")) {
+          throw new ToolError(
+            `The extension folder "${folder5}" is outside the project. Put full paths in "browser.extensions" in .walkthrough/config.local.yaml.`,
+            "bad_input"
+          );
+        }
+      }
+      const browserSettings = resolveBrowserSettings(
+        [config3.browser.options, plan?.browser],
+        config3.projectDir
+      );
+      const otherSettings = ctx.driver?.alive === true && ctx.driver.mode === "launched" && ctx.driver.launchKey !== launchKey(browserSettings, config3.browser.headless);
       const mode = modeArg ?? plan?.mode ?? "checkpoints";
       const planStart = plan?.baseUrl ? rebaseToEnvironment(ctx.display(plan.baseUrl), config3) : void 0;
       const baseUrl = startUrl(planStart, config3.baseUrl);
@@ -117871,9 +118248,10 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         session: plan?.session,
         emulation,
         // Each run starts at its page size, so screenshots match from run to run.
-        window: plan?.browser?.window ?? config3.browser.window,
+        window: browserSettings.window,
+        browser: plan?.browser,
         // Lighthouse results must not depend on earlier runs, like a warm cache.
-        fresh: lhSteps,
+        fresh: lhSteps || otherSettings,
         signal: extra.signal,
         requestId: extra.requestId
       });
@@ -117891,6 +118269,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         setup: `${describeEmulation(opened.tab.emulation)}${plan?.session ? `, saved login: ${plan.session}` : ""}`,
         emulation: { ...opened.tab.emulation },
         window: driver.pageSize,
+        browser: pageSettings(browserSettings),
         unique: ctx.unique,
         session: plan?.session,
         a11yChecks: CHECKS.filter((c) => config3.accessibility.checks[c]),
@@ -117911,6 +118290,23 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       });
       const lh = ctx.run.run.lhPlan;
       await pushProgress(ctx);
+      const store = ctx.run;
+      const downloadsOn = browserSettings.downloads && driver.mode === "launched";
+      await driver.setDownloads(
+        downloadsOn ? join35(store.dir, "downloads") : void 0,
+        (entry) => {
+          store.run.downloads = [
+            ...store.run.downloads ?? [],
+            {
+              file: relative11(store.dir, entry.file),
+              url: entry.url,
+              at: (/* @__PURE__ */ new Date()).toISOString(),
+              ...store.nextPending() ? { step: store.nextPending()?.id } : {}
+            }
+          ];
+          store.save();
+        }
+      );
       await stopRing(ctx);
       if (videoPlan) await startVideo(ctx, { whole: true, ...videoPlan });
       else await startRing(ctx);
@@ -117918,6 +118314,10 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
       const slides = plan ? slideProblems(plan, config3.projectDir) : [];
       const lines = [
         `Started the run "${ctx.run.run.name}" in ${mode} mode.`,
+        ...otherSettings ? [
+          "The plan has other browser settings than the open browser, so the run started in a new browser."
+        ] : [],
+        ...plan?.browser ? [`Browser settings: ${describeBrowserSettings(browserSettings)}.`] : [],
         ...plan?.presentation ? [
           "This plan is a presentation. This run is its rehearsal: check every step. Steps that are only a slide are skipped."
         ] : [],
@@ -118084,6 +118484,7 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
         store.finish(summary);
         ctx.run = void 0;
         await ctx.driver?.panel?.setProgress(null);
+        await ctx.driver?.setDownloads(void 0);
       } else if (summary) {
         store.run.summary = summary;
         store.save();
@@ -118129,11 +118530,11 @@ ${shots.map((p) => `- ${p}`).join("\n")}`,
 // packages/server/src/tools/a11y-tools.ts
 var TIME_LIMIT_MS = Number(process.env.UIWALK_SCAN_LIMIT_MS) || 45e3;
 function latestA11yRunId(projectDir) {
-  const dir = join35(projectDir, ".walkthrough", "runs");
-  if (!existsSync21(dir)) return void 0;
+  const dir = join36(projectDir, ".walkthrough", "runs");
+  if (!existsSync22(dir)) return void 0;
   for (const id of readdirSync11(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync20(join35(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync20(join36(dir, id, "run.json"), "utf8"));
       if (run.accessibility?.length) return id;
     } catch {
     }
@@ -118202,7 +118603,7 @@ function prepare(projectDir, store, compareTo) {
 function projectFile(projectDir, file2) {
   try {
     const root = realpathSync3(projectDir);
-    const real = realpathSync3(resolve10(projectDir, file2));
+    const real = realpathSync3(resolve12(projectDir, file2));
     return real.startsWith(root + sep5) && statSync7(real).isFile();
   } catch {
     return false;
@@ -118516,9 +118917,9 @@ function registerA11yTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join35(store.dir, "accessibility.html"),
-        md: join35(store.dir, "accessibility.md"),
-        json: join35(store.dir, "accessibility.json")
+        html: join36(store.dir, "accessibility.html"),
+        md: join36(store.dir, "accessibility.md"),
+        json: join36(store.dir, "accessibility.json")
       };
       writeFileSync14(files.html, a11yHtmlReport(data));
       writeFileSync14(files.md, secrets.redact(a11yMarkdownReport(data)));
@@ -118580,7 +118981,7 @@ function describeCookie(cookie, show) {
   ].filter(Boolean);
   return `- ${cookie.name}: ${maskValue(cookie.value, show)}. ${flags.join(", ")}.`;
 }
-function checkCookies(cookies, checks, resolve12) {
+function checkCookies(cookies, checks, resolve14) {
   const lines = [];
   let ok = true;
   const say = (pass, text) => {
@@ -118601,14 +119002,14 @@ function checkCookies(cookies, checks, resolve12) {
     const facts = [];
     let pass = true;
     if (check2.value !== void 0) {
-      const same = cookie.value === resolve12(check2.value);
+      const same = cookie.value === resolve14(check2.value);
       pass &&= same;
       facts.push(
         same ? "the value matches" : `the value does not match (it has ${cookie.value.length} characters)`
       );
     }
     if (check2.contains !== void 0) {
-      const has = cookie.value.includes(resolve12(check2.contains));
+      const has = cookie.value.includes(resolve14(check2.contains));
       pass &&= has;
       facts.push(has ? "the value has the text" : "the value does not have the text");
     }
@@ -118719,7 +119120,7 @@ function registerDevtoolsTools(server, ctx) {
       const guard = await ctx.guard();
       const secrets = await ctx.secrets();
       const show = config3.allowSecretValues;
-      const resolve12 = (text) => secrets.resolve(withUnique(text, ctx.unique));
+      const resolve14 = (text) => secrets.resolve(withUnique(text, ctx.unique));
       const keep = (label3, detail) => ctx.actionLog.push({
         at: (/* @__PURE__ */ new Date()).toISOString(),
         tabId: tab.id,
@@ -118742,7 +119143,7 @@ function registerDevtoolsTools(server, ctx) {
           tab,
           { ...input3, kind: input3.kind },
           show,
-          resolve12,
+          resolve14,
           keep,
           guard.isAllowed.bind(guard)
         );
@@ -118785,7 +119186,7 @@ function registerDevtoolsTools(server, ctx) {
           }
           const cookie = {
             name: input3.name,
-            value: resolve12(input3.value),
+            value: resolve14(input3.value),
             domain: domain2,
             path: input3.path ?? "/",
             ...input3.expires !== void 0 ? { expires: input3.expires } : {},
@@ -118825,7 +119226,7 @@ function registerDevtoolsTools(server, ctx) {
         }
         case "check": {
           const checks = input3.checks ?? stepChecks(ctx, input3.stepId);
-          const result = checkCookies(cookies, checks, resolve12);
+          const result = checkCookies(cookies, checks, resolve14);
           return [
             `result: ${result.ok ? "pass" : "fail"}`,
             untrusted(result.lines.join("\n"))
@@ -119055,7 +119456,7 @@ function stepChecks(ctx, stepId) {
     throw new ToolError(`Step "${stepId}" has no cookie checks.`, "bad_step");
   return step.cookies;
 }
-async function storageAction(tab, input3, show, resolve12, keep, isAllowed) {
+async function storageAction(tab, input3, show, resolve14, keep, isAllowed) {
   const origin = pageOrigin(tab, isAllowed);
   const store = STORAGE_NAMES[input3.kind];
   const entries = await readStorage(tab, input3.kind);
@@ -119075,7 +119476,7 @@ async function storageAction(tab, input3, show, resolve12, keep, isAllowed) {
     case "set":
       if (!input3.name || input3.value === void 0)
         throw new ToolError('Give the key "name" and the "value" to set.', "bad_input");
-      await writeStorage(tab, input3.kind, "set", input3.name, resolve12(input3.value));
+      await writeStorage(tab, input3.kind, "set", input3.name, resolve14(input3.value));
       keep(`Set "${input3.name}" in ${store}`, { name: input3.name, value: input3.value });
       return `Set "${input3.name}" in ${store} of ${origin}.`;
     case "delete":
@@ -119182,19 +119583,19 @@ function registerEnvironmentTools(server, ctx) {
 
 // packages/server/src/tools/lighthouse-tools.ts
 import {
-  existsSync as existsSync23,
+  existsSync as existsSync24,
   readdirSync as readdirSync13,
   readFileSync as readFileSync22,
   realpathSync as realpathSync4,
   statSync as statSync8,
   writeFileSync as writeFileSync16
 } from "node:fs";
-import { join as join38, relative as relative14, resolve as resolve11, sep as sep6 } from "node:path";
+import { join as join39, relative as relative14, resolve as resolve13, sep as sep6 } from "node:path";
 
 // packages/server/src/lighthouse/findings.ts
 import { createHash as createHash6 } from "node:crypto";
-import { existsSync as existsSync22, readdirSync as readdirSync12, readFileSync as readFileSync21 } from "node:fs";
-import { join as join36 } from "node:path";
+import { existsSync as existsSync23, readdirSync as readdirSync12, readFileSync as readFileSync21 } from "node:fs";
+import { join as join37 } from "node:path";
 var ORDER = new Map(LH_CATEGORIES.map((c, i) => [c, i]));
 function checkLabel(check2) {
   const page = pageKey(check2.url);
@@ -119272,10 +119673,10 @@ function lhId(n) {
   return `LH-${String(n).padStart(3, "0")}`;
 }
 function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "development") {
-  const runs = join36(projectDir, ".walkthrough", "runs");
+  const runs = join37(projectDir, ".walkthrough", "runs");
   const read = (id) => {
-    const file2 = join36(runs, id, "lighthouse.json");
-    if (!existsSync22(file2)) return void 0;
+    const file2 = join37(runs, id, "lighthouse.json");
+    if (!existsSync23(file2)) return void 0;
     try {
       return JSON.parse(readFileSync21(file2, "utf8"));
     } catch {
@@ -119286,7 +119687,7 @@ function findPreviousLh(projectDir, runId, pages, compareTo, plan, env2 = "devel
     checkRunId(projectDir, compareTo);
     return read(compareTo);
   }
-  if (!existsSync22(runs)) return void 0;
+  if (!existsSync23(runs)) return void 0;
   for (const id of readdirSync12(runs).sort().reverse()) {
     if (id >= runId) continue;
     const saved = read(id);
@@ -119323,11 +119724,18 @@ function compareLh(current2, previous) {
 }
 
 // packages/server/src/lighthouse/run.ts
-import { mkdirSync as mkdirSync14, writeFileSync as writeFileSync15 } from "node:fs";
-import { join as join37 } from "node:path";
+import { mkdirSync as mkdirSync15, writeFileSync as writeFileSync15 } from "node:fs";
+import { join as join38 } from "node:path";
 async function auditPage2(url2, options) {
   const lighthouse = await loadLighthouse();
-  const { browser, profileDir } = await launchChrome(options.config, { background: true });
+  const own2 = options.config.browser.options;
+  const { browser, profileDir } = await launchChrome(options.config, {
+    background: true,
+    settings: resolveBrowserSettings(
+      [{ hosts: own2.hosts, secureOrigins: own2.secureOrigins }],
+      options.config.projectDir
+    )
+  });
   let result;
   try {
     const page = (await browser.pages())[0] ?? await browser.newPage();
@@ -119368,8 +119776,8 @@ async function auditPage2(url2, options) {
     );
   }
   const [html2, json2] = Array.isArray(result.report) ? result.report : [result.report];
-  const dir = join37(options.runDir, "lighthouse");
-  mkdirSync14(dir, { recursive: true });
+  const dir = join38(options.runDir, "lighthouse");
+  mkdirSync15(dir, { recursive: true });
   let path14 = "/";
   try {
     path14 = new URL(url2).pathname;
@@ -119378,11 +119786,11 @@ async function auditPage2(url2, options) {
   const base = `${String(options.index).padStart(2, "0")}-${slug(path14, 40, "home")}`;
   const files = {};
   if (html2) {
-    writeFileSync15(join37(dir, `${base}.report.html`), options.secrets.redact(html2));
+    writeFileSync15(join38(dir, `${base}.report.html`), options.secrets.redact(html2));
     files.html = `lighthouse/${base}.report.html`;
   }
   if (json2) {
-    writeFileSync15(join37(dir, `${base}.report.json`), options.secrets.redact(json2));
+    writeFileSync15(join38(dir, `${base}.report.json`), options.secrets.redact(json2));
     files.json = `lighthouse/${base}.report.json`;
   }
   return {
@@ -119399,11 +119807,11 @@ function scoresLine(scores) {
   return Object.entries(scores).map(([c, s]) => `${CATEGORY_LABELS[c] ?? c} ${s ?? "n/a"}`).join(", ");
 }
 function latestLhRunId(projectDir) {
-  const dir = join38(projectDir, ".walkthrough", "runs");
-  if (!existsSync23(dir)) return void 0;
+  const dir = join39(projectDir, ".walkthrough", "runs");
+  if (!existsSync24(dir)) return void 0;
   for (const id of readdirSync13(dir).sort().reverse()) {
     try {
-      const run = JSON.parse(readFileSync22(join38(dir, id, "run.json"), "utf8"));
+      const run = JSON.parse(readFileSync22(join39(dir, id, "run.json"), "utf8"));
       if (run.lighthouse?.length) return id;
     } catch {
     }
@@ -119413,7 +119821,7 @@ function latestLhRunId(projectDir) {
 function projectFile2(projectDir, file2) {
   try {
     const root = realpathSync4(projectDir);
-    const real = realpathSync4(resolve11(projectDir, file2));
+    const real = realpathSync4(resolve13(projectDir, file2));
     return real.startsWith(root + sep6) && statSync8(real).isFile();
   } catch {
     return false;
@@ -119874,9 +120282,9 @@ function registerLighthouseTools(server, ctx) {
         secrets
       );
       const files = {
-        html: join38(store.dir, "lighthouse.html"),
-        md: join38(store.dir, "lighthouse.md"),
-        json: join38(store.dir, "lighthouse.json")
+        html: join39(store.dir, "lighthouse.html"),
+        md: join39(store.dir, "lighthouse.md"),
+        json: join39(store.dir, "lighthouse.json")
       };
       writeFileSync16(files.html, secrets.redact(lhHtml(data)));
       writeFileSync16(files.md, secrets.redact(lhMarkdown(data)));
@@ -120040,7 +120448,7 @@ async function waitFor(tab, input3) {
     }
     if (input3.ms !== void 0) {
       const ms = Math.min(Math.max(input3.ms, 0), 3e4);
-      await new Promise((resolve12) => setTimeout(resolve12, ms));
+      await new Promise((resolve14) => setTimeout(resolve14, ms));
       return `Waited ${ms} ms.`;
     }
   } catch (error62) {
@@ -120258,11 +120666,11 @@ ${untrusted(JSON.stringify(value, null, 2) ?? "undefined")}`;
 }
 
 // packages/server/src/tools/present-tools.ts
-import { basename as basename7, join as join43, relative as relative17 } from "node:path";
+import { basename as basename8, join as join44, relative as relative17 } from "node:path";
 
 // packages/server/src/presentation/handout.ts
-import { mkdirSync as mkdirSync15, writeFileSync as writeFileSync17 } from "node:fs";
-import { join as join39 } from "node:path";
+import { mkdirSync as mkdirSync16, writeFileSync as writeFileSync17 } from "node:fs";
+import { join as join40 } from "node:path";
 function handoutData(session, frames, redact, endedAt = Date.now()) {
   return {
     name: session.info.name,
@@ -120426,11 +120834,11 @@ function markdown(data) {
 `;
 }
 function writeHandout(dir, data) {
-  mkdirSync15(join39(dir, "frames"), { recursive: true });
+  mkdirSync16(join40(dir, "frames"), { recursive: true });
   for (const step of data.steps) {
-    if (step.frame) writeFileSync17(join39(dir, frameFile(step.index)), step.frame);
+    if (step.frame) writeFileSync17(join40(dir, frameFile(step.index)), step.frame);
   }
-  const files = { html: join39(dir, "presentation.html"), md: join39(dir, "presentation.md") };
+  const files = { html: join40(dir, "presentation.html"), md: join40(dir, "presentation.md") };
   writeFileSync17(files.html, html(data));
   writeFileSync17(files.md, markdown(data));
   return files;
@@ -120439,7 +120847,7 @@ function writeHandout(dir, data) {
 // packages/server/src/presentation/live-stage.ts
 import { randomBytes as randomBytes12 } from "node:crypto";
 import { readFileSync as readFileSync23 } from "node:fs";
-import { extname as extname9 } from "node:path";
+import { extname as extname10 } from "node:path";
 
 // packages/server/src/replay/engine.ts
 import { randomBytes as randomBytes11 } from "node:crypto";
@@ -120456,12 +120864,12 @@ var parse6 = (value) => {
 };
 function sleep(ms, signal) {
   if (ms <= 0 || signal?.aborted) return Promise.resolve();
-  return new Promise((resolve12) => {
+  return new Promise((resolve14) => {
     const timer2 = setTimeout(done, ms);
     function done() {
       clearTimeout(timer2);
       signal?.removeEventListener("abort", done);
-      resolve12();
+      resolve14();
     }
     signal?.addEventListener("abort", done, { once: true });
   });
@@ -121366,7 +121774,7 @@ var LiveStage = class {
     if (cached2) return cached2;
     try {
       const real = checkSlideImage(path14, this.options.projectDir);
-      const type = IMAGE_TYPES[extname9(real).toLowerCase()] ?? "application/octet-stream";
+      const type = IMAGE_TYPES[extname10(real).toLowerCase()] ?? "application/octet-stream";
       const src = `data:${type};base64,${readFileSync23(real).toString("base64")}`;
       this.images.set(path14, src);
       return src;
@@ -121542,7 +121950,7 @@ var LiveStage = class {
 import { randomBytes as randomBytes13 } from "node:crypto";
 
 // packages/server/src/presentation/presenter-source.ts
-import { dirname as dirname12, join as join40 } from "node:path";
+import { dirname as dirname12, join as join41 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 var built2;
 async function presenterSource() {
@@ -121550,7 +121958,7 @@ async function presenterSource() {
   if (built2) return built2;
   const esbuild = await import("esbuild");
   const result = await esbuild.build({
-    entryPoints: [join40(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
+    entryPoints: [join41(dirname12(fileURLToPath4(import.meta.url)), "presenter-page", "main.ts")],
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -121670,11 +122078,11 @@ var PresentationSession = class {
   // Waits until no step plays, so a tool can read the page without a race.
   settled(ms = 5e3) {
     if (this.state !== "running") return Promise.resolve();
-    return new Promise((resolve12) => {
+    return new Promise((resolve14) => {
       const done = () => {
         clearTimeout(timer2);
         this.idle.delete(done);
-        resolve12();
+        resolve14();
       };
       const timer2 = setTimeout(done, ms);
       this.idle.add(done);
@@ -121708,8 +122116,8 @@ var PresentationSession = class {
     const queued = this.commands.shift();
     if (queued) return Promise.resolve(queued);
     if (this.abort.signal.aborted) return Promise.resolve({ type: "end" });
-    return new Promise((resolve12) => {
-      this.commandWaiter = resolve12;
+    return new Promise((resolve14) => {
+      this.commandWaiter = resolve14;
     });
   }
   // A question from the presenter, for the agent.
@@ -121772,13 +122180,13 @@ var PresentationSession = class {
       return Promise.resolve({ kind: "event", event: queued });
     }
     this.listener?.({ kind: "superseded" });
-    return new Promise((resolve12) => {
+    return new Promise((resolve14) => {
       const finish = (outcome) => {
         clearTimeout(timer2);
         signal?.removeEventListener("abort", onAbort);
         if (this.listener === finish) this.listener = void 0;
         this.changed();
-        resolve12(outcome);
+        resolve14(outcome);
       };
       const onAbort = () => finish({ kind: "canceled" });
       const timer2 = setTimeout(() => finish({ kind: "timeout" }), timeoutMs);
@@ -122035,8 +122443,8 @@ var PresenterWindow = class _PresenterWindow {
 };
 
 // packages/server/src/presentation/recorder.ts
-import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync16 } from "node:fs";
-import { dirname as dirname13, join as join41 } from "node:path";
+import { copyFileSync as copyFileSync2, mkdirSync as mkdirSync17 } from "node:fs";
+import { dirname as dirname13, join as join42 } from "node:path";
 var PresentationRecorder = class {
   constructor(driver, session, config3) {
     this.session = session;
@@ -122092,17 +122500,17 @@ var PresentationRecorder = class {
           note: `The recording is ${Math.round(seconds)} seconds long, and a GIF can have ${config3.video.maxGifSeconds} seconds (maxGifSeconds). Record as mp4 or webm.`
         };
       }
-      mkdirSync16(dir, { recursive: true });
+      mkdirSync17(dir, { recursive: true });
       const out = await encodeVideo({
         config: config3,
         framesDir: this.capture.dir,
         samples,
         format: format3,
-        outFile: join41(dir, `presentation.${format3}`)
+        outFile: join42(dir, `presentation.${format3}`)
       });
       let copied;
       if (target2 && out.format === format3) {
-        mkdirSync16(dirname13(target2.path), { recursive: true });
+        mkdirSync17(dirname13(target2.path), { recursive: true });
         copyFileSync2(out.file, target2.path);
         copied = target2.display;
       }
@@ -122436,8 +122844,8 @@ var Rebaser = class _Rebaser {
 };
 
 // packages/server/src/replay/replayer.ts
-import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync17, readFileSync as readFileSync24, writeFileSync as writeFileSync18 } from "node:fs";
-import { dirname as dirname14, join as join42, relative as relative16 } from "node:path";
+import { copyFileSync as copyFileSync3, mkdirSync as mkdirSync18, readFileSync as readFileSync24, writeFileSync as writeFileSync18 } from "node:fs";
+import { dirname as dirname14, join as join43, relative as relative16 } from "node:path";
 var PACES = {
   slow: { typeMs: 90, glideMs: 600, holdMs: 1800 },
   normal: { typeMs: 50, glideMs: 400, holdMs: 1200 },
@@ -122512,8 +122920,8 @@ async function replayRun(ctx, input3) {
     try {
       const shot = await replay.tab.page.screenshot({ type: "jpeg", quality: 80 });
       preview = Buffer.from(shot).toString("base64");
-      const file2 = join42(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
-      mkdirSync17(dirname14(file2), { recursive: true });
+      const file2 = join43(store.dir, "video", `replay-failed-${fileStamp("step")}.jpg`);
+      mkdirSync18(dirname14(file2), { recursive: true });
       writeFileSync18(file2, shot);
       lines.push(`Screenshot: ${relative16(config3.projectDir, file2)}`);
     } catch {
@@ -122542,8 +122950,8 @@ async function replayRun(ctx, input3) {
       { type: "activity", start: capture.startedAt, end: capture.stoppedAt ?? Date.now() }
     ];
     const lines = [];
-    const videoDir = join42(store.dir, "video");
-    mkdirSync17(videoDir, { recursive: true });
+    const videoDir = join43(store.dir, "video");
+    mkdirSync18(videoDir, { recursive: true });
     const stamp3 = fileStamp("replay");
     let preview;
     for (const format3 of formats) {
@@ -122565,13 +122973,13 @@ async function replayRun(ctx, input3) {
       }
       const middle = samples[Math.floor(samples.length / 2)];
       if (!preview && middle)
-        preview = readFileSync24(join42(capture.dir, middle.file)).toString("base64");
+        preview = readFileSync24(join43(capture.dir, middle.file)).toString("base64");
       const out = await encodeVideo({
         config: config3,
         framesDir: capture.dir,
         samples,
         format: format3,
-        outFile: join42(videoDir, `${stamp3}.${format3}`),
+        outFile: join43(videoDir, `${stamp3}.${format3}`),
         title: input3.titleCard ?? true ? run.name : void 0,
         width: format3 === "gif" ? config3.video.gifWidth : width
       });
@@ -122581,7 +122989,7 @@ async function replayRun(ctx, input3) {
       if (out.note) lines.push(out.note);
       const copies = [];
       for (const target2 of targets.filter((t) => t.format === out.format)) {
-        mkdirSync17(dirname14(target2.path), { recursive: true });
+        mkdirSync18(dirname14(target2.path), { recursive: true });
         copyFileSync3(out.file, target2.path);
         copies.push(target2.display);
         lines.push(`Also saved it to ${target2.display}. It replaced any file that was there.`);
@@ -122617,17 +123025,6 @@ async function replayRun(ctx, input3) {
 }
 
 // packages/server/src/tools/present-tools.ts
-function appHosts(config3) {
-  const hosts = /* @__PURE__ */ new Set();
-  for (const origin of [config3.baseUrl, ...config3.allowedOrigins]) {
-    if (!origin || origin.includes("*")) continue;
-    try {
-      hosts.add(new URL(origin).hostname);
-    } catch {
-    }
-  }
-  return [...hosts];
-}
 var current;
 var COMMANDS = [
   "start",
@@ -122699,15 +123096,15 @@ function eventText(session, event) {
   ].join("\n");
 }
 function changeSoon(session, ms) {
-  return new Promise((resolve12) => {
+  return new Promise((resolve14) => {
     const stop = session.watch(() => {
       clearTimeout(timer2);
       stop();
-      resolve12();
+      resolve14();
     });
     const timer2 = setTimeout(() => {
       stop();
-      resolve12();
+      resolve14();
     }, ms);
   });
 }
@@ -122804,12 +123201,24 @@ ${problems.map((p) => `- ${p}`).join("\n")}`,
   }
   if (ctx.driver?.alive) await ctx.driver.close();
   const zoom = settings.pageZoom && settings.pageZoom !== 1 && !settings.device ? { factor: settings.pageZoom, hosts: appHosts(config3) } : void 0;
+  const browser = resolveBrowserSettings(
+    [config3.browser.options, run.browser],
+    config3.projectDir
+  );
   const driver = await ctx.startDriver(void 0, {
     launch: {
       presentation: {
         ...settings.window ?? { width: 1280, height: 800 },
         ...zoom ? { zoom } : {}
-      }
+      },
+      settings: {
+        ...browser,
+        devtools: void 0,
+        extensions: [],
+        automationBar: false,
+        keepFocus: true
+      },
+      zoomHosts: appHosts(config3)
     },
     panel: false
   });
@@ -123002,7 +123411,7 @@ async function saveHandout(o) {
     return ["The presentation did not start, so Walkthrough wrote no handout."];
   }
   const store = RunStore.open(o.projectDir, o.runId);
-  const dir = join43(
+  const dir = join44(
     store.dir,
     "presentations",
     handoutFolder(session.startedAt, session.info.environment.name)
@@ -123012,7 +123421,7 @@ async function saveHandout(o) {
   if (o.recorder) {
     const saved = await o.recorder.save(dir, o.record);
     if (saved.out) {
-      data.video = { file: basename7(saved.out.file), seconds: saved.out.seconds };
+      data.video = { file: basename8(saved.out.file), seconds: saved.out.seconds };
       lines.push(
         `Recording: ${relative17(o.projectDir, saved.out.file)} (${saved.out.format.toUpperCase()}, ${clock2(saved.out.seconds * 1e3)}, ${size(saved.out.bytes)}).`
       );
@@ -123036,7 +123445,7 @@ async function stopPresentation(extra) {
   session.stop();
   const stopProgress = startProgress(extra, "Walkthrough saves the handout of the presentation.");
   try {
-    await Promise.race([live.done, new Promise((resolve12) => setTimeout(resolve12, 6e5))]);
+    await Promise.race([live.done, new Promise((resolve14) => setTimeout(resolve14, 6e5))]);
   } finally {
     stopProgress();
   }
@@ -123155,8 +123564,8 @@ ${statusText(session)}`;
 }
 
 // packages/server/src/tools/project-tools.ts
-import { existsSync as existsSync24, readdirSync as readdirSync14, readFileSync as readFileSync25 } from "node:fs";
-import { join as join44 } from "node:path";
+import { existsSync as existsSync25, readdirSync as readdirSync14, readFileSync as readFileSync25 } from "node:fs";
+import { join as join45 } from "node:path";
 function registerProjectTools(server, ctx) {
   server.registerTool(
     "init_project",
@@ -123194,16 +123603,16 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
     },
     ({ limit }) => runTool(ctx, "runs", async () => {
       const { projectDir } = await ctx.config();
-      const dir = join44(projectDir, ".walkthrough", "runs");
-      if (!existsSync24(dir)) return "There are no runs yet.";
+      const dir = join45(projectDir, ".walkthrough", "runs");
+      if (!existsSync25(dir)) return "There are no runs yet.";
       const rows = [];
       for (const id of readdirSync14(dir).sort().reverse()) {
         if (rows.length >= (limit ?? 10)) break;
-        const file2 = join44(dir, id, "run.json");
-        if (!existsSync24(file2)) continue;
+        const file2 = join45(dir, id, "run.json");
+        if (!existsSync25(file2)) continue;
         try {
           const run = JSON.parse(readFileSync25(file2, "utf8"));
-          const report = existsSync24(join44(dir, id, "report.html")) ? `report written${existsSync24(join44(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync24(join44(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
+          const report = existsSync25(join45(dir, id, "report.html")) ? `report written${existsSync25(join45(dir, id, "accessibility.html")) ? ", accessibility report written" : ""}${existsSync25(join45(dir, id, "lighthouse.html")) ? ", Lighthouse report written" : ""}${run.videos?.length ? `, video: ${run.videos.map((v2) => v2.file).join(", ")}` : ""}` : "no report yet";
           const env2 = runEnvironment(run).name;
           rows.push(
             `- ${id}: "${run.name}"${env2 === "development" ? "" : ` on ${env2}`}, ${run.status}, ${resultLine(run) || "no steps"} (${report})`
@@ -123219,8 +123628,8 @@ ${result.updated.map((f) => `- ${f}`).join("\n")}` : ""
 
 // packages/server/src/tools/quality-tools.ts
 import { randomBytes as randomBytes14 } from "node:crypto";
-import { existsSync as existsSync25, mkdirSync as mkdirSync18, readFileSync as readFileSync26, writeFileSync as writeFileSync19 } from "node:fs";
-import { basename as basename8, dirname as dirname15, extname as extname10, join as join45, relative as relative18 } from "node:path";
+import { existsSync as existsSync26, mkdirSync as mkdirSync19, readFileSync as readFileSync26, writeFileSync as writeFileSync19 } from "node:fs";
+import { basename as basename9, dirname as dirname15, extname as extname11, join as join46, relative as relative18 } from "node:path";
 
 // node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output3, width, height, options = {}) {
@@ -123586,11 +123995,11 @@ function registerQualityTools(server, ctx) {
         ref: input3.ref,
         selector: input3.selector
       });
-      const group = ctx.run?.run.planFile ? basename8(ctx.run.run.planFile, extname10(ctx.run.run.planFile)) : "adhoc";
+      const group = ctx.run?.run.planFile ? basename9(ctx.run.run.planFile, extname11(ctx.run.run.planFile)) : "adhoc";
       const device = slug(tab.emulation.device ?? "default", 60, "check");
       const file2 = `${slug(input3.name, 60, "check")}@${device}-${process.platform}.png`;
       const env2 = config3.environment.name;
-      const baselinePath = join45(
+      const baselinePath = join46(
         config3.projectDir,
         ".walkthrough",
         "baselines",
@@ -123604,9 +124013,9 @@ function registerQualityTools(server, ctx) {
         fullPage: input3.fullPage,
         mask: input3.mask
       });
-      if (!existsSync25(baselinePath) || input3.updateBaseline) {
-        const existed = existsSync25(baselinePath);
-        mkdirSync18(dirname15(baselinePath), { recursive: true });
+      if (!existsSync26(baselinePath) || input3.updateBaseline) {
+        const existed = existsSync26(baselinePath);
+        mkdirSync19(dirname15(baselinePath), { recursive: true });
         writeFileSync19(baselinePath, capture.png);
         return textResult(
           existed ? `result: updated
@@ -123620,7 +124029,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
       const matches = comparison.sameSize && comparison.diffPercent <= limit;
       const dir = ctx.evidenceDir(config3.projectDir);
       const stamp3 = fileStamp(`visual-${input3.name}`);
-      const actualPath = join45(dir, `${stamp3}-actual.png`);
+      const actualPath = join46(dir, `${stamp3}-actual.png`);
       const lines = [];
       const images = [];
       const saved = [];
@@ -123643,7 +124052,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
           );
         }
         if (comparison.diffPng) {
-          const diffPath = join45(dir, `${stamp3}-diff.png`);
+          const diffPath = join46(dir, `${stamp3}-diff.png`);
           writeFileSync19(diffPath, comparison.diffPng);
           saved.push(diffPath);
           lines.push(
@@ -123757,7 +124166,7 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
         `Accessibility check (${standardLabel(std)}, ${audit.result.engine}): ${violations.length} problem type(s), ${count} element(s).`,
         ...audit.notes,
         untrusted(formatAudit(audit)),
-        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative18(config3.projectDir, join45(dirname15(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
+        audit.check.shots?.length ? `Screenshots of the problems (${audit.check.shots.length}) are in ${relative18(config3.projectDir, join46(dirname15(ctx.evidenceDir(config3.projectDir)), "a11y"))}.` : "",
         store ? "Walkthrough added these results to the run report." : ""
       ].filter(Boolean).join("\n");
     })
@@ -123765,11 +124174,11 @@ There was no baseline, so this screenshot is now the baseline: ${baselineRel}. T
 }
 
 // packages/server/src/tools/share-tools.ts
-import { existsSync as existsSync26, mkdirSync as mkdirSync19, writeFileSync as writeFileSync20 } from "node:fs";
-import { join as join46, relative as relative19 } from "node:path";
+import { existsSync as existsSync27, mkdirSync as mkdirSync20, writeFileSync as writeFileSync20 } from "node:fs";
+import { join as join47, relative as relative19 } from "node:path";
 
 // packages/server/src/export/puppeteer-script.ts
-import { isAbsolute as isAbsolute8 } from "node:path";
+import { isAbsolute as isAbsolute10 } from "node:path";
 var SECRET2 = /^\{\{\s*secret:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$/;
 var js = (value) => JSON.stringify(value);
 var UNIQUE_IN = /\{\{\s*unique\s*\}\}|%7B%7B\s*unique\s*%7D%7D/gi;
@@ -124411,8 +124820,8 @@ function exportScript(run, options = {}) {
           break;
         case "capture": {
           const shot = op.shot;
-          const where3 = isAbsolute8(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
-          if (isAbsolute8(shot.path))
+          const where3 = isAbsolute10(shot.path) ? js(shot.path) : `resolve(PROJECT_DIR, ${js(shot.path.split("\\").join("/"))})`;
+          if (isAbsolute10(shot.path))
             lines.push("// This folder is outside the project. It only works on this computer.");
           const options2 = [
             shot.selector ? `selector: ${js(shot.selector)}` : "",
@@ -124439,7 +124848,13 @@ function exportScript(run, options = {}) {
   const missingSelectors = plan.missingSelectors;
   const pkg = options.installedChrome ? "puppeteer-core" : "puppeteer";
   const imports = needs.emulate ? `puppeteer, { PredefinedNetworkConditions }` : "puppeteer";
-  const launch3 = options.installedChrome ? "{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS }" : "{ headless: !process.env.HEADFUL, slowMo: PACE_MS }";
+  const runBrowser = run.browser ? launchPlan(resolveBrowserSettings([run.browser], ""), { headless: true }) : void 0;
+  const flags = runBrowser?.args ?? [];
+  const prefOnly = ["zoom", "fontSize", "thirdPartyCookies"].filter(
+    (k) => run.browser?.[k] !== void 0
+  );
+  const launchArgs = flags.length ? `, args: ${JSON.stringify(flags)}` : "";
+  const launch3 = options.installedChrome ? `{ channel: 'chrome', headless: !process.env.HEADFUL, slowMo: PACE_MS${launchArgs} }` : `{ headless: !process.env.HEADFUL, slowMo: PACE_MS${launchArgs} }`;
   const secretList = [...secrets];
   const hasShots = captures.length > 0;
   const runEnv = run.environment?.name ?? "development";
@@ -124489,7 +124904,9 @@ const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 for (const name of ${JSON.stringify(secretList)}) {
   if (!process.env[name]) throw new Error(\`Set the \${name} environment variable first.\`);
 }
-${needs.unique ? UNIQUE_CODE : ""}${VIDEO_HELPERS}
+${needs.unique ? UNIQUE_CODE : ""}${VIDEO_HELPERS}${prefOnly.length ? `
+// The run also used these browser settings, which this script does not set: ${prefOnly.join(", ")}.
+// Chrome keeps them in its profile. Set them in Chrome by hand to see the same pages.` : ""}
 const browser = await puppeteer.launch(${launch3});
 ${needs.tabs ? "let" : "const"} page = await browser.newPage();
 page.setDefaultTimeout(10_000);
@@ -125027,10 +125444,10 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         50,
         "run"
       );
-      const dir = join46(projectDir, ".walkthrough", "exports");
-      mkdirSync19(dir, { recursive: true });
-      const file2 = join46(dir, `${name}.mjs`);
-      const existed = existsSync26(file2);
+      const dir = join47(projectDir, ".walkthrough", "exports");
+      mkdirSync20(dir, { recursive: true });
+      const file2 = join47(dir, `${name}.mjs`);
+      const existed = existsSync27(file2);
       let target2;
       if (environment2) {
         const other = loadConfig(projectDir, config3.projectDirSource, environment2);
@@ -125092,9 +125509,9 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         );
       }
       const secrets = await ctx.secrets();
-      const reports = existsSync26(join46(store.dir, "report.md")) ? { markdown: relative19(projectDir, join46(store.dir, "report.md")) } : writeReports(store, secrets);
-      const screenshots = step.screenshots.map((s) => relative19(projectDir, join46(store.dir, s)));
-      const files = (step.files ?? []).map((f) => relative19(projectDir, join46(store.dir, f)));
+      const reports = existsSync27(join47(store.dir, "report.md")) ? { markdown: relative19(projectDir, join47(store.dir, "report.md")) } : writeReports(store, secrets);
+      const screenshots = step.screenshots.map((s) => relative19(projectDir, join47(store.dir, s)));
+      const files = (step.files ?? []).map((f) => relative19(projectDir, join47(store.dir, f)));
       const run = redactDeep(store.run, secrets);
       const safeStep = run.steps.find((s) => s.id === step.id) ?? step;
       const draft = draftIssue(run, safeStep, {
@@ -125102,15 +125519,15 @@ Recording is still on, with ${recorder.steps.length} step(s) so far. Call record
         screenshots,
         files
       });
-      const bodyFile = join46(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
+      const bodyFile = join47(store.dir, `issue-${slug(step.id, 50, "step")}.md`);
       writeFileSync20(bodyFile, draft.body);
       return [
         `Title: ${draft.title}`,
         `Body file: ${relative19(projectDir, bodyFile)}${draft.shortened ? " (shortened to fit in the browser address)" : ""}`,
         `Screenshots to drag into the issue:${screenshots.length ? `
-${screenshots.map((s) => `- ${join46(projectDir, s)}`).join("\n")}` : " none"}`,
+${screenshots.map((s) => `- ${join47(projectDir, s)}`).join("\n")}` : " none"}`,
         ...files.length ? [`Other files to attach:
-${files.map((f) => `- ${join46(projectDir, f)}`).join("\n")}`] : [],
+${files.map((f) => `- ${join47(projectDir, f)}`).join("\n")}`] : [],
         "Show the title and the body to the developer. Ask before you open the issue page.",
         "Body:",
         untrusted(draft.body)
@@ -125299,7 +125716,7 @@ async function chromeCanMakeMp4(browser) {
     res.setHeader("content-type", "text/html");
     res.end("<!doctype html><title>uiwalk</title>");
   });
-  await new Promise((resolve12) => server.listen(0, "127.0.0.1", resolve12));
+  await new Promise((resolve14) => server.listen(0, "127.0.0.1", resolve14));
   const page = await browser.newPage();
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
@@ -125401,7 +125818,7 @@ No download is needed.
     [
       `ffmpeg is ready: ${result.path}`,
       `Source: ${result.build.source}`,
-      `License: ${result.license}. The text is in ${join47(dirname16(result.path), "LICENSE.txt")}.`,
+      `License: ${result.license}. The text is in ${join48(dirname16(result.path), "LICENSE.txt")}.`,
       ""
     ].join("\n")
   );

@@ -16,12 +16,12 @@ beforeAll(async () => {
 });
 afterAll(() => demo?.stop());
 
-async function setup(name: string, visible: boolean) {
+async function setup(name: string, visible: boolean, browser = '') {
   const project = tempDir(name);
   mkdirSync(join(project, '.walkthrough', 'plans'), { recursive: true });
   writeFileSync(
     join(project, '.walkthrough', 'config.yaml'),
-    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n`,
+    `baseUrl: ${demo.base}\nallowedOrigins:\n  - ${demo.base}\n${browser}`,
   );
   writeFileSync(
     join(project, '.walkthrough', 'plans', 'small.yaml'),
@@ -133,6 +133,48 @@ describe.skipIf(process.env.UIWALK_VISIBLE_TESTS !== '1')('visible windows', () 
         width: Math.min(1280, secondRoom.width),
         height: Math.min(800, secondRoom.height),
       });
+    } finally {
+      await chrome.disconnect();
+      await mcp.close();
+    }
+  }, 60_000);
+});
+
+describe.skipIf(process.env.UIWALK_VISIBLE_TESTS !== '1')('DevTools', () => {
+  it('keeps the page size next to docked DevTools, and DevTools is not a tab', async () => {
+    const { mcp, chrome, size } = await setup(
+      'devtools-right',
+      true,
+      'browser:\n  devtools: { dock: right }\n',
+    );
+    try {
+      const page = await size();
+      const screenWidth = await chrome
+        .pages()
+        .then((pages) => pages[0]?.evaluate(() => screen.availWidth) ?? 0);
+      // The window grew by the width of DevTools, or to the width of the screen.
+      expect(page.height).toBeLessThanOrEqual(800);
+      expect(page.outer).toBeGreaterThan(page.width);
+      expect(page.width === 1280 || page.outer >= screenWidth - 1).toBe(true);
+      const tabs = await mcp.call('tabs', { action: 'list' });
+      expect(tabs.text).not.toContain('devtools://');
+    } finally {
+      await chrome.disconnect();
+      await mcp.close();
+    }
+  }, 60_000);
+
+  it('lets the device toolbar control the page size', async () => {
+    const { mcp, chrome } = await setup(
+      'devtools-toolbar',
+      true,
+      'browser:\n  devtools: { dock: right, deviceToolbar: true }\n',
+    );
+    try {
+      const reply = await mcp.call('emulate', { device: 'mobile', colorScheme: 'dark' });
+      expect(reply.isError, reply.text).toBe(false);
+      expect(reply.text).toContain("DevTools' device toolbar is on");
+      expect(reply.text).toContain('color scheme: dark');
     } finally {
       await chrome.disconnect();
       await mcp.close();

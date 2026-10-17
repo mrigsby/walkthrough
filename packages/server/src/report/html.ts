@@ -215,6 +215,16 @@ export function htmlReport(run: Run, runDir: string): string {
 <div class="counts">${[...counts].map(([status, n]) => `<span class="badge ${status}">${n} ${esc(STATUS_LABELS[status as RunStep['status']])}</span>`).join('')}</div>
 ${run.summary ? `<h2>Summary</h2><p>${esc(run.summary)}</p>` : ''}
 ${videoSection(run)}
+${
+  run.downloads?.length
+    ? `<h2>Downloads</h2><ul>${run.downloads
+        .map(
+          (d) =>
+            `<li><a href="${esc(d.file)}">${esc(d.file)}</a>, from ${esc(d.url)}${d.step ? ` (step ${esc(d.step)})` : ''}</li>`,
+        )
+        .join('')}</ul>`
+    : ''
+}
 ${problems.length ? `<h2>Bugs and failures</h2>\n${problems.map((s) => stepCard(run, runDir, s, true)).join('\n')}` : ''}
 <h2>All steps</h2>
 <table>

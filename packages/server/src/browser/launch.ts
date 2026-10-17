@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import puppeteer, { type Browser } from 'puppeteer-core';
 import type { Config } from '../config.js';
 import { ToolError } from '../errors.js';
+import { type BrowserSettings, launchPlan } from './browser-settings.js';
 import { findChrome, NO_CHROME_MESSAGE } from './chrome.js';
 
 // Chrome settings for the new profile. Chrome must not offer to save passwords or check
@@ -14,9 +15,30 @@ export const PROFILE_PREFS = {
   profile: { password_manager_enabled: false, password_manager_leak_detection: false },
 };
 
-export function writeProfilePrefs(profileDir: string, zoom?: PageZoom): void {
+// Joins prefs key by key, so one part does not remove another, like profile.* keys.
+export function mergePrefs(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...a };
+  for (const [key, value] of Object.entries(b)) {
+    const old = out[key];
+    out[key] =
+      value && typeof value === 'object' && !Array.isArray(value) && old && typeof old === 'object'
+        ? mergePrefs(old as Record<string, unknown>, value as Record<string, unknown>)
+        : value;
+  }
+  return out;
+}
+
+export function writeProfilePrefs(
+  profileDir: string,
+  zoom?: PageZoom,
+  extra: Record<string, unknown> = {},
+): void {
   mkdirSync(join(profileDir, 'Default'), { recursive: true });
-  const prefs = zoom ? { ...PROFILE_PREFS, ...zoomPrefs(zoom) } : PROFILE_PREFS;
+  let prefs = mergePrefs(PROFILE_PREFS, extra);
+  if (zoom) prefs = mergePrefs(prefs, zoomPrefs(zoom));
   writeFileSync(join(profileDir, 'Default', 'Preferences'), JSON.stringify(prefs));
 }
 
@@ -49,6 +71,11 @@ export interface LaunchOptions {
   // A Chrome for a presentation: the first window is the audience screen. It has no tabs,
   // no address bar, and no "controlled by automated test software" bar.
   presentation?: { width: number; height: number; zoom?: PageZoom };
+  // Browser settings from config.yaml and the plan. Without them, only the password
+  // manager is off.
+  settings?: BrowserSettings;
+  // The sites of the app, for the zoom setting.
+  zoomHosts?: string[];
 }
 
 // The address of the first window of a presentation. The origin guard allows it.
@@ -61,8 +88,16 @@ export async function launchChrome(config: Config, options: LaunchOptions = {}):
 
   // A new profile each time, so two sessions never lock each other.
   const profileDir = mkdtempSync(join(tmpdir(), 'uiwalk-profile-'));
-  writeProfilePrefs(profileDir, options.presentation?.zoom);
   const headless = options.background || config.browser.headless;
+  const plan = options.settings
+    ? launchPlan(options.settings, { headless, zoomHosts: options.zoomHosts })
+    : undefined;
+  writeProfilePrefs(profileDir, options.presentation?.zoom, plan?.prefs);
+  const ignored = [
+    ...(options.presentation ? ['--enable-automation'] : []),
+    ...(plan?.ignoreDefaultArgs ?? []),
+  ];
+  const extensions = plan?.extensions ?? [];
   try {
     const browser = await puppeteer.launch({
       executablePath: chrome.path,
@@ -83,8 +118,12 @@ export async function launchChrome(config: Config, options: LaunchOptions = {}):
           ? `--window-size=${options.presentation.width},${options.presentation.height}`
           : '--window-size=1280,900',
         ...(options.presentation && !headless ? [`--app=${AUDIENCE_START}`] : []),
+        ...(plan?.args ?? []),
       ],
-      ...(options.presentation ? { ignoreDefaultArgs: ['--enable-automation'] } : {}),
+      ...(ignored.length ? { ignoreDefaultArgs: [...new Set(ignored)] } : {}),
+      ...(plan?.devtools ? { devtools: true } : {}),
+      // Extensions load through a pipe. Then Chrome has no WebSocket address.
+      ...(extensions.length ? { pipe: true, enableExtensions: extensions } : {}),
       // Our own shutdown code closes Chrome and removes the profile.
       handleSIGINT: false,
       handleSIGTERM: false,
@@ -92,7 +131,8 @@ export async function launchChrome(config: Config, options: LaunchOptions = {}):
     });
     // For tests only: the exact address of this Chrome, so a test can connect to it.
     const endpointFile = process.env.UIWALK_DEBUG_ENDPOINT_FILE;
-    if (endpointFile && !options.background) writeFileSync(endpointFile, browser.wsEndpoint());
+    if (endpointFile && !options.background && !extensions.length)
+      writeFileSync(endpointFile, browser.wsEndpoint());
     return { browser, profileDir, chromePath: chrome.path };
   } catch (error) {
     removeProfile(profileDir);

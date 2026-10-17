@@ -5,6 +5,7 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import type { LookupFunction } from 'node:net';
 import { join } from 'node:path';
+import { describeBrowserSettings, resolveBrowserSettings } from './browser/browser-settings.js';
 import { findChrome, NO_CHROME_MESSAGE } from './browser/chrome.js';
 import type { Driver } from './browser/driver.js';
 import type { Config } from './config.js';
@@ -172,6 +173,11 @@ export async function doctorReport(
   lines.push(
     info(
       `Browser: ${config.browser.headless ? 'headless (hidden)' : 'visible'}, slow motion ${config.browser.slowMo} ms`,
+    ),
+  );
+  lines.push(
+    info(
+      `Browser settings: ${describeBrowserSettings(resolveBrowserSettings([config.browser.options], config.projectDir))}`,
     ),
   );
   lines.push(info(`Dialogs: ${config.dialogs}`));
